@@ -1,0 +1,13 @@
+venv/*
+*-old*
+*_old*
+__pycache__
+rtl/tmp*
+
+py/*.out
+py/parsetab.py
+py/*.dot
+py/*codegen.py
+
+!venv/requirements.txt
+!py/example_codegen.py

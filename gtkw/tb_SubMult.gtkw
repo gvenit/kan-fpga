@@ -1,0 +1,55 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Mon Oct 14 14:20:02 2024
+[*]
+[dumpfile] "/home/gvenit/Projects/kan-fpga/vcd/tb_SubMult.vcd"
+[dumpfile_mtime] "Mon Oct 14 14:18:37 2024"
+[dumpfile_size] 30393
+[savefile] "/home/gvenit/Projects/kan-fpga/gtkw/tb_SubMult.gtkw"
+[timestart] 50010
+[size] 1920 986
+[pos] -1 -1
+*-13.211655 62430 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_SubMult.
+[treeopen] tb_SubMult.uut.
+[sst_width] 276
+[signals_width] 294
+[sst_expanded] 1
+[sst_vpaned_height] 292
+@28
+tb_SubMult.uut.clk
+tb_SubMult.uut.data_lock
+@22
+tb_SubMult.uut.m_axis_data_tdata[15:0]
+tb_SubMult.uut.m_axis_data_tdata[15:0]
+@28
+tb_SubMult.uut.m_axis_data_tlast
+tb_SubMult.uut.m_axis_data_tready
+tb_SubMult.uut.m_axis_data_tvalid
+@22
+tb_SubMult.uut.s_axis_data_tdata[15:0]
+@28
+tb_SubMult.uut.s_axis_data_tlast
+tb_SubMult.uut.s_axis_data_tready
+tb_SubMult.uut.s_axis_data_tvalid
+@22
+tb_SubMult.uut.stage_1_in_axis_data_tdata[15:0]
+@28
+tb_SubMult.uut.stage_1_in_axis_data_tlast
+tb_SubMult.uut.stage_1_in_axis_data_tready
+tb_SubMult.uut.stage_1_in_axis_data_tvalid
+@22
+tb_SubMult.uut.stage_1_out_axis_data_tdata[15:0]
+@28
+tb_SubMult.uut.stage_1_out_axis_data_tlast
+tb_SubMult.uut.stage_1_out_axis_data_tready
+tb_SubMult.uut.stage_1_out_axis_data_tvalid
+@22
+tb_SubMult.uut.stage_1_fb_axis_data_tdata[15:0]
+@28
+tb_SubMult.uut.stage_1_fb_axis_data_tlast
+tb_SubMult.uut.stage_1_fb_axis_data_tready
+tb_SubMult.uut.stage_1_fb_axis_data_tvalid
+tb_SubMult.uut.data_lock
+[pattern_trace] 1
+[pattern_trace] 0
