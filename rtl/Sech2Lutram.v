@@ -8,7 +8,7 @@
  *    point arithmetics (N.Q) as signed or unsigned.
  */
 
-module SubMultAbs #(
+module Sech2Lutram #(
   // Width of AXI stream Input Data & Grid interfaces in bits
   parameter DATA_WIDTH_DATA = 16,
   // Fractional bits of input data & grid

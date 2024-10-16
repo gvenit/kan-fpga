@@ -18,18 +18,18 @@ sys.path.append(TOP_DIR)
 
 from py import *
 
-def sech2_lutram() -> Module:
+def Sech2Lutram() -> Module:
     return verilog.from_verilog.read_verilog_module(
-        os.path.join(TOP_DIR,'rtl/sech2_lutram.v')
-    )['sech2_lutram']
+        os.path.join(TOP_DIR,'rtl/Sech2Lutram.v')
+    )['Sech2Lutram']
     
-def tb_sech2_lutram():
-    module = Module('tb_sech2_lutram')
+def tb_Sech2Lutram():
+    module = Module('tb_Sech2Lutram')
 
-    sech2_lutram_inst = sech2_lutram()
+    Sech2Lutram_inst = Sech2Lutram()
 
-    params = module.copy_params_as_localparams(sech2_lutram_inst)
-    ports  = module.copy_sim_ports(sech2_lutram_inst)
+    params = module.copy_params_as_localparams(Sech2Lutram_inst)
+    ports  = module.copy_sim_ports(Sech2Lutram_inst)
 
     # params['CHANNELS'] = 8
     DATA_WIDTH_IN = params['DATA_WIDTH_IN']
@@ -41,10 +41,10 @@ def tb_sech2_lutram():
     reset_done = module.Reg('reset_done', initval=0)
     
     uut = module.Instance(
-        sech2_lutram_inst, 
+        Sech2Lutram_inst, 
         'uut',
-        params = module.connect_params(sech2_lutram_inst),
-        ports = module.connect_ports(sech2_lutram_inst)
+        params = module.connect_params(Sech2Lutram_inst),
+        ports = module.connect_ports(Sech2Lutram_inst)
     )
     
     clk    = ports['clk']
@@ -65,7 +65,7 @@ def tb_sech2_lutram():
     reset_stmt.append(s_axis_0_tvalid(0))
     reset_stmt.append(m_axis_0_tready(0))
     
-    vcd_name = os.path.join('..','vcd','tb_sech2_lutram.vcd')
+    vcd_name = os.path.join('..','vcd','tb_Sech2Lutram.vcd')
     simulation.setup_waveform(module, uut, dumpfile=vcd_name)
     simulation.setup_clock(module, clk, hperiod=1)
     init = simulation.setup_reset(module, rst, reset_stmt, period=10)
@@ -149,21 +149,23 @@ def main():
     os.makedirs(os.path.join(TOP_DIR,'vcd'), exist_ok=True)
     os.makedirs(os.path.join(TOP_DIR,'out'), exist_ok=True)
 
-    module = sech2_lutram()
-    fname = os.path.join(TOP_DIR,'rtl/sech2_lutram.v')
-    verilog = module.to_verilog(fname)
-    addTimeScale(fname)
-
-    test = tb_sech2_lutram()
-    fname = os.path.join(TOP_DIR,'tb/tb_sech2_lutram.v')
+    # module = Sech2Lutram()
+    # fname = os.path.join(TOP_DIR,'rtl/Sech2Lutram.v')
+    # verilog = module.to_verilog(fname)
+    # stripModule(fname, 'Sech2Lutram')
+    # addTimeScale(fname)
+    
+    test = tb_Sech2Lutram()
+    fname = os.path.join(TOP_DIR,'tb/tb_Sech2Lutram.v')
     verilog_test = test.to_verilog(fname)
     addTimeScale(fname)
 
-    sim = simulation.Simulator(test)
-    rslt = sim.run(
-        outputfile=os.path.join(TOP_DIR,'out/tb_sech2_lutram.out'),
-    )
-    print(rslt)
+    os.system(' '.join([
+        os.path.join(TOP_DIR,'aux/run_sim.sh'),
+        '-v',
+        '-p',
+        'Sech2Lutram',
+    ]))
 
 if __name__ == "__main__":
     main()
