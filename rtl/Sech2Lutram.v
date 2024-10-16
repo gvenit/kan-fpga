@@ -37,6 +37,8 @@ module Sech2Lutram #(
   parameter USER_ENABLE = 0,
   // tuser signal width
   parameter USER_WIDTH = 1,
+  // Number of Independent AXI-Stream Channels
+  parameter CHANNELS = 1,
   // Unsigned Input
   parameter USE_UNSIGNED = 1
 ) (
@@ -44,186 +46,193 @@ module Sech2Lutram #(
   input                             rst,
 
   /*
-    * AXI Stream Data input
-    */
-  input  wire [DATA_WIDTH_DATA-1:0] s_axis_data_tdata,
-  output wire [KEEP_WIDTH-1:0]      s_axis_data_tkeep,
-  input  wire                       s_axis_data_tlast,
-  input  wire                       s_axis_data_tvalid,
-  output wire                       s_axis_data_tready,
-  input  wire [ID_WIDTH-1:0]        s_axis_data_tid,
-  input  wire [DEST_WIDTH-1:0]      s_axis_data_tdest,
-  input  wire [USER_WIDTH-1:0]      s_axis_data_tuser,
+   * AXI Stream Data input
+   */
+  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_0_tdata,
+  output wire [CHANNELS*KEEP_WIDTH_DATA-1:0] s_axis_0_tkeep,
+  input  wire [CHANNELS-1:0]                 s_axis_0_tlast,
+  input  wire [CHANNELS-1:0]                 s_axis_0_tvalid,
+  output wire [CHANNELS-1:0]                 s_axis_0_tready,
+  input  wire [CHANNELS*ID_WIDTH-1:0]        s_axis_0_tid,
+  input  wire [CHANNELS*DEST_WIDTH-1:0]      s_axis_0_tdest,
+  input  wire [CHANNELS*USER_WIDTH-1:0]      s_axis_0_tuser,
 
   /*
-    * AXI Stream output
-    */
-  output wire [DATA_WIDTH_RSLT-1:0] m_axis_data_tdata,
-  output wire [KEEP_WIDTH-1:0]      m_axis_data_tkeep,
-  output wire                       m_axis_data_tlast,
-  output wire                       m_axis_data_tvalid,
-  input  wire                       m_axis_data_tready,
-  output wire [ID_WIDTH-1:0]        m_axis_data_tid,
-  output wire [DEST_WIDTH-1:0]      m_axis_data_tdest,
-  output wire [USER_WIDTH-1:0]      m_axis_data_tuser
+   * AXI Stream output
+   */
+  output wire [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_0_tdata,
+  output wire [CHANNELS*KEEP_WIDTH_RSLT-1:0] m_axis_0_tkeep,
+  output wire [CHANNELS-1:0]                 m_axis_0_tlast,
+  output wire [CHANNELS-1:0]                 m_axis_0_tvalid,
+  input  wire [CHANNELS-1:0]                 m_axis_0_tready,
+  output wire [CHANNELS*ID_WIDTH-1:0]        m_axis_0_tid,
+  output wire [CHANNELS*DEST_WIDTH-1:0]      m_axis_0_tdest,
+  output wire [CHANNELS*USER_WIDTH-1:0]      m_axis_0_tuser
 
   // // Error Signals
   // output                  err_unalligned_data,
   // output                  err_unalligned_scale
 );
-  
-  // Internal Registers & Wires
-  // Data wires
-  wire [DATA_WIDTH_DATA-1:0]  stage_1_in_axis_data_tdata, stage_1_out_axis_data_tdata;
-  wire [KEEP_WIDTH_DATA-1:0]  stage_1_in_axis_data_tkeep, stage_1_out_axis_data_tkeep;
-  wire                        stage_1_in_axis_data_tvalid, stage_1_out_axis_data_tvalid;
-  wire                        stage_1_in_axis_data_tready, stage_1_out_axis_data_tready;
-  wire                        stage_1_in_axis_data_tlast, stage_1_out_axis_data_tlast;
-  wire [ID_WIDTH-1:0]         stage_1_in_axis_data_tid, stage_1_out_axis_data_tid;
-  wire [DEST_WIDTH-1:0]       stage_1_in_axis_data_tdest, stage_1_out_axis_data_tdest;
-  wire [USER_WIDTH-1:0]       stage_1_in_axis_data_tuser, stage_1_out_axis_data_tuser;
-
-  wire [DATA_WIDTH_RSLT-1:0]  stage_2_in_axis_data_tdata, stage_2_out_axis_data_tdata;
-  wire [KEEP_WIDTH_RSLT-1:0]  stage_2_in_axis_data_tkeep, stage_2_out_axis_data_tkeep;
-  wire                        stage_2_in_axis_data_tvalid, stage_2_out_axis_data_tvalid;
-  wire                        stage_2_in_axis_data_tready, stage_2_out_axis_data_tready;
-  wire                        stage_2_in_axis_data_tlast, stage_2_out_axis_data_tlast;
-  wire [ID_WIDTH-1:0]         stage_2_in_axis_data_tid, stage_2_out_axis_data_tid;
-  wire [DEST_WIDTH-1:0]       stage_2_in_axis_data_tdest, stage_2_out_axis_data_tdest;
-  wire [USER_WIDTH-1:0]       stage_2_in_axis_data_tuser, stage_2_out_axis_data_tuser;
-  
+  // LUTRAM Configuration    
   reg [321-1:0] ROM_DATA_PATH;
   reg [DATA_WIDTH_RSLT-1:0] LUTRAM_ARRAY [0:2**DATA_WIDTH_DATA-1];
 
+  // LUTRAM Instantiation
   initial begin
     if (USE_UNSIGNED) begin
-        $sformat(ROM_DATA_PATH, "../data/sech2_lutram_n_%0d.%0d_%0d.%0d.txt", DATA_WIDTH_DATA, FRACTIONAL_BITS_DATA, DATA_WIDTH_RSLT, FRACTIONAL_BITS_RSLT);
+        $sformat(ROM_DATA_PATH, "../data/Sech2Lutram_n_%0d.%0d_%0d.%0d.txt", DATA_WIDTH_DATA, FRACTIONAL_BITS_DATA, DATA_WIDTH_RSLT, FRACTIONAL_BITS_RSLT);
     end
     else begin
-        $sformat(ROM_DATA_PATH, "../data/sech2_lutram_%0d.%0d_%0d.%0d.txt", DATA_WIDTH_DATA, FRACTIONAL_BITS_DATA, DATA_WIDTH_RSLT, FRACTIONAL_BITS_RSLT);
+        $sformat(ROM_DATA_PATH, "../data/Sech2Lutram_%0d.%0d_%0d.%0d.txt", DATA_WIDTH_DATA, FRACTIONAL_BITS_DATA, DATA_WIDTH_RSLT, FRACTIONAL_BITS_RSLT);
     end
     $display("ROM_DATA_PATH is : %s", ROM_DATA_PATH);
     $readmemh(ROM_DATA_PATH, LUTRAM_ARRAY);
   end
 
-  // Stage 1 Data Input
-  assign stage_1_in_axis_data_tdata   = s_axis_data_tdata;
-  assign stage_1_in_axis_data_tkeep   = s_axis_data_tkeep;
-  assign stage_1_in_axis_data_tvalid  = s_axis_data_tvalid;
-  assign s_axis_data_tready           = stage_1_in_axis_data_tready;
-  assign stage_1_in_axis_data_tlast   = s_axis_data_tlast;
-  assign stage_1_in_axis_data_tid     = s_axis_data_tid;
-  assign stage_1_in_axis_data_tdest   = s_axis_data_tdest;
-  assign stage_1_in_axis_data_tuser   = s_axis_data_tuser;
+  genvar CHN;
 
-  // Stage 1 Skid Data Register
-  axis_register #(
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_DATA),
-    // Propagate tkeep signal
-    .KEEP_ENABLE(KEEP_ENABLE),
-    // tkeep signal width (words per cycle)
-    .KEEP_WIDTH(KEEP_WIDTH),
-    // Propagate tlast signal
-    .LAST_ENABLE(1),
-    // Propagate tid signal
-    .ID_ENABLE(ID_ENABLE),
-    // tid signal width
-    .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
-    .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
-    .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
-    .USER_ENABLE(USER_ENABLE),
-    // tuser signal width
-    .USER_WIDTH(USER_WIDTH)
-  ) axis_register_data_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(stage_1_in_axis_data_tdata),
-    .s_axis_tkeep(stage_1_in_axis_data_tkeep),
-    .s_axis_tvalid(stage_1_in_axis_data_tvalid),
-    .s_axis_tready(stage_1_in_axis_data_tready),
-    .s_axis_tlast(stage_1_in_axis_data_tlast),
-    .s_axis_tid(stage_1_in_axis_data_tid),
-    .s_axis_tdest(stage_1_in_axis_data_tdest),
-    .s_axis_tuser(stage_1_in_axis_data_tuser),
-    .m_axis_tdata(stage_1_out_axis_data_tdata),
-    .m_axis_tkeep(stage_1_out_axis_data_tkeep),
-    .m_axis_tvalid(stage_1_out_axis_data_tvalid),
-    .m_axis_tready(stage_1_out_axis_data_tready),
-    .m_axis_tlast(stage_1_out_axis_data_tlast),
-    .m_axis_tid(stage_1_out_axis_data_tid),
-    .m_axis_tdest(stage_1_out_axis_data_tdest),
-    .m_axis_tuser(stage_1_out_axis_data_tuser)
-  );
+  // Per Channel LUTRAM Access
+  generate for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin      
+    // Internal Registers & Wires
+    // Data wires
+    wire [DATA_WIDTH_DATA-1:0]  stage_1_in_axis_0_tdata, stage_1_out_axis_0_tdata;
+    wire [KEEP_WIDTH_DATA-1:0]  stage_1_in_axis_0_tkeep, stage_1_out_axis_0_tkeep;
+    wire                        stage_1_in_axis_0_tvalid, stage_1_out_axis_0_tvalid;
+    wire                        stage_1_in_axis_0_tready, stage_1_out_axis_0_tready;
+    wire                        stage_1_in_axis_0_tlast, stage_1_out_axis_0_tlast;
+    wire [ID_WIDTH-1:0]         stage_1_in_axis_0_tid, stage_1_out_axis_0_tid;
+    wire [DEST_WIDTH-1:0]       stage_1_in_axis_0_tdest, stage_1_out_axis_0_tdest;
+    wire [USER_WIDTH-1:0]       stage_1_in_axis_0_tuser, stage_1_out_axis_0_tuser;
 
-  // Stage 2 Input
-  assign stage_2_in_axis_data_tdata    = LUTRAM_ARRAY[stage_1_out_axis_data_tdata];
-  assign stage_2_in_axis_data_tkeep    = {KEEP_WIDTH_RSLT{1'b1}};
-  assign stage_2_in_axis_data_tvalid   = stage_1_out_axis_data_tvalid & stage_1_out_axis_grid_tvalid & stage_1_out_axis_scale_tvalid;
-  assign stage_1_out_axis_data_tready  = stage_2_in_axis_data_tready & stage_1_out_axis_grid_tvalid & stage_1_out_axis_scale_tvalid;
-  assign stage_1_out_axis_grid_tready  = stage_2_in_axis_data_tready & stage_1_out_axis_data_tvalid & stage_1_out_axis_scale_tvalid;
-  assign stage_1_out_axis_scale_tready = stage_2_in_axis_data_tready & stage_1_out_axis_data_tvalid & stage_1_out_axis_grid_tvalid;
-  assign stage_2_in_axis_data_tlast    = stage_1_out_axis_data_tlast & stage_1_out_axis_grid_tlast & stage_1_out_axis_scale_tlast;
-  assign stage_2_in_axis_data_tid      = stage_1_out_axis_data_tid;
-  assign stage_2_in_axis_data_tdest    = stage_1_out_axis_data_tdest;
-  assign stage_2_in_axis_data_tuser    = stage_1_out_axis_data_tuser;
+    wire [DATA_WIDTH_RSLT-1:0]  stage_2_in_axis_0_tdata, stage_2_out_axis_0_tdata;
+    wire [KEEP_WIDTH_RSLT-1:0]  stage_2_in_axis_0_tkeep, stage_2_out_axis_0_tkeep;
+    wire                        stage_2_in_axis_0_tvalid, stage_2_out_axis_0_tvalid;
+    wire                        stage_2_in_axis_0_tready, stage_2_out_axis_0_tready;
+    wire                        stage_2_in_axis_0_tlast, stage_2_out_axis_0_tlast;
+    wire [ID_WIDTH-1:0]         stage_2_in_axis_0_tid, stage_2_out_axis_0_tid;
+    wire [DEST_WIDTH-1:0]       stage_2_in_axis_0_tdest, stage_2_out_axis_0_tdest;
+    wire [USER_WIDTH-1:0]       stage_2_in_axis_0_tuser, stage_2_out_axis_0_tuser;
 
-  // Stage 2 Skid Register
-  axis_register #(
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_RSLT),
-    // Propagate tkeep signal
-    .KEEP_ENABLE(KEEP_ENABLE),
-    // tkeep signal width (words per cycle)
-    .KEEP_WIDTH(KEEP_WIDTH),
-    // Propagate tlast signal
-    .LAST_ENABLE(1),
-    // Propagate tid signal
-    .ID_ENABLE(ID_ENABLE),
-    // tid signal width
-    .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
-    .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
-    .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
-    .USER_ENABLE(USER_ENABLE),
-    // tuser signal width
-    .USER_WIDTH(USER_WIDTH)
-  ) axis_register_output_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(stage_2_in_axis_data_tdata),
-    .s_axis_tkeep(stage_2_in_axis_data_tkeep),
-    .s_axis_tvalid(stage_2_in_axis_data_tvalid),
-    .s_axis_tready(stage_2_in_axis_data_tready),
-    .s_axis_tlast(stage_2_in_axis_data_tlast),
-    .s_axis_tid(stage_2_in_axis_data_tid),
-    .s_axis_tdest(stage_2_in_axis_data_tdest),
-    .s_axis_tuser(stage_2_in_axis_data_tuser),
-    .m_axis_tdata(stage_2_out_axis_data_tdata),
-    .m_axis_tkeep(stage_2_out_axis_data_tkeep),
-    .m_axis_tvalid(stage_2_out_axis_data_tvalid),
-    .m_axis_tready(stage_2_out_axis_data_tready),
-    .m_axis_tlast(stage_2_out_axis_data_tlast),
-    .m_axis_tid(stage_2_out_axis_data_tid),
-    .m_axis_tdest(stage_2_out_axis_data_tdest),
-    .m_axis_tuser(stage_2_out_axis_data_tuser)
-  );
+    // Stage 1 Data Input
+    assign stage_1_in_axis_0_tdata   = s_axis_0_tdata[(CHN+1)*DATA_WIDTH_DATA -1: CHN*DATA_WIDTH_DATA];
+    assign stage_1_in_axis_0_tkeep   = s_axis_0_tkeep[(CHN+1)*KEEP_WIDTH_DATA -1: CHN*KEEP_WIDTH_DATA];
+    assign stage_1_in_axis_0_tvalid  = s_axis_0_tvalid[CHN];
+    assign s_axis_0_tready[CHN]      = stage_1_in_axis_0_tready;
+    assign stage_1_in_axis_0_tlast   = s_axis_0_tlast[CHN];
+    assign stage_1_in_axis_0_tid     = s_axis_0_tid  [(CHN+1)*ID_WIDTH -1: CHN*ID_WIDTH];
+    assign stage_1_in_axis_0_tdest   = s_axis_0_tdest[(CHN+1)*DEST_WIDTH -1: CHN*DEST_WIDTH];
+    assign stage_1_in_axis_0_tuser   = s_axis_0_tuser[(CHN+1)*USER_WIDTH -1: CHN*USER_WIDTH];
 
-  // Output Control Logic
-  assign m_axis_data_tdata            = stage_2_out_axis_data_tdata ;
-  assign m_axis_data_tkeep            = stage_2_out_axis_data_tkeep ;
-  assign m_axis_data_tvalid           = stage_2_out_axis_data_tvalid;
-  assign stage_2_out_axis_data_tready = m_axis_data_tready          ;
-  assign m_axis_data_tlast            = stage_2_out_axis_data_tlast ;
-  assign m_axis_data_tid              = stage_2_out_axis_data_tid   ;
-  assign m_axis_data_tdest            = stage_2_out_axis_data_tdest ;
-  assign m_axis_data_tuser            = stage_2_out_axis_data_tuser ;
+    // Stage 1 Skid Data Register
+    axis_register #(
+      // Width of AXI stream interfaces in bits
+      .DATA_WIDTH(DATA_WIDTH_DATA),
+      // Propagate tkeep signal
+      .KEEP_ENABLE(KEEP_ENABLE_DATA),
+      // tkeep signal width (words per cycle)
+      .KEEP_WIDTH(KEEP_WIDTH_DATA),
+      // Propagate tlast signal
+      .LAST_ENABLE(1),
+      // Propagate tid signal
+      .ID_ENABLE(ID_ENABLE),
+      // tid signal width
+      .ID_WIDTH(ID_WIDTH),
+      // Propagate tdest signal
+      .DEST_ENABLE(DEST_ENABLE),
+      // tdest signal width
+      .DEST_WIDTH(DEST_WIDTH),
+      // Propagate tuser signal
+      .USER_ENABLE(USER_ENABLE),
+      // tuser signal width
+      .USER_WIDTH(USER_WIDTH)
+    ) axis_register_data_inst (
+      .clk(clk),
+      .rst(rst),
+      .s_axis_tdata(stage_1_in_axis_0_tdata),
+      .s_axis_tkeep(stage_1_in_axis_0_tkeep),
+      .s_axis_tvalid(stage_1_in_axis_0_tvalid),
+      .s_axis_tready(stage_1_in_axis_0_tready),
+      .s_axis_tlast(stage_1_in_axis_0_tlast),
+      .s_axis_tid(stage_1_in_axis_0_tid),
+      .s_axis_tdest(stage_1_in_axis_0_tdest),
+      .s_axis_tuser(stage_1_in_axis_0_tuser),
+      .m_axis_tdata(stage_1_out_axis_0_tdata),
+      .m_axis_tkeep(stage_1_out_axis_0_tkeep),
+      .m_axis_tvalid(stage_1_out_axis_0_tvalid),
+      .m_axis_tready(stage_1_out_axis_0_tready),
+      .m_axis_tlast(stage_1_out_axis_0_tlast),
+      .m_axis_tid(stage_1_out_axis_0_tid),
+      .m_axis_tdest(stage_1_out_axis_0_tdest),
+      .m_axis_tuser(stage_1_out_axis_0_tuser)
+    );
 
+    // Stage 2 Input
+    assign stage_2_in_axis_0_tdata    = LUTRAM_ARRAY[stage_1_out_axis_0_tdata];
+    assign stage_2_in_axis_0_tkeep    = {KEEP_WIDTH_RSLT{1'b1}};
+    assign stage_2_in_axis_0_tvalid   = stage_1_out_axis_0_tvalid;
+    assign stage_1_out_axis_0_tready  = stage_2_in_axis_0_tready;
+    assign stage_2_in_axis_0_tid      = stage_1_out_axis_0_tid;
+    assign stage_2_in_axis_0_tdest    = stage_1_out_axis_0_tdest;
+    assign stage_2_in_axis_0_tuser    = stage_1_out_axis_0_tuser;
+
+    // Stage 2 Skid Register
+    axis_register #(
+      // Width of AXI stream interfaces in bits
+      .DATA_WIDTH(DATA_WIDTH_RSLT),
+      // Propagate tkeep signal
+      .KEEP_ENABLE(KEEP_ENABLE_RSLT),
+      // tkeep signal width (words per cycle)
+      .KEEP_WIDTH(KEEP_WIDTH_RSLT),
+      // Propagate tlast signal
+      .LAST_ENABLE(1),
+      // Propagate tid signal
+      .ID_ENABLE(ID_ENABLE),
+      // tid signal width
+      .ID_WIDTH(ID_WIDTH),
+      // Propagate tdest signal
+      .DEST_ENABLE(DEST_ENABLE),
+      // tdest signal width
+      .DEST_WIDTH(DEST_WIDTH),
+      // Propagate tuser signal
+      .USER_ENABLE(USER_ENABLE),
+      // tuser signal width
+      .USER_WIDTH(USER_WIDTH),
+      // Register type
+      // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+      .REG_TYPE(2)
+    ) axis_register_output_inst (
+      .clk(clk),
+      .rst(rst),
+      .s_axis_tdata(stage_2_in_axis_0_tdata),
+      .s_axis_tkeep(stage_2_in_axis_0_tkeep),
+      .s_axis_tvalid(stage_2_in_axis_0_tvalid),
+      .s_axis_tready(stage_2_in_axis_0_tready),
+      .s_axis_tlast(stage_2_in_axis_0_tlast),
+      .s_axis_tid(stage_2_in_axis_0_tid),
+      .s_axis_tdest(stage_2_in_axis_0_tdest),
+      .s_axis_tuser(stage_2_in_axis_0_tuser),
+      .m_axis_tdata(stage_2_out_axis_0_tdata),
+      .m_axis_tkeep(stage_2_out_axis_0_tkeep),
+      .m_axis_tvalid(stage_2_out_axis_0_tvalid),
+      .m_axis_tready(stage_2_out_axis_0_tready),
+      .m_axis_tlast(stage_2_out_axis_0_tlast),
+      .m_axis_tid(stage_2_out_axis_0_tid),
+      .m_axis_tdest(stage_2_out_axis_0_tdest),
+      .m_axis_tuser(stage_2_out_axis_0_tuser)
+    );
+
+    // Output Control Logic
+    assign m_axis_0_tdata[(CHN+1)*DATA_WIDTH_DATA -1: CHN*DATA_WIDTH_DATA] = stage_2_out_axis_0_tdata ;
+    assign m_axis_0_tkeep[(CHN+1)*KEEP_WIDTH_DATA -1: CHN*KEEP_WIDTH_DATA] = stage_2_out_axis_0_tkeep ;
+    assign m_axis_0_tvalid[CHN]                                            = stage_2_out_axis_0_tvalid;
+    assign stage_2_out_axis_0_tready                                       = m_axis_0_tready[CHN]     ;
+    assign m_axis_0_tlast[CHN]                                             = stage_2_out_axis_0_tlast ;
+    assign m_axis_0_tid  [(CHN+1)*ID_WIDTH -1: CHN*ID_WIDTH]               = stage_2_out_axis_0_tid   ;
+    assign m_axis_0_tdest[(CHN+1)*DEST_WIDTH -1: CHN*DEST_WIDTH]           = stage_2_out_axis_0_tdest ;
+    assign m_axis_0_tuser[(CHN+1)*USER_WIDTH -1: CHN*USER_WIDTH]           = stage_2_out_axis_0_tuser ;
+
+  end
+  endgenerate
 endmodule
 
 `resetall

@@ -16,7 +16,7 @@ TOP_DIR = os.path.dirname(  # .../kan-fpga
 )
 sys.path.append(TOP_DIR)
 
-from py import *
+from py import addTimeScale, stripModule
 
 def Sech2Lutram() -> Module:
     return verilog.from_verilog.read_verilog_module(
@@ -31,12 +31,18 @@ def tb_Sech2Lutram():
     params = module.copy_params_as_localparams(Sech2Lutram_inst)
     ports  = module.copy_sim_ports(Sech2Lutram_inst)
 
-    # params['CHANNELS'] = 8
-    DATA_WIDTH_IN = params['DATA_WIDTH_IN']
-    CHANNELS      = params['CHANNELS']
-    EXTRA_CYCLE   = params['EXTRA_CYCLE']
-    CHANNELS.value = 1
-    EXTRA_CYCLE.value = 1
+    DATA_WIDTH            : Localparam = params['DATA_WIDTH_DATA']
+    FRACTIONAL_BITS_DATA  : Localparam = params['FRACTIONAL_BITS_DATA']
+    FRACTIONAL_BITS_RSLT  : Localparam = params['FRACTIONAL_BITS_RSLT']
+    CHANNELS              : Localparam = params['CHANNELS']
+    USE_UNSIGNED          : Localparam = params['USE_UNSIGNED']
+
+    DATA_WIDTH.value = 16
+    FRACTIONAL_BITS_DATA.value = 13
+    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
+    FRACTIONAL_BITS_RSLT.value = 16
+    CHANNELS.value = 4
+    USE_UNSIGNED.value = 1
 
     reset_done = module.Reg('reset_done', initval=0)
     
@@ -72,17 +78,17 @@ def tb_Sech2Lutram():
 
     nclk = simulation.next_clock
 
-    clocks = 2* (2 ** DATA_WIDTH_IN) // CHANNELS
+    clocks = 2* (2 ** DATA_WIDTH) // CHANNELS
     count = module.TmpReg(
-        DATA_WIDTH_IN, 
+        DATA_WIDTH, 
         CHANNELS, 
     )
 
     init.add(
         Delay(20),
         reset_done(1),
-        s_axis_0_tvalid(-1),
-        m_axis_0_tready(-1),
+        # s_axis_0_tvalid(-1),
+        # m_axis_0_tready(-1),
         nclk(clk),
         Delay(clocks),
         # Delay(10),
@@ -92,13 +98,13 @@ def tb_Sech2Lutram():
     chn = module.Genvar('CHN')
     per_channel = module.GenerateFor(chn(0),chn < CHANNELS, chn(chn+1))
 
-    data_reg  = per_channel.Reg('data_reg', DATA_WIDTH_IN)
-    data_next = per_channel.Wire('data_next', DATA_WIDTH_IN)
+    data_reg  = per_channel.Reg('data_reg', DATA_WIDTH)
+    data_next = per_channel.Wire('data_next', DATA_WIDTH)
 
     per_channel.Always()(
         s_axis_0_tdata.slice(
-            DATA_WIDTH_IN * (chn+1) - 1,
-            DATA_WIDTH_IN * chn
+            DATA_WIDTH * (chn+1) - 1,
+            DATA_WIDTH * chn
         )(data_reg)
     )
     per_channel.Assign(
@@ -107,8 +113,8 @@ def tb_Sech2Lutram():
     per_channel.Always(Posedge(clk))(
         If(reset_done)(
             If(Ors(
-                data_reg == 2**6+1 + chn,
-                data_reg == 2**6+1 + chn + 3
+                data_reg == 2**6 + chn,
+                data_reg == 2**6 + CHANNELS*(chn+3) + chn
             ))(
                 s_axis_0_tvalid[chn](0)
             ),
@@ -116,8 +122,8 @@ def tb_Sech2Lutram():
                 s_axis_0_tvalid[chn](1)
             ),
             If(Ors(
-                data_reg == 2**6+1 + chn,
-                data_reg == 2**6+1 + chn + 3
+                data_reg == 2**6 + chn,
+                data_reg == 2**6 + CHANNELS*(chn+3) + chn
             ))(
                 m_axis_0_tready[chn](0)
             ),
@@ -137,7 +143,8 @@ def tb_Sech2Lutram():
                 data_reg(data_next)
             ),
         ).Else(
-            data_reg(2**(DATA_WIDTH_IN-1)+chn)
+            data_reg(chn)
+            # data_reg(2**(DATA_WIDTH-1)+chn)
         )
     )
     return module
@@ -158,6 +165,7 @@ def main():
     test = tb_Sech2Lutram()
     fname = os.path.join(TOP_DIR,'tb/tb_Sech2Lutram.v')
     verilog_test = test.to_verilog(fname)
+    stripModule(fname, 'Sech2Lutram')
     addTimeScale(fname)
 
     os.system(' '.join([

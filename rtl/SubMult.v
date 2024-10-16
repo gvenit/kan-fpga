@@ -242,7 +242,10 @@ module SubMult #(
     // Propagate tuser signal
     .USER_ENABLE(USER_ENABLE),
     // tuser signal width
-    .USER_WIDTH(USER_WIDTH)
+    .USER_WIDTH(USER_WIDTH),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(2)
   ) axis_register_data_inst (
     .clk(clk),
     .rst(rst),
@@ -285,7 +288,10 @@ module SubMult #(
     // Propagate tuser signal
     .USER_ENABLE(USER_ENABLE),
     // tuser signal width
-    .USER_WIDTH(USER_WIDTH)
+    .USER_WIDTH(USER_WIDTH),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(2)
   ) axis_register_grid_inst (
     .clk(clk),
     .rst(rst),
@@ -328,7 +334,10 @@ module SubMult #(
     // Propagate tuser signal
     .USER_ENABLE(USER_ENABLE),
     // tuser signal width
-    .USER_WIDTH(USER_WIDTH)
+    .USER_WIDTH(USER_WIDTH),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(2)
   ) axis_register_scale_inst (
     .clk(clk),
     .rst(rst),
@@ -390,7 +399,10 @@ module SubMult #(
     // Propagate tuser signal
     .USER_ENABLE(USER_ENABLE),
     // tuser signal width
-    .USER_WIDTH(USER_WIDTH)
+    .USER_WIDTH(USER_WIDTH),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(2)
   ) axis_register_output_inst (
     .clk(clk),
     .rst(rst),

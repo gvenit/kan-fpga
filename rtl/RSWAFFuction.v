@@ -4,1324 +4,609 @@
 
 module RSWAFFunction #
 (
-  parameter DATA_WIDTH_IN = 16,
-  parameter DATA_WIDTH_OUT = 16,
-  parameter FRACTIONAL_BITS_IN = 12,
-  parameter FRACTIONAL_BITS_OUT = 16,
+  // Width of AXI stream Input Data & Grid interfaces in bits
+  parameter DATA_WIDTH_DATA = 16,
+  // Fractional bits of input data & grid
+  parameter FRACTIONAL_BITS_DATA = 12,
+  // Width of AXI stream Scale interface in bits
+  parameter DATA_WIDTH_SCALE = 16,
+  // Fractional bits of input scale
+  parameter FRACTIONAL_BITS_SCALE= 12,
+  // Width of AXI stream Output Data interface in bits
+  parameter DATA_WIDTH_SCALED_DIFF = 16,
+  // Fractional bits of output data
+  parameter FRACTIONAL_BITS_SCALED_DIFF = 12,
+  // Width of AXI stream Output Data interface in bits
+  parameter DATA_WIDTH_RSLT = 16,
+  // Fractional bits of output data
+  parameter FRACTIONAL_BITS_RSLT = 12,
+  // Propagate tkeep signal
+  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT>8),
+  // tkeep signal width (words per cycle)
+  parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
+  // Propagate tid signal
+  parameter ID_ENABLE = 0,
+  // tid signal width
+  parameter ID_WIDTH = 8,
+  // Propagate tdest signal
+  parameter DEST_ENABLE = 0,
+  // tdest signal width
+  parameter DEST_WIDTH = 8,
+  // Propagate tuser signal
+  parameter USER_ENABLE = 0,
+  // tuser signal width
+  parameter USER_WIDTH = 1,
+  // Number of Independent AXI-Stream Channels
   parameter CHANNELS = 1,
+  // Unsigned Input
+  parameter USE_UNSIGNED = 1,
+  // Use Common Share Channel 
   parameter SHARE_SCALE = 1,
-  parameter EXTRA_CYCLE = 0,
+  // Scale Channels
   parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : CHANNELS
 )
 (
-  input clk,
-  input rst
+  input                             clk,
+  input                             rst,
+
+  /*
+    * AXI Stream Data input
+    */
+  input  [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_data_tdata,
+  input  [CHANNELS-1:0]                 s_axis_data_tvalid,
+  output [CHANNELS-1:0]                 s_axis_data_tready,
+  input  [CHANNELS-1:0]                 s_axis_data_tlast,
+  input  [CHANNELS*ID_WIDTH-1:0]        s_axis_data_tid,
+  input  [CHANNELS*DEST_WIDTH-1:0]      s_axis_data_tdest,
+  input  [CHANNELS*USER_WIDTH-1:0]      s_axis_data_tuser,
+
+  /*
+    * AXI Stream Grid input
+    */
+  input  [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_grid_tdata,
+  input  [CHANNELS-1:0]                 s_axis_grid_tvalid,
+  output [CHANNELS-1:0]                 s_axis_grid_tready,
+  input  [CHANNELS-1:0]                 s_axis_grid_tlast,
+  input  [CHANNELS*ID_WIDTH-1:0]        s_axis_grid_tid,
+  input  [CHANNELS*DEST_WIDTH-1:0]      s_axis_grid_tdest,
+  input  [CHANNELS*USER_WIDTH-1:0]      s_axis_grid_tuser,
+
+  /*
+    * AXI Stream Scale input
+    */
+  input  [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]  s_axis_scale_tdata,
+  input  [SCALE_CHANNELS-1:0]                   s_axis_scale_tvalid,
+  output [SCALE_CHANNELS-1:0]                   s_axis_scale_tready,
+  input  [SCALE_CHANNELS-1:0]                   s_axis_scale_tlast,
+  input  [SCALE_CHANNELS*ID_WIDTH-1:0]          s_axis_scale_tid,
+  input  [SCALE_CHANNELS*DEST_WIDTH-1:0]        s_axis_scale_tdest,
+  input  [SCALE_CHANNELS*USER_WIDTH-1:0]        s_axis_scale_tuser,
+
+  /*
+    * AXI Stream output
+    */
+  output [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_data_tdata,
+  output [CHANNELS*KEEP_WIDTH-1:0]      m_axis_data_tkeep,
+  output [CHANNELS-1:0]                 m_axis_data_tvalid,
+  input  [CHANNELS-1:0]                 m_axis_data_tready,
+  output [CHANNELS-1:0]                 m_axis_data_tlast,
+  output [CHANNELS*ID_WIDTH-1:0]        m_axis_data_tid,
+  output [CHANNELS*DEST_WIDTH-1:0]      m_axis_data_tdest,
+  output [CHANNELS*USER_WIDTH-1:0]      m_axis_data_tuser
 );
 
-  reg [DATA_WIDTH_IN*CHANNELS-1:0] s_axis_data_tdata;
-  reg [CHANNELS-1:0] s_axis_data_tkeep;
-  reg s_axis_data_tlast;
-  reg s_axis_data_tvalid;
-  wire s_axis_data_tready;
-  reg [DATA_WIDTH_IN*CHANNELS-1:0] s_axis_grid_tdata;
-  reg [CHANNELS-1:0] s_axis_grid_tkeep;
-  reg s_axis_grid_tlast;
-  reg s_axis_grid_tvalid;
-  wire s_axis_grid_tready;
-  reg [DATA_WIDTH_IN*SCALE_CHANNELS-1:0] s_axis_scale_tdata;
-  reg [((SHARE_SCALE)?0:SCALE_CHANNELS)-1:0] s_axis_scale_tkeep;
-  reg s_axis_scale_tlast;
-  reg s_axis_scale_tvalid;
-  wire s_axis_scale_tready;
-  wire [DATA_WIDTH_OUT*CHANNELS-1:0] m_axis_data_tdata;
-  wire [CHANNELS-1:0] m_axis_data_tkeep;
-  wire m_axis_data_tlast;
-  wire m_axis_data_tvalid;
-  reg m_axis_data_tready;
-  wire [CHANNELS*DATA_WIDTH_IN-1:0] x_tdata_int;
-  wire [CHANNELS-1:0] x_tlast_int;
-  wire [CHANNELS-1:0] x_tvalid_int;
-  wire [CHANNELS-1:0] x_tready_int;
-  wire [CHANNELS*DATA_WIDTH_IN-1:0] grid_tdata_int;
-  wire [CHANNELS-1:0] grid_tlast_int;
-  wire [CHANNELS-1:0] grid_tvalid_int;
-  wire [CHANNELS-1:0] grid_tready_int;
-  wire [CHANNELS*DATA_WIDTH_IN-1:0] scale_tdata_int;
-  wire [CHANNELS-1:0] scale_tlast_int;
-  wire [CHANNELS-1:0] scale_tvalid_int;
-  wire [CHANNELS-1:0] scale_tready_int;
-  wire [CHANNELS*DATA_WIDTH_IN-1:0] diff_tdata_int;
-  wire [CHANNELS-1:0] diff_tlast_int;
-  wire [CHANNELS-1:0] diff_tvalid_int;
-  wire [CHANNELS-1:0] diff_tready_int;
-  wire [CHANNELS*DATA_WIDTH_OUT-1:0] act_tdata_int;
-  wire [CHANNELS-1:0] act_tlast_int;
-  wire [CHANNELS-1:0] act_tvalid_int;
-  wire [CHANNELS-1:0] act_tready_int;
 
-  AXISSplitter
+  // Internal Registers & Wires
+  wire [CHANNELS*DATA_WIDTH_SCALE-1:0] s_axis_scale_tdata_int;
+  wire [CHANNELS-1:0]                  s_axis_scale_tvalid_int;
+  wire [CHANNELS-1:0]                  s_axis_scale_tready_int;
+  wire [CHANNELS-1:0]                  s_axis_scale_tlast_int;
+  wire [CHANNELS*ID_WIDTH-1:0]         s_axis_scale_tid_int;
+  wire [CHANNELS*DEST_WIDTH-1:0]       s_axis_scale_tdest_int;
+  wire [CHANNELS*USER_WIDTH-1:0]       s_axis_scale_tuser_int;
+  
+  wire [CHANNELS*DATA_WIDTH_SCALED_DIFF-1:0] scaled_diff_axis_data_tdata;
+  wire [CHANNELS-1:0]                        scaled_diff_axis_data_tvalid;
+  wire [CHANNELS-1:0]                        scaled_diff_axis_data_tready;
+  wire [CHANNELS-1:0]                        scaled_diff_axis_data_tlast;
+  wire [CHANNELS*ID_WIDTH-1:0]               scaled_diff_axis_data_tid;
+  wire [CHANNELS*DEST_WIDTH-1:0]             scaled_diff_axis_data_tdest;
+  wire [CHANNELS*USER_WIDTH-1:0]             scaled_diff_axis_data_tuser;
+
+  genvar CHN;
+  generate 
+
+  if (SHARE_SCALE) begin
+
+    axis_broadcast #(
+      .M_COUNT(CHANNELS),
+      .DATA_WIDTH(DATA_WIDTH),
+      .KEEP_ENABLE(0),
+      .KEEP_WIDTH(1),
+      .LAST_ENABLE(1),
+      .ID_ENABLE(ID_ENABLE),
+      .ID_WIDTH(ID_WIDTH),
+      .DEST_ENABLE(DEST_ENABLE),
+      .DEST_WIDTH(DEST_WIDTH),
+      .USER_ENABLE(USER_ENABLE),
+      .USER_WIDTH(USER_WIDTH)
+    )
+    axis_broadcast_inst (
+      .clk(clk),
+      .rst(rst),
+      // AXI input
+      .s_axis_tdata(s_axis_scale_tdata),
+      .s_axis_tkeep(s_axis_scale_tkeep),
+      .s_axis_tvalid(s_axis_scale_tvalid),
+      .s_axis_tready(s_axis_scale_tready),
+      .s_axis_tlast(s_axis_scale_tlast),
+      .s_axis_tid(s_axis_scale_tid),
+      .s_axis_tdest(s_axis_scale_tdest),
+      .s_axis_tuser(s_axis_scale_tuser),
+      // AXI outputs
+      .m_axis_tdata(s_axis_scale_tdata_int),
+      .m_axis_tkeep(s_axis_scale_tkeep_int),
+      .m_axis_tvalid(s_axis_scale_tvalid_int),
+      .m_axis_tready(s_axis_scale_tready_int),
+      .m_axis_tlast(s_axis_scale_tlast_int),
+      .m_axis_tid(s_axis_scale_tid_int),
+      .m_axis_tdest(s_axis_scale_tdest_int),
+      .m_axis_tuser(s_axis_scale_tuser_int)
+    )
+  end
+  else begin
+    assign s_axis_scale_tdata_int = s_axis_scale_tdata;
+    assign s_axis_scale_tvalid_int  = s_axis_scale_tvalid;
+    assign s_axis_scale_tready_int  = s_axis_scale_tready;
+    assign s_axis_scale_tlast_int = s_axis_scale_tlast;
+    assign s_axis_scale_tid_int = s_axis_scale_tid;
+    assign s_axis_scale_tdest_int = s_axis_scale_tdest;
+    assign s_axis_scale_tuser_int = s_axis_scale_tuser;
+  end
+    
+  for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1 ) begin
+    // Internal Registers & Wires
+    // Data wires
+    wire [DATA_WIDTH_DATA-1:0]  s_in_axis_data_tdata_slice, s_fifo_axis_data_tdata_slice; 
+    wire [KEEP_WIDTH-1:0]       s_in_axis_data_tkeep_slice, s_fifo_axis_data_tkeep_slice; 
+    wire                        s_in_axis_data_tvalid_slice, s_fifo_axis_data_tvalid_slice; 
+    wire                        s_in_axis_data_tready_slice, s_fifo_axis_data_tready_slice; 
+    wire                        s_in_axis_data_tlast_slice, s_fifo_axis_data_tlast_slice; 
+    wire [ID_WIDTH-1:0]         s_in_axis_data_tid_slice, s_fifo_axis_data_tid_slice; 
+    wire [DEST_WIDTH-1:0]       s_in_axis_data_tdest_slice, s_fifo_axis_data_tdest_slice; 
+    wire [USER_WIDTH-1:0]       s_in_axis_data_tuser_slice, s_fifo_axis_data_tuser_slice; 
+
+    // Grid Wires
+    wire [DATA_WIDTH_DATA-1:0]  s_in_axis_grid_tdata_slice, s_fifo_axis_grid_tdata_slice;
+    wire [KEEP_WIDTH-1:0]       s_in_axis_grid_tkeep_slice, s_fifo_axis_grid_tkeep_slice;
+    wire                        s_in_axis_grid_tvalid_slice, s_fifo_axis_grid_tvalid_slice;
+    wire                        s_in_axis_grid_tready_slice, s_fifo_axis_grid_tready_slice;
+    wire                        s_in_axis_grid_tlast_slice, s_fifo_axis_grid_tlast_slice;
+    wire [ID_WIDTH-1:0]         s_in_axis_grid_tid_slice, s_fifo_axis_grid_tid_slice;
+    wire [DEST_WIDTH-1:0]       s_in_axis_grid_tdest_slice, s_fifo_axis_grid_tdest_slice;
+    wire [USER_WIDTH-1:0]       s_in_axis_grid_tuser_slice, s_fifo_axis_grid_tuser_slice;
+
+    // Scale Wires
+    wire [DATA_WIDTH_SCALE-1:0] s_in_axis_scale_tdata_slice, s_fifo_axis_scale_tdata_slice;
+    wire [KEEP_WIDTH-1:0]       s_in_axis_scale_tkeep_slice, s_fifo_axis_scale_tkeep_slice;
+    wire                        s_in_axis_scale_tvalid_slice, s_fifo_axis_scale_tvalid_slice;
+    wire                        s_in_axis_scale_tready_slice, s_fifo_axis_scale_tready_slice;
+    wire                        s_in_axis_scale_tlast_slice, s_fifo_axis_scale_tlast_slice;
+    wire [ID_WIDTH-1:0]         s_in_axis_scale_tid_slice, s_fifo_axis_scale_tid_slice;
+    wire [DEST_WIDTH-1:0]       s_in_axis_scale_tdest_slice, s_fifo_axis_scale_tdest_slice;
+    wire [USER_WIDTH-1:0]       s_in_axis_scale_tuser_slice, s_fifo_axis_scale_tuser_slice;
+  
+    wire [DATA_WIDTH_RSLT-1:0]  scaled_diff_axis_data_tdata_slice;
+    wire [KEEP_WIDTH-1:0]       scaled_diff_axis_data_tkeep_slice;
+    wire                        scaled_diff_axis_data_tvalid_slice;
+    wire                        scaled_diff_axis_data_tready_slice;
+    wire                        scaled_diff_axis_data_tlast_slice;
+    wire [ID_WIDTH-1:0]         scaled_diff_axis_data_tid_slice;
+    wire [DEST_WIDTH-1:0]       scaled_diff_axis_data_tdest_slice;
+    wire [USER_WIDTH-1:0]       scaled_diff_axis_data_tuser_slice;
+    
+    assign s_in_axis_data_tdata_slice  = s_in_axis_data_tdata[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
+    assign s_in_axis_data_tkeep_slice  = s_in_axis_data_tkeep[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
+    assign s_in_axis_data_tvalid_slice = s_in_axis_data_tvalid[CHN];
+    assign s_in_axis_data_tready_slice = s_in_axis_data_tready[CHN];
+    assign s_in_axis_data_tlast_slice  = s_in_axis_data_tlast[CHN];
+    assign s_in_axis_data_tid_slice    = s_in_axis_data_tid  [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH];
+    assign s_in_axis_data_tdest_slice  = s_in_axis_data_tdest[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
+    assign s_in_axis_data_tuser_slice  = s_in_axis_data_tuser[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
+  
+    assign s_in_axis_grid_tdata_slice  = s_in_axis_grid_tdata[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
+    assign s_in_axis_grid_tkeep_slice  = s_in_axis_grid_tkeep[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
+    assign s_in_axis_grid_tvalid_slice = s_in_axis_grid_tvalid[CHN];
+    assign s_in_axis_grid_tready_slice = s_in_axis_grid_tready[CHN];
+    assign s_in_axis_grid_tlast_slice  = s_in_axis_grid_tlast[CHN];
+    assign s_in_axis_grid_tid_slice    = s_in_axis_grid_tid  [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH];
+    assign s_in_axis_grid_tdest_slice  = s_in_axis_grid_tdest[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
+    assign s_in_axis_grid_tuser_slice  = s_in_axis_grid_tuser[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
+  
+    assign s_in_axis_scale_tdata_slice  = s_in_axis_scale_tdata[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
+    assign s_in_axis_scale_tkeep_slice  = s_in_axis_scale_tkeep[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
+    assign s_in_axis_scale_tvalid_slice = s_in_axis_scale_tvalid[CHN];
+    assign s_in_axis_scale_tready_slice = s_in_axis_scale_tready[CHN];
+    assign s_in_axis_scale_tlast_slice  = s_in_axis_scale_tlast[CHN];
+    assign s_in_axis_scale_tid_slice    = s_in_axis_scale_tid  [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH];
+    assign s_in_axis_scale_tdest_slice  = s_in_axis_scale_tdest[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
+    assign s_in_axis_scale_tuser_slice  = s_in_axis_scale_tuser[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
+
+    axis_fifo #(
+    // FIFO depth in words
+    // KEEP_WIDTH words per cycle if KEEP_ENABLE set
+    // Rounded up to nearest power of 2 cycles
+    .DEPTH(8),
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_DATA),
+    // Propagate tkeep signal
+    // If disabled, tkeep assumed to be 1'b1
+    .KEEP_ENABLE(0),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(ID_ENABLE),
+    // tid signal width
+    .ID_WIDTH(ID_WIDTH),
+    // Propagate tdest signal
+    .DEST_ENABLE(DEST_ENABLE),
+    // tdest signal width
+    .DEST_WIDTH(DEST_WIDTH),
+    // Propagate tuser signal
+    .USER_ENABLE(USER_ENABLE),
+    // tuser signal width
+    .USER_WIDTH(USER_WIDTH),
+    // number of RAM pipeline registers
+    .RAM_PIPELINE = 1,
+    // use output FIFO
+    // When set, the RAM read enable and pipeline clock enables are removed
+    .OUTPUT_FIFO_ENABLE = 0,
+    // Frame FIFO mode - operate on frames instead of cycles
+    // When set, m_axis_tvalid will not be deasserted within a frame
+    // Requires LAST_ENABLE set
+    .FRAME_FIFO = 0,
+    // tuser value for bad frame marker
+    .USER_BAD_FRAME_VALUE = 1'b1,
+    // tuser mask for bad frame marker
+    .USER_BAD_FRAME_MASK = 1'b1,
+    // Drop frames larger than FIFO
+    // Requires FRAME_FIFO set
+    .DROP_OVERSIZE_FRAME = FRAME_FIFO,
+    // Drop frames marked bad
+    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
+    .DROP_BAD_FRAME = 0,
+    // Drop incoming frames when full
+    // When set, s_axis_tready is always asserted
+    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
+    .DROP_WHEN_FULL = 0,
+    // Mark incoming frames as bad frames when full
+    // When set, s_axis_tready is always asserted
+    // Requires FRAME_FIFO to be clear
+    .MARK_WHEN_FULL = 0,
+    // Enable pause request input
+    .PAUSE_ENABLE = 0,
+    // Pause between frames
+    .FRAME_PAUSE = FRAME_FIFO
+    )
+    axis_fifo_data_inst(
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * AXI input
+     */
+    .s_axis_tdata(s_in_axis_data_tdata_slice),
+    .s_axis_tkeep(s_in_axis_data_tkeep_slice),
+    .s_axis_tvalid(s_in_axis_data_tvalid_slice),
+    .s_axis_tready(s_in_axis_data_tready_slice),
+    .s_axis_tlast(s_in_axis_data_tlast_slice),
+    .s_axis_tid(s_in_axis_data_tid_slice),
+    .s_axis_tdest(s_in_axis_data_tdest_slice),
+    .s_axis_tuser(s_in_axis_data_tuser_slice),
+
+    /*
+     * AXI output
+     */
+    .m_axis_tdata(s_fifo_axis_data_tdata_slice),
+    .m_axis_tkeep(s_fifo_axis_data_tkeep_slice),
+    .m_axis_tvalid(s_fifo_axis_data_tvalid_slice),
+    .m_axis_tready(s_fifo_axis_data_tready_slice),
+    .m_axis_tlast(s_fifo_axis_data_tlast_slice),
+    .m_axis_tid(s_fifo_axis_data_tid_slice),
+    .m_axis_tdest(s_fifo_axis_data_tdest_slice),
+    .m_axis_tuser(s_fifo_axis_data_tuser_slice),
+
+    /*
+     * Pause
+     */
+    .pause_req(0),
+    );
+    
+    axis_fifo #(
+    // FIFO depth in words
+    // KEEP_WIDTH words per cycle if KEEP_ENABLE set
+    // Rounded up to nearest power of 2 cycles
+    .DEPTH(8),
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_DATA),
+    // Propagate tkeep signal
+    // If disabled, tkeep assumed to be 1'b1
+    .KEEP_ENABLE(0),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(ID_ENABLE),
+    // tid signal width
+    .ID_WIDTH(ID_WIDTH),
+    // Propagate tdest signal
+    .DEST_ENABLE(DEST_ENABLE),
+    // tdest signal width
+    .DEST_WIDTH(DEST_WIDTH),
+    // Propagate tuser signal
+    .USER_ENABLE(USER_ENABLE),
+    // tuser signal width
+    .USER_WIDTH(USER_WIDTH),
+    // number of RAM pipeline registers
+    .RAM_PIPELINE = 1,
+    // use output FIFO
+    // When set, the RAM read enable and pipeline clock enables are removed
+    .OUTPUT_FIFO_ENABLE = 0,
+    // Frame FIFO mode - operate on frames instead of cycles
+    // When set, m_axis_tvalid will not be deasserted within a frame
+    // Requires LAST_ENABLE set
+    .FRAME_FIFO = 0,
+    // tuser value for bad frame marker
+    .USER_BAD_FRAME_VALUE = 1'b1,
+    // tuser mask for bad frame marker
+    .USER_BAD_FRAME_MASK = 1'b1,
+    // Drop frames larger than FIFO
+    // Requires FRAME_FIFO set
+    .DROP_OVERSIZE_FRAME = FRAME_FIFO,
+    // Drop frames marked bad
+    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
+    .DROP_BAD_FRAME = 0,
+    // Drop incoming frames when full
+    // When set, s_axis_tready is always asserted
+    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
+    .DROP_WHEN_FULL = 0,
+    // Mark incoming frames as bad frames when full
+    // When set, s_axis_tready is always asserted
+    // Requires FRAME_FIFO to be clear
+    .MARK_WHEN_FULL = 0,
+    // Enable pause request input
+    .PAUSE_ENABLE = 0,
+    // Pause between frames
+    .FRAME_PAUSE = FRAME_FIFO
+    )
+    axis_fifo_grid_inst(
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * AXI input
+     */
+    .s_axis_tdata(s_in_axis_grid_tdata_slice),
+    .s_axis_tkeep(s_in_axis_grid_tkeep_slice),
+    .s_axis_tvalid(s_in_axis_grid_tvalid_slice),
+    .s_axis_tready(s_in_axis_grid_tready_slice),
+    .s_axis_tlast(s_in_axis_grid_tlast_slice),
+    .s_axis_tid(s_in_axis_grid_tid_slice),
+    .s_axis_tdest(s_in_axis_grid_tdest_slice),
+    .s_axis_tuser(s_in_axis_grid_tuser_slice),
+
+    /*
+     * AXI output
+     */
+    .m_axis_tdata(s_fifo_axis_grid_tdata_slice),
+    .m_axis_tkeep(s_fifo_axis_grid_tkeep_slice),
+    .m_axis_tvalid(s_fifo_axis_grid_tvalid_slice),
+    .m_axis_tready(s_fifo_axis_grid_tready_slice),
+    .m_axis_tlast(s_fifo_axis_grid_tlast_slice),
+    .m_axis_tid(s_fifo_axis_grid_tid_slice),
+    .m_axis_tdest(s_fifo_axis_grid_tdest_slice),
+    .m_axis_tuser(s_fifo_axis_grid_tuser_slice),
+
+    /*
+     * Pause
+     */
+    .pause_req(0),
+    );
+    
+    axis_fifo #(
+    // FIFO depth in words
+    // KEEP_WIDTH words per cycle if KEEP_ENABLE set
+    // Rounded up to nearest power of 2 cycles
+    .DEPTH(8),
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_SCALE),
+    // Propagate tkeep signal
+    // If disabled, tkeep assumed to be 1'b1
+    .KEEP_ENABLE(0),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(ID_ENABLE),
+    // tid signal width
+    .ID_WIDTH(ID_WIDTH),
+    // Propagate tdest signal
+    .DEST_ENABLE(DEST_ENABLE),
+    // tdest signal width
+    .DEST_WIDTH(DEST_WIDTH),
+    // Propagate tuser signal
+    .USER_ENABLE(USER_ENABLE),
+    // tuser signal width
+    .USER_WIDTH(USER_WIDTH),
+    // number of RAM pipeline registers
+    .RAM_PIPELINE = 1,
+    // use output FIFO
+    // When set, the RAM read enable and pipeline clock enables are removed
+    .OUTPUT_FIFO_ENABLE = 0,
+    // Frame FIFO mode - operate on frames instead of cycles
+    // When set, m_axis_tvalid will not be deasserted within a frame
+    // Requires LAST_ENABLE set
+    .FRAME_FIFO = 0,
+    // tuser value for bad frame marker
+    .USER_BAD_FRAME_VALUE = 1'b1,
+    // tuser mask for bad frame marker
+    .USER_BAD_FRAME_MASK = 1'b1,
+    // Drop frames larger than FIFO
+    // Requires FRAME_FIFO set
+    .DROP_OVERSIZE_FRAME = FRAME_FIFO,
+    // Drop frames marked bad
+    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
+    .DROP_BAD_FRAME = 0,
+    // Drop incoming frames when full
+    // When set, s_axis_tready is always asserted
+    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
+    .DROP_WHEN_FULL = 0,
+    // Mark incoming frames as bad frames when full
+    // When set, s_axis_tready is always asserted
+    // Requires FRAME_FIFO to be clear
+    .MARK_WHEN_FULL = 0,
+    // Enable pause request input
+    .PAUSE_ENABLE = 0,
+    // Pause between frames
+    .FRAME_PAUSE = FRAME_FIFO
+    )
+    axis_fifo_scale_inst(
+    .clk(clk),
+    .rst(rst),
+
+    /*
+     * AXI input
+     */
+    .s_axis_tdata(s_in_axis_scale_tdata_slice),
+    .s_axis_tkeep(s_in_axis_scale_tkeep_slice),
+    .s_axis_tvalid(s_in_axis_scale_tvalid_slice),
+    .s_axis_tready(s_in_axis_scale_tready_slice),
+    .s_axis_tlast(s_in_axis_scale_tlast_slice),
+    .s_axis_tid(s_in_axis_scale_tid_slice),
+    .s_axis_tdest(s_in_axis_scale_tdest_slice),
+    .s_axis_tuser(s_in_axis_scale_tuser_slice),
+
+    /*
+     * AXI output
+     */
+    .m_axis_tdata(s_fifo_axis_scale_tdata_slice),
+    .m_axis_tkeep(s_fifo_axis_scale_tkeep_slice),
+    .m_axis_tvalid(s_fifo_axis_scale_tvalid_slice),
+    .m_axis_tready(s_fifo_axis_scale_tready_slice),
+    .m_axis_tlast(s_fifo_axis_scale_tlast_slice),
+    .m_axis_tid(s_fifo_axis_scale_tid_slice),
+    .m_axis_tdest(s_fifo_axis_scale_tdest_slice),
+    .m_axis_tuser(s_fifo_axis_scale_tuser_slice),
+
+    /*
+     * Pause
+     */
+    .pause_req(0),
+    );
+    
+    SubMultAbs
+    #(
+      .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
+      .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
+      .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
+      .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
+      .DATA_WIDTH_RSLT(DATA_WIDTH_SCALED_DIFF),
+      .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_SCALED_DIFF),
+      .KEEP_ENABLE(KEEP_ENABLE),
+      .KEEP_WIDTH(KEEP_WIDTH),
+      .ID_ENABLE(ID_ENABLE),
+      .ID_WIDTH(ID_WIDTH),
+      .DEST_ENABLE(DEST_ENABLE),
+      .DEST_WIDTH(DEST_WIDTH),
+      .USER_ENABLE(USER_ENABLE),
+      .USER_WIDTH(USER_WIDTH)
+    )
+    SubMultAbs_inst
+    (
+      .clk(clk),
+      .rst(rst),
+      .s_axis_data_tdata(s_axis_data_tdata_slice),
+      .s_axis_data_tvalid(s_axis_data_tvalid_slice),
+      .s_axis_data_tready(s_axis_data_tready_slice),
+      .s_axis_data_tlast(s_axis_data_tlast_slice),
+      .s_axis_data_tid(s_axis_data_tid_slice),
+      .s_axis_data_tdest(s_axis_data_tdest_slice),
+      .s_axis_data_tuser(s_axis_data_tuser_slice),
+      .s_axis_grid_tdata(s_axis_grid_tdata_slice),
+      .s_axis_grid_tvalid(s_axis_grid_tvalid_slice),
+      .s_axis_grid_tready(s_axis_grid_tready_slice),
+      .s_axis_grid_tlast(s_axis_grid_tlast_slice),
+      .s_axis_grid_tid(s_axis_grid_tid_slice),
+      .s_axis_grid_tdest(s_axis_grid_tdest_slice),
+      .s_axis_grid_tuser(s_axis_grid_tuser_slice),
+      .s_axis_scale_tdata(s_axis_scale_tdata_slice),
+      .s_axis_scale_tvalid(s_axis_scale_tvalid_slice),
+      .s_axis_scale_tready(s_axis_scale_tready_slice),
+      .s_axis_scale_tlast(s_axis_scale_tlast_slice),
+      .s_axis_scale_tid(s_axis_scale_tid_slice),
+      .s_axis_scale_tdest(s_axis_scale_tdest_slice),
+      .s_axis_scale_tuser(s_axis_scale_tuser_slice),
+      .m_axis_data_tdata(scaled_diff_axis_data_tdata),
+      // .m_axis_data_tkeep(scaled_diff_axis_data_tkeep),
+      .m_axis_data_tvalid(scaled_diff_axis_data_tvalid),
+      .m_axis_data_tready(scaled_diff_axis_data_tready),
+      .m_axis_data_tlast(scaled_diff_axis_data_tlast),
+      .m_axis_data_tid(scaled_diff_axis_data_tid),
+      .m_axis_data_tdest(scaled_diff_axis_data_tdest),
+      .m_axis_data_tuser(scaled_diff_axis_data_tuser)
+    );
+
+    assign scaled_diff_axis_data_tdata [(CHN+1)*DATA_WIDTH_SCALED_DIFF-1 : CHN*DATA_WIDTH_SCALED_DIFF]  = scaled_diff_axis_data_tdata_slice;
+    // assign scaled_diff_axis_data_tkeep [(CHN+1)*WIDTH-1 : CHN*WIDTH]  = scaled_diff_axis_data_tkeep_slice;
+    assign scaled_diff_axis_data_tlast [(CHN+1)*WIDTH-1 : CHN*WIDTH]  = scaled_diff_axis_data_tlast_slice;
+    assign scaled_diff_axis_data_tvalid[(CHN+1)*WIDTH-1 : CHN*WIDTH] = scaled_diff_axis_data_tvalid_slice;
+    assign scaled_diff_axis_data_tready[(CHN+1)*WIDTH-1 : CHN*WIDTH] = scaled_diff_axis_data_tready_slice;
+    assign scaled_diff_axis_data_tid   [(CHN+1)*WIDTH-1 : CHN*WIDTH]    = scaled_diff_axis_data_tid_slice;
+    assign scaled_diff_axis_data_tdest [(CHN+1)*WIDTH-1 : CHN*WIDTH]  = scaled_diff_axis_data_tdest_slice;
+    assign scaled_diff_axis_data_tuser [(CHN+1)*WIDTH-1 : CHN*WIDTH]  = scaled_diff_axis_data_tuser_slice;
+    
+  end
+
+  endgenerate
+
+  Sech2Lutram
   #(
-    .DATA_WIDTH(DATA_WIDTH_IN),
+    .DATA_WIDTH_DATA(DATA_WIDTH_SCALED_DIFF),
+    .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_SCALED_DIFF),
+    .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
+    .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+    .KEEP_ENABLE_DATA(0),
+    .KEEP_WIDTH_DATA(1),
+    .KEEP_ENABLE_RSLT(KEEP_ENABLE_RSLT),
+    .KEEP_WIDTH_RSLT(KEEP_WIDTH_RSLT),
+    .ID_ENABLE(ID_ENABLE),
+    .ID_WIDTH(ID_WIDTH),
+    .DEST_ENABLE(DEST_ENABLE),
+    .DEST_WIDTH(DEST_WIDTH),
+    .USER_ENABLE(USER_ENABLE),
+    .USER_WIDTH(USER_WIDTH),
     .CHANNELS(CHANNELS),
-    .FIFO_DEPTH(CHANNELS)
+    .USE_UNSIGNED(USE_UNSIGNED)
   )
-  x_splitter_inst
+  Sech2Lutram_inst
   (
     .clk(clk),
     .rst(rst),
-    .s_axis_0_tdata(s_axis_data_tdata),
-    .s_axis_0_tkeep(s_axis_data_tkeep),
-    .s_axis_0_tlast(s_axis_data_tlast),
-    .s_axis_0_tvalid(s_axis_data_tvalid),
-    .s_axis_0_tready(s_axis_data_tready),
-    .m_axis_0_tdata(x_tdata_int),
-    .m_axis_0_tlast(x_tlast_int),
-    .m_axis_0_tvalid(x_tvalid_int),
-    .m_axis_0_tready(x_tready_int)
-  );
-
-
-  AXISSplitter_
-  #(
-    .DATA_WIDTH(DATA_WIDTH_IN),
-    .CHANNELS(CHANNELS),
-    .FIFO_DEPTH(CHANNELS)
-  )
-  grid_splitter_inst
-  (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_0_tdata(s_axis_grid_tdata),
-    .s_axis_0_tkeep(s_axis_grid_tkeep),
-    .s_axis_0_tlast(s_axis_grid_tlast),
-    .s_axis_0_tvalid(s_axis_grid_tvalid),
-    .s_axis_0_tready(s_axis_grid_tready),
-    .m_axis_0_tdata(grid_tdata_int),
-    .m_axis_0_tlast(grid_tlast_int),
-    .m_axis_0_tvalid(grid_tvalid_int),
-    .m_axis_0_tready(grid_tready_int)
-  );
-
-
-  generate if(SHARE_SCALE) begin
-
-    AXISBroadcaster
-    #(
-      .DATA_WIDTH(DATA_WIDTH_IN),
-      .CHANNELS(CHANNELS)
-    )
-    scale_broadcaster_inst
-    (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_0_tdata(s_axis_scale_tdata),
-      .s_axis_0_tvalid(s_axis_scale_tvalid),
-      .s_axis_0_tready(s_axis_scale_tready),
-      .s_axis_0_tlast(s_axis_scale_tlast),
-      .m_axis_0_tdata(scale_tdata_int),
-      .m_axis_0_tvalid(scale_tvalid_int),
-      .m_axis_0_tready(scale_tready_int),
-      .m_axis_0_tlast(scale_tlast_int)
-    );
-
-  end else begin
-
-    AXISSplitter
-    #(
-      .DATA_WIDTH(DATA_WIDTH_IN),
-      .CHANNELS(CHANNELS),
-      .FIFO_DEPTH(CHANNELS)
-    )
-    scale_splitter_inst
-    (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_0_tdata(s_axis_scale_tdata),
-      .s_axis_0_tvalid(s_axis_scale_tvalid),
-      .s_axis_0_tready(s_axis_scale_tready),
-      .s_axis_0_tlast(s_axis_scale_tlast),
-      .s_axis_0_tkeep(s_axis_scale_tkeep),
-      .m_axis_0_tdata(scale_tdata_int),
-      .m_axis_0_tvalid(scale_tvalid_int),
-      .m_axis_0_tready(scale_tready_int),
-      .m_axis_0_tlast(scale_tlast_int)
-    );
-
-  end
-  endgenerate
-
-  genvar CHN;
-
-  generate for(CHN=0; CHN<CHANNELS; CHN=CHN+1) begin
-    wire [DATA_WIDTH_IN-1:0] x_tdata_int_slice;
-    wire x_tvalid_int_slice;
-    wire x_tready_int_slice;
-    wire x_tlast_int_slice;
-    wire [DATA_WIDTH_IN-1:0] grid_tdata_int_slice;
-    wire grid_tvalid_int_slice;
-    wire grid_tready_int_slice;
-    wire grid_tlast_int_slice;
-    wire [DATA_WIDTH_IN-1:0] scale_tdata_int_slice;
-    wire scale_tvalid_int_slice;
-    wire scale_tready_int_slice;
-    wire scale_tlast_int_slice;
-    wire [DATA_WIDTH_IN-1:0] rslt_tdata_int_slice;
-    wire rslt_tvalid_int_slice;
-    wire rslt_tready_int_slice;
-    wire rslt_tlast_int_slice;
-    assign x_tdata_int_slice = x_tdata_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign x_tvalid_int_slice = x_tvalid_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign x_tready_int_slice = x_tready_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign x_tlast_int_slice = x_tlast_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign grid_tdata_int_slice = grid_tdata_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign grid_tvalid_int_slice = grid_tvalid_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign grid_tready_int_slice = grid_tready_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign grid_tlast_int_slice = grid_tlast_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign scale_tdata_int_slice = scale_tdata_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign scale_tvalid_int_slice = scale_tvalid_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign scale_tready_int_slice = scale_tready_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign scale_tlast_int_slice = scale_tlast_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign rslt_tdata_int_slice = diff_tdata_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign rslt_tvalid_int_slice = diff_tvalid_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign rslt_tready_int_slice = diff_tready_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign rslt_tlast_int_slice = diff_tlast_int[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-
-    SubMult
-    #(
-      .DATA_WIDTH("DATA_WIDTH_IN")
-    )
-    subMult_inst
-    (
-      .clk(clk),
-      .rst(rst),
-      .axis_x_tdata(x_tdata_int_slice),
-      .axis_x_tvalid(x_tvalid_int_slice),
-      .axis_x_tready(x_tready_int_slice),
-      .axis_x_tlast(x_tlast_int_slice),
-      .axis_grid_tdata(grid_tdata_int_slice),
-      .axis_grid_tvalid(grid_tvalid_int_slice),
-      .axis_grid_tready(grid_tready_int_slice),
-      .axis_grid_tlast(grid_tlast_int_slice),
-      .axis_scale_tdata(scale_tdata_int_slice),
-      .axis_scale_tvalid(scale_tvalid_int_slice),
-      .axis_scale_tready(scale_tready_int_slice),
-      .axis_scale_tlast(scale_tlast_int_slice),
-      .axis_rslt_tdata(rslt_tdata_int_slice),
-      .axis_rslt_tvalid(rslt_tvalid_int_slice),
-      .axis_rslt_tready(rslt_tready_int_slice),
-      .axis_rslt_tlast(rslt_tlast_int_slice)
-    );
-
-  end
-  endgenerate
-
-
-  sech2_lutram
-  #(
-    .DATA_WIDTH_IN(DATA_WIDTH_IN),
-    .DATA_WIDTH_OUT(DATA_WIDTH_OUT),
-    .FRACTIONAL_BITS_IN(FRACTIONAL_BITS_IN),
-    .FRACTIONAL_BITS_OUT(FRACTIONAL_BITS_OUT),
-    .CHANNELS(CHANNELS),
-    .EXTRA_CYCLE(EXTRA_CYCLE)
-  )
-  act_function_inst
-  (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_0_tdata(diff_tdata_int),
-    .s_axis_0_tlast(diff_tlast_int),
-    .s_axis_0_tvalid(diff_tvalid_int),
-    .s_axis_0_tready(diff_tready_int),
-    .m_axis_0_tdata(act_tdata_int),
-    .m_axis_0_tlast(act_tlast_int),
-    .m_axis_0_tvalid(act_tvalid_int),
-    .m_axis_0_tready(act_tready_int)
-  );
-
-
-  AXISCombiner
-  #(
-    .DATA_WIDTH(DATA_WIDTH_OUT),
-    .CHANNELS(CHANNELS)
-  )
-  AXISCombiner_inst
-  (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_0_tdata(act_tdata_int),
-    .s_axis_0_tlast(act_tlast_int),
-    .s_axis_0_tvalid(act_tvalid_int),
-    .s_axis_0_tready(act_tready_int),
-    .m_axis_0_tdata(m_axis_data_tdata),
-    .m_axis_0_tkeep(m_axis_data_tkeep),
-    .m_axis_0_tlast(m_axis_data_tlast),
-    .m_axis_0_tvalid(m_axis_data_tvalid),
-    .m_axis_0_tready(m_axis_data_tready)
-  );
-
-
-endmodule
-
-
-
-module AXISBroadcaster #
-(
-  parameter DATA_WIDTH = 16,
-  parameter CHANNELS = 16
-)
-(
-  input clk,
-  input rst,
-  input [DATA_WIDTH-1:0] s_axis_0_tdata,
-  input s_axis_0_tvalid,
-  output s_axis_0_tready,
-  input s_axis_0_tlast,
-  output [DATA_WIDTH*CHANNELS-1:0] m_axis_0_tdata,
-  output [CHANNELS-1:0] m_axis_0_tvalid,
-  input [CHANNELS-1:0] m_axis_0_tready,
-  output [CHANNELS-1:0] m_axis_0_tlast
-);
-
-  localparam FIFO_DEPTH = 4;
-  reg [DATA_WIDTH:0] data_reg;
-  reg [CHANNELS-1:0] data_keep_reg;
-  wire s_axis_0_tready_reg;
-  wire [DATA_WIDTH:0] data_reg_next;
-  wire [DATA_WIDTH:0] data_in_next;
-  wire [CHANNELS-1:0] data_keep_next;
-  wire [CHANNELS-1:0] data_keep_reg_next;
-  wire [CHANNELS-1:0] data_keep_in_next;
-  wire load_from_reg;
-  wire load_from_in;
-  wire input_handshake;
-  assign load_from_reg = |data_keep_next;
-  assign load_from_in = !load_from_reg;
-  assign input_handshake = (load_from_in)? s_axis_0_tvalid & s_axis_0_tready_reg : 0;
-  assign data_in_next = (input_handshake)? { s_axis_0_tlast, s_axis_0_tdata } : data_reg;
-  assign data_reg_next = (load_from_reg)? data_reg : data_in_next;
-  assign data_keep_in_next = (input_handshake)? -1 : data_keep_next;
-  assign data_keep_reg_next = (load_from_reg)? data_keep_next : data_keep_in_next;
-  assign s_axis_0_tready = s_axis_0_tready_reg;
-  assign s_axis_0_tready_reg = (rst)? 0 : load_from_in;
-
-  always @(posedge clk) begin
-    if(rst) begin
-      data_reg <= 0;
-      data_keep_reg <= 0;
-    end else begin
-      data_reg <= data_reg_next;
-      data_keep_reg <= data_keep_reg_next;
-    end
-  end
-
-  genvar CHN;
-
-  generate for(CHN=0; CHN<CHANNELS; CHN=CHN+1) begin
-    reg [DATA_WIDTH-1:0] s_fifo_tdata;
-    wire [DATA_WIDTH-1:0] m_fifo_tdata;
-    wire s_fifo_tready;
-    wire m_fifo_tready;
-    wire s_fifo_tvalid;
-    wire m_fifo_tvalid;
-    wire s_fifo_tlast;
-    wire m_fifo_tlast;
-    wire s_fifo_handshake;
-    wire m_fifo_handshake;
-
-    always @(*) begin
-      s_fifo_tdata <= data_reg[DATA_WIDTH-1:0];
-    end
-
-    assign s_fifo_tlast = data_reg[DATA_WIDTH];
-    assign s_fifo_tvalid = data_keep_reg;
-    assign s_fifo_handshake = s_fifo_tready && s_fifo_tvalid;
-    assign data_keep_next[CHN] = (s_fifo_handshake)? 0 : s_fifo_tvalid;
-    assign m_axis_0_tdata[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN] = m_fifo_tdata;
-    assign m_fifo_tready = m_axis_0_tready[CHN];
-    assign m_axis_0_tvalid[CHN] = m_fifo_tvalid;
-    assign m_axis_0_tlast[CHN] = m_fifo_tlast;
-
-    AXISFifo
-    #(
-      .DATA_WIDTH(DATA_WIDTH),
-      .ADDRESS_WIDTH($clog2(FIFO_DEPTH))
-    )
-    AXISFifo_inst_i
-    (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_0_tdata(s_fifo_tdata),
-      .s_axis_0_tvalid(s_fifo_tvalid),
-      .s_axis_0_tready(s_fifo_tready),
-      .s_axis_0_tlast(s_fifo_tlast),
-      .m_axis_0_tdata(m_fifo_tdata),
-      .m_axis_0_tvalid(m_fifo_tvalid),
-      .m_axis_0_tready(m_fifo_tready),
-      .m_axis_0_tlast(m_fifo_tlast)
-    );
-
-  end
-  endgenerate
-
-
-endmodule
-
-
-
-module SubMult #
-(
-  parameter DATA_WIDTH = 16
-)
-(
-  input clk,
-  input rst,
-  input [DATA_WIDTH-1:0] axis_x_tdata,
-  input axis_x_tvalid,
-  output axis_x_tready,
-  input axis_x_tlast,
-  input [DATA_WIDTH-1:0] axis_grid_tdata,
-  input axis_grid_tvalid,
-  output axis_grid_tready,
-  input axis_grid_tlast,
-  input [DATA_WIDTH-1:0] axis_scale_tdata,
-  input axis_scale_tvalid,
-  output axis_scale_tready,
-  input axis_scale_tlast,
-  output reg [DATA_WIDTH-1:0] axis_rslt_tdata,
-  output reg axis_rslt_tvalid,
-  input axis_rslt_tready,
-  output reg axis_rslt_tlast
-);
-
-  wire _axis_x_read_req_fifo_enq;
-  wire [105-1:0] _axis_x_read_req_fifo_wdata;
-  wire _axis_x_read_req_fifo_full;
-  wire _axis_x_read_req_fifo_almost_full;
-  wire _axis_x_read_req_fifo_deq;
-  wire [105-1:0] _axis_x_read_req_fifo_rdata;
-  wire _axis_x_read_req_fifo_empty;
-  wire _axis_x_read_req_fifo_almost_empty;
-  assign _axis_x_read_req_fifo_enq = 0;
-  assign _axis_x_read_req_fifo_wdata = 'hx;
-  assign _axis_x_read_req_fifo_deq = 0;
-
-  _axis_x_read_req_fifo
-  inst__axis_x_read_req_fifo
-  (
-    .CLK(clk),
-    .RST(rst),
-    ._axis_x_read_req_fifo_enq(_axis_x_read_req_fifo_enq),
-    ._axis_x_read_req_fifo_wdata(_axis_x_read_req_fifo_wdata),
-    ._axis_x_read_req_fifo_full(_axis_x_read_req_fifo_full),
-    ._axis_x_read_req_fifo_almost_full(_axis_x_read_req_fifo_almost_full),
-    ._axis_x_read_req_fifo_deq(_axis_x_read_req_fifo_deq),
-    ._axis_x_read_req_fifo_rdata(_axis_x_read_req_fifo_rdata),
-    ._axis_x_read_req_fifo_empty(_axis_x_read_req_fifo_empty),
-    ._axis_x_read_req_fifo_almost_empty(_axis_x_read_req_fifo_almost_empty)
-  );
-
-  reg [1-1:0] count__axis_x_read_req_fifo;
-  wire [8-1:0] _axis_x_read_op_sel_fifo;
-  wire [32-1:0] _axis_x_read_local_addr_fifo;
-  wire [32-1:0] _axis_x_read_local_stride_fifo;
-  wire [33-1:0] _axis_x_read_local_size_fifo;
-  wire [8-1:0] unpack_read_req_op_sel_0;
-  wire [32-1:0] unpack_read_req_local_addr_1;
-  wire [32-1:0] unpack_read_req_local_stride_2;
-  wire [33-1:0] unpack_read_req_local_size_3;
-  assign unpack_read_req_op_sel_0 = _axis_x_read_req_fifo_rdata[104:97];
-  assign unpack_read_req_local_addr_1 = _axis_x_read_req_fifo_rdata[96:65];
-  assign unpack_read_req_local_stride_2 = _axis_x_read_req_fifo_rdata[64:33];
-  assign unpack_read_req_local_size_3 = _axis_x_read_req_fifo_rdata[32:0];
-  assign _axis_x_read_op_sel_fifo = unpack_read_req_op_sel_0;
-  assign _axis_x_read_local_addr_fifo = unpack_read_req_local_addr_1;
-  assign _axis_x_read_local_stride_fifo = unpack_read_req_local_stride_2;
-  assign _axis_x_read_local_size_fifo = unpack_read_req_local_size_3;
-  reg [8-1:0] _axis_x_read_op_sel_buf;
-  reg [32-1:0] _axis_x_read_local_addr_buf;
-  reg [32-1:0] _axis_x_read_local_stride_buf;
-  reg [33-1:0] _axis_x_read_local_size_buf;
-  reg _axis_x_read_data_busy;
-  wire _axis_x_read_data_idle;
-  wire _axis_x_read_idle;
-  assign _axis_x_read_data_idle = _axis_x_read_req_fifo_empty && !_axis_x_read_data_busy;
-  assign _axis_x_read_idle = _axis_x_read_data_idle;
-  wire _axis_grid_read_req_fifo_enq;
-  wire [105-1:0] _axis_grid_read_req_fifo_wdata;
-  wire _axis_grid_read_req_fifo_full;
-  wire _axis_grid_read_req_fifo_almost_full;
-  wire _axis_grid_read_req_fifo_deq;
-  wire [105-1:0] _axis_grid_read_req_fifo_rdata;
-  wire _axis_grid_read_req_fifo_empty;
-  wire _axis_grid_read_req_fifo_almost_empty;
-  assign _axis_grid_read_req_fifo_enq = 0;
-  assign _axis_grid_read_req_fifo_wdata = 'hx;
-  assign _axis_grid_read_req_fifo_deq = 0;
-
-  _axis_grid_read_req_fifo
-  inst__axis_grid_read_req_fifo
-  (
-    .CLK(clk),
-    .RST(rst),
-    ._axis_grid_read_req_fifo_enq(_axis_grid_read_req_fifo_enq),
-    ._axis_grid_read_req_fifo_wdata(_axis_grid_read_req_fifo_wdata),
-    ._axis_grid_read_req_fifo_full(_axis_grid_read_req_fifo_full),
-    ._axis_grid_read_req_fifo_almost_full(_axis_grid_read_req_fifo_almost_full),
-    ._axis_grid_read_req_fifo_deq(_axis_grid_read_req_fifo_deq),
-    ._axis_grid_read_req_fifo_rdata(_axis_grid_read_req_fifo_rdata),
-    ._axis_grid_read_req_fifo_empty(_axis_grid_read_req_fifo_empty),
-    ._axis_grid_read_req_fifo_almost_empty(_axis_grid_read_req_fifo_almost_empty)
-  );
-
-  reg [1-1:0] count__axis_grid_read_req_fifo;
-  wire [8-1:0] _axis_grid_read_op_sel_fifo;
-  wire [32-1:0] _axis_grid_read_local_addr_fifo;
-  wire [32-1:0] _axis_grid_read_local_stride_fifo;
-  wire [33-1:0] _axis_grid_read_local_size_fifo;
-  wire [8-1:0] unpack_read_req_op_sel_4;
-  wire [32-1:0] unpack_read_req_local_addr_5;
-  wire [32-1:0] unpack_read_req_local_stride_6;
-  wire [33-1:0] unpack_read_req_local_size_7;
-  assign unpack_read_req_op_sel_4 = _axis_grid_read_req_fifo_rdata[104:97];
-  assign unpack_read_req_local_addr_5 = _axis_grid_read_req_fifo_rdata[96:65];
-  assign unpack_read_req_local_stride_6 = _axis_grid_read_req_fifo_rdata[64:33];
-  assign unpack_read_req_local_size_7 = _axis_grid_read_req_fifo_rdata[32:0];
-  assign _axis_grid_read_op_sel_fifo = unpack_read_req_op_sel_4;
-  assign _axis_grid_read_local_addr_fifo = unpack_read_req_local_addr_5;
-  assign _axis_grid_read_local_stride_fifo = unpack_read_req_local_stride_6;
-  assign _axis_grid_read_local_size_fifo = unpack_read_req_local_size_7;
-  reg [8-1:0] _axis_grid_read_op_sel_buf;
-  reg [32-1:0] _axis_grid_read_local_addr_buf;
-  reg [32-1:0] _axis_grid_read_local_stride_buf;
-  reg [33-1:0] _axis_grid_read_local_size_buf;
-  reg _axis_grid_read_data_busy;
-  wire _axis_grid_read_data_idle;
-  wire _axis_grid_read_idle;
-  assign _axis_grid_read_data_idle = _axis_grid_read_req_fifo_empty && !_axis_grid_read_data_busy;
-  assign _axis_grid_read_idle = _axis_grid_read_data_idle;
-  wire _axis_scale_read_req_fifo_enq;
-  wire [105-1:0] _axis_scale_read_req_fifo_wdata;
-  wire _axis_scale_read_req_fifo_full;
-  wire _axis_scale_read_req_fifo_almost_full;
-  wire _axis_scale_read_req_fifo_deq;
-  wire [105-1:0] _axis_scale_read_req_fifo_rdata;
-  wire _axis_scale_read_req_fifo_empty;
-  wire _axis_scale_read_req_fifo_almost_empty;
-  assign _axis_scale_read_req_fifo_enq = 0;
-  assign _axis_scale_read_req_fifo_wdata = 'hx;
-  assign _axis_scale_read_req_fifo_deq = 0;
-
-  _axis_scale_read_req_fifo
-  inst__axis_scale_read_req_fifo
-  (
-    .CLK(clk),
-    .RST(rst),
-    ._axis_scale_read_req_fifo_enq(_axis_scale_read_req_fifo_enq),
-    ._axis_scale_read_req_fifo_wdata(_axis_scale_read_req_fifo_wdata),
-    ._axis_scale_read_req_fifo_full(_axis_scale_read_req_fifo_full),
-    ._axis_scale_read_req_fifo_almost_full(_axis_scale_read_req_fifo_almost_full),
-    ._axis_scale_read_req_fifo_deq(_axis_scale_read_req_fifo_deq),
-    ._axis_scale_read_req_fifo_rdata(_axis_scale_read_req_fifo_rdata),
-    ._axis_scale_read_req_fifo_empty(_axis_scale_read_req_fifo_empty),
-    ._axis_scale_read_req_fifo_almost_empty(_axis_scale_read_req_fifo_almost_empty)
-  );
-
-  reg [2-1:0] count__axis_scale_read_req_fifo;
-  wire [8-1:0] _axis_scale_read_op_sel_fifo;
-  wire [32-1:0] _axis_scale_read_local_addr_fifo;
-  wire [32-1:0] _axis_scale_read_local_stride_fifo;
-  wire [33-1:0] _axis_scale_read_local_size_fifo;
-  wire [8-1:0] unpack_read_req_op_sel_8;
-  wire [32-1:0] unpack_read_req_local_addr_9;
-  wire [32-1:0] unpack_read_req_local_stride_10;
-  wire [33-1:0] unpack_read_req_local_size_11;
-  assign unpack_read_req_op_sel_8 = _axis_scale_read_req_fifo_rdata[104:97];
-  assign unpack_read_req_local_addr_9 = _axis_scale_read_req_fifo_rdata[96:65];
-  assign unpack_read_req_local_stride_10 = _axis_scale_read_req_fifo_rdata[64:33];
-  assign unpack_read_req_local_size_11 = _axis_scale_read_req_fifo_rdata[32:0];
-  assign _axis_scale_read_op_sel_fifo = unpack_read_req_op_sel_8;
-  assign _axis_scale_read_local_addr_fifo = unpack_read_req_local_addr_9;
-  assign _axis_scale_read_local_stride_fifo = unpack_read_req_local_stride_10;
-  assign _axis_scale_read_local_size_fifo = unpack_read_req_local_size_11;
-  reg [8-1:0] _axis_scale_read_op_sel_buf;
-  reg [32-1:0] _axis_scale_read_local_addr_buf;
-  reg [32-1:0] _axis_scale_read_local_stride_buf;
-  reg [33-1:0] _axis_scale_read_local_size_buf;
-  reg _axis_scale_read_data_busy;
-  wire _axis_scale_read_data_idle;
-  wire _axis_scale_read_idle;
-  assign _axis_scale_read_data_idle = _axis_scale_read_req_fifo_empty && !_axis_scale_read_data_busy;
-  assign _axis_scale_read_idle = _axis_scale_read_data_idle;
-  wire _axis_rslt_write_req_fifo_enq;
-  wire [105-1:0] _axis_rslt_write_req_fifo_wdata;
-  wire _axis_rslt_write_req_fifo_full;
-  wire _axis_rslt_write_req_fifo_almost_full;
-  wire _axis_rslt_write_req_fifo_deq;
-  wire [105-1:0] _axis_rslt_write_req_fifo_rdata;
-  wire _axis_rslt_write_req_fifo_empty;
-  wire _axis_rslt_write_req_fifo_almost_empty;
-  assign _axis_rslt_write_req_fifo_enq = 0;
-  assign _axis_rslt_write_req_fifo_wdata = 'hx;
-  assign _axis_rslt_write_req_fifo_deq = 0;
-
-  _axis_rslt_write_req_fifo
-  inst__axis_rslt_write_req_fifo
-  (
-    .CLK(clk),
-    .RST(rst),
-    ._axis_rslt_write_req_fifo_enq(_axis_rslt_write_req_fifo_enq),
-    ._axis_rslt_write_req_fifo_wdata(_axis_rslt_write_req_fifo_wdata),
-    ._axis_rslt_write_req_fifo_full(_axis_rslt_write_req_fifo_full),
-    ._axis_rslt_write_req_fifo_almost_full(_axis_rslt_write_req_fifo_almost_full),
-    ._axis_rslt_write_req_fifo_deq(_axis_rslt_write_req_fifo_deq),
-    ._axis_rslt_write_req_fifo_rdata(_axis_rslt_write_req_fifo_rdata),
-    ._axis_rslt_write_req_fifo_empty(_axis_rslt_write_req_fifo_empty),
-    ._axis_rslt_write_req_fifo_almost_empty(_axis_rslt_write_req_fifo_almost_empty)
-  );
-
-  reg [1-1:0] count__axis_rslt_write_req_fifo;
-  wire [8-1:0] _axis_rslt_write_op_sel_fifo;
-  wire [32-1:0] _axis_rslt_write_local_addr_fifo;
-  wire [32-1:0] _axis_rslt_write_local_stride_fifo;
-  wire [33-1:0] _axis_rslt_write_size_fifo;
-  wire [8-1:0] unpack_write_req_op_sel_12;
-  wire [32-1:0] unpack_write_req_local_addr_13;
-  wire [32-1:0] unpack_write_req_local_stride_14;
-  wire [33-1:0] unpack_write_req_local_size_15;
-  assign unpack_write_req_op_sel_12 = _axis_rslt_write_req_fifo_rdata[104:97];
-  assign unpack_write_req_local_addr_13 = _axis_rslt_write_req_fifo_rdata[96:65];
-  assign unpack_write_req_local_stride_14 = _axis_rslt_write_req_fifo_rdata[64:33];
-  assign unpack_write_req_local_size_15 = _axis_rslt_write_req_fifo_rdata[32:0];
-  assign _axis_rslt_write_op_sel_fifo = unpack_write_req_op_sel_12;
-  assign _axis_rslt_write_local_addr_fifo = unpack_write_req_local_addr_13;
-  assign _axis_rslt_write_local_stride_fifo = unpack_write_req_local_stride_14;
-  assign _axis_rslt_write_size_fifo = unpack_write_req_local_size_15;
-  reg [8-1:0] _axis_rslt_write_op_sel_buf;
-  reg [32-1:0] _axis_rslt_write_local_addr_buf;
-  reg [32-1:0] _axis_rslt_write_local_stride_buf;
-  reg [33-1:0] _axis_rslt_write_size_buf;
-  reg _axis_rslt_write_data_busy;
-  wire _axis_rslt_write_data_idle;
-  wire _axis_rslt_write_idle;
-  assign _axis_rslt_write_data_idle = _axis_rslt_write_req_fifo_empty && !_axis_rslt_write_data_busy;
-  assign _axis_rslt_write_idle = _axis_rslt_write_data_idle;
-  reg [32-1:0] th_comp;
-  localparam th_comp_init = 0;
-  reg signed [DATA_WIDTH-1:0] axistreamin_tdata_16;
-  reg axistreamin_tlast_17;
-  assign axis_scale_tready = th_comp == 3;
-  reg signed [32-1:0] _th_comp_scale_0;
-  reg signed [32-1:0] _th_comp_scale_last_1;
-  reg signed [32-1:0] _th_comp_x_last_2;
-  reg signed [32-1:0] _th_comp_grid_last_3;
-  reg signed [DATA_WIDTH-1:0] axistreamin_tdata_18;
-  reg axistreamin_tlast_19;
-  assign axis_x_tready = th_comp == 11;
-  reg signed [32-1:0] _th_comp_x_4;
-  reg signed [DATA_WIDTH-1:0] axistreamin_tdata_20;
-  reg axistreamin_tlast_21;
-  assign axis_grid_tready = th_comp == 14;
-  reg signed [32-1:0] _th_comp_grid_5;
-  reg signed [32-1:0] _th_comp_rslt_6;
-  reg signed [32-1:0] _th_comp_rslt_last_7;
-  reg _axis_rslt_cond_0_1;
-
-endmodule
-
-
-
-module _axis_x_read_req_fifo
-(
-  input CLK,
-  input RST,
-  input _axis_x_read_req_fifo_enq,
-  input [105-1:0] _axis_x_read_req_fifo_wdata,
-  output _axis_x_read_req_fifo_full,
-  output _axis_x_read_req_fifo_almost_full,
-  input _axis_x_read_req_fifo_deq,
-  output [105-1:0] _axis_x_read_req_fifo_rdata,
-  output _axis_x_read_req_fifo_empty,
-  output _axis_x_read_req_fifo_almost_empty
-);
-
-  reg [105-1:0] mem [0:1-1];
-  reg [0-1:0] head;
-  reg [0-1:0] tail;
-  wire is_empty;
-  wire is_almost_empty;
-  wire is_full;
-  wire is_almost_full;
-  assign is_empty = head == tail;
-  assign is_almost_empty = head == (tail + 1 & 0);
-  assign is_full = (head + 1 & 0) == tail;
-  assign is_almost_full = (head + 2 & 0) == tail;
-  wire [105-1:0] rdata;
-  assign _axis_x_read_req_fifo_full = is_full;
-  assign _axis_x_read_req_fifo_almost_full = is_almost_full || is_full;
-  assign _axis_x_read_req_fifo_empty = is_empty;
-  assign _axis_x_read_req_fifo_almost_empty = is_almost_empty || is_empty;
-  assign rdata = mem[tail];
-  assign _axis_x_read_req_fifo_rdata = rdata;
-
-  always @(posedge CLK) begin
-    if(RST) begin
-      head <= 0;
-      tail <= 0;
-    end else begin
-      if(_axis_x_read_req_fifo_enq && !is_full) begin
-        mem[head] <= _axis_x_read_req_fifo_wdata;
-        head <= head + 1;
-      end 
-      if(_axis_x_read_req_fifo_deq && !is_empty) begin
-        tail <= tail + 1;
-      end 
-    end
-  end
-
-
-endmodule
-
-
-
-module _axis_grid_read_req_fifo
-(
-  input CLK,
-  input RST,
-  input _axis_grid_read_req_fifo_enq,
-  input [105-1:0] _axis_grid_read_req_fifo_wdata,
-  output _axis_grid_read_req_fifo_full,
-  output _axis_grid_read_req_fifo_almost_full,
-  input _axis_grid_read_req_fifo_deq,
-  output [105-1:0] _axis_grid_read_req_fifo_rdata,
-  output _axis_grid_read_req_fifo_empty,
-  output _axis_grid_read_req_fifo_almost_empty
-);
-
-  reg [105-1:0] mem [0:1-1];
-  reg [0-1:0] head;
-  reg [0-1:0] tail;
-  wire is_empty;
-  wire is_almost_empty;
-  wire is_full;
-  wire is_almost_full;
-  assign is_empty = head == tail;
-  assign is_almost_empty = head == (tail + 1 & 0);
-  assign is_full = (head + 1 & 0) == tail;
-  assign is_almost_full = (head + 2 & 0) == tail;
-  wire [105-1:0] rdata;
-  assign _axis_grid_read_req_fifo_full = is_full;
-  assign _axis_grid_read_req_fifo_almost_full = is_almost_full || is_full;
-  assign _axis_grid_read_req_fifo_empty = is_empty;
-  assign _axis_grid_read_req_fifo_almost_empty = is_almost_empty || is_empty;
-  assign rdata = mem[tail];
-  assign _axis_grid_read_req_fifo_rdata = rdata;
-
-  always @(posedge CLK) begin
-    if(RST) begin
-      head <= 0;
-      tail <= 0;
-    end else begin
-      if(_axis_grid_read_req_fifo_enq && !is_full) begin
-        mem[head] <= _axis_grid_read_req_fifo_wdata;
-        head <= head + 1;
-      end 
-      if(_axis_grid_read_req_fifo_deq && !is_empty) begin
-        tail <= tail + 1;
-      end 
-    end
-  end
-
-
-endmodule
-
-
-
-module _axis_scale_read_req_fifo
-(
-  input CLK,
-  input RST,
-  input _axis_scale_read_req_fifo_enq,
-  input [105-1:0] _axis_scale_read_req_fifo_wdata,
-  output _axis_scale_read_req_fifo_full,
-  output _axis_scale_read_req_fifo_almost_full,
-  input _axis_scale_read_req_fifo_deq,
-  output [105-1:0] _axis_scale_read_req_fifo_rdata,
-  output _axis_scale_read_req_fifo_empty,
-  output _axis_scale_read_req_fifo_almost_empty
-);
-
-  reg [105-1:0] mem [0:2-1];
-  reg [1-1:0] head;
-  reg [1-1:0] tail;
-  wire is_empty;
-  wire is_almost_empty;
-  wire is_full;
-  wire is_almost_full;
-  assign is_empty = head == tail;
-  assign is_almost_empty = head == (tail + 1 & 1);
-  assign is_full = (head + 1 & 1) == tail;
-  assign is_almost_full = (head + 2 & 1) == tail;
-  wire [105-1:0] rdata;
-  assign _axis_scale_read_req_fifo_full = is_full;
-  assign _axis_scale_read_req_fifo_almost_full = is_almost_full || is_full;
-  assign _axis_scale_read_req_fifo_empty = is_empty;
-  assign _axis_scale_read_req_fifo_almost_empty = is_almost_empty || is_empty;
-  assign rdata = mem[tail];
-  assign _axis_scale_read_req_fifo_rdata = rdata;
-
-  always @(posedge CLK) begin
-    if(RST) begin
-      head <= 0;
-      tail <= 0;
-    end else begin
-      if(_axis_scale_read_req_fifo_enq && !is_full) begin
-        mem[head] <= _axis_scale_read_req_fifo_wdata;
-        head <= head + 1;
-      end 
-      if(_axis_scale_read_req_fifo_deq && !is_empty) begin
-        tail <= tail + 1;
-      end 
-    end
-  end
-
-
-endmodule
-
-
-
-module _axis_rslt_write_req_fifo
-(
-  input CLK,
-  input RST,
-  input _axis_rslt_write_req_fifo_enq,
-  input [105-1:0] _axis_rslt_write_req_fifo_wdata,
-  output _axis_rslt_write_req_fifo_full,
-  output _axis_rslt_write_req_fifo_almost_full,
-  input _axis_rslt_write_req_fifo_deq,
-  output [105-1:0] _axis_rslt_write_req_fifo_rdata,
-  output _axis_rslt_write_req_fifo_empty,
-  output _axis_rslt_write_req_fifo_almost_empty
-);
-
-  reg [105-1:0] mem [0:1-1];
-  reg [0-1:0] head;
-  reg [0-1:0] tail;
-  wire is_empty;
-  wire is_almost_empty;
-  wire is_full;
-  wire is_almost_full;
-  assign is_empty = head == tail;
-  assign is_almost_empty = head == (tail + 1 & 0);
-  assign is_full = (head + 1 & 0) == tail;
-  assign is_almost_full = (head + 2 & 0) == tail;
-  wire [105-1:0] rdata;
-  assign _axis_rslt_write_req_fifo_full = is_full;
-  assign _axis_rslt_write_req_fifo_almost_full = is_almost_full || is_full;
-  assign _axis_rslt_write_req_fifo_empty = is_empty;
-  assign _axis_rslt_write_req_fifo_almost_empty = is_almost_empty || is_empty;
-  assign rdata = mem[tail];
-  assign _axis_rslt_write_req_fifo_rdata = rdata;
-
-  always @(posedge CLK) begin
-    if(RST) begin
-      head <= 0;
-      tail <= 0;
-    end else begin
-      if(_axis_rslt_write_req_fifo_enq && !is_full) begin
-        mem[head] <= _axis_rslt_write_req_fifo_wdata;
-        head <= head + 1;
-      end 
-      if(_axis_rslt_write_req_fifo_deq && !is_empty) begin
-        tail <= tail + 1;
-      end 
-    end
-  end
-
-
-endmodule
-
-
-
-module AXISSplitter #
-(
-  parameter DATA_WIDTH = 16,
-  parameter CHANNELS = 16,
-  parameter FIFO_DEPTH = 4
-)
-(
-  input clk,
-  input rst,
-  input [DATA_WIDTH*CHANNELS-1:0] s_axis_0_tdata,
-  input s_axis_0_tvalid,
-  output s_axis_0_tready,
-  input s_axis_0_tlast,
-  input [CHANNELS-1:0] s_axis_0_tkeep,
-  output [DATA_WIDTH*CHANNELS-1:0] m_axis_0_tdata,
-  output [CHANNELS-1:0] m_axis_0_tvalid,
-  input [CHANNELS-1:0] m_axis_0_tready,
-  output [CHANNELS-1:0] m_axis_0_tlast
-);
-
-  reg [DATA_WIDTH*CHANNELS:0] data_reg;
-  reg [CHANNELS-1:0] data_keep_reg;
-  wire s_axis_0_tready_reg;
-  wire [DATA_WIDTH*CHANNELS:0] data_reg_next;
-  wire [DATA_WIDTH*CHANNELS:0] data_in_next;
-  wire [CHANNELS-1:0] data_keep_next;
-  wire [CHANNELS-1:0] data_keep_reg_next;
-  wire [CHANNELS-1:0] data_keep_in_next;
-  wire load_from_reg;
-  wire load_from_in;
-  wire input_handshake;
-  assign load_from_reg = |data_keep_next;
-  assign load_from_in = !load_from_reg;
-  assign input_handshake = (load_from_in)? s_axis_0_tvalid & s_axis_0_tready_reg : 0;
-  assign data_in_next = (input_handshake)? { s_axis_0_tlast, s_axis_0_tdata } : data_reg;
-  assign data_reg_next = (load_from_reg)? data_reg : data_in_next;
-  assign data_keep_in_next = (input_handshake)? s_axis_0_tkeep : data_keep_next;
-  assign data_keep_reg_next = (load_from_reg)? data_keep_next : data_keep_in_next;
-  assign s_axis_0_tready = s_axis_0_tready_reg;
-  assign s_axis_0_tready_reg = (rst)? 0 : load_from_in;
-
-  always @(posedge clk) begin
-    if(rst) begin
-      data_reg <= 0;
-      data_keep_reg <= 0;
-    end else begin
-      data_reg <= data_reg_next;
-      data_keep_reg <= data_keep_reg_next;
-    end
-  end
-
-  genvar CHN;
-
-  generate for(CHN=0; CHN<CHANNELS; CHN=CHN+1) begin
-    reg [DATA_WIDTH-1:0] s_fifo_tdata;
-    wire [DATA_WIDTH-1:0] m_fifo_tdata;
-    wire s_fifo_tready;
-    wire m_fifo_tready;
-    wire s_fifo_tvalid;
-    wire m_fifo_tvalid;
-    wire s_fifo_tlast;
-    wire m_fifo_tlast;
-    wire s_fifo_handshake;
-    wire m_fifo_handshake;
-
-    always @(*) begin
-      s_fifo_tdata <= data_reg[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN];
-    end
-
-    assign s_fifo_tlast = data_reg[DATA_WIDTH * CHANNELS];
-    assign s_fifo_tvalid = data_keep_reg[CHN];
-    assign s_fifo_handshake = s_fifo_tready && s_fifo_tvalid;
-    assign data_keep_next[CHN] = (s_fifo_handshake)? 0 : s_fifo_tvalid;
-    assign m_axis_0_tdata[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN] = m_fifo_tdata;
-    assign m_fifo_tready = m_axis_0_tready[CHN];
-    assign m_axis_0_tvalid[CHN] = m_fifo_tvalid;
-    assign m_axis_0_tlast[CHN] = m_fifo_tlast;
-
-    AXISFifo
-    #(
-      .DATA_WIDTH(DATA_WIDTH),
-      .ADDRESS_WIDTH($clog2(FIFO_DEPTH))
-    )
-    AXISFifo_inst_i
-    (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_0_tdata(s_fifo_tdata),
-      .s_axis_0_tvalid(s_fifo_tvalid),
-      .s_axis_0_tready(s_fifo_tready),
-      .s_axis_0_tlast(s_fifo_tlast),
-      .m_axis_0_tdata(m_fifo_tdata),
-      .m_axis_0_tvalid(m_fifo_tvalid),
-      .m_axis_0_tready(m_fifo_tready),
-      .m_axis_0_tlast(m_fifo_tlast)
-    );
-
-  end
-  endgenerate
-
-
-endmodule
-
-
-
-module AXISSplitter_ #
-(
-  parameter DATA_WIDTH = 16,
-  parameter CHANNELS = 16,
-  parameter FIFO_DEPTH = 4
-)
-(
-  input clk,
-  input rst,
-  input [DATA_WIDTH*CHANNELS-1:0] s_axis_0_tdata,
-  input s_axis_0_tvalid,
-  output s_axis_0_tready,
-  input s_axis_0_tlast,
-  input [CHANNELS-1:0] s_axis_0_tkeep,
-  output [DATA_WIDTH*CHANNELS-1:0] m_axis_0_tdata,
-  output [CHANNELS-1:0] m_axis_0_tvalid,
-  input [CHANNELS-1:0] m_axis_0_tready,
-  output [CHANNELS-1:0] m_axis_0_tlast
-);
-
-  reg [DATA_WIDTH*CHANNELS:0] data_reg;
-  reg [CHANNELS-1:0] data_keep_reg;
-  wire s_axis_0_tready_reg;
-  wire [DATA_WIDTH*CHANNELS:0] data_reg_next;
-  wire [DATA_WIDTH*CHANNELS:0] data_in_next;
-  wire [CHANNELS-1:0] data_keep_next;
-  wire [CHANNELS-1:0] data_keep_reg_next;
-  wire [CHANNELS-1:0] data_keep_in_next;
-  wire load_from_reg;
-  wire load_from_in;
-  wire input_handshake;
-  assign load_from_reg = |data_keep_next;
-  assign load_from_in = !load_from_reg;
-  assign input_handshake = (load_from_in)? s_axis_0_tvalid & s_axis_0_tready_reg : 0;
-  assign data_in_next = (input_handshake)? { s_axis_0_tlast, s_axis_0_tdata } : data_reg;
-  assign data_reg_next = (load_from_reg)? data_reg : data_in_next;
-  assign data_keep_in_next = (input_handshake)? s_axis_0_tkeep : data_keep_next;
-  assign data_keep_reg_next = (load_from_reg)? data_keep_next : data_keep_in_next;
-  assign s_axis_0_tready = s_axis_0_tready_reg;
-  assign s_axis_0_tready_reg = (rst)? 0 : load_from_in;
-
-  always @(posedge clk) begin
-    if(rst) begin
-      data_reg <= 0;
-      data_keep_reg <= 0;
-    end else begin
-      data_reg <= data_reg_next;
-      data_keep_reg <= data_keep_reg_next;
-    end
-  end
-
-  genvar CHN;
-
-  generate for(CHN=0; CHN<CHANNELS; CHN=CHN+1) begin
-    reg [DATA_WIDTH-1:0] s_fifo_tdata;
-    wire [DATA_WIDTH-1:0] m_fifo_tdata;
-    wire s_fifo_tready;
-    wire m_fifo_tready;
-    wire s_fifo_tvalid;
-    wire m_fifo_tvalid;
-    wire s_fifo_tlast;
-    wire m_fifo_tlast;
-    wire s_fifo_handshake;
-    wire m_fifo_handshake;
-
-    always @(*) begin
-      s_fifo_tdata <= data_reg[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN];
-    end
-
-    assign s_fifo_tlast = data_reg[DATA_WIDTH * CHANNELS];
-    assign s_fifo_tvalid = data_keep_reg[CHN];
-    assign s_fifo_handshake = s_fifo_tready && s_fifo_tvalid;
-    assign data_keep_next[CHN] = (s_fifo_handshake)? 0 : s_fifo_tvalid;
-    assign m_axis_0_tdata[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN] = m_fifo_tdata;
-    assign m_fifo_tready = m_axis_0_tready[CHN];
-    assign m_axis_0_tvalid[CHN] = m_fifo_tvalid;
-    assign m_axis_0_tlast[CHN] = m_fifo_tlast;
-
-    AXISFifo
-    #(
-      .DATA_WIDTH(DATA_WIDTH),
-      .ADDRESS_WIDTH($clog2(FIFO_DEPTH))
-    )
-    AXISFifo_inst_i
-    (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_0_tdata(s_fifo_tdata),
-      .s_axis_0_tvalid(s_fifo_tvalid),
-      .s_axis_0_tready(s_fifo_tready),
-      .s_axis_0_tlast(s_fifo_tlast),
-      .m_axis_0_tdata(m_fifo_tdata),
-      .m_axis_0_tvalid(m_fifo_tvalid),
-      .m_axis_0_tready(m_fifo_tready),
-      .m_axis_0_tlast(m_fifo_tlast)
-    );
-
-  end
-  endgenerate
-
-
-endmodule
-
-
-
-module sech2_lutram #
-(
-  parameter DATA_WIDTH_IN = 16,
-  parameter DATA_WIDTH_OUT = 16,
-  parameter FRACTIONAL_BITS_IN = 12,
-  parameter FRACTIONAL_BITS_OUT = 16,
-  parameter CHANNELS = 1,
-  parameter EXTRA_CYCLE = 0
-)
-(
-  input clk,
-  input rst,
-  input [DATA_WIDTH_IN*CHANNELS-1:0] s_axis_0_tdata,
-  input [CHANNELS-1:0] s_axis_0_tlast,
-  input [CHANNELS-1:0] s_axis_0_tvalid,
-  output [CHANNELS-1:0] s_axis_0_tready,
-  output [DATA_WIDTH_OUT*CHANNELS-1:0] m_axis_0_tdata,
-  output [CHANNELS-1:0] m_axis_0_tlast,
-  output [CHANNELS-1:0] m_axis_0_tvalid,
-  input [CHANNELS-1:0] m_axis_0_tready
-);
-
-  reg [321-1:0] ROM_DATA_PATH;
-  reg [DATA_WIDTH_OUT-1:0] LUTRAM_ARRAY [0:2**DATA_WIDTH_IN-1];
-
-  initial begin
-    $sformat(ROM_DATA_PATH, "../data/sech2_lutram_%0d.%0d_%0d.%0d.txt", DATA_WIDTH_IN, FRACTIONAL_BITS_IN, DATA_WIDTH_OUT, FRACTIONAL_BITS_OUT);
-    $display("ROM_DATA_PATH is : %s", ROM_DATA_PATH);
-    $readmemh(ROM_DATA_PATH, LUTRAM_ARRAY);
-  end
-
-  genvar CHN;
-
-  generate for(CHN=0; CHN<CHANNELS; CHN=CHN+1) begin
-    wire [DATA_WIDTH_IN-1:0] d_data_int_slice;
-    wire d_last_int_slice;
-    wire d_valid_int_slice;
-    wire d_ready_int_slice;
-    wire [DATA_WIDTH_OUT-1:0] q_data_int_slice;
-    wire q_last_int_slice;
-    wire q_valid_int_slice;
-    wire q_ready_int_slice;
-    wire [2+EXTRA_CYCLE-1:0] d_valid_int_next_slice;
-    wire [2+EXTRA_CYCLE-1:0] d_ready_int_next_slice;
-    wire [DATA_WIDTH_OUT-1:0] q_data_int_next_slice [0:1+EXTRA_CYCLE-1];
-    wire [1+EXTRA_CYCLE-1:0] q_last_int_next_slice;
-    reg [DATA_WIDTH_IN-1:0] d_data_int_reg_slice;
-    reg d_last_int_reg_slice;
-    reg [2+EXTRA_CYCLE-1:0] d_valid_int_reg_slice;
-    reg [2+EXTRA_CYCLE-1:0] d_ready_int_reg_slice;
-    reg [DATA_WIDTH_OUT-1:0] q_data_int_reg_slice [0:1+EXTRA_CYCLE-1];
-    reg [1+EXTRA_CYCLE-1:0] q_last_int_reg_slice;
-    wire [2+EXTRA_CYCLE-1:0] handshakes_next;
-    reg [2+EXTRA_CYCLE-1:0] handshakes_reg;
-    wire store_in_tmp_next;
-    wire load_from_tmp_next;
-    reg store_in_tmp_reg;
-    reg load_from_tmp_reg;
-    reg [DATA_WIDTH_IN-1:0] tmp_data;
-    reg tmp_last;
-    assign d_data_int_slice = s_axis_0_tdata[DATA_WIDTH_IN*(CHN+1)-1:DATA_WIDTH_IN*CHN];
-    assign d_last_int_slice = s_axis_0_tlast[CHN];
-    assign d_valid_int_slice = s_axis_0_tvalid[CHN];
-    assign s_axis_0_tready[CHN] = d_ready_int_slice;
-    assign m_axis_0_tdata[DATA_WIDTH_OUT*(CHN+1)-1:DATA_WIDTH_OUT*CHN] = q_data_int_slice;
-    assign m_axis_0_tlast[CHN] = q_last_int_slice;
-    assign m_axis_0_tvalid[CHN] = q_valid_int_slice;
-    assign q_ready_int_slice = m_axis_0_tready[CHN];
-    assign d_ready_int_slice = d_ready_int_next_slice[0];
-    assign d_valid_int_next_slice[0] = d_valid_int_slice;
-    assign d_ready_int_next_slice[1 + EXTRA_CYCLE] = q_ready_int_slice;
-    assign q_valid_int_slice = d_valid_int_next_slice[1 + EXTRA_CYCLE];
-    assign handshakes_next = d_ready_int_next_slice & d_valid_int_next_slice;
-    assign store_in_tmp_next = handshakes_next[0] && d_valid_int_next_slice[1] && !d_ready_int_next_slice[1] && !load_from_tmp_reg;
-    assign load_from_tmp_next = (load_from_tmp_reg)? !handshakes_next[1] : store_in_tmp_reg;
-    assign d_ready_int_next_slice[0] = !load_from_tmp_next & (!d_valid_int_reg_slice[1] || d_ready_int_reg_slice[1] && d_valid_int_reg_slice[0]);
-    if(EXTRA_CYCLE) begin
-      assign d_valid_int_next_slice[1] = (handshakes_reg[0] | load_from_tmp_reg)? 1 : 
-                                         (handshakes_reg[1])? 0 : d_valid_int_reg_slice[1];
-    end 
-    if(EXTRA_CYCLE) begin
-      assign d_ready_int_next_slice[1] = !d_valid_int_reg_slice[2] || d_ready_int_next_slice[2] && d_valid_int_reg_slice[1];
-    end 
-    assign d_valid_int_next_slice[1 + EXTRA_CYCLE] = ((EXTRA_CYCLE)? handshakes_reg[EXTRA_CYCLE] : handshakes_reg[EXTRA_CYCLE] | load_from_tmp_reg)? 1 : 
-                                                     (handshakes_reg[1 + EXTRA_CYCLE])? 0 : d_valid_int_reg_slice[1 + EXTRA_CYCLE];
-    assign q_data_int_next_slice[0] = LUTRAM_ARRAY[d_data_int_reg_slice];
-    assign q_last_int_next_slice[0] = d_last_int_reg_slice;
-    if(EXTRA_CYCLE) begin
-      assign q_data_int_next_slice[1] = q_data_int_reg_slice[0];
-    end 
-    if(EXTRA_CYCLE) begin
-      assign q_last_int_next_slice[1] = q_last_int_reg_slice[0];
-    end 
-    assign q_data_int_slice = q_data_int_next_slice[EXTRA_CYCLE];
-    assign q_last_int_slice = q_last_int_next_slice[EXTRA_CYCLE];
-
-    always @(posedge clk) begin
-      if(rst) begin
-        d_valid_int_reg_slice <= 0;
-        d_ready_int_reg_slice <= 0;
-        handshakes_reg <= 0;
-        store_in_tmp_reg <= 0;
-        load_from_tmp_reg <= 0;
-      end else begin
-        d_valid_int_reg_slice <= d_valid_int_next_slice;
-        d_ready_int_reg_slice <= d_ready_int_next_slice;
-        handshakes_reg <= handshakes_next;
-        store_in_tmp_reg <= store_in_tmp_next;
-        load_from_tmp_reg <= load_from_tmp_next;
-        if(handshakes_next[0]) begin
-          if(store_in_tmp_next) begin
-            tmp_data <= d_data_int_slice;
-            tmp_last <= d_last_int_slice;
-          end else begin
-            d_data_int_reg_slice <= d_data_int_slice;
-            d_last_int_reg_slice <= d_last_int_slice;
-          end
-        end else if(load_from_tmp_next) begin
-          d_data_int_reg_slice <= tmp_data;
-          d_last_int_reg_slice <= tmp_last;
-        end 
-        if(handshakes_next[1]) begin
-          q_data_int_reg_slice[0] <= q_data_int_next_slice[0];
-          q_last_int_reg_slice[0] <= q_last_int_next_slice[0];
-        end 
-        if(EXTRA_CYCLE) begin
-          if(handshakes_next[2]) begin
-            q_data_int_reg_slice[1] <= q_data_int_next_slice[1];
-            q_last_int_reg_slice[1] <= q_last_int_next_slice[1];
-          end 
-        end 
-      end
-    end
-
-  end
-  endgenerate
-
-
-endmodule
-
-
-
-module AXISCombiner #
-(
-  parameter DATA_WIDTH = 16,
-  parameter CHANNELS = 16
-)
-(
-  input clk,
-  input rst,
-  input [DATA_WIDTH*CHANNELS-1:0] s_axis_0_tdata,
-  input [CHANNELS-1:0] s_axis_0_tlast,
-  input [CHANNELS-1:0] s_axis_0_tvalid,
-  output [CHANNELS-1:0] s_axis_0_tready,
-  output [DATA_WIDTH*CHANNELS-1:0] m_axis_0_tdata,
-  output [CHANNELS-1:0] m_axis_0_tkeep,
-  output m_axis_0_tlast,
-  output m_axis_0_tvalid,
-  input m_axis_0_tready
-);
-
-  localparam FIFO_DEPTH = 4;
-  reg [DATA_WIDTH*CHANNELS-1:0] data_reg;
-  reg [CHANNELS-1:0] data_keep_reg;
-  reg [CHANNELS-1:0] data_last_reg;
-  wire [DATA_WIDTH*CHANNELS-1:0] data_reg_next;
-  wire [DATA_WIDTH*CHANNELS-1:0] data_in_next;
-  wire [CHANNELS-1:0] data_keep_next;
-  wire [CHANNELS-1:0] data_keep_reg_next;
-  wire [CHANNELS-1:0] data_keep_in_next;
-  wire [CHANNELS-1:0] data_last_in_next;
-  wire [CHANNELS-1:0] data_last_reg_next;
-  wire [CHANNELS-1:0] data_ready_in_next;
-  wire [CHANNELS-1:0] data_ready_in_early_next;
-  wire [CHANNELS-1:0] data_valid_in_next;
-  wire generate_tlast;
-  wire output_handshake;
-  genvar CHN;
-
-  generate for(CHN=0; CHN<CHANNELS; CHN=CHN+1) begin
-    reg [DATA_WIDTH-1:0] s_fifo_tdata;
-    wire [DATA_WIDTH-1:0] m_fifo_tdata;
-    wire s_fifo_tready;
-    wire m_fifo_tready;
-    wire s_fifo_tvalid;
-    wire m_fifo_tvalid;
-    wire s_fifo_tlast;
-    wire m_fifo_tlast;
-    wire m_fifo_handshake;
-
-    always @(*) begin
-      s_fifo_tdata <= s_axis_0_tdata[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN];
-    end
-
-    assign s_fifo_tlast = s_axis_0_tlast[CHN];
-    assign s_fifo_tvalid = s_axis_0_tvalid[CHN];
-    assign s_axis_0_tready[CHN] = s_fifo_tready;
-    assign s_fifo_handshake = s_fifo_tready && s_fifo_tvalid;
-    assign data_keep_next[CHN] = (s_fifo_handshake)? 0 : s_fifo_tvalid;
-    assign m_fifo_handshake = m_fifo_tready && m_fifo_tvalid;
-    assign data_in_next[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN] = m_fifo_tdata;
-    assign m_fifo_tready = data_ready_in_next[CHN];
-    assign data_valid_in_next[CHN] = m_fifo_tvalid;
-    assign data_last_in_next[CHN] = m_fifo_tlast;
-
-    AXISFifo
-    #(
-      .DATA_WIDTH(DATA_WIDTH),
-      .ADDRESS_WIDTH($clog2(FIFO_DEPTH))
-    )
-    AXISFifo_in_inst_i
-    (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_0_tdata(s_fifo_tdata),
-      .s_axis_0_tlast(s_fifo_tlast),
-      .s_axis_0_tvalid(s_fifo_tvalid),
-      .s_axis_0_tready(s_fifo_tready),
-      .m_axis_0_tdata(m_fifo_tdata),
-      .m_axis_0_tlast(m_fifo_tlast),
-      .m_axis_0_tvalid(m_fifo_tvalid),
-      .m_axis_0_tready(m_fifo_tready)
-    );
-
-    assign data_ready_in_early_next[CHN] = !data_keep_reg[CHN] | output_handshake;
-    assign data_ready_in_next[CHN] = data_ready_in_early_next[CHN] && (generate_tlast || !data_last_reg[CHN]);
-    assign data_keep_in_next[CHN] = m_fifo_handshake;
-    assign data_reg_next[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN] = (data_keep_in_next[CHN])? data_in_next[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN] : data_reg[DATA_WIDTH*(CHN+1)-1:DATA_WIDTH*CHN];
-  end
-  endgenerate
-
-  assign output_handshake = generate_tvalid & data_ready_in;
-  assign data_keep_reg_next = (output_handshake)? data_keep_in_next : data_keep_reg | data_keep_in_next;
-  assign data_last_reg_next = (output_handshake & generate_tlast)? data_last_in_next : data_last_reg | data_last_in_next & data_keep_in_next & data_ready_in_early_next;
-  assign generate_tlast = &data_last_reg;
-  assign generate_tvalid = |data_keep_reg;
-
-  always @(posedge clk) begin
-    if(rst) begin
-      data_reg <= 0;
-      data_keep_reg <= 0;
-      data_last_reg <= 0;
-    end else begin
-      data_reg <= data_reg_next;
-      data_keep_reg <= data_keep_reg_next;
-      data_last_reg <= data_last_reg_next;
-    end
-  end
-
-
-  AXISFifo
-  #(
-    .DATA_WIDTH((DATA_WIDTH + 1) * CHANNELS),
-    .ADDRESS_WIDTH($clog2(FIFO_DEPTH))
-  )
-  AXISFifo_out_inst
-  (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_0_tdata({ data_reg, data_keep_reg }),
-    .s_axis_0_tlast(generate_tlast),
-    .s_axis_0_tvalid(generate_tvalid),
-    .s_axis_0_tready(data_ready_in),
-    .m_axis_0_tdata({ m_axis_0_tdata, m_axis_0_tkeep }),
+    .s_axis_0_tdata(scaled_diff_axis_0_tdata),
+    .s_axis_0_tkeep(1'b1),
+    .s_axis_0_tlast(scaled_diff_axis_0_tlast),
+    .s_axis_0_tvalid(scaled_diff_axis_0_tvalid),
+    .s_axis_0_tready(scaled_diff_axis_0_tready),
+    .s_axis_0_tid(scaled_diff_axis_0_tid),
+    .s_axis_0_tdest(scaled_diff_axis_0_tdest),
+    .s_axis_0_tuser(scaled_diff_axis_0_tuser),
+    .m_axis_0_tdata(m_axis_0_tdata),
+    .m_axis_0_tkeep(m_axis_0_tkeep),
     .m_axis_0_tlast(m_axis_0_tlast),
     .m_axis_0_tvalid(m_axis_0_tvalid),
-    .m_axis_0_tready(m_axis_0_tready)
+    .m_axis_0_tready(m_axis_0_tready),
+    .m_axis_0_tid(m_axis_0_tid),
+    .m_axis_0_tdest(m_axis_0_tdest),
+    .m_axis_0_tuser(m_axis_0_tuser)
   );
-
 
 endmodule
 
