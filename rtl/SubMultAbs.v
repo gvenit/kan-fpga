@@ -113,7 +113,7 @@ module SubMultAbs #(
     .USER_ENABLE(USER_ENABLE),
     .USER_WIDTH(USER_WIDTH)
   )
-  uut
+  SubMult_inst
   (
     .clk(clk),
     .rst(rst),

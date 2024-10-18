@@ -140,6 +140,9 @@ module tb_Sech2Lutram
         if(!s_axis_0_tvalid[CHN]) begin
           s_axis_0_tvalid[CHN] <= 1;
         end 
+        if((data_reg == 64 + CHN) || (data_reg == 64 + CHANNELS * (CHN + 3) + CHN)) begin
+          m_axis_0_tready[CHN] <= 0;
+        end 
         if(!m_axis_0_tready[CHN]) begin
           m_axis_0_tready[CHN] <= 1;
         end 

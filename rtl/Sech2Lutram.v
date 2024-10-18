@@ -48,26 +48,26 @@ module Sech2Lutram #(
   /*
    * AXI Stream Data input
    */
-  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_0_tdata,
-  output wire [CHANNELS*KEEP_WIDTH_DATA-1:0] s_axis_0_tkeep,
-  input  wire [CHANNELS-1:0]                 s_axis_0_tlast,
-  input  wire [CHANNELS-1:0]                 s_axis_0_tvalid,
-  output wire [CHANNELS-1:0]                 s_axis_0_tready,
-  input  wire [CHANNELS*ID_WIDTH-1:0]        s_axis_0_tid,
-  input  wire [CHANNELS*DEST_WIDTH-1:0]      s_axis_0_tdest,
-  input  wire [CHANNELS*USER_WIDTH-1:0]      s_axis_0_tuser,
+  input  [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_0_tdata,
+  output [CHANNELS*KEEP_WIDTH_DATA-1:0] s_axis_0_tkeep,
+  input  [CHANNELS-1:0]                 s_axis_0_tlast,
+  input  [CHANNELS-1:0]                 s_axis_0_tvalid,
+  output [CHANNELS-1:0]                 s_axis_0_tready,
+  input  [CHANNELS*ID_WIDTH-1:0]        s_axis_0_tid,
+  input  [CHANNELS*DEST_WIDTH-1:0]      s_axis_0_tdest,
+  input  [CHANNELS*USER_WIDTH-1:0]      s_axis_0_tuser,
 
   /*
    * AXI Stream output
    */
-  output wire [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_0_tdata,
-  output wire [CHANNELS*KEEP_WIDTH_RSLT-1:0] m_axis_0_tkeep,
-  output wire [CHANNELS-1:0]                 m_axis_0_tlast,
-  output wire [CHANNELS-1:0]                 m_axis_0_tvalid,
-  input  wire [CHANNELS-1:0]                 m_axis_0_tready,
-  output wire [CHANNELS*ID_WIDTH-1:0]        m_axis_0_tid,
-  output wire [CHANNELS*DEST_WIDTH-1:0]      m_axis_0_tdest,
-  output wire [CHANNELS*USER_WIDTH-1:0]      m_axis_0_tuser
+  output [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_0_tdata,
+  output [CHANNELS*KEEP_WIDTH_RSLT-1:0] m_axis_0_tkeep,
+  output [CHANNELS-1:0]                 m_axis_0_tlast,
+  output [CHANNELS-1:0]                 m_axis_0_tvalid,
+  input  [CHANNELS-1:0]                 m_axis_0_tready,
+  output [CHANNELS*ID_WIDTH-1:0]        m_axis_0_tid,
+  output [CHANNELS*DEST_WIDTH-1:0]      m_axis_0_tdest,
+  output [CHANNELS*USER_WIDTH-1:0]      m_axis_0_tuser
 
   // // Error Signals
   // output                  err_unalligned_data,
@@ -171,6 +171,7 @@ module Sech2Lutram #(
     assign stage_2_in_axis_0_tkeep    = {KEEP_WIDTH_RSLT{1'b1}};
     assign stage_2_in_axis_0_tvalid   = stage_1_out_axis_0_tvalid;
     assign stage_1_out_axis_0_tready  = stage_2_in_axis_0_tready;
+    assign stage_2_in_axis_0_tlast    = stage_1_out_axis_0_tlast ;
     assign stage_2_in_axis_0_tid      = stage_1_out_axis_0_tid;
     assign stage_2_in_axis_0_tdest    = stage_1_out_axis_0_tdest;
     assign stage_2_in_axis_0_tuser    = stage_1_out_axis_0_tuser;
