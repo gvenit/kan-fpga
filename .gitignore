@@ -2,7 +2,7 @@ venv/*
 *-old*
 *_old*
 __pycache__
-rtl/tmp*
+*/tmp.*
 
 py/*.out
 py/parsetab.py
