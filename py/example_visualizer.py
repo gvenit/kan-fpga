@@ -1,20 +1,18 @@
 import subprocess
 import graphviz
+import sys
 
-# Parse Verilog file using Yosys
-yosys_cmd = ["yosys", "-q", "-p", "read_verilog", "../rtl/AXISSplitter.v"]
-subprocess.run(yosys_cmd)
+for arg in sys.argv[1:]:
+    module_name = arg
 
-# Extract necessary information (e.g., module hierarchy, connections)
-# from Yosys output
+    # Parse Verilog file using Yosys
+    yosys_cmd = [
+        "prep",
+        f"read_verilog ../rtl/{module_name}.v",
+        f"show -stretch -prefix ../dot/{module_name} -format dot", 
+    ]
+    subprocess.run(["yosys", "-q", "-p", "; ".join(yosys_cmd)])
 
-# Create Graphviz graph definition file (DOT language)
-dot_file = "../dot/block_diagram.dot"
-with open(dot_file, "w") as f:
-    f.write("digraph block_diagram {\n")
-    # Add nodes and edges to the graph definition file
-    f.write("}\n")
-
-# Generate block diagram using Graphviz
-graphviz_cmd = ["dot", "-Tpng", dot_file, "-o", "../graphs/AXISSplitter.png"]
-subprocess.run(graphviz_cmd)
+    # Generate block diagram using Graphviz
+    graphviz_cmd = ["dot", "-Tpng", f"../dot/{module_name}.dot", "-o", f"../graphs/{module_name}.png"]
+    subprocess.run(graphviz_cmd)

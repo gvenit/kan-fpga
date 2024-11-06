@@ -25,9 +25,9 @@ module tb_RSWAFFunction
   localparam USER_ENABLE = 0;
   localparam USER_WIDTH = 1;
   localparam CHANNELS = 5;
-  localparam USE_UNSIGNED = 1;
   localparam SHARE_SCALE = 1;
   localparam SCALE_CHANNELS = (SHARE_SCALE)? 1 : CHANNELS;
+  localparam ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt";
   reg clk;
   reg rst;
   reg [CHANNELS*DATA_WIDTH_DATA-1+1-1:0] s_axis_data_tdata;
@@ -80,9 +80,9 @@ module tb_RSWAFFunction
     .USER_ENABLE(USER_ENABLE),
     .USER_WIDTH(USER_WIDTH),
     .CHANNELS(CHANNELS),
-    .USE_UNSIGNED(USE_UNSIGNED),
     .SHARE_SCALE(SHARE_SCALE),
-    .SCALE_CHANNELS(SCALE_CHANNELS)
+    .SCALE_CHANNELS(SCALE_CHANNELS),
+    .ROM_DATA_PATH(ROM_DATA_PATH)
   )
   uut
   (

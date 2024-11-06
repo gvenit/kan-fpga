@@ -39,8 +39,8 @@ module SubMultAbs #(
   // tuser signal width
   parameter USER_WIDTH = 1
 ) (
-  input                             clk,
-  input                             rst,
+  input  wire                            clk,
+  input  wire                            rst,
 
   /*
     * AXI Stream Data input

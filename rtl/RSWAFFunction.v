@@ -46,12 +46,12 @@ module RSWAFFunction #
   parameter USER_WIDTH = 1,
   // Number of Independent AXI-Stream Channels
   parameter CHANNELS = 1,
-  // Unsigned Input
-  parameter USE_UNSIGNED = 1,
   // Use Common Share Channel 
   parameter SHARE_SCALE = 1,
   // Scale Channels
-  parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : CHANNELS
+  parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : CHANNELS,
+  // Path to ROM Data
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt"
 )
 (
   input                             clk,
@@ -590,7 +590,7 @@ module RSWAFFunction #
     .USER_ENABLE(USER_ENABLE),
     .USER_WIDTH(USER_WIDTH),
     .CHANNELS(CHANNELS),
-    .USE_UNSIGNED(USE_UNSIGNED)
+    .ROM_DATA_PATH(ROM_DATA_PATH)
   )
   Sech2Lutram_inst
   (

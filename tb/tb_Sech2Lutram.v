@@ -23,7 +23,7 @@ module tb_Sech2Lutram
   localparam USER_ENABLE = 0;
   localparam USER_WIDTH = 1;
   localparam CHANNELS = 4;
-  localparam USE_UNSIGNED = 1;
+  localparam ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt";
   reg clk;
   reg rst;
   reg [CHANNELS*DATA_WIDTH_DATA-1+1-1:0] s_axis_0_tdata;
@@ -61,7 +61,7 @@ module tb_Sech2Lutram
     .USER_ENABLE(USER_ENABLE),
     .USER_WIDTH(USER_WIDTH),
     .CHANNELS(CHANNELS),
-    .USE_UNSIGNED(USE_UNSIGNED)
+    .ROM_DATA_PATH(ROM_DATA_PATH)
   )
   uut
   (

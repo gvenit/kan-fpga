@@ -38,6 +38,7 @@ def tb_RSWAFFunction():
     FRACTIONAL_BITS_RSLT        : Localparam = params['FRACTIONAL_BITS_RSLT']
     CHANNELS                    : Localparam = params['CHANNELS']
     SHARE_SCALE                 : Localparam = params['SHARE_SCALE']
+    ROM_DATA_PATH               : Localparam = params['ROM_DATA_PATH']
 
     DATA_WIDTH.value = 16
     FRACTIONAL_BITS_DATA.value = 12
@@ -46,6 +47,7 @@ def tb_RSWAFFunction():
     FRACTIONAL_BITS_RSLT.value = 16
     CHANNELS.value = 5
     SHARE_SCALE.value = 1
+    ROM_DATA_PATH.value = "../data/Sech2Lutram_n_16.13_16.16.txt"
 
     params['DATA_WIDTH_SCALE'].value = DATA_WIDTH
     params['DATA_WIDTH_SCALED_DIFF'].value = DATA_WIDTH

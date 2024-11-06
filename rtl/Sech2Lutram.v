@@ -15,7 +15,7 @@ module Sech2Lutram #(
   parameter FRACTIONAL_BITS_DATA = 12,
   // Width of AXI stream Output Data interface in bits
   parameter DATA_WIDTH_RSLT = 16,
-  // Fractional bits of output data
+  // Fractional bits of output wire data
   parameter FRACTIONAL_BITS_RSLT = 16,
   // Propagate tkeep signal
   parameter KEEP_ENABLE_DATA = (DATA_WIDTH_DATA>8),
@@ -39,53 +39,45 @@ module Sech2Lutram #(
   parameter USER_WIDTH = 1,
   // Number of Independent AXI-Stream Channels
   parameter CHANNELS = 1,
-  // Unsigned Input
-  parameter USE_UNSIGNED = 1
+  // Path to ROM Data
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt"
 ) (
-  input                             clk,
-  input                             rst,
+  input  wire                            clk,
+  input  wire                            rst,
 
   /*
    * AXI Stream Data input
    */
-  input  [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_0_tdata,
-  output [CHANNELS*KEEP_WIDTH_DATA-1:0] s_axis_0_tkeep,
-  input  [CHANNELS-1:0]                 s_axis_0_tlast,
-  input  [CHANNELS-1:0]                 s_axis_0_tvalid,
-  output [CHANNELS-1:0]                 s_axis_0_tready,
-  input  [CHANNELS*ID_WIDTH-1:0]        s_axis_0_tid,
-  input  [CHANNELS*DEST_WIDTH-1:0]      s_axis_0_tdest,
-  input  [CHANNELS*USER_WIDTH-1:0]      s_axis_0_tuser,
+  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_0_tdata,
+  output wire [CHANNELS*KEEP_WIDTH_DATA-1:0] s_axis_0_tkeep,
+  input  wire [CHANNELS-1:0]                 s_axis_0_tlast,
+  input  wire [CHANNELS-1:0]                 s_axis_0_tvalid,
+  output wire [CHANNELS-1:0]                 s_axis_0_tready,
+  input  wire [CHANNELS*ID_WIDTH-1:0]        s_axis_0_tid,
+  input  wire [CHANNELS*DEST_WIDTH-1:0]      s_axis_0_tdest,
+  input  wire [CHANNELS*USER_WIDTH-1:0]      s_axis_0_tuser,
 
   /*
    * AXI Stream output
    */
-  output [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_0_tdata,
-  output [CHANNELS*KEEP_WIDTH_RSLT-1:0] m_axis_0_tkeep,
-  output [CHANNELS-1:0]                 m_axis_0_tlast,
-  output [CHANNELS-1:0]                 m_axis_0_tvalid,
-  input  [CHANNELS-1:0]                 m_axis_0_tready,
-  output [CHANNELS*ID_WIDTH-1:0]        m_axis_0_tid,
-  output [CHANNELS*DEST_WIDTH-1:0]      m_axis_0_tdest,
-  output [CHANNELS*USER_WIDTH-1:0]      m_axis_0_tuser
+  output wire [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_0_tdata,
+  output wire [CHANNELS*KEEP_WIDTH_RSLT-1:0] m_axis_0_tkeep,
+  output wire [CHANNELS-1:0]                 m_axis_0_tlast,
+  output wire [CHANNELS-1:0]                 m_axis_0_tvalid,
+  input  wire [CHANNELS-1:0]                 m_axis_0_tready,
+  output wire [CHANNELS*ID_WIDTH-1:0]        m_axis_0_tid,
+  output wire [CHANNELS*DEST_WIDTH-1:0]      m_axis_0_tdest,
+  output wire [CHANNELS*USER_WIDTH-1:0]      m_axis_0_tuser
 
   // // Error Signals
-  // output                  err_unalligned_data,
-  // output                  err_unalligned_scale
+  // output wire                  err_unalligned_data,
+  // output wire                  err_unalligned_scale
 );
   // LUTRAM Configuration    
-  reg [321-1:0] ROM_DATA_PATH;
   reg [DATA_WIDTH_RSLT-1:0] LUTRAM_ARRAY [0:2**DATA_WIDTH_DATA-1];
 
   // LUTRAM Instantiation
   initial begin
-    if (USE_UNSIGNED) begin
-        $sformat(ROM_DATA_PATH, "../data/Sech2Lutram_n_%0d.%0d_%0d.%0d.txt", DATA_WIDTH_DATA, FRACTIONAL_BITS_DATA, DATA_WIDTH_RSLT, FRACTIONAL_BITS_RSLT);
-    end
-    else begin
-        $sformat(ROM_DATA_PATH, "../data/Sech2Lutram_%0d.%0d_%0d.%0d.txt", DATA_WIDTH_DATA, FRACTIONAL_BITS_DATA, DATA_WIDTH_RSLT, FRACTIONAL_BITS_RSLT);
-    end
-    $display("ROM_DATA_PATH is : %s", ROM_DATA_PATH);
     $readmemh(ROM_DATA_PATH, LUTRAM_ARRAY);
   end
 

@@ -30,27 +30,29 @@ def tb_Sech2Lutram():
 
     params = module.copy_params_as_localparams(Sech2Lutram_inst)
     ports  = module.copy_sim_ports(Sech2Lutram_inst)
+    
+    print(params.keys())
 
     DATA_WIDTH            : Localparam = params['DATA_WIDTH_DATA']
     FRACTIONAL_BITS_DATA  : Localparam = params['FRACTIONAL_BITS_DATA']
     FRACTIONAL_BITS_RSLT  : Localparam = params['FRACTIONAL_BITS_RSLT']
     CHANNELS              : Localparam = params['CHANNELS']
-    USE_UNSIGNED          : Localparam = params['USE_UNSIGNED']
+    ROM_DATA_PATH         : Localparam = params['ROM_DATA_PATH']
 
     DATA_WIDTH.value = 16
     FRACTIONAL_BITS_DATA.value = 13
     params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
     FRACTIONAL_BITS_RSLT.value = 16
     CHANNELS.value = 4
-    USE_UNSIGNED.value = 1
+    ROM_DATA_PATH.value = "../data/Sech2Lutram_n_16.13_16.16.txt"
 
     reset_done = module.Reg('reset_done', initval=0)
     
     uut = module.Instance(
         Sech2Lutram_inst, 
         'uut',
-        params = module.connect_params(Sech2Lutram_inst),
-        ports = module.connect_ports(Sech2Lutram_inst)
+        params,
+        ports
     )
     
     clk    = ports['clk']
@@ -157,10 +159,11 @@ def main():
     os.makedirs(os.path.join(TOP_DIR,'out'), exist_ok=True)
 
     # module = Sech2Lutram()
-    # fname = os.path.join(TOP_DIR,'rtl/Sech2Lutram.v')
+    # fname = os.path.join(TOP_DIR,'rtl/tmp.v')
     # verilog = module.to_verilog(fname)
     # stripModule(fname, 'Sech2Lutram')
     # addTimeScale(fname)
+    # exit()
     
     test = tb_Sech2Lutram()
     fname = os.path.join(TOP_DIR,'tb/tb_Sech2Lutram.v')
