@@ -1,4 +1,0 @@
-ROM_DATA_PATH is :      ../data/sech2_lutram_16.12_16.16.txt
-ERROR: /tmp/tmp5ua9bcp5:125: $readmemh(../data/sech2_lutram_16.12_16.16.txt): Invalid input character: }
-VCD info: dumpfile ../vcd/tb_sech2_lutram.vcd opened for output.
-

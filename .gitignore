@@ -3,6 +3,7 @@ venv/*
 *_old*
 __pycache__
 */tmp.*
+/log
 
 py/*.out
 py/parsetab.py
