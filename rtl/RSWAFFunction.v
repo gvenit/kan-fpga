@@ -54,72 +54,71 @@ module RSWAFFunction #
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt"
 )
 (
-  input                             clk,
-  input                             rst,
+  input  wire                            clk,
+  input  wire                            rst,
 
   /*
     * AXI Stream Data input
     */
-  input  [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_data_tdata,
-  input  [CHANNELS-1:0]                 s_axis_data_tvalid,
-  output [CHANNELS-1:0]                 s_axis_data_tready,
-  input  [CHANNELS-1:0]                 s_axis_data_tlast,
-  input  [CHANNELS*ID_WIDTH-1:0]        s_axis_data_tid,
-  input  [CHANNELS*DEST_WIDTH-1:0]      s_axis_data_tdest,
-  input  [CHANNELS*USER_WIDTH-1:0]      s_axis_data_tuser,
+  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0]          s_axis_data_tdata,
+  input  wire [CHANNELS-1:0]                          s_axis_data_tvalid,
+  output wire [CHANNELS-1:0]                          s_axis_data_tready,
+  input  wire [CHANNELS-1:0]                          s_axis_data_tlast,
+  input  wire [CHANNELS*ID_WIDTH-1:0]                 s_axis_data_tid,
+  input  wire [CHANNELS*DEST_WIDTH-1:0]               s_axis_data_tdest,
+  input  wire [CHANNELS*USER_WIDTH-1:0]               s_axis_data_tuser,
 
   /*
     * AXI Stream Grid input
     */
-  input  [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_grid_tdata,
-  input  [CHANNELS-1:0]                 s_axis_grid_tvalid,
-  output [CHANNELS-1:0]                 s_axis_grid_tready,
-  input  [CHANNELS-1:0]                 s_axis_grid_tlast,
-  input  [CHANNELS*ID_WIDTH-1:0]        s_axis_grid_tid,
-  input  [CHANNELS*DEST_WIDTH-1:0]      s_axis_grid_tdest,
-  input  [CHANNELS*USER_WIDTH-1:0]      s_axis_grid_tuser,
+  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0]          s_axis_grid_tdata,
+  input  wire [CHANNELS-1:0]                          s_axis_grid_tvalid,
+  output wire [CHANNELS-1:0]                          s_axis_grid_tready,
+  input  wire [CHANNELS-1:0]                          s_axis_grid_tlast,
+  input  wire [CHANNELS*ID_WIDTH-1:0]                 s_axis_grid_tid,
+  input  wire [CHANNELS*DEST_WIDTH-1:0]               s_axis_grid_tdest,
+  input  wire [CHANNELS*USER_WIDTH-1:0]               s_axis_grid_tuser,
 
   /*
     * AXI Stream Scale input
     */
-  input  [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]  s_axis_scale_tdata,
-  input  [SCALE_CHANNELS-1:0]                   s_axis_scale_tvalid,
-  output [SCALE_CHANNELS-1:0]                   s_axis_scale_tready,
-  input  [SCALE_CHANNELS-1:0]                   s_axis_scale_tlast,
-  input  [SCALE_CHANNELS*ID_WIDTH-1:0]          s_axis_scale_tid,
-  input  [SCALE_CHANNELS*DEST_WIDTH-1:0]        s_axis_scale_tdest,
-  input  [SCALE_CHANNELS*USER_WIDTH-1:0]        s_axis_scale_tuser,
+  input  wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]   s_axis_scale_tdata,
+  input  wire [SCALE_CHANNELS-1:0]                    s_axis_scale_tvalid,
+  output wire [SCALE_CHANNELS-1:0]                    s_axis_scale_tready,
+  input  wire [SCALE_CHANNELS-1:0]                    s_axis_scale_tlast,
+  input  wire [SCALE_CHANNELS*ID_WIDTH-1:0]           s_axis_scale_tid,
+  input  wire [SCALE_CHANNELS*DEST_WIDTH-1:0]         s_axis_scale_tdest,
+  input  wire [SCALE_CHANNELS*USER_WIDTH-1:0]         s_axis_scale_tuser,
 
   /*
     * AXI Stream output
     */
-  output [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_data_tdata,
-  output [CHANNELS*KEEP_WIDTH-1:0]      m_axis_data_tkeep,
-  output [CHANNELS-1:0]                 m_axis_data_tvalid,
-  input  [CHANNELS-1:0]                 m_axis_data_tready,
-  output [CHANNELS-1:0]                 m_axis_data_tlast,
-  output [CHANNELS*ID_WIDTH-1:0]        m_axis_data_tid,
-  output [CHANNELS*DEST_WIDTH-1:0]      m_axis_data_tdest,
-  output [CHANNELS*USER_WIDTH-1:0]      m_axis_data_tuser
+  output wire [CHANNELS*DATA_WIDTH_RSLT-1:0]          m_axis_data_tdata,
+  output wire [CHANNELS*KEEP_WIDTH-1:0]               m_axis_data_tkeep,
+  output wire [CHANNELS-1:0]                          m_axis_data_tvalid,
+  input  wire [CHANNELS-1:0]                          m_axis_data_tready,
+  output wire [CHANNELS-1:0]                          m_axis_data_tlast,
+  output wire [CHANNELS*ID_WIDTH-1:0]                 m_axis_data_tid,
+  output wire [CHANNELS*DEST_WIDTH-1:0]               m_axis_data_tdest,
+  output wire [CHANNELS*USER_WIDTH-1:0]               m_axis_data_tuser
 );
 
-
   // Internal Registers & Wires
-  wire [CHANNELS*DATA_WIDTH_SCALE-1:0] s_axis_scale_tdata_int;
-  wire [CHANNELS-1:0]                  s_axis_scale_tvalid_int;
-  wire [CHANNELS-1:0]                  s_axis_scale_tready_int;
-  wire [CHANNELS-1:0]                  s_axis_scale_tlast_int;
-  wire [CHANNELS*ID_WIDTH-1:0]         s_axis_scale_tid_int;
-  wire [CHANNELS*DEST_WIDTH-1:0]       s_axis_scale_tdest_int;
-  wire [CHANNELS*USER_WIDTH-1:0]       s_axis_scale_tuser_int;
+  wire [CHANNELS*DATA_WIDTH_SCALE-1:0]        s_axis_scale_tdata_int;
+  wire [CHANNELS-1:0]                         s_axis_scale_tvalid_int;
+  wire [CHANNELS-1:0]                         s_axis_scale_tready_int;
+  wire [CHANNELS-1:0]                         s_axis_scale_tlast_int;
+  wire [CHANNELS*ID_WIDTH-1:0]                s_axis_scale_tid_int;
+  wire [CHANNELS*DEST_WIDTH-1:0]              s_axis_scale_tdest_int;
+  wire [CHANNELS*USER_WIDTH-1:0]              s_axis_scale_tuser_int;
   
-  wire [CHANNELS*DATA_WIDTH_SCALED_DIFF-1:0] scaled_diff_axis_data_tdata;
-  wire [CHANNELS-1:0]                        scaled_diff_axis_data_tvalid;
-  wire [CHANNELS-1:0]                        scaled_diff_axis_data_tready;
-  wire [CHANNELS-1:0]                        scaled_diff_axis_data_tlast;
-  wire [CHANNELS*ID_WIDTH-1:0]               scaled_diff_axis_data_tid;
-  wire [CHANNELS*DEST_WIDTH-1:0]             scaled_diff_axis_data_tdest;
-  wire [CHANNELS*USER_WIDTH-1:0]             scaled_diff_axis_data_tuser;
+  wire [CHANNELS*DATA_WIDTH_SCALED_DIFF-1:0]  scaled_diff_axis_data_tdata;
+  wire [CHANNELS-1:0]                         scaled_diff_axis_data_tvalid;
+  wire [CHANNELS-1:0]                         scaled_diff_axis_data_tready;
+  wire [CHANNELS-1:0]                         scaled_diff_axis_data_tlast;
+  wire [CHANNELS*ID_WIDTH-1:0]                scaled_diff_axis_data_tid;
+  wire [CHANNELS*DEST_WIDTH-1:0]              scaled_diff_axis_data_tdest;
+  wire [CHANNELS*USER_WIDTH-1:0]              scaled_diff_axis_data_tuser;
 
   genvar CHN;
   generate 
