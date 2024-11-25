@@ -45,7 +45,7 @@ def tb_RSWAFFunction():
     FRACTIONAL_BITS_SCALE.value = 12
     FRACTIONAL_BITS_SCALED_DIFF.value = 13
     FRACTIONAL_BITS_RSLT.value = 16
-    CHANNELS.value = 5
+    CHANNELS.value = 1
     SHARE_SCALE.value = 1
     ROM_DATA_PATH.value = "../data/Sech2Lutram_n_16.13_16.16.txt"
 
@@ -141,6 +141,7 @@ def tb_RSWAFFunction():
     timer_grid  = module.Integer('timer_grid')
     i_data = per_channel.TmpInteger()
     i_grid = per_channel.TmpInteger()
+    is_Ready = module.Reg('is_Ready', CHANNELS)
 
 
     per_channel.Always(Posedge(clk))(
@@ -149,11 +150,12 @@ def tb_RSWAFFunction():
             i_data(((count_data + chn) // 5) % 5),
             If(chn == 0)(
                 Display(
-                    'Count : %d,%d -- %X:%X:%X-%X:%X:%X-%X:%X:%X-%X:%X:%X', count_data,count_grid,
+                    'Count : %d,%d -- %X:%X:%X-%X:%X:%X-%X:%X:%X-%X:%X:%X -- is_Ready : %b', count_data,count_grid,
                     s_axis_data_tready,s_axis_data_tvalid,s_axis_data_tlast,
                     s_axis_grid_tready,s_axis_grid_tvalid,s_axis_grid_tlast,
                     s_axis_scale_tready,s_axis_scale_tvalid,s_axis_scale_tlast,
-                    m_axis_data_tready,m_axis_data_tvalid,m_axis_data_tlast
+                    m_axis_data_tready,m_axis_data_tvalid,m_axis_data_tlast,
+                    is_Ready
                 )
             ),
             If(Ands(s_axis_data_tready[chn],s_axis_data_tvalid[chn]))(
@@ -161,6 +163,19 @@ def tb_RSWAFFunction():
             ),
             If(Ands(s_axis_grid_tready[chn],s_axis_grid_tvalid[chn]))(
                 count_grid(count_grid+1),
+            ),
+            If(Ands(
+                m_axis_data_tlast[chn] == 1,
+                m_axis_data_tready[chn] == 1,
+                m_axis_data_tvalid[chn] == 1,
+            ))(
+                is_Ready[chn](1),
+            ),
+            If(Ands(chn == 0, Not(is_Ready) == 0))(
+                is_Ready(0),
+                s_axis_scale_tdata(-5 << (FRACTIONAL_BITS_SCALE-2)),
+                s_axis_scale_tlast[chn](1),
+                s_axis_scale_tvalid[chn](1),
             ),
             If(Ands(
                 count_data == 0,
@@ -314,7 +329,8 @@ def tb_RSWAFFunction():
                 #     m_axis_grid_tvalid[chn],
                 # ),
             ))(
-                s_axis_scale_tvalid[chn](0)
+                s_axis_scale_tvalid[chn](0),
+                s_axis_scale_tlast[chn](0)
             ),
             If(Ands(count_data > 70, Not(timer_data), Not(m_axis_data_tvalid[chn])))(
                 Systask('finish')
@@ -356,6 +372,7 @@ def tb_RSWAFFunction():
             If (chn == 0)(
                 count_data(0),
                 count_grid(0),
+                is_Ready(0),
         ))
         
     )

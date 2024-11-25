@@ -36,7 +36,7 @@ def tb_LinearProcessingArray():
     FRACTIONAL_BITS_RSLT = module.Localparam('FRACTIONAL_BITS_RSLT', 13)
     IS_UNSIGNED_OP0      = module.Localparam('IS_UNSIGNED_OP0', 1)
     INTERNAL_RESET       = module.Localparam('INTERNAL_RESET', 0)
-    USER_WIDTH           = module.Localparam('USER_WIDTH', 8)
+    USER_WIDTH           = module.Localparam('USER_WIDTH', 1)
 
     clk = module.Reg('clk')
     rst = module.Reg('rst')
@@ -92,7 +92,7 @@ def tb_LinearProcessingArray():
   // .ID_WIDTH(ID_WIDTH),
   .DEST_ENABLE(0),
   // .DEST_WIDTH(DEST_WIDTH),
-  .USER_ENABLE(1),
+  .USER_ENABLE(USER_WIDTH>1),
   .USER_WIDTH(USER_WIDTH)
   // .OUTPUT_DEST(OUTPUT_DEST),
   // .OUTPUT_ID(OUTPUT_ID),
@@ -154,7 +154,9 @@ def tb_LinearProcessingArray():
         # count(0),
         reset_done(1),
         # Systask('finish'),
-        s_axis_up_tuser(int('DEADBEEFCAFEBABE', base=16)),
+        If(USER_WIDTH > 1)(
+            s_axis_up_tuser(int('DEADBEEFCAFEBABE', base=16)),
+        ),
         nclk(clk),
         # s_axis_up_tdest(1),
         # s_axis_up_tid(0),

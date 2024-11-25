@@ -272,7 +272,9 @@ module LinearProcessingArray #(
           assign int_axis_up_tlast  [NODE]          = s_axis_up_tlast    [PE_POSITION_I];
           // assign int_axis_up_tid    [NODE]          = s_axis_up_tid      [(PE_POSITION_I+1)*ID_WIDTH-1:PE_POSITION_I*ID_WIDTH];
           // assign int_axis_up_tdest  [NODE]          = s_axis_up_tdest    [(PE_POSITION_I+1)*DEST_WIDTH-1:PE_POSITION_I*DEST_WIDTH];
-          assign int_axis_up_tuser  [NODE]          = {OP1_USER_MASK_R, {PE_WIDTH_J{1'b0}}, s_axis_up_tuser [(PE_POSITION_I+1)*USER_WIDTH-1:PE_POSITION_I*USER_WIDTH]};
+          assign int_axis_up_tuser  [NODE]          = (USER_ENABLE) ? 
+            {OP1_USER_MASK_R, {PE_WIDTH_J{1'b0}}, s_axis_up_tuser [(PE_POSITION_I+1)*USER_WIDTH-1:PE_POSITION_I*USER_WIDTH]} :
+            OP1_USER_MASK;
         end else begin
           assign int_axis_up_tdata   [NODE]   = int_axis_down_tdata  [NODE_U];
           assign int_axis_up_tvalid  [NODE]   = int_axis_down_tvalid [NODE_U];

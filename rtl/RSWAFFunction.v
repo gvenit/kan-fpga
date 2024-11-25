@@ -123,8 +123,7 @@ module RSWAFFunction #
   genvar CHN;
   generate 
 
-  if (SHARE_SCALE) begin
-
+  if (SHARE_SCALE && SCALE_CHANNELS > 1) begin
     axis_broadcast #(
       .M_COUNT(CHANNELS),
       .DATA_WIDTH(DATA_WIDTH_SCALE),
@@ -162,13 +161,13 @@ module RSWAFFunction #
     );
   end
   else begin
-    assign s_axis_scale_tdata_int = s_axis_scale_tdata;
+    assign s_axis_scale_tdata_int   = s_axis_scale_tdata;
     assign s_axis_scale_tvalid_int  = s_axis_scale_tvalid;
-    assign s_axis_scale_tready_int  = s_axis_scale_tready;
-    assign s_axis_scale_tlast_int = s_axis_scale_tlast;
-    assign s_axis_scale_tid_int = s_axis_scale_tid;
-    assign s_axis_scale_tdest_int = s_axis_scale_tdest;
-    assign s_axis_scale_tuser_int = s_axis_scale_tuser;
+    assign s_axis_scale_tready      = s_axis_scale_tready_int;
+    assign s_axis_scale_tlast_int   = s_axis_scale_tlast;
+    assign s_axis_scale_tid_int     = s_axis_scale_tid;
+    assign s_axis_scale_tdest_int   = s_axis_scale_tdest;
+    assign s_axis_scale_tuser_int   = s_axis_scale_tuser;
   end
     
   for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1 ) begin
@@ -239,16 +238,65 @@ module RSWAFFunction #
     assign s_in_axis_scale_tdest_slice  = s_axis_scale_tdest_int[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
     assign s_in_axis_scale_tuser_slice  = s_axis_scale_tuser_int[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
 
-    axis_fifo #(
-    // FIFO depth in words
-    // KEEP_WIDTH words per cycle if KEEP_ENABLE set
-    // Rounded up to nearest power of 2 cycles
-    .DEPTH(8),
+    axis_srl_fifo #(
+      // Width of AXI stream interfaces in bits
+      .DATA_WIDTH(DATA_WIDTH_DATA),
+      // Propagate tkeep signal
+      .KEEP_ENABLE(KEEP_ENABLE),
+      // tkeep signal width (words per cycle)
+      .KEEP_WIDTH(KEEP_WIDTH),
+      // Propagate tlast signal
+      .LAST_ENABLE(1),
+      // Propagate tid signal
+      .ID_ENABLE(ID_ENABLE),
+      // tid signal width
+      .ID_WIDTH(ID_WIDTH),
+      // Propagate tdest signal
+      .DEST_ENABLE(DEST_ENABLE),
+      // tdest signal width
+      .DEST_WIDTH(DEST_WIDTH),
+      // Propagate tuser signal
+      .USER_ENABLE(USER_ENABLE),
+      // tuser signal width
+      .USER_WIDTH(USER_WIDTH),
+      // FIFO depth in cycles
+      .DEPTH(8)
+    ) axis_fifo_data_inst (
+      .clk(clk),
+      .rst(rst),
+
+      /*
+      * AXI input
+      */
+      .s_axis_tdata(s_in_axis_data_tdata_slice),
+      // .s_axis_tkeep(s_in_axis_data_tkeep_slice),
+      .s_axis_tvalid(s_in_axis_data_tvalid_slice),
+      .s_axis_tready(s_in_axis_data_tready_slice),
+      .s_axis_tlast(s_in_axis_data_tlast_slice),
+      .s_axis_tid(s_in_axis_data_tid_slice),
+      .s_axis_tdest(s_in_axis_data_tdest_slice),
+      .s_axis_tuser(s_in_axis_data_tuser_slice),
+
+      /*
+      * AXI output
+      */
+      .m_axis_tdata(s_fifo_axis_data_tdata_slice),
+      // .m_axis_tkeep(s_fifo_axis_data_tkeep_slice),
+      .m_axis_tvalid(s_fifo_axis_data_tvalid_slice),
+      .m_axis_tready(s_fifo_axis_data_tready_slice),
+      .m_axis_tlast(s_fifo_axis_data_tlast_slice),
+      .m_axis_tid(s_fifo_axis_data_tid_slice),
+      .m_axis_tdest(s_fifo_axis_data_tdest_slice),
+      .m_axis_tuser(s_fifo_axis_data_tuser_slice)
+    );
+    
+    axis_srl_fifo #(
     // Width of AXI stream interfaces in bits
     .DATA_WIDTH(DATA_WIDTH_DATA),
     // Propagate tkeep signal
-    // If disabled, tkeep assumed to be 1'b1
-    .KEEP_ENABLE(0),
+    .KEEP_ENABLE(KEEP_ENABLE),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(KEEP_WIDTH),
     // Propagate tlast signal
     .LAST_ENABLE(1),
     // Propagate tid signal
@@ -263,250 +311,88 @@ module RSWAFFunction #
     .USER_ENABLE(USER_ENABLE),
     // tuser signal width
     .USER_WIDTH(USER_WIDTH),
-    // number of RAM pipeline registers
-    .RAM_PIPELINE(1),
-    // use output FIFO
-    // When set, the RAM read enable and pipeline clock enables are removed
-    .OUTPUT_FIFO_ENABLE(0),
-    // Frame FIFO mode - operate on frames instead of cycles
-    // When set, m_axis_tvalid will not be deasserted within a frame
-    // Requires LAST_ENABLE set
-    .FRAME_FIFO(0),
-    // tuser value for bad frame marker
-    .USER_BAD_FRAME_VALUE(1'b1),
-    // tuser mask for bad frame marker
-    .USER_BAD_FRAME_MASK(1'b1),
-    // Drop frames larger than FIFO
-    // Requires FRAME_FIFO set
-    .DROP_OVERSIZE_FRAME(0),
-    // Drop frames marked bad
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_BAD_FRAME(0),
-    // Drop incoming frames when full
-    // When set, s_axis_tready is always asserted
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_WHEN_FULL(0),
-    // Mark incoming frames as bad frames when full
-    // When set, s_axis_tready is always asserted
-    // Requires FRAME_FIFO to be clear
-    .MARK_WHEN_FULL(0),
-    // Enable pause request input
-    .PAUSE_ENABLE(0),
-    // Pause between frames
-    .FRAME_PAUSE(0)
-    )
-    axis_fifo_data_inst(
-    .clk(clk),
-    .rst(rst),
+    // FIFO depth in cycles
+    .DEPTH(8)
+    ) axis_fifo_grid_inst (
+      .clk(clk),
+      .rst(rst),
 
-    /*
-     * AXI input
-     */
-    .s_axis_tdata(s_in_axis_data_tdata_slice),
-    // .s_axis_tkeep(s_in_axis_data_tkeep_slice),
-    .s_axis_tvalid(s_in_axis_data_tvalid_slice),
-    .s_axis_tready(s_in_axis_data_tready_slice),
-    .s_axis_tlast(s_in_axis_data_tlast_slice),
-    .s_axis_tid(s_in_axis_data_tid_slice),
-    .s_axis_tdest(s_in_axis_data_tdest_slice),
-    .s_axis_tuser(s_in_axis_data_tuser_slice),
+      /*
+      * AXI input
+      */
+      .s_axis_tdata(s_in_axis_grid_tdata_slice),
+      // .s_axis_tkeep(s_in_axis_grid_tkeep_slice),
+      .s_axis_tvalid(s_in_axis_grid_tvalid_slice),
+      .s_axis_tready(s_in_axis_grid_tready_slice),
+      .s_axis_tlast(s_in_axis_grid_tlast_slice),
+      .s_axis_tid(s_in_axis_grid_tid_slice),
+      .s_axis_tdest(s_in_axis_grid_tdest_slice),
+      .s_axis_tuser(s_in_axis_grid_tuser_slice),
 
-    /*
-     * AXI output
-     */
-    .m_axis_tdata(s_fifo_axis_data_tdata_slice),
-    // .m_axis_tkeep(s_fifo_axis_data_tkeep_slice),
-    .m_axis_tvalid(s_fifo_axis_data_tvalid_slice),
-    .m_axis_tready(s_fifo_axis_data_tready_slice),
-    .m_axis_tlast(s_fifo_axis_data_tlast_slice),
-    .m_axis_tid(s_fifo_axis_data_tid_slice),
-    .m_axis_tdest(s_fifo_axis_data_tdest_slice),
-    .m_axis_tuser(s_fifo_axis_data_tuser_slice),
-
-    /*
-     * Pause
-     */
-    .pause_req(1'b0)
+      /*
+      * AXI output
+      */
+      .m_axis_tdata(s_fifo_axis_grid_tdata_slice),
+      // .m_axis_tkeep(s_fifo_axis_grid_tkeep_slice),
+      .m_axis_tvalid(s_fifo_axis_grid_tvalid_slice),
+      .m_axis_tready(s_fifo_axis_grid_tready_slice),
+      .m_axis_tlast(s_fifo_axis_grid_tlast_slice),
+      .m_axis_tid(s_fifo_axis_grid_tid_slice),
+      .m_axis_tdest(s_fifo_axis_grid_tdest_slice),
+      .m_axis_tuser(s_fifo_axis_grid_tuser_slice)
     );
     
-    axis_fifo #(
-    // FIFO depth in words
-    // KEEP_WIDTH words per cycle if KEEP_ENABLE set
-    // Rounded up to nearest power of 2 cycles
-    .DEPTH(8),
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_DATA),
-    // Propagate tkeep signal
-    // If disabled, tkeep assumed to be 1'b1
-    .KEEP_ENABLE(0),
-    // Propagate tlast signal
-    .LAST_ENABLE(1),
-    // Propagate tid signal
-    .ID_ENABLE(ID_ENABLE),
-    // tid signal width
-    .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
-    .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
-    .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
-    .USER_ENABLE(USER_ENABLE),
-    // tuser signal width
-    .USER_WIDTH(USER_WIDTH),
-    // number of RAM pipeline registers
-    .RAM_PIPELINE(1),
-    // use output FIFO
-    // When set, the RAM read enable and pipeline clock enables are removed
-    .OUTPUT_FIFO_ENABLE(0),
-    // Frame FIFO mode - operate on frames instead of cycles
-    // When set, m_axis_tvalid will not be deasserted within a frame
-    // Requires LAST_ENABLE set
-    .FRAME_FIFO(0),
-    // tuser value for bad frame marker
-    .USER_BAD_FRAME_VALUE(1'b1),
-    // tuser mask for bad frame marker
-    .USER_BAD_FRAME_MASK(1'b1),
-    // Drop frames larger than FIFO
-    // Requires FRAME_FIFO set
-    .DROP_OVERSIZE_FRAME(0),
-    // Drop frames marked bad
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_BAD_FRAME(0),
-    // Drop incoming frames when full
-    // When set, s_axis_tready is always asserted
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_WHEN_FULL(0),
-    // Mark incoming frames as bad frames when full
-    // When set, s_axis_tready is always asserted
-    // Requires FRAME_FIFO to be clear
-    .MARK_WHEN_FULL(0),
-    // Enable pause request input
-    .PAUSE_ENABLE(0),
-    // Pause between frames
-    .FRAME_PAUSE(0)
-    )
-    axis_fifo_grid_inst(
-    .clk(clk),
-    .rst(rst),
-
-    /*
-     * AXI input
-     */
-    .s_axis_tdata(s_in_axis_grid_tdata_slice),
-    // .s_axis_tkeep(s_in_axis_grid_tkeep_slice),
-    .s_axis_tvalid(s_in_axis_grid_tvalid_slice),
-    .s_axis_tready(s_in_axis_grid_tready_slice),
-    .s_axis_tlast(s_in_axis_grid_tlast_slice),
-    .s_axis_tid(s_in_axis_grid_tid_slice),
-    .s_axis_tdest(s_in_axis_grid_tdest_slice),
-    .s_axis_tuser(s_in_axis_grid_tuser_slice),
-
-    /*
-     * AXI output
-     */
-    .m_axis_tdata(s_fifo_axis_grid_tdata_slice),
-    // .m_axis_tkeep(s_fifo_axis_grid_tkeep_slice),
-    .m_axis_tvalid(s_fifo_axis_grid_tvalid_slice),
-    .m_axis_tready(s_fifo_axis_grid_tready_slice),
-    .m_axis_tlast(s_fifo_axis_grid_tlast_slice),
-    .m_axis_tid(s_fifo_axis_grid_tid_slice),
-    .m_axis_tdest(s_fifo_axis_grid_tdest_slice),
-    .m_axis_tuser(s_fifo_axis_grid_tuser_slice),
-
-    /*
-     * Pause
-     */
-    .pause_req(1'b0)
-    );
     
-    axis_fifo #(
-    // FIFO depth in words
-    // KEEP_WIDTH words per cycle if KEEP_ENABLE set
-    // Rounded up to nearest power of 2 cycles
-    .DEPTH(8),
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_SCALE),
-    // Propagate tkeep signal
-    // If disabled, tkeep assumed to be 1'b1
-    .KEEP_ENABLE(0),
-    // Propagate tlast signal
-    .LAST_ENABLE(1),
-    // Propagate tid signal
-    .ID_ENABLE(ID_ENABLE),
-    // tid signal width
-    .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
-    .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
-    .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
-    .USER_ENABLE(USER_ENABLE),
-    // tuser signal width
-    .USER_WIDTH(USER_WIDTH),
-    // number of RAM pipeline registers
-    .RAM_PIPELINE(1),
-    // use output FIFO
-    // When set, the RAM read enable and pipeline clock enables are removed
-    .OUTPUT_FIFO_ENABLE(0),
-    // Frame FIFO mode - operate on frames instead of cycles
-    // When set, m_axis_tvalid will not be deasserted within a frame
-    // Requires LAST_ENABLE set
-    .FRAME_FIFO(0),
-    // tuser value for bad frame marker
-    .USER_BAD_FRAME_VALUE(1'b1),
-    // tuser mask for bad frame marker
-    .USER_BAD_FRAME_MASK(1'b1),
-    // Drop frames larger than FIFO
-    // Requires FRAME_FIFO set
-    .DROP_OVERSIZE_FRAME(0),
-    // Drop frames marked bad
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_BAD_FRAME(0),
-    // Drop incoming frames when full
-    // When set, s_axis_tready is always asserted
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_WHEN_FULL(0),
-    // Mark incoming frames as bad frames when full
-    // When set, s_axis_tready is always asserted
-    // Requires FRAME_FIFO to be clear
-    .MARK_WHEN_FULL(0),
-    // Enable pause request input
-    .PAUSE_ENABLE(0),
-    // Pause between frames
-    .FRAME_PAUSE(0)
-    )
-    axis_fifo_scale_inst(
-    .clk(clk),
-    .rst(rst),
+    axis_srl_fifo #(
+      // Width of AXI stream interfaces in bits
+      .DATA_WIDTH(DATA_WIDTH_DATA),
+      // Propagate tkeep signal
+      .KEEP_ENABLE(KEEP_ENABLE),
+      // tkeep signal width (words per cycle)
+      .KEEP_WIDTH(KEEP_WIDTH),
+      // Propagate tlast signal
+      .LAST_ENABLE(1),
+      // Propagate tid signal
+      .ID_ENABLE(ID_ENABLE),
+      // tid signal width
+      .ID_WIDTH(ID_WIDTH),
+      // Propagate tdest signal
+      .DEST_ENABLE(DEST_ENABLE),
+      // tdest signal width
+      .DEST_WIDTH(DEST_WIDTH),
+      // Propagate tuser signal
+      .USER_ENABLE(USER_ENABLE),
+      // tuser signal width
+      .USER_WIDTH(USER_WIDTH),
+      // FIFO depth in cycles
+      .DEPTH(8)
+    ) axis_fifo_scale_inst (
+      .clk(clk),
+      .rst(rst),
 
-    /*
-     * AXI input
-     */
-    .s_axis_tdata(s_in_axis_scale_tdata_slice),
-    // .s_axis_tkeep(s_in_axis_scale_tkeep_slice),
-    .s_axis_tvalid(s_in_axis_scale_tvalid_slice),
-    .s_axis_tready(s_in_axis_scale_tready_slice),
-    .s_axis_tlast(s_in_axis_scale_tlast_slice),
-    .s_axis_tid(s_in_axis_scale_tid_slice),
-    .s_axis_tdest(s_in_axis_scale_tdest_slice),
-    .s_axis_tuser(s_in_axis_scale_tuser_slice),
+      /*
+      * AXI input
+      */
+      .s_axis_tdata(s_in_axis_scale_tdata_slice),
+      // .s_axis_tkeep(s_in_axis_scale_tkeep_slice),
+      .s_axis_tvalid(s_in_axis_scale_tvalid_slice),
+      .s_axis_tready(s_in_axis_scale_tready_slice),
+      .s_axis_tlast(s_in_axis_scale_tlast_slice),
+      .s_axis_tid(s_in_axis_scale_tid_slice),
+      .s_axis_tdest(s_in_axis_scale_tdest_slice),
+      .s_axis_tuser(s_in_axis_scale_tuser_slice),
 
-    /*
-     * AXI output
-     */
-    .m_axis_tdata(s_fifo_axis_scale_tdata_slice),
-    // .m_axis_tkeep(s_fifo_axis_scale_tkeep_slice),
-    .m_axis_tvalid(s_fifo_axis_scale_tvalid_slice),
-    .m_axis_tready(s_fifo_axis_scale_tready_slice),
-    .m_axis_tlast(s_fifo_axis_scale_tlast_slice),
-    .m_axis_tid(s_fifo_axis_scale_tid_slice),
-    .m_axis_tdest(s_fifo_axis_scale_tdest_slice),
-    .m_axis_tuser(s_fifo_axis_scale_tuser_slice),
-
-    /*
-     * Pause
-     */
-    .pause_req(1'b0)
+      /*
+      * AXI output
+      */
+      .m_axis_tdata(s_fifo_axis_scale_tdata_slice),
+      // .m_axis_tkeep(s_fifo_axis_scale_tkeep_slice),
+      .m_axis_tvalid(s_fifo_axis_scale_tvalid_slice),
+      .m_axis_tready(s_fifo_axis_scale_tready_slice),
+      .m_axis_tlast(s_fifo_axis_scale_tlast_slice),
+      .m_axis_tid(s_fifo_axis_scale_tid_slice),
+      .m_axis_tdest(s_fifo_axis_scale_tdest_slice),
+      .m_axis_tuser(s_fifo_axis_scale_tuser_slice)
     );
     
     SubMultAbs

@@ -2,13 +2,14 @@ venv/*
 *-old*
 *_old*
 __pycache__
-*/tmp.*
+*/tmp*
 /log
 
 py/*.out
 py/parsetab.py
 py/*.dot
 py/*codegen.py
+py/example*.py
 
 !venv/requirements.txt
 !py/example_codegen.py

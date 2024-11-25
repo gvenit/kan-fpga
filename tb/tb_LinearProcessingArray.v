@@ -16,7 +16,7 @@ module tb_LinearProcessingArray
   localparam FRACTIONAL_BITS_RSLT = 13;
   localparam IS_UNSIGNED_OP0 = 1;
   localparam INTERNAL_RESET = 0;
-  localparam USER_WIDTH = 8;
+  localparam USER_WIDTH = 1;
   reg clk;
   reg rst;
   reg [DATA_WIDTH*PE_NUMBER_I-1:0] s_axis_up_tdata;
@@ -53,7 +53,7 @@ module tb_LinearProcessingArray
     // .ID_WIDTH(ID_WIDTH),
     .DEST_ENABLE(0),
     // .DEST_WIDTH(DEST_WIDTH),
-    .USER_ENABLE(1),
+    .USER_ENABLE(USER_WIDTH>1),
     .USER_WIDTH(USER_WIDTH)
     // .OUTPUT_DEST(OUTPUT_DEST),
     // .OUTPUT_ID(OUTPUT_ID),
@@ -120,7 +120,9 @@ module tb_LinearProcessingArray
     rst = 0;
     #10;
     reset_done = 1;
-    s_axis_up_tuser = 16045690984503098046;
+    if(USER_WIDTH > 1) begin
+      s_axis_up_tuser = 16045690984503098046;
+    end 
     @(posedge clk);
     #1;
     #500;

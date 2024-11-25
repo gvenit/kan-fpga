@@ -24,7 +24,7 @@ module tb_RSWAFFunction
   localparam DEST_WIDTH = 8;
   localparam USER_ENABLE = 0;
   localparam USER_WIDTH = 1;
-  localparam CHANNELS = 5;
+  localparam CHANNELS = 1;
   localparam SHARE_SCALE = 1;
   localparam SCALE_CHANNELS = (SHARE_SCALE)? 1 : CHANNELS;
   localparam ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt";
@@ -171,13 +171,22 @@ module tb_RSWAFFunction
         _tmp_1 <= (count_grid + CHN) % 5;
         _tmp_0 <= (count_data + CHN) / 5 % 5;
         if(CHN == 0) begin
-          $display("Count : %d,%d -- %X:%X:%X-%X:%X:%X-%X:%X:%X-%X:%X:%X", count_data, count_grid, s_axis_data_tready, s_axis_data_tvalid, s_axis_data_tlast, s_axis_grid_tready, s_axis_grid_tvalid, s_axis_grid_tlast, s_axis_scale_tready, s_axis_scale_tvalid, s_axis_scale_tlast, m_axis_data_tready, m_axis_data_tvalid, m_axis_data_tlast);
+          $display("Count : %d,%d -- %X:%X:%X-%X:%X:%X-%X:%X:%X-%X:%X:%X -- is_Ready : %b", count_data, count_grid, s_axis_data_tready, s_axis_data_tvalid, s_axis_data_tlast, s_axis_grid_tready, s_axis_grid_tvalid, s_axis_grid_tlast, s_axis_scale_tready, s_axis_scale_tvalid, s_axis_scale_tlast, m_axis_data_tready, m_axis_data_tvalid, m_axis_data_tlast, is_Ready);
         end 
         if(s_axis_data_tready[CHN] && s_axis_data_tvalid[CHN]) begin
           count_data <= count_data + 1;
         end 
         if(s_axis_grid_tready[CHN] && s_axis_grid_tvalid[CHN]) begin
           count_grid <= count_grid + 1;
+        end 
+        if((m_axis_data_tlast[CHN] == 1) && (m_axis_data_tready[CHN] == 1) && (m_axis_data_tvalid[CHN] == 1)) begin
+          is_Ready[CHN] <= 1;
+        end 
+        if((CHN == 0) && (!is_Ready == 0)) begin
+          is_Ready <= 0;
+          s_axis_scale_tdata <= -5 << FRACTIONAL_BITS_SCALE - 2;
+          s_axis_scale_tlast[CHN] <= 1;
+          s_axis_scale_tvalid[CHN] <= 1;
         end 
         if(count_data == 0) begin
           s_axis_scale_tdata <= 1 << FRACTIONAL_BITS_SCALE;
@@ -258,6 +267,7 @@ module tb_RSWAFFunction
         end 
         if(s_axis_scale_tvalid[CHN]) begin
           s_axis_scale_tvalid[CHN] <= 0;
+          s_axis_scale_tlast[CHN] <= 0;
         end 
         if((count_data > 70) && !timer_data && !m_axis_data_tvalid[CHN]) begin
           $finish;
@@ -287,6 +297,7 @@ module tb_RSWAFFunction
         if(CHN == 0) begin
           count_data <= 0;
           count_grid <= 0;
+          is_Ready <= 0;
         end 
       end
     end
@@ -300,6 +311,7 @@ module tb_RSWAFFunction
   integer count2_grid;
   integer timer_data;
   integer timer_grid;
+  reg [CHANNELS-1:0] is_Ready;
 
 endmodule
 

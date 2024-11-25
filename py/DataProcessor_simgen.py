@@ -208,13 +208,13 @@ def tb_DataProcessor():
         Delay(10),
         reset_done(1),
         nclk(clk),
-        Delay(500),
+        # Delay(500),
         # Delay(10),
-        Finish(),
+        # Finish(),
     )
     
     batch_size = DATA_CHANNELS.value
-    input_layer_size = 100
+    input_layer_size = 5
     grid_size = 5
     output_layer_size = WEIGHT_CHANNELS.value
     
@@ -243,13 +243,13 @@ def tb_DataProcessor():
     
     x_int.reverse()
     grid_int.reverse()
-    weights_int.reverse()
+    # weights_int.reverse()
     y_int.reverse()
     
     print('Expected output :')
     # print(x.shape, grid.shape, weights.shape, diff.shape, scaled_diff.shape, act_func_data.shape, y.shape)
-    print(x_int[:10])
-    print(y_int)
+    # print(x_int[:10])
+    print(*y_int)
     
     data_array = module.Reg(
         'data_array', 
@@ -259,17 +259,17 @@ def tb_DataProcessor():
         'grid_array', 
         grid_size*DATA_WIDTH, 
     )
-    weight_array = module.Reg(
-        'weight_array', 
-        input_layer_size*WEIGHT_CHANNELS*DATA_WIDTH,
-    )
+    # weight_array = module.Reg(
+    #     'weight_array', 
+    #     input_layer_size*WEIGHT_CHANNELS*DATA_WIDTH,
+    # )
     
     # Array Initialization
     # tmp = module.TmpInteger()
     module.Initial(
         data_array(Cat(*[EmbeddedNumeric(f"{DATA_WIDTH.value}'h{x_i}") for x_i in x_int])),
         grid_array(Cat(*[EmbeddedNumeric(f"{DATA_WIDTH.value}'h{x_i}") for x_i in grid_int])),
-        weight_array(Cat(*[EmbeddedNumeric(f"{DATA_WIDTH.value}'h{x_i}") for x_i in weights_int])),
+        # weight_array(Cat(*[EmbeddedNumeric(f"{DATA_WIDTH.value}'h{x_i}") for x_i in weights_int])),
     )
     
     
@@ -278,7 +278,7 @@ def tb_DataProcessor():
         Display('Data: %x', data_array),
         Display('%x', data_array.slice(15,0)),
         Display('Grid: %x', grid_array),
-        Display('Weight: %x', weight_array),
+        # Display('Weight: %x', weight_array),
         Wait(reset_done),
         Wait(clk),
         
@@ -295,6 +295,7 @@ def tb_DataProcessor():
             Wait(~clk),
         ),
         Wait(clk),
+        Wait(~clk),
         
         s_axis_scale_tvalid(0),
         s_axis_scale_tlast(0),
@@ -313,7 +314,7 @@ def tb_DataProcessor():
         
         Wait(s_axis_data_tready[data_chn]),
         Wait(~clk),
-        Wait(clk),
+        # Wait(clk),
         
         s_axis_data_tvalid[data_chn](1),
         For(i_data(0), i_data < input_layer_size * grid_size, i_data(i_data+1))(
@@ -322,7 +323,7 @@ def tb_DataProcessor():
                     msb = (data_chn+1)*DATA_WIDTH-1,
                     lsb = data_chn * DATA_WIDTH
                 )(
-                    weight_array.slice(
+                    data_array.slice(
                         msb = (i*DATA_CHANNELS+data_chn+1)*DATA_WIDTH-1,
                         lsb = (i*DATA_CHANNELS+data_chn) * DATA_WIDTH
                     )
@@ -333,12 +334,12 @@ def tb_DataProcessor():
                 )(0))
             ),
             s_axis_data_tlast[data_chn](i_data == (input_layer_size * grid_size-1)),
-            Wait(~clk),
-            While(~s_axis_data_tready[data_chn])(
-                Wait(clk),
-                Wait(~clk),
-            ),
             Wait(clk),
+            While(~s_axis_data_tready[data_chn])(
+                Wait(~clk),
+                Wait(clk),
+            ),
+            Wait(~clk),
         ),
         s_axis_data_tvalid[data_chn](0),
         s_axis_data_tlast[data_chn](0),
@@ -351,7 +352,7 @@ def tb_DataProcessor():
         
         Wait(s_axis_grid_tready[data_chn]),
         Wait(~clk),
-        Wait(clk),
+        # Wait(clk),
         
         s_axis_grid_tvalid[data_chn](1),
         For(i_grid(0), i_grid < input_layer_size * grid_size, i_grid(i_grid+1))(
@@ -368,12 +369,12 @@ def tb_DataProcessor():
                 )(0))
             ),
             s_axis_grid_tlast[data_chn](i_grid == (input_layer_size * grid_size-1)),
-            Wait(~clk),
-            While(~s_axis_grid_tready[data_chn])(
-                Wait(clk),
-                Wait(~clk),
-            ),
             Wait(clk),
+            While(~s_axis_grid_tready[data_chn])(
+                Wait(~clk),
+                Wait(clk),
+            ),
+            Wait(~clk),
         ),
         s_axis_grid_tvalid[data_chn](0),
         s_axis_grid_tlast[data_chn](0),
@@ -390,32 +391,37 @@ def tb_DataProcessor():
         
         Wait(s_axis_weight_tready[weight_chn]),
         Wait(~clk),
-        Wait(clk),
+        # Wait(clk),
         
         s_axis_weight_tvalid(1),
-        For(i_weight(0), i_weight < input_layer_size * grid_size, i_weight(i_weight+1))(
+        For(i_weight(0), i_weight < len(weights_int), i_weight(i_weight+1))(
             Case(i_weight)(
-                *[When(i)( s_axis_weight_tdata.slice(
-                    msb = (weight_chn+1)*DATA_WIDTH-1,
-                    lsb = weight_chn * DATA_WIDTH
-                )(
-                    grid_array.slice(
-                        msb = (i*WEIGHT_CHANNELS+weight_chn+1)*DATA_WIDTH-1,
-                        lsb = (i*WEIGHT_CHANNELS+weight_chn) * DATA_WIDTH
-                    )
-                )) for i in range(input_layer_size * grid_size)],
+                *[
+                    When(i)( s_axis_weight_tdata.slice(
+                        msb = (weight_chn+1)*DATA_WIDTH-1,
+                        lsb = weight_chn * DATA_WIDTH
+                    )(
+                        # weight_array.slice(
+                        #     msb = (i*WEIGHT_CHANNELS+weight_chn+1)*DATA_WIDTH-1,
+                        #     lsb = (i*WEIGHT_CHANNELS+weight_chn) * DATA_WIDTH
+                        # )
+                        EmbeddedNumeric(f"{DATA_WIDTH.value}'h{x_i}")
+                    )) 
+                    for i, x_i in enumerate(weights_int)
+                    # for i in range(len(weights_int))
+                ],
                 When( )(s_axis_weight_tdata.slice(
                     msb = (weight_chn+1)*DATA_WIDTH-1,
                     lsb = weight_chn * DATA_WIDTH
                 )(0))
             ),
-            s_axis_weight_tlast[weight_chn](i_weight == (input_layer_size * grid_size-1)),
-            Wait(~clk),
-            While(~s_axis_weight_tready[weight_chn])(
-                Wait(clk),
-                Wait(~clk),
-            ),
+            s_axis_weight_tlast[weight_chn](i_weight == (len(weights_int)-1)),
             Wait(clk),
+            While(~s_axis_weight_tready[weight_chn])(
+                Wait(~clk),
+                Wait(clk),
+            ),
+            Wait(~clk),
         ),
         s_axis_weight_tvalid[weight_chn](0),
         s_axis_weight_tlast[weight_chn](0),
