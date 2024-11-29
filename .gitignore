@@ -13,3 +13,4 @@ py/example*.py
 
 !venv/requirements.txt
 !py/example_codegen.py
+test
