@@ -107,7 +107,7 @@ module LPEControlUnit #(
   // FSM Output Signals
   reg  store_l_reg, store_u_reg;
   reg  forward_l_reg, forward_u_reg;
-  reg  
+  
   reg  drop_l_reg, drop_u_reg;
   reg  push_d_reg;
   reg  [PE_J_WIDTH-1:0] timer; // To keep track that all nodes above have transfered their results first
