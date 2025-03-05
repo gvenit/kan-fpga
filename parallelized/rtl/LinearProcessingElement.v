@@ -1,0 +1,495 @@
+`resetall
+`timescale 1ns/1ps
+`default_nettype none
+
+/* 
+ * LinearProcessingElement : Accepts and returns two AXI-Streams
+ *   from neighbouring `LinearProcessingElement` modules. Input
+ *   streams are up (i,j-1) and left (i-1,j) and output wire streams
+ *   are down (i,j+1) and right (i+1,j). The module works as a
+ *   node of a systolic array for the Matrix-Matrix Multiplication.
+ * 
+ * 
+ * Array Positioning :
+ *              i
+ *       --------------->
+ *   |  {0,0}  ...  {I-1,0}
+ *  j|   ...          ...
+ *   v {0,J-1} ... {I-1,J-1} 
+ */
+
+module LinearProcessingElement #(
+    // Number of PEs in Processing Array i axis
+    parameter PE_NUMBER_I = 4,
+    // Number of PEs in Processing Array j axis
+    parameter PE_NUMBER_J = 4,
+    // Position of current PE in the i axis
+    parameter PE_POSITION_I = 0,
+    // Position of current PE in the j axis
+    parameter PE_POSITION_J = 0,
+    // Data Width of Input Data (L-AXIS)
+    parameter DATA_WIDTH_OP0 = 16,
+    // Fractional Bits of Input Data (L-AXIS)
+    parameter FRACTIONAL_BITS_OP0 = 12,
+    // Treat operand 0 as unsigned
+    parameter IS_UNSIGNED_OP0 = 0,
+    // Data Width of Input Weights (T-AXIS)
+    parameter DATA_WIDTH_OP1 = 16,
+    // Fractional Bits of Input Weights (T-AXIS)
+    parameter FRACTIONAL_BITS_OP1 = 12,
+    // Treat operand 1 as unsigned
+    parameter IS_UNSIGNED_OP1 = 0,
+    // Data Width of Output Data (D-AXIS)
+    parameter DATA_WIDTH_PSUM = 16,
+    // Fractional Bits of Output Data (D-AXIS)
+    parameter FRACTIONAL_BITS_RSLT = 12,
+    // Element acts as accumulator for Top AXI-Stream
+    parameter ACCUMULATE_PSUM = 0
+) (
+  input  wire                            clk,
+  input  wire                            rst,
+
+  /*
+   * AXI Stream Left Input
+   */
+  input  wire [DATA_WIDTH_OP0-1:0]    s_axis_l_tdata,
+  input  wire                         s_axis_l_tvalid,
+  output wire                         s_axis_l_tready,
+  input  wire                         s_axis_l_tlast,
+
+  /*
+   * AXI Stream Right Output
+   */
+  output wire [DATA_WIDTH_OP0-1:0]    m_axis_r_tdata,
+  output wire                         m_axis_r_tvalid,
+  input  wire                         m_axis_r_tready,
+  output wire                         m_axis_r_tlast,
+
+  /*
+   * AXI Stream Top Input
+   */
+  input  wire [DATA_WIDTH_OP1-1:0]    s_axis_t_tdata,
+  input  wire                         s_axis_t_tvalid,
+  output wire                         s_axis_t_tready,
+  input  wire                         s_axis_t_tlast,
+
+  /*
+   * AXI Stream Bottom Output
+   */
+  output wire [DATA_WIDTH_OP1-1:0]    m_axis_b_tdata,
+  output wire                         m_axis_b_tvalid,
+  input  wire                         m_axis_b_tready,
+  output wire                         m_axis_b_tlast,
+
+  /*
+   * AXI Stream Up Input
+   */
+  input  wire [DATA_WIDTH_PSUM-1:0]   s_axis_u_tdata,
+  input  wire                         s_axis_u_tvalid,
+  output wire                         s_axis_u_tready,
+  input  wire                         s_axis_u_tlast,
+
+  /*
+   * AXI Stream Down Output
+   */
+  output wire [DATA_WIDTH_PSUM-1:0]   m_axis_d_tdata,
+  output wire                         m_axis_d_tvalid,
+  input  wire                         m_axis_d_tready,
+  output wire                         m_axis_d_tlast,
+
+  /*
+   * Error Outputs
+   */
+  output wire err_unalligned_data,
+  output wire err_user_flag
+);
+  // DataFlow Local Parameters
+  localparam MLT_OP_SIZE  = DATA_WIDTH_OP0 + DATA_WIDTH_OP1 + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
+
+  // Left AXI-Stream internal signals
+  wire [DATA_WIDTH_OP0-1:0] int_axis_l_tdata;
+  wire                      int_axis_l_tvalid;
+  wire                      int_axis_l_tready;
+  wire                      int_axis_l_tlast;
+
+  // Right AXI-Stream internal signals
+  wire [DATA_WIDTH_OP0-1:0] int_axis_r_tdata;
+  wire                      int_axis_r_tvalid;
+  wire                      int_axis_r_tready;
+  wire                      int_axis_r_tlast;
+
+  // Up AXI-Stream internal signals
+  wire [DATA_WIDTH_OP1-1:0] int_axis_u_tdata;
+  wire                      int_axis_u_tvalid;
+  wire                      int_axis_u_tready;
+  wire                      int_axis_u_tlast;
+
+  // Down AXI-Stream internal signals
+  wire [DATA_WIDTH_OP1-1:0] int_axis_d_tdata;
+  wire                      int_axis_d_tvalid;
+  wire                      int_axis_d_tready;
+  wire                      int_axis_d_tlast;
+
+  // Top AXI-Stream internal signals
+  wire [DATA_WIDTH_OP1-1:0] int_axis_t_tdata;
+  wire                      int_axis_t_tvalid;
+  wire                      int_axis_t_tready;
+  wire                      int_axis_t_tlast;
+
+  // Bottom AXI-Stream internal signals
+  wire [DATA_WIDTH_OP1-1:0] int_axis_b_tdata;
+  wire                      int_axis_b_tvalid;
+  wire                      int_axis_b_tready;
+  wire                      int_axis_b_tlast;
+
+  // Control Unit Output Signals
+  wire store_l, store_t;
+  wire forward_l, forward_t;
+  wire drop_l, drop_t;
+
+  wire op_start;
+  wire bypass_adder;
+  wire acc_res;
+  wire export_rslt;
+
+  // DataFlow Registers & Wires
+  reg  [DATA_WIDTH_PSUM-1:0]     partial_sum_reg = 0;
+
+  wire [DATA_WIDTH_OP0 + IS_UNSIGNED_OP0 -1:0]  mult_op0 = { {IS_UNSIGNED_OP0{1'b0}}, int_axis_l_tdata};
+  wire [DATA_WIDTH_OP1 + IS_UNSIGNED_OP1 -1:0]  mult_op1 = { {IS_UNSIGNED_OP1{1'b0}}, int_axis_t_tdata};
+  wire [MLT_OP_SIZE-1:0]                        mult_res = mult_op0 * mult_op1;
+
+  wire [DATA_WIDTH_PSUM-1:0] partial_sum_acc ;
+
+  generate
+    if (ACCUMULATE_PSUM > 0) assign partial_sum_acc = (acc_res) ? int_axis_t_tdata : mult_res;
+    else assign partial_sum_acc = mult_res;
+  endgenerate
+
+  wire [DATA_WIDTH_PSUM-1:0] partial_sum_fb       = (op_start) ? 0 : partial_sum_reg;
+  wire [DATA_WIDTH_PSUM-1:0] partial_sum_rslt     = partial_sum_fb + partial_sum_acc;
+  wire [DATA_WIDTH_PSUM-1:0] partial_sum_reg_next = (bypass_adder) ? partial_sum_fb : partial_sum_rslt;
+
+  // Control Logic
+  LPEControlUnit #(
+    // Number of PEs in Processing Array j axis
+    .PE_NUMBER_J(PE_NUMBER_J),
+    // Position of current PE in the j axis
+    .PE_POSITION_J(PE_POSITION_J),
+    // tuser signal width
+    .USER_WIDTH(1)  // 2 + $clog2(PE_NUMBER_J),
+  ) control_unit (
+    .clk(clk),
+    .rst(rst),
+    .int_axis_u_tvalid(int_axis_u_tvalid),
+    .int_axis_u_tready(int_axis_u_tready),
+    .int_axis_u_tlast(int_axis_u_tlast),
+    .int_axis_l_tvalid(int_axis_l_tvalid),
+    .int_axis_l_tready(int_axis_l_tready),
+    .int_axis_l_tlast(int_axis_l_tlast),
+    .int_axis_t_tvalid(int_axis_t_tvalid),
+    .int_axis_t_tready(int_axis_t_tready),
+    .int_axis_t_tlast(int_axis_t_tlast),
+    .int_axis_d_tvalid(int_axis_d_tvalid),
+    .int_axis_d_tready(int_axis_d_tready),
+    .int_axis_r_tvalid(int_axis_r_tvalid),
+    .int_axis_r_tready(int_axis_r_tready),
+    .int_axis_b_tvalid(int_axis_b_tvalid),
+    .int_axis_b_tready(int_axis_b_tready),
+    .store_l(store_l),
+    .store_t(store_t),
+    .forward_l(forward_l),
+    .forward_t(forward_t),
+    .drop_l(drop_l), 
+    .drop_t(drop_t),
+    .export_rslt(export_rslt),
+    .op_start(op_start),
+    .bypass_adder(bypass_adder),
+    .acc_res(acc_res),
+    .err_unalligned_data(err_unalligned_data),
+    .err_user_flag(err_user_flag)
+  );
+
+  // Up AXI-Stream Skid Buffer
+  // wire s_axis_u_tready_int;
+  // assign s_axis_u_tready = s_axis_u_tready_int & store_t;
+  axis_register #(
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_PSUM),
+    // Propagate tkeep signal
+    .KEEP_ENABLE(0),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(1),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(0),
+    // tid signal width
+    .ID_WIDTH(1),
+    // Propagate tdest signal
+    .DEST_ENABLE(0),
+    // tdest signal width
+    .DEST_WIDTH(1),
+    // Propagate tuser signal
+    .USER_ENABLE(1),
+    // tuser signal width
+    .USER_WIDTH(USER_WIDTH),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(2)
+  ) axis_register_up_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(s_axis_u_tdata),
+    .s_axis_tkeep(1'b1),
+    .s_axis_tvalid(s_axis_u_tvalid),
+    // .s_axis_tready(s_axis_u_tready_int),
+    .s_axis_tready(s_axis_u_tready),
+    .s_axis_tlast(s_axis_u_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(1'b0),
+    .s_axis_tuser(s_axis_u_tuser),
+    .m_axis_tdata(int_axis_u_tdata),
+    .m_axis_tvalid(int_axis_u_tvalid),
+    .m_axis_tready(int_axis_u_tready),
+    .m_axis_tlast(int_axis_u_tlast)
+  );
+
+  // Down AXI-Stream Skid Buffer
+  axis_register #(
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_PSUM),
+    // Propagate tkeep signal
+    .KEEP_ENABLE(0),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(1),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(0),
+    // tid signal width
+    .ID_WIDTH(1),
+    // Propagate tdest signal
+    .DEST_ENABLE(0),
+    // tdest signal width
+    .DEST_WIDTH(1),
+    // Propagate tuser signal
+    .USER_ENABLE(1),
+    // tuser signal width
+    .USER_WIDTH(1),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(0)
+  ) axis_register_down_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(int_axis_d_tdata),
+    .s_axis_tkeep(1'b1),
+    .s_axis_tvalid(int_axis_d_tvalid),
+    .s_axis_tready(int_axis_d_tready),
+    .s_axis_tlast(int_axis_d_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(1'b0),
+    .m_axis_tdata(m_axis_d_tdata),
+    .m_axis_tvalid(m_axis_d_tvalid),
+    .m_axis_tready(m_axis_d_tready),
+    .m_axis_tlast(m_axis_d_tlast)
+  );
+
+  // Left AXI-Stream Skid Buffer
+  wire s_axis_l_tready_int;
+  assign s_axis_l_tready = s_axis_l_tready_int & store_l;
+  axis_register #(
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_OP0),
+    // Propagate tkeep signal
+    .KEEP_ENABLE(0),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(1),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(0),
+    // tid signal width
+    .ID_WIDTH(1),
+    // Propagate tdest signal
+    .DEST_ENABLE(0),
+    // tdest signal width
+    .DEST_WIDTH(1),
+    // Propagate tuser signal
+    .USER_ENABLE(0),
+    // tuser signal width
+    .USER_WIDTH(1),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(2)
+  ) axis_register_left_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(s_axis_l_tdata),
+    .s_axis_tkeep(1'b1),
+    .s_axis_tvalid(s_axis_l_tvalid & store_l),
+    .s_axis_tready(s_axis_l_tready_int),
+    .s_axis_tlast(s_axis_l_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(1'b0),
+    .s_axis_tuser(1'b0),
+    .m_axis_tdata(int_axis_l_tdata),
+    .m_axis_tvalid(int_axis_l_tvalid),
+    .m_axis_tready(int_axis_l_tready),
+    .m_axis_tlast(int_axis_l_tlast)
+  );
+
+  // Right AXI-Stream Skid Buffer
+  axis_register #(
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_L_R),
+    // Propagate tkeep signal
+    .KEEP_ENABLE(0),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(1),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(0),
+    // tid signal width
+    .ID_WIDTH(1),
+    // Propagate tdest signal
+    .DEST_ENABLE(0),
+    // tdest signal width
+    .DEST_WIDTH(1),
+    // Propagate tuser signal
+    .USER_ENABLE(0),
+    // tuser signal width
+    .USER_WIDTH(1),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(0)
+  ) axis_register_right_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(int_axis_r_tdata),
+    .s_axis_tkeep(1'b1),
+    .s_axis_tvalid(int_axis_r_tvalid),
+    .s_axis_tready(int_axis_r_tready),
+    .s_axis_tlast(int_axis_r_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(1'b0),
+    .s_axis_tuser(1'b0),
+    .m_axis_tdata(m_axis_r_tdata),
+    .m_axis_tvalid(m_axis_r_tvalid),
+    .m_axis_tready(m_axis_r_tready),
+    .m_axis_tlast(m_axis_r_tlast)
+  );
+
+  // Top AXI-Stream Skid Buffer
+  wire s_axis_l_tready_int;
+  assign s_axis_l_tready = s_axis_l_tready_int & store_l;
+  axis_register #(
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_OP1),
+    // Propagate tkeep signal
+    .KEEP_ENABLE(0),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(1),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(0),
+    // tid signal width
+    .ID_WIDTH(1),
+    // Propagate tdest signal
+    .DEST_ENABLE(0),
+    // tdest signal width
+    .DEST_WIDTH(1),
+    // Propagate tuser signal
+    .USER_ENABLE(0),
+    // tuser signal width
+    .USER_WIDTH(1),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(2)
+  ) axis_register_left_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(s_axis_t_tdata),
+    .s_axis_tkeep(1'b1),
+    .s_axis_tvalid(s_axis_t_tvalid & store_l),
+    .s_axis_tready(s_axis_t_tready_int),
+    .s_axis_tlast(s_axis_t_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(1'b0),
+    .s_axis_tuser(1'b0),
+    .m_axis_tdata(int_axis_t_tdata),
+    .m_axis_tvalid(int_axis_t_tvalid),
+    .m_axis_tready(int_axis_t_tready),
+    .m_axis_tlast(int_axis_t_tlast)
+  );
+
+  // Bottom AXI-Stream Skid Buffer
+  axis_register #(
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(DATA_WIDTH_OP1),
+    // Propagate tkeep signal
+    .KEEP_ENABLE(0),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(1),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(0),
+    // tid signal width
+    .ID_WIDTH(1),
+    // Propagate tdest signal
+    .DEST_ENABLE(0),
+    // tdest signal width
+    .DEST_WIDTH(1),
+    // Propagate tuser signal
+    .USER_ENABLE(0),
+    // tuser signal width
+    .USER_WIDTH(1),
+    // Register type
+    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+    .REG_TYPE(0)
+  ) axis_register_right_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(int_axis_b_tdata),
+    .s_axis_tkeep(1'b1),
+    .s_axis_tvalid(int_axis_b_tvalid),
+    .s_axis_tready(int_axis_b_tready),
+    .s_axis_tlast(int_axis_b_tlast),
+    .s_axis_tid(1'b0),
+    .s_axis_tdest(1'b0),
+    .s_axis_tuser(1'b0),
+    .m_axis_tdata(m_axis_b_tdata),
+    .m_axis_tvalid(m_axis_b_tvalid),
+    .m_axis_tready(m_axis_b_tready),
+    .m_axis_tlast(m_axis_b_tlast)
+  );
+
+  always @(posedge clk ) begin
+    partial_sum_reg <= partial_sum_reg_next;
+  end
+
+  // Output Down AXI-Stream Drivers
+  assign int_axis_d_tdata   = (export_rslt) ? partial_sum_reg;
+  assign int_axis_d_tvalid  = (export_rslt) ? 1'b1             : int_axis_u_tvalid & forward_t & !drop_t;
+  assign int_axis_u_tready  = (export_rslt) ? 1'b0             : int_axis_d_tready & forward_t |  drop_t;
+  assign int_axis_d_tlast   = (export_rslt) ? PE_NUMBER_J == 0 : int_axis_u_tlast;
+
+  // Output Right AXI-Stream Drivers
+  assign int_axis_r_tdata   = int_axis_l_tdata;
+  assign int_axis_r_tvalid  = int_axis_l_tvalid & forward_l & !drop_l;
+  assign int_axis_l_tready  = int_axis_r_tready & forward_l |  drop_l;
+  assign int_axis_r_tlast   = int_axis_l_tlast;
+
+  // Output Bottom AXI-Stream Drivers
+  assign int_axis_b_tdata   = int_axis_t_tdata;
+  assign int_axis_b_tvalid  = int_axis_t_tvalid & forward_t & !drop_t;
+  assign int_axis_t_tready  = int_axis_b_tready & forward_t |  drop_t;
+  assign int_axis_b_tlast   = int_axis_t_tlast;
+
+endmodule
+
+`resetall

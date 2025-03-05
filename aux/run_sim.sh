@@ -66,12 +66,13 @@ done
 # set positional arguments in their proper place
 eval set -- "$PARAMS"
 
-pc_path=$(dirname $(realpath "$(dirname $0)"))              # path/to/pc/top/directory/kan-fpga
+pc_path=$(dirname $(realpath "$(dirname .)"))              # path/to/pc/top/directory/kan-fpga
 
 print_exec cd $pc_path/py
 
 while [ $1 ] ; do 
     module=$1
+
 
     if [ -e $(realpath -q "../rtl/$module.v") ]; then
         module="tb_$module"
@@ -85,7 +86,13 @@ while [ $1 ] ; do
                 print_exec rm -r "../vcd/$module.vcd"
             fi
         fi
-        print_exec iverilog -y ../rtl -y ../lib/*/rtl -o "../out/$module.out" "../tb/$module.v"
+        lib_path="../lib"
+
+        if [ "parallelized" = $(basename $(realpath ..)) ]; then
+            lib_path="../../lib"
+        fi
+
+        print_exec iverilog -y ../rtl -y "$lib_path/*/rtl" -o "../out/$module.out" "../tb/$module.v"
         print_exec vvp $( [ verbose ] && echo -v ) -n "../out/$module.out"
         print_verbose -- Done
     else
