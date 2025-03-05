@@ -11,6 +11,12 @@ py/*.dot
 py/*codegen.py
 py/example*.py
 
+parallelized/py/*.out
+parallelized/py/parsetab.py
+parallelized/py/*.dot
+parallelized/py/*codegen.py
+parallelized/py/example*.py
+
 !venv/requirements.txt
 !py/example_codegen.py
 test
