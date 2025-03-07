@@ -441,7 +441,7 @@ def main():
     # exit()
 
     os.system(' '.join([
-        os.path.join(TOP_DIR,'aux/run_sim.sh'),
+        os.path.join(TOP_DIR,'auxiliary/run_sim.sh'),
         '-v',
         '-p',
         'LinearProcessingArray',
