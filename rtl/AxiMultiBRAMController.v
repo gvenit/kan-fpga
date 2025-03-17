@@ -133,7 +133,8 @@ reg s_axi_rlast_pipe_reg = 1'b0;
 reg s_axi_rvalid_pipe_reg = 1'b0;
 
 // (* RAM_STYLE="BLOCK" *)
-reg [DATA_WIDTH-1:0] mem[(2**VALID_ADDR_WIDTH)-1:0];
+reg [DATA_WIDTH-1:0] mem[M_PORTS-1:0][(2**BANK_ADDR_WIDTH)-1:0];
+// reg [DATA_WIDTH-1:0] mem[(2**VALID_ADDR_WIDTH)-1:0];
 
 wire [VALID_ADDR_WIDTH-1:0] s_axi_awaddr_valid = s_axi_awaddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
 wire [VALID_ADDR_WIDTH-1:0] s_axi_araddr_valid = s_axi_araddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
@@ -152,14 +153,16 @@ assign s_axi_rresp = 2'b00;
 assign s_axi_rlast = PIPELINE_OUTPUT ? s_axi_rlast_pipe_reg : s_axi_rlast_reg;
 assign s_axi_rvalid = PIPELINE_OUTPUT ? s_axi_rvalid_pipe_reg : s_axi_rvalid_reg;
 
-integer i, j;
+integer i, j, bank;
 
 initial begin
-    // two nested loops for smaller number of iterations per loop
-    // workaround for synthesizer complaints about large loop counts
-    for (i = 0; i < 2**VALID_ADDR_WIDTH; i = i + 2**(VALID_ADDR_WIDTH/2)) begin
-        for (j = i; j < i + 2**(VALID_ADDR_WIDTH/2); j = j + 1) begin
-            mem[j] = 0;
+    for (bank=0; bank < M_PORTS; bank=bank+1) begin
+        // two nested loops for smaller number of iterations per loop
+        // workaround for synthesizer complaints about large loop counts
+        for (i = 0; i < 2**BANK_ADDR_WIDTH; i = i + 2**(BANK_ADDR_WIDTH/2)) begin
+            for (j = i; j < i + 2**(BANK_ADDR_WIDTH/2); j = j + 1) begin
+                mem[bank][j] = 0;
+            end
         end
     end
 end
@@ -253,7 +256,7 @@ always @(posedge clk) begin
 
     for (i = 0; i < WORD_WIDTH; i = i + 1) begin
         if (mem_wr_en & s_axi_wstrb[i]) begin
-            mem[write_addr_valid][WORD_SIZE*i +: WORD_SIZE] <= s_axi_wdata[WORD_SIZE*i +: WORD_SIZE];
+            mem[write_addr_valid % M_PORTS][write_addr_valid / M_PORTS][WORD_SIZE*i +: WORD_SIZE] <= s_axi_wdata[WORD_SIZE*i +: WORD_SIZE];
         end
     end
 
@@ -338,7 +341,7 @@ always @(posedge clk) begin
     s_axi_rvalid_reg <= s_axi_rvalid_next;
 
     if (mem_rd_en) begin
-        s_axi_rdata_reg <= mem[read_addr_valid];
+        s_axi_rdata_reg <= mem[read_addr_valid % M_PORTS][read_addr_valid / M_PORTS];
     end
 
     if (!s_axi_rvalid_pipe_reg || s_axi_rready) begin
@@ -360,21 +363,13 @@ end
 genvar m_port;
 generate
     for ( m_port=0 ; m_port < M_PORTS ; m_port = m_port+1) begin
-        // Memory slice to access with port m_port
-        wire [DATA_WIDTH-1:0]       mem2 [(2**BANK_ADDR_WIDTH)-1:0];
         wire [BANK_ADDR_WIDTH-1:0]  raddr_i = raddr[(m_port+1)*BANK_ADDR_WIDTH-1:m_port*BANK_ADDR_WIDTH];
         reg  [DATA_WIDTH-1:0]       rdata_i;
 
         assign rdata [(m_port+1)*DATA_WIDTH-1:m_port*DATA_WIDTH] = rdata_i;
 
-        genvar addr_i;
-        for (addr_i=0; addr_i < 2**BANK_ADDR_WIDTH; addr_i=addr_i+1) begin
-            if (addr_i*M_PORTS + m_port < 2**VALID_ADDR_WIDTH) 
-                assign mem2[addr_i] = mem[addr_i*M_PORTS + m_port];
-        end
-
         always @(posedge clk ) begin
-            rdata_i <= mem2[raddr_i];
+            rdata_i <= mem[m_port][raddr_i];
         end
     end
 endgenerate
