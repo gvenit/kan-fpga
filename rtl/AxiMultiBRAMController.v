@@ -9,6 +9,8 @@
  * Based on AXI-4 RAM by Alex Forencich
  * https://github.com/alexforencich/verilog-axi
  * 
+ * Notice : BRAM control interfaces only allow read operations
+ * 
  */
 module AxiMultiBRAMController #
 (
@@ -23,9 +25,9 @@ module AxiMultiBRAMController #
     // Extra pipeline register on output
     parameter PIPELINE_OUTPUT = 0,
     // Number of Banks
-    parameter S_PORTS = 1,
+    parameter M_PORTS = 1,
     // Bank Address Width
-    parameter BANK_ADDR_WIDTH = $clog2(2 ** (ADDR_WIDTH - $clog2(STRB_WIDTH)) / S_PORTS)
+    parameter BANK_ADDR_WIDTH = $clog2(2 ** (ADDR_WIDTH - $clog2(STRB_WIDTH)) / M_PORTS)
 )
 (
     input  wire                   clk,
@@ -67,8 +69,8 @@ module AxiMultiBRAMController #
     output wire                   s_axi_rvalid,
     input  wire                   s_axi_rready,
 
-    input  wire [S_PORTS*BANK_ADDR_WIDTH-1:0] raddr,
-    output wire [S_PORTS*DATA_WIDTH-1:0]      rdata
+    input  wire [M_PORTS*BANK_ADDR_WIDTH-1:0] raddr,
+    output wire [M_PORTS*DATA_WIDTH-1:0]      rdata
 
 );
 
@@ -355,19 +357,20 @@ always @(posedge clk) begin
     end
 end
 
-genvar s_port;
+genvar m_port;
 generate
-    for ( s_port=0 ; s_port < S_PORTS ; s_port = s_port+1) begin
+    for ( m_port=0 ; m_port < M_PORTS ; m_port = m_port+1) begin
+        // Memory slice to access with port m_port
         wire [DATA_WIDTH-1:0]       mem2 [(2**BANK_ADDR_WIDTH)-1:0];
-        wire [BANK_ADDR_WIDTH-1:0]  raddr_i = raddr[(s_port+1)*BANK_ADDR_WIDTH-1:s_port*BANK_ADDR_WIDTH];
+        wire [BANK_ADDR_WIDTH-1:0]  raddr_i = raddr[(m_port+1)*BANK_ADDR_WIDTH-1:m_port*BANK_ADDR_WIDTH];
         reg  [DATA_WIDTH-1:0]       rdata_i;
 
-        assign rdata [(s_port+1)*DATA_WIDTH-1:s_port*DATA_WIDTH] = rdata_i;
+        assign rdata [(m_port+1)*DATA_WIDTH-1:m_port*DATA_WIDTH] = rdata_i;
 
         genvar addr_i;
         for (addr_i=0; addr_i < 2**BANK_ADDR_WIDTH; addr_i=addr_i+1) begin
-            if (addr_i*S_PORTS + s_port < 2**VALID_ADDR_WIDTH) 
-                assign mem2[addr_i] = mem[addr_i*S_PORTS + s_port];
+            if (addr_i*M_PORTS + m_port < 2**VALID_ADDR_WIDTH) 
+                assign mem2[addr_i] = mem[addr_i*M_PORTS + m_port];
         end
 
         always @(posedge clk ) begin
