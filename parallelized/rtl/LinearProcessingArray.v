@@ -6,7 +6,7 @@
  * LinearProcessingArray : Accepts N+M and returns N AXI-Streams. Input
  *   The module works as a systolic array for the Matrix-Matrix Multiplication.
  * 
- * Array Positioning :
+ * Array Positioning : (Weights from Top to Bottom)
  *                         i
  *                  --------------->
  *              |  {0,0}  ...  {I-1,0}
@@ -66,52 +66,51 @@ module LinearProcessingArray #(
   /*
    * AXI Stream Top Input -- Weight Input
    */
-  input  wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_OP1-1:0]    s_axis_top_tdata,
-  input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_top_tvalid,
-  output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_top_tready,
-  input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_top_tlast,
-  input  wire [PE_NUMBER_I*PE_NUMBER_J*ID_WIDTH-1:0]          s_axis_top_tid,
-  input  wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        s_axis_top_tdest,
-  input  wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        s_axis_top_tuser,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_OP1-1:0]    s_axis_t_tdata,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tvalid,
+  output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tready,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tlast,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J*ID_WIDTH-1:0]          s_axis_t_tid,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        s_axis_t_tdest,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        s_axis_t_tuser,
 
   // /*
   //  * AXI Stream Bottom Output -- Weights are dropped
   //  */
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_RSLT-1:0]   m_axis_down_tdata,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_down_tvalid,
-  // input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_down_tready,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_down_tlast,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*ID_WIDTH-1:0]          m_axis_down_tid,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        m_axis_down_tdest,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        m_axis_down_tuser,
+  // output wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_RSLT-1:0]   m_axis_b_tdata,
+  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tvalid,
+  // input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tready,
+  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tlast,
+  // output wire [PE_NUMBER_I*PE_NUMBER_J*ID_WIDTH-1:0]          m_axis_b_tid,
+  // output wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        m_axis_b_tdest,
+  // output wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        m_axis_b_tuser,
 
   /*
    * AXI Stream Left Input -- Data Input
    */
-  input  wire [PE_NUMBER_J*BATCH_SIZE*DATA_WIDTH_OP0-1:0]    s_axis_left_tdata,
-  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_left_tvalid,
-  output wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_left_tready,
-  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_left_tlast,
-  input  wire [PE_NUMBER_J*BATCH_SIZE*ID_WIDTH-1:0]          s_axis_left_tid,
-  input  wire [PE_NUMBER_J*BATCH_SIZE*DEST_WIDTH-1:0]        s_axis_left_tdest,
-  input  wire [PE_NUMBER_J*BATCH_SIZE*USER_WIDTH-1:0]        s_axis_left_tuser,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*DATA_WIDTH_OP0-1:0]    s_axis_l_tdata,
+  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tvalid,
+  output wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tready,
+  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tlast,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*ID_WIDTH-1:0]          s_axis_l_tid,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*DEST_WIDTH-1:0]        s_axis_l_tdest,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*USER_WIDTH-1:0]        s_axis_l_tuser,
 
   /*
    * AXI Stream Down Output -- Partial Sum Output
    */
-  output wire [PE_NUMBER_I*BATCH_SIZE*DATA_WIDTH_RSLT-1:0]   m_axis_down_tdata,
-  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_down_tvalid,
-  input  wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_down_tready,
-  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_down_tlast,
-  output wire [PE_NUMBER_I*BATCH_SIZE*ID_WIDTH-1:0]          m_axis_down_tid,
-  output wire [PE_NUMBER_I*BATCH_SIZE*DEST_WIDTH-1:0]        m_axis_down_tdest,
-  output wire [PE_NUMBER_I*BATCH_SIZE*USER_WIDTH-1:0]        m_axis_down_tuser,
+  output wire [PE_NUMBER_I*BATCH_SIZE*DATA_WIDTH_RSLT-1:0]   m_axis_d_tdata,
+  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tvalid,
+  input  wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tready,
+  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tlast,
+  output wire [PE_NUMBER_I*BATCH_SIZE*ID_WIDTH-1:0]          m_axis_d_tid,
+  output wire [PE_NUMBER_I*BATCH_SIZE*DEST_WIDTH-1:0]        m_axis_d_tdest,
+  output wire [PE_NUMBER_I*BATCH_SIZE*USER_WIDTH-1:0]        m_axis_d_tuser,
 
   /*
    * Error Outputs
    */
   output wire err_unalligned_data,
-  output wire err_user_flag,
 
   /*
    * Interrupts
@@ -126,31 +125,30 @@ module LinearProcessingArray #(
 
   // Internal AXI-Stream Signals
   // Output Partial Sums (Up->Down)
-  wire [DATA_WIDTH_PSUM-1:0]                                int_axis_ud_tdata    [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1];
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_ud_tvalid;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_ud_tready;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_ud_tlast;
+  wire [DATA_WIDTH_PSUM-1:0]                        int_axis_ud_tdata    [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1];
+  wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tvalid;
+  wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tready;
+  wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tlast;
 
   // Input Data (Left->Right)
-  wire [DATA_WIDTH_OP0-1:0]                                 int_axis_lr_tdata    [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1];
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_lr_tvalid;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_lr_tready;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_lr_tlast;
+  wire [DATA_WIDTH_OP0-1:0]                         int_axis_lr_tdata    [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1];
+  wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tvalid;
+  wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tready;
+  wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tlast;
 
   // Input Weights (Top->Bottom)
-  wire [DATA_WIDTH_OP1-1:0]                                 int_axis_tb_tdata    [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1];
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_tb_tvalid;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_tb_tready;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_tb_tlast;
-
+  wire [DATA_WIDTH_OP1-1:0]                         int_axis_tb_tdata    [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1];
+  wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tvalid;
+  wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tready;
+  wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tlast;
 
   // Internal Error Signals
-  wire [0:PE_NUMBER_I*PE_NUMBER_J*BATCH_SIZE-1] err_unalligned_data_int, err_user_flag_int;
+  wire [0:PE_NUMBER_I*PE_NUMBER_J*BATCH_SIZE-1] err_unalligned_data_int;
 
   // Debugging Signals
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_lr_handshake = int_axis_lr_tready & int_axis_lr_tvalid;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_ud_handshake = int_axis_ud_tready & int_axis_ud_tvalid;
-  wire [0:(PE_NUMBER_I+1)*(PE_NUMBER_J+1)*(BATCH_SIZE+1)-1] int_axis_tb_handshake = int_axis_tb_tready & int_axis_tb_tvalid;
+  wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_handshake = int_axis_ud_tready & int_axis_ud_tvalid;
+  wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_handshake = int_axis_lr_tready & int_axis_lr_tvalid;
+  wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_handshake = int_axis_tb_tready & int_axis_tb_tvalid;
 
   // Internal Reset
   reg  [3:0] rst_pipeline;
@@ -158,7 +156,6 @@ module LinearProcessingArray #(
 
   // Error Signal Reduction
   assign err_unalligned_data = |err_unalligned_data_int;
-  assign err_user_flag = |err_user_flag_int;
 
   // Reset Management
   always @(posedge clk ) begin
@@ -176,7 +173,7 @@ module LinearProcessingArray #(
   generate
     always @* begin
       if (INTERNAL_RESET)
-        rst_pipeline[0] <= rst | err_unalligned_data | err_user_flag;
+        rst_pipeline[0] <= rst | err_unalligned_data;
       else 
        rst_pipeline[0] <= rst;
     end
@@ -187,13 +184,12 @@ module LinearProcessingArray #(
           localparam PE_POSITION_I = pe_pos_i;
           localparam PE_POSITION_J = pe_pos_j;
           localparam UID    = (  batch    *  PE_NUMBER_J    +  PE_POSITION_J    ) *  PE_NUMBER_I    +  PE_POSITION_I;
-          localparam NODE   = (  batch    * (PE_NUMBER_J+1) +  PE_POSITION_J    ) * (PE_NUMBER_I+1) +  PE_POSITION_I;
-          localparam NODE_U = (  batch    * (PE_NUMBER_J+1) + (PE_POSITION_J-1) ) * (PE_NUMBER_I+1) +  PE_POSITION_I;
-          localparam NODE_L = (  batch    * (PE_NUMBER_J+1) +  PE_POSITION_J    ) * (PE_NUMBER_I+1) + (PE_POSITION_I-1);
-          localparam NODE_D = (  batch    * (PE_NUMBER_J+1) + (PE_POSITION_J+1) ) * (PE_NUMBER_I+1) +  PE_POSITION_I;
-          localparam NODE_R = (  batch    * (PE_NUMBER_J+1) +  PE_POSITION_J    ) * (PE_NUMBER_I+1) + (PE_POSITION_I+1);
-          localparam NODE_T = ( (batch-1) * (PE_NUMBER_J+1) +  PE_POSITION_J    ) * (PE_NUMBER_I+1) +  PE_POSITION_I;
-          localparam NODE_B = ( (batch+1) * (PE_NUMBER_J+1) +  PE_POSITION_J    ) * (PE_NUMBER_I+1) +  PE_POSITION_I;
+          localparam NODE_L = (  batch    *  PE_NUMBER_J    +  PE_POSITION_J    ) * (PE_NUMBER_I+1) +  PE_POSITION_I;
+          localparam NODE_R = (  batch    *  PE_NUMBER_J    +  PE_POSITION_J    ) * (PE_NUMBER_I+1) + (PE_POSITION_I+1);
+          localparam NODE_T = (  batch    *  PE_NUMBER_J    +  PE_POSITION_J    ) *  PE_NUMBER_I    +  PE_POSITION_I;
+          localparam NODE_B = ( (batch+1) *  PE_NUMBER_J    +  PE_POSITION_J    ) *  PE_NUMBER_I    +  PE_POSITION_I;
+          localparam NODE_U = (  batch    * (PE_NUMBER_J+1) +  PE_POSITION_J    ) *  PE_NUMBER_I    +  PE_POSITION_I;
+          localparam NODE_D = (  batch    * (PE_NUMBER_J+1) + (PE_POSITION_J+1) ) *  PE_NUMBER_I    +  PE_POSITION_I;
 
           LinearProcessingElement #(
             // Number of PEs in Processing Array i axis
@@ -210,60 +206,54 @@ module LinearProcessingArray #(
             .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_OP0),
             // Treat operand 0 as unsigned
             .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
-            // Data Width of Input Weights (U-AXIS)
+            // Data Width of Input Weights (T-AXIS)
             .DATA_WIDTH_OP1(DATA_WIDTH_OP1),
+            // Fractional Bits of Input Weights (T-AXIS)
+            .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
             // Treat operand 1 as unsigned
             .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
-            // Fractional Bits of Input Weights (U-AXIS)
-            .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
             // Data Width of Output Data (D-AXIS)
-            .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
-            // Fractional Bits of Output Data (D-AXIS)
-            .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
-            // tuser signal width
-            .USER_WIDTH(USER_WIDTH_INT)
-          ) LPE_ij (
+            .DATA_WIDTH_PSUM(DATA_WIDTH_PSUM)
+          ) LPE_ijk (
             .clk(clk),
             .rst(rst_int),
-            .s_axis_u_tdata(int_axis_ud_tdata[NODE]),
-            .s_axis_u_tvalid(int_axis_ud_tvalid[NODE]),
-            .s_axis_u_tready(int_axis_ud_tready[NODE]),
-            .s_axis_u_tlast(int_axis_ud_tlast[NODE]),
+            .s_axis_u_tdata(int_axis_ud_tdata[NODE_U]),
+            .s_axis_u_tvalid(int_axis_ud_tvalid[NODE_U]),
+            .s_axis_u_tready(int_axis_ud_tready[NODE_U]),
+            .s_axis_u_tlast(int_axis_ud_tlast[NODE_U]),
             .m_axis_d_tdata(int_axis_ud_tdata[NODE_D]),
             .m_axis_d_tvalid(int_axis_ud_tvalid[NODE_D]),
             .m_axis_d_tready(int_axis_ud_tready[NODE_D]),
             .m_axis_d_tlast(int_axis_ud_tlast[NODE_D]),
-            .s_axis_l_tdata(int_axis_lr_tdata[NODE]),
-            .s_axis_l_tvalid(int_axis_lr_tvalid[NODE]),
-            .s_axis_l_tready(int_axis_lr_tready[NODE]),
-            .s_axis_l_tlast(int_axis_lr_tlast[NODE]),
+            .s_axis_l_tdata(int_axis_lr_tdata[NODE_U]),
+            .s_axis_l_tvalid(int_axis_lr_tvalid[NODE_U]),
+            .s_axis_l_tready(int_axis_lr_tready[NODE_U]),
+            .s_axis_l_tlast(int_axis_lr_tlast[NODE_U]),
             .m_axis_r_tdata(int_axis_lr_tdata[NODE_R]),
             .m_axis_r_tvalid(int_axis_lr_tvalid[NODE_R]),
             .m_axis_r_tready(int_axis_lr_tready[NODE_R]),
             .m_axis_r_tlast(int_axis_lr_tlast[NODE_R]),
-            .s_axis_t_tdata(int_axis_tb_tdata[NODE]),
-            .s_axis_t_tvalid(int_axis_tb_tvalid[NODE]),
-            .s_axis_t_tready(int_axis_tb_tready[NODE]),
-            .s_axis_t_tlast(int_axis_tb_tlast[NODE]),
+            .s_axis_t_tdata(int_axis_tb_tdata[NODE_U]),
+            .s_axis_t_tvalid(int_axis_tb_tvalid[NODE_U]),
+            .s_axis_t_tready(int_axis_tb_tready[NODE_U]),
+            .s_axis_t_tlast(int_axis_tb_tlast[NODE_U]),
             .m_axis_b_tdata(int_axis_tb_tdata[NODE_B]),
             .m_axis_b_tvalid(int_axis_tb_tvalid[NODE_B]),
             .m_axis_b_tready(int_axis_tb_tready[NODE_B]),
             .m_axis_b_tlast(int_axis_tb_tlast[NODE_B]),
-            .err_unalligned_data(err_unalligned_data_int[UID]),
-            .err_user_flag(err_user_flag_int[UID])
+            .err_unalligned_data(err_unalligned_data_int[UID])
           );
 
           if (PE_POSITION_I == 0) begin
+            localparam LFT_POS = batch * PE_NUMBER_J + PE_POSITION_J;
             localparam LSB = (batch * PE_NUMBER_J + PE_POSITION_J)*DATA_WIDTH_OP0;
             localparam MSB = LSB + DATA_WIDTH_OP0 -1;
 
             // Connect Input to Left Border
-            assign int_axis_lr_tdata   [NODE]          = s_axis_left_tdata  [MSB:LSB];
-            assign int_axis_lr_tvalid  [NODE]          = s_axis_left_tvalid [PE_POSITION_J];
-            assign s_axis_left_tready  [PE_POSITION_J] = int_axis_lr_tready [NODE];
-            assign int_axis_lr_tlast   [NODE]          = s_axis_left_tlast  [PE_POSITION_J];
-            // assign int_axis_lr_tid    [NODE]          = s_axis_left_tid      [(PE_POSITION_J+1)*ID_WIDTH-1:PE_POSITION_J*ID_WIDTH];
-            // assign int_axis_lr_tdest  [NODE]          = s_axis_left_tdest    [(PE_POSITION_J+1)*DEST_WIDTH-1:PE_POSITION_J*DEST_WIDTH];
+            assign int_axis_lr_tdata   [NODE_U]    = s_axis_l_tdata  [MSB:LSB];
+            assign int_axis_lr_tvalid  [NODE_U]    = s_axis_l_tvalid [LFT_POS];
+            assign s_axis_l_tready     [LFT_POS] = int_axis_lr_tready [NODE_U];
+            assign int_axis_lr_tlast   [NODE_U]    = s_axis_l_tlast  [LFT_POS];
           end 
 
           if (PE_POSITION_I == PE_NUMBER_I-1) begin
@@ -277,10 +267,10 @@ module LinearProcessingArray #(
             localparam MSB = LSB + DATA_WIDTH_OP1 -1;
 
             // Connect Input to Top Border
-            assign int_axis_tb_tdata  [NODE]    = s_axis_top_tdata   [MSB:LSB];
-            assign int_axis_tb_tvalid [NODE]    = s_axis_top_tvalid  [TOP_POS];
-            assign s_axis_top_tready  [TOP_POS] = int_axis_tb_tready [NODE];
-            assign int_axis_tb_tlast  [NODE]    = s_axis_top_tlast   [TOP_POS];
+            assign int_axis_tb_tdata  [NODE_U]    = s_axis_t_tdata  [MSB:LSB];
+            assign int_axis_tb_tvalid [NODE_U]    = s_axis_t_tvalid [TOP_POS];
+            assign s_axis_t_tready    [TOP_POS] = int_axis_tb_tready [NODE_U];
+            assign int_axis_tb_tlast  [NODE_U]    = s_axis_t_tlast  [TOP_POS];
           end
           
           if (batch == BATCH_SIZE-1) begin
@@ -289,19 +279,21 @@ module LinearProcessingArray #(
           end 
           
           if (PE_POSITION_J == 0) begin
-            // Close Input from Up Border
-            assign int_axis_ud_tvalid[NODE] = 1'b0;
+            // Close Input from Up Border -- Disconnect Up Border
+            assign int_axis_ud_tdata  [NODE_U] = {DATA_WIDTH_PSUM{1'bZ}};
+            assign int_axis_ud_tvalid [NODE_U] = 1'bZ;
+            assign int_axis_ud_tlast  [NODE_U] = 1'bZ;
           end 
           
           if (PE_POSITION_J == PE_NUMBER_J-1) begin
-            localparam DOWN_POS = batch * PE_NUMBER_I + PE_POSITION_I;
-            localparam LSB = DOWN_POS*DATA_WIDTH_PSUM + MAC_RSLT_LSB;
+            localparam DWN_POS = batch * PE_NUMBER_I + PE_POSITION_I;
+            localparam LSB = DWN_POS*DATA_WIDTH_PSUM;
             localparam MSB = LSB + DATA_WIDTH_RSLT -1;
 
-            assign m_axis_down_tdata  [MSB:LSB]  = int_axis_tb_tdata  [NODE_D][MAC_RSLT_MSB:MAC_RSLT_LSB];
-            assign m_axis_down_tvalid [DOWN_POS] = int_axis_tb_tvalid [NODE_D];
-            assign int_axis_tb_tready [NODE_D]   = m_axis_down_tready [DOWN_POS];
-            assign m_axis_down_tlast  [DOWN_POS] = int_axis_tb_tlast  [NODE_D];
+            assign m_axis_d_tdata     [MSB:LSB]  = int_axis_ud_tdata  [NODE_D][MAC_RSLT_MSB:MAC_RSLT_LSB];
+            assign m_axis_d_tvalid    [DWN_POS]  = int_axis_ud_tvalid [NODE_D];
+            assign int_axis_ud_tready [NODE_D]   = m_axis_d_tready   [DWN_POS];
+            assign m_axis_d_tlast     [DWN_POS]  = int_axis_ud_tlast  [NODE_D];
           end 
         end 
       end

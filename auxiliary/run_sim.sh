@@ -92,7 +92,7 @@ while [ $1 ] ; do
             lib_path="../../lib"
         fi
 
-        print_exec iverilog -y ../rtl -y "$lib_path/*/rtl" -o "../out/$module.out" "../tb/$module.v"
+        print_exec iverilog -y ../rtl -y "$lib_path/*/rtl" -Wall -o "../out/$module.out" "../tb/$module.v"
         print_exec vvp $( [ verbose ] && echo -v ) -n "../out/$module.out"
         print_verbose -- Done
     else

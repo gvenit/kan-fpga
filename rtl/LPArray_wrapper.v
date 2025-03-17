@@ -101,7 +101,7 @@ module LPArray_wrapper #(
   output wire err_user_flag
 );
 
-LPArray_wrapper #(
+LinearProcessingArray #(
   .PE_NUMBER_I(PE_NUMBER_I),
   .PE_NUMBER_J(PE_NUMBER_J),
   .INTERNAL_RESET(INTERNAL_RESET),
