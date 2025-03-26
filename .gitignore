@@ -1,3 +1,5 @@
+# python
+
 venv/*
 *-old*
 *_old*
@@ -20,3 +22,10 @@ parallelized/py/example*.py
 !venv/requirements.txt
 !py/example_codegen.py
 test
+
+# vivado
+
+vivado/vivado_22.2/KAN_SoC/KAN_SoC.cache
+vivado/vivado_22.2/KAN_SoC/KAN_SoC.hw
+vivado/vivado_22.2/KAN_SoC/KAN_SoC.ip_user_files
+vivado/vivado_22.2/KAN_SoC/KAN_SoC.sim
