@@ -37,6 +37,13 @@ module KanLayer #(
     parameter DATA_WE = DATA_WIDTH_DATA / 8,
 
     /*------------------------------------------------------------------
+      GRID parameters for AXI stream and BRAM interface
+    ------------------------------------------------------------------*/
+
+    // depth of the grid bram
+    parameter GRID_DEPTH = 256,
+
+    /*------------------------------------------------------------------
       SCALE streams parameters
     ------------------------------------------------------------------*/
 
@@ -132,21 +139,28 @@ module KanLayer #(
     parameter TDEST_ROUTE = 0
   ) (
     /*------------------------------------------------------------------
-        BRAM Control interface
-
-        This interface is made to match
-        exactly the one that the BRAM
-        controller has on its rhs
-        on the Vivado Block Design
+        BRAM Data Control interface
     ------------------------------------------------------------------*/
 
-    input wire                       bram_rst_a,
-    input wire                       bram_clk_a,
-    input wire                       bram_en_a,
-    input wire [BRAM_CTR_WE-1:0]     bram_we_a,
-    input wire [BRAM_CTR_ADDR-1:0]   bram_addr_a,
-    input wire [BRAM_CTR_WIDTH-1:0]  bram_wrdata_a,
-    output wire [BRAM_CTR_WIDTH-1:0] bram_rddata_a,
+    input wire                       bram_data_ctr_rst,
+    input wire                       bram_data_ctr_clk,
+    input wire                       bram_data_ctr_en,
+    input wire [BRAM_CTR_WE-1:0]     bram_data_ctr_we,
+    input wire [BRAM_CTR_ADDR-1:0]   bram_data_ctr_addr,
+    input wire [BRAM_CTR_WIDTH-1:0]  bram_data_ctr_wrdata,
+    output wire [BRAM_CTR_WIDTH-1:0] bram_data_ctr_rddata,
+
+    /*------------------------------------------------------------------
+        BRAM Grid Control interface
+    ------------------------------------------------------------------*/
+
+    input wire                       bram_grid_ctr_rst,
+    input wire                       bram_grid_ctr_clk,
+    input wire                       bram_grid_ctr_en,
+    input wire [BRAM_CTR_WE-1:0]     bram_grid_ctr_we,
+    input wire [BRAM_CTR_ADDR-1:0]   bram_grid_ctr_addr,
+    input wire [BRAM_CTR_WIDTH-1:0]  bram_grid_ctr_wrdata,
+    output wire [BRAM_CTR_WIDTH-1:0] bram_grid_ctr_rddata,
 
     /*------------------------------------------------------------------
         AXI-Lite Control Slave interface
@@ -206,28 +220,44 @@ module KanLayer #(
    Local Paramters
   *************************************************************************************/
 
-  localparam IN_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total ram length
-  localparam IN_ADDR = `LOG2(IN_DEPTH);               // number of input address bits of total memory
-  localparam IN_WE = BRAM_CTR_WIDTH / 8;              // number of input write-enable bits of total memory
+  localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total data ram length
+  localparam DATA_ITRL_ADDR = `LOG2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
+
+  localparam GRID_ITRL_ADDR = `LOG2(GRID_DEPTH);  // number of input address bits of total grid memory
 
   /*************************************************************************************
    Internal Signals
   *************************************************************************************/
 
-  // ram packed interface out of the translator into the multi-bank brams
+  // data ram packed interface out of the translator into the multi-bank brams
 
-  wire [DATA_BANKS-1:0]                   mb_bram_ctr_en;
-  wire [(DATA_BANKS*DATA_WE)-1:0]         mb_bram_ctr_we;
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       mb_bram_ctr_addr;
-  wire [(DATA_BANKS*DATA_WIDTH_DATA)-1:0] mb_bram_ctr_wrdata;
-  wire [(DATA_BANKS*DATA_WIDTH_DATA)-1:0] mb_bram_ctr_rddata;
+  wire [DATA_BANKS-1:0]                   mb_bram_data_ctr_en;
+  wire [(DATA_BANKS*DATA_WE)-1:0]         mb_bram_data_ctr_we;
+  wire [(DATA_BANKS*DATA_ADDR)-1:0]       mb_bram_data_ctr_addr;
+  wire [(DATA_BANKS*DATA_WIDTH_DATA)-1:0] mb_bram_data_ctr_wrdata;
+  wire [(DATA_BANKS*DATA_WIDTH_DATA)-1:0] mb_bram_data_ctr_rddata;
 
-  // ram packed interface for use internally in the architecture
+  // data ram packed interface for use internally in the architecture
 
-  wire [DATA_BANKS-1:0]                   mb_bram_en;
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       mb_bram_addr;
-  wire [(DATA_BANKS*DATA_WIDTH_DATA)-1:0] mb_bram_rddata;
-  wire [DATA_BANKS-1:0]                   mb_bram_rdstrobe;
+  wire [DATA_BANKS-1:0]                   mb_bram_data_en;
+  wire [(DATA_BANKS*DATA_ADDR)-1:0]       mb_bram_data_addr;
+  wire [(DATA_BANKS*DATA_WIDTH_DATA)-1:0] mb_bram_data_rddata;
+  wire [DATA_BANKS-1:0]                   mb_bram_data_rdstrobe;
+    
+  // grid ram interface out of the translator into the internal brams
+
+  wire                        itrl_bram_grid_ctr_en;
+  wire [DATA_WE-1:0]          itrl_bram_grid_ctr_we;
+  wire [DATA_ADDR-1:0]        itrl_bram_grid_ctr_addr;
+  wire [DATA_WIDTH_DATA-1:0]  itrl_bram_grid_ctr_wrdata;
+  wire [DATA_WIDTH_DATA-1:0]  itrl_bram_grid_ctr_rddata;
+
+  // grid ram interface for use internally in the architecture
+
+  wire                        bram_grid_en;
+  wire [DATA_ADDR-1:0]        bram_grid_addr;
+  wire [DATA_WIDTH_DATA-1:0]  bram_grid_rddata;
+  wire                        bram_grid_rdstrobe;
     
   // control flags that connecy to axi-lite mm interface
 
@@ -301,38 +331,70 @@ module KanLayer #(
   BramIntrfTranslator #(
     .IN_WIDTH(BRAM_CTR_WIDTH),
     .OUT_WIDTH(DATA_WIDTH_DATA),
-    .DATA_BANKS(DATA_BANKS),
+    .BANKS(DATA_BANKS),
     .OUT_DEPTH(DATA_BANK_DEPTH)
-  ) bram_interface_translator_inst (
-    .en_i(bram_en_a),
-    .we_i(bram_we_a),
-    .addr_i(bram_addr_a[IN_ADDR-1:0]),
-    .wrdata_i(bram_wrdata_a),
-    .rddata_i(bram_rddata_a),
-    .en_o(mb_bram_ctr_en),
-    .we_o(mb_bram_ctr_we),
-    .addr_o(mb_bram_ctr_addr),
-    .wrdata_o(mb_bram_ctr_wrdata),
-    .rddata_o(mb_bram_ctr_rddata)
+  ) data_bram_interface_translator_inst (
+    .en_i(bram_data_ctr_en),
+    .we_i(bram_data_ctr_we),
+    .addr_i(bram_data_ctr_addr[DATA_ITRL_ADDR-1:0]),
+    .wrdata_i(bram_data_ctr_wrdata),
+    .rddata_i(bram_data_ctr_rddata),
+    .en_o(mb_bram_data_ctr_en),
+    .we_o(mb_bram_data_ctr_we),
+    .addr_o(mb_bram_data_ctr_addr),
+    .wrdata_o(mb_bram_data_ctr_wrdata),
+    .rddata_o(mb_bram_data_ctr_rddata)
   );
 
   MultiBankBram #(
-    .DATA_BANKS(DATA_BANKS),
-    .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
-    .DATA_BANK_DEPTH(DATA_BANK_DEPTH),
-    .DATA_ADDR(DATA_ADDR),
-    .DATA_WE(DATA_WE)
-  ) multi_bank_data_bram_inst (
-    .clk(bram_clk_a),
-    .ena(mb_bram_ctr_en),
-    .wea(mb_bram_ctr_we),
-    .addra(mb_bram_ctr_addr),
-    .dina(mb_bram_ctr_wrdata),
-    .douta(mb_bram_ctr_rddata),
-    .enb(mb_bram_en),
-    .addrb(mb_bram_addr),
-    .doutb(mb_bram_rddata),
-    .validb(mb_bram_rdstrobe)
+    .BANKS(DATA_BANKS),
+    .WIDTH(DATA_WIDTH_DATA),
+    .DEPTH(DATA_BANK_DEPTH)
+  ) data_multi_bank_bram_inst (
+    .clk(bram_data_ctr_clk),
+    .ena(mb_bram_data_ctr_en),
+    .wea(mb_bram_data_ctr_we),
+    .addra(mb_bram_data_ctr_addr),
+    .dina(mb_bram_data_ctr_wrdata),
+    .douta(mb_bram_data_ctr_rddata),
+    .enb(mb_bram_data_en),
+    .addrb(mb_bram_data_addr),
+    .doutb(mb_bram_data_rddata),
+    .validb(mb_bram_data_rdstrobe)
+  );
+
+  BramIntrfTranslator #(
+    .IN_WIDTH(BRAM_CTR_WIDTH),
+    .OUT_WIDTH(DATA_WIDTH_DATA),
+    .BANKS(1),
+    .OUT_DEPTH(GRID_DEPTH)
+  ) grid_bram_interface_translator_inst (
+    .en_i(bram_grid_ctr_en),
+    .we_i(bram_grid_ctr_we),
+    .addr_i(bram_grid_ctr_addr[GRID_ITRL_ADDR-1:0]),
+    .wrdata_i(bram_grid_ctr_wrdata),
+    .rddata_i(bram_grid_ctr_rddata),
+    .en_o(itrl_bram_grid_ctr_en),
+    .we_o(itrl_bram_grid_ctr_we),
+    .addr_o(itrl_bram_grid_ctr_addr),
+    .wrdata_o(itrl_bram_grid_ctr_wrdata),
+    .rddata_o(itrl_bram_grid_ctr_rddata)
+  );
+
+  Bram #(
+    .WIDTH(DATA_WIDTH_DATA),
+    .DEPTH(GRID_DEPTH)
+  ) grid_bram_inst (
+    .clk(bram_grid_ctr_clk),
+    .ena(itrl_bram_grid_ctr_en),
+    .wea(itrl_bram_grid_ctr_we),
+    .addra(itrl_bram_grid_ctr_addr),
+    .dina(itrl_bram_grid_ctr_wrdata),
+    .douta(itrl_bram_grid_ctr_rddata),
+    .enb(bram_grid_en),
+    .addrb(bram_grid_addr),
+    .doutb(bram_grid_rddata),
+    .validb(bram_grid_rdstrobe)
   );
 
 	AxiLiteControlRegisters #(
@@ -394,6 +456,51 @@ module KanLayer #(
     .S_AXI_RVALID(s01_axi_rvalid),
     .S_AXI_RREADY(s01_axi_rready)
 	);
+
+  MemoryControlUnit #(
+    .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
+    .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
+    .DATA_CHANNELS(DATA_CHANNELS),
+    .DATA_BANKS(DATA_BANKS),
+    .DATA_BANK_DEPTH(DATA_BANK_DEPTH),
+    .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
+    .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
+    .SHARE_SCALE(SHARE_SCALE),
+    .ID_WIDTH(ID_WIDTH),
+    .DEST_WIDTH(DEST_WIDTH),
+    .USER_WIDTH(USER_WIDTH)
+  ) memory_controler_unit_inst (
+    .mb_bram_data_en(mb_bram_data_en),
+    .mb_bram_data_addr(mb_bram_data_addr),
+    .mb_bram_data_rddata(mb_bram_data_rddata),
+    .mb_bram_data_rdstrobe(mb_bram_data_rdstrobe),
+    .bram_grid_en(bram_grid_en),
+    .bram_grid_addr(bram_grid_addr),
+    .bram_grid_rddata(bram_grid_rddata),
+    .bram_grid_rdstrobe(bram_grid_rdstrobe),
+    .scale_reg(scale_reg),
+    .axis_data_tdata(axis_data_tdata),
+    .axis_data_tvalid(axis_data_tvalid),
+    .axis_data_tready(axis_data_tready),
+    .axis_data_tlast(axis_data_tlast),
+    .axis_data_tid(axis_data_tid),
+    .axis_data_tdest(axis_data_tdest),
+    .axis_data_tuser(axis_data_tuser),
+    .axis_grid_tdata(axis_grid_tdata),
+    .axis_grid_tvalid(axis_grid_tvalid),
+    .axis_grid_tready(axis_grid_tready),
+    .axis_grid_tlast(axis_grid_tlast),
+    .axis_grid_tid(axis_grid_tid),  
+    .axis_grid_tdest(axis_grid_tdest),
+    .axis_grid_tuser(axis_grid_tuser),
+    .axis_scale_tdata(axis_scale_tdata),
+    .axis_scale_tvalid(axis_scale_tvalid),
+    .axis_scale_tready(axis_scale_tready),
+    .axis_scale_tlast(axis_scale_tlast),
+    .axis_scale_tid(axis_scale_tid), 
+    .axis_scale_tdest(axis_scale_tdest),
+    .axis_scale_tuser(axis_scale_tuser)
+  );
 
   DataProcessor #(
     .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
