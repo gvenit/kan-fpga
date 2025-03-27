@@ -1,5 +1,5 @@
 
-`include "utils.vh"
+// `include "utils.vh"
 
 module MemoryUnit #(
 
@@ -19,7 +19,7 @@ module MemoryUnit #(
     // number of elements on a single bram bank
     parameter DATA_BANK_DEPTH = 256,
     // number of address bits needed for each bank
-    parameter DATA_ADDR = `LOG2(DATA_BANK_DEPTH),
+    parameter DATA_ADDR = $clog2(DATA_BANK_DEPTH),
 
     /*------------------------------------------------------------------
       SCALE streams parameters

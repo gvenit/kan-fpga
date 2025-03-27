@@ -2,7 +2,7 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-`include "utils.vh"
+// `include "utils.vh"
 
 /* 
  * LPEControlUnit : Control Unit for LinearProcessingElement
@@ -15,7 +15,7 @@ module LPEControlUnit #(
     // Position of current PE in the j axis
     parameter PE_POSITION_J = 0,
     // tuser signal width
-    parameter USER_WIDTH = 8 , // 2 + `LOG2(PE_NUMBER_J),
+    parameter USER_WIDTH = 8 , // 2 + $clog2(PE_NUMBER_J),
     // Output Destination 
     parameter OUTPUT_DEST = 1,
     // Output Destination 
@@ -74,7 +74,7 @@ module LPEControlUnit #(
   output wire err_user_flag
 );
   // Output Control Local Parameters
-  localparam PE_J_WIDTH = `LOG2(PE_NUMBER_J);
+  localparam PE_J_WIDTH = $clog2(PE_NUMBER_J);
 
   // FSM States
   localparam FSM_STATE_WIDTH = 3;

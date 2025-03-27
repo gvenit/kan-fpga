@@ -1,10 +1,10 @@
-`include "utils.vh"
+// `include "utils.vh"
 
 module MultiBankBram #(
         parameter BANKS = 4,
         parameter WIDTH = 16,
         parameter DEPTH = 256,
-        parameter ADDR = `LOG2(DEPTH),
+        parameter ADDR = $clog2(DEPTH),
         parameter WE = WIDTH / 8
     ) (
         input clk,

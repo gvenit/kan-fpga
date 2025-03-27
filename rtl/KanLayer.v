@@ -1,228 +1,226 @@
 /*
-    This acts as the top level hdl module
-    of the KAN SoC design.
-    The endgoal is that this particular module
-    be drag-and-dropped in the Vivado Block Design.
-*/
+ * KanLayer: This acts as the top level hdl module
+ *   of the KAN SoC design.
+ *   The endgoal is that this particular module
+ *   be drag-and-dropped in the Vivado Block Design.
+ */
 
-`include "utils.vh"
+// `include "utils.vh"
 
 module KanLayer #(
+  /*------------------------------------------------------------------
+    Genreal parameters of the architecture
+  ------------------------------------------------------------------*/
+  
+  parameter BATCH_SIZE = 1,
 
-    /*------------------------------------------------------------------
-      Genreal parameters of the architecture
-    ------------------------------------------------------------------*/
-    
-    parameter BATCH_SIZE = 1,
+  /*------------------------------------------------------------------
+    Bram controller mem interface parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      Bram controller mem interface parameters
-    ------------------------------------------------------------------*/
+  parameter BRAM_CTR_WIDTH = 32,
+  parameter BRAM_CTR_WE = 4,
+  parameter BRAM_CTR_ADDR = 11,
 
-    parameter BRAM_CTR_WIDTH = 32,
-    parameter BRAM_CTR_WE = 4,
-    parameter BRAM_CTR_ADDR = 11,
+  /*------------------------------------------------------------------
+    DATA parameters for AXI stream and BRAM interface
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      DATA parameters for AXI stream and BRAM interface
-    ------------------------------------------------------------------*/
+  // Width of AXI stream Input Data & Grid interfaces in bits
+  parameter DATA_WIDTH_DATA = 16,
+  // Fractional bits of input data & grid
+  parameter FRACTIONAL_BITS_DATA = 12,
+  // Number of Independent AXI-Stream Data Channels
+  parameter DATA_CHANNELS = 1,
 
-    // Width of AXI stream Input Data & Grid interfaces in bits
-    parameter DATA_WIDTH_DATA = 16,
-    // Fractional bits of input data & grid
-    parameter FRACTIONAL_BITS_DATA = 12,
-    // Number of Independent AXI-Stream Data Channels
-    parameter DATA_CHANNELS = 1,
+  // number of DATA bram banks
+  parameter DATA_BANKS = 4,
+  // number of elements on a single bram bank
+  parameter DATA_BANK_DEPTH = 256,
+  // number of address bits needed for each bank
+  parameter DATA_ADDR = $clog2(DATA_BANK_DEPTH),
+  // number of DATA_WE bits needed for each bank
+  parameter DATA_WE = DATA_WIDTH_DATA / 8,
 
-    // number of DATA bram banks
-    parameter DATA_BANKS = 4,
-    // number of elements on a single bram bank
-    parameter DATA_BANK_DEPTH = 256,
-    // number of address bits needed for each bank
-    parameter DATA_ADDR = `LOG2(DATA_BANK_DEPTH),
-    // number of DATA_WE bits needed for each bank
-    parameter DATA_WE = DATA_WIDTH_DATA / 8,
+  /*------------------------------------------------------------------
+    GRID parameters for AXI stream and BRAM interface
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      GRID parameters for AXI stream and BRAM interface
-    ------------------------------------------------------------------*/
+  // depth of the grid bram
+  parameter GRID_DEPTH = 256,
 
-    // depth of the grid bram
-    parameter GRID_DEPTH = 256,
+  /*------------------------------------------------------------------
+    SCALE streams parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      SCALE streams parameters
-    ------------------------------------------------------------------*/
+  // Width of AXI stream Scale interface in bits
+  parameter DATA_WIDTH_SCALE = 16,
+  // Fractional bits of input scale
+  parameter FRACTIONAL_BITS_SCALE= 12,
+  // Use Common Share Channel 
+  parameter SHARE_SCALE = 1,
+  // Scale Channels
+  parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : DATA_CHANNELS*BATCH_SIZE,
 
-    // Width of AXI stream Scale interface in bits
-    parameter DATA_WIDTH_SCALE = 16,
-    // Fractional bits of input scale
-    parameter FRACTIONAL_BITS_SCALE= 12,
-    // Use Common Share Channel 
-    parameter SHARE_SCALE = 1,
-    // Scale Channels
-    parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : DATA_CHANNELS*BATCH_SIZE,
+  /*------------------------------------------------------------------
+    RESULT / OUTPUT parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      RESULT / OUTPUT parameters
-    ------------------------------------------------------------------*/
+  // Number of Independent AXI-Stream Result Channels per Batch
+  parameter RSLT_CHANNELS = 1,
+  // Width of AXI stream Output Data interface in bits
+  parameter DATA_WIDTH_RSLT = 16,
+  // Fractional bits of output data
+  parameter FRACTIONAL_BITS_RSLT = 12,
 
-    // Number of Independent AXI-Stream Result Channels per Batch
-    parameter RSLT_CHANNELS = 1,
-    // Width of AXI stream Output Data interface in bits
-    parameter DATA_WIDTH_RSLT = 16,
-    // Fractional bits of output data
-    parameter FRACTIONAL_BITS_RSLT = 12,
+  /*------------------------------------------------------------------
+    WEIGHT streams parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      WEIGHT streams parameters
-    ------------------------------------------------------------------*/
+  // Width of AXI stream Input Weight interface in bits
+  parameter DATA_WIDTH_WEIGHT = 16,
+  // Fractional bits of output data
+  parameter FRACTIONAL_BITS_WEIGHT = 12,
+  // Number of Independent AXI-Stream Weight Channels
+  parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
 
-    // Width of AXI stream Input Weight interface in bits
-    parameter DATA_WIDTH_WEIGHT = 16,
-    // Fractional bits of output data
-    parameter FRACTIONAL_BITS_WEIGHT = 12,
-    // Number of Independent AXI-Stream Weight Channels
-    parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
+  /*------------------------------------------------------------------
+    SCALED_DIFF parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      SCALED_DIFF parameters
-    ------------------------------------------------------------------*/
+  // Width of Scaled Data in bits
+  parameter DATA_WIDTH_SCALED_DIFF = 16,
+  // Fractional bits of Scaled Data
+  parameter FRACTIONAL_BITS_SCALED_DIFF = 12,
 
-    // Width of Scaled Data in bits
-    parameter DATA_WIDTH_SCALED_DIFF = 16,
-    // Fractional bits of Scaled Data
-    parameter FRACTIONAL_BITS_SCALED_DIFF = 12,
+  /*------------------------------------------------------------------
+    ACT parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      ACT parameters
-    ------------------------------------------------------------------*/
+  // Width of Activation Function Data in bits
+  parameter DATA_WIDTH_ACT = 16,
+  // Fractional bits of Activation Function Data
+  parameter FRACTIONAL_BITS_ACT = 12,
 
-    // Width of Activation Function Data in bits
-    parameter DATA_WIDTH_ACT = 16,
-    // Fractional bits of Activation Function Data
-    parameter FRACTIONAL_BITS_ACT = 12,
+  /*------------------------------------------------------------------
+    Various AXI parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      Various AXI parameters
-    ------------------------------------------------------------------*/
+  // tkeep signal width (words per cycle)
+  parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
 
-    // tkeep signal width (words per cycle)
-    parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
+  // Propagate tid signal
+  parameter ID_ENABLE = 0,
+  // tid signal width
+  parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
 
-    // Propagate tid signal
-    parameter ID_ENABLE = 0,
-    // tid signal width
-    parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
+  // Propagate tdest signal
+  parameter DEST_ENABLE = 0,
+  // tdest signal width
+  parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
 
-    // Propagate tdest signal
-    parameter DEST_ENABLE = 0,
-    // tdest signal width
-    parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
+  // Propagate tuser signal
+  parameter USER_ENABLE = 0,
+  // tuser signal width
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
 
-    // Propagate tuser signal
-    parameter USER_ENABLE = 0,
-    // tuser signal width
-    parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
+  // Propagate tlast signal
+  parameter LAST_ENABLE = 1,
 
-    // Propagate tlast signal
-    parameter LAST_ENABLE = 1,
+  // Add Buffer on Output Streams
+  parameter EXTRA_CYCLE = 0,
 
-    // Add Buffer on Output Streams
-    parameter EXTRA_CYCLE = 0,
+  /*------------------------------------------------------------------
+    Input / Output file constants
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      Input / Output file constants
-    ------------------------------------------------------------------*/
+  // Path to ROM Data
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt",
 
-    // Path to ROM Data
-    parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt",
+  /*------------------------------------------------------------------
+    Miscalleneous parameters
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-      Miscalleneous parameters
-    ------------------------------------------------------------------*/
+  // Output Destination 
+  parameter OUTPUT_DEST = 0,
+  // Output Thread ID 
+  parameter OUTPUT_ID = 1
+) (
+  /*------------------------------------------------------------------
+      BRAM Data Control interface
+  ------------------------------------------------------------------*/
 
-    // Output Destination 
-    parameter OUTPUT_DEST = 0,
-    // Output Thread ID 
-    parameter OUTPUT_ID = 1
-  ) (
-    /*------------------------------------------------------------------
-        BRAM Data Control interface
-    ------------------------------------------------------------------*/
+  input wire                       bram_data_ctr_rst,
+  input wire                       bram_data_ctr_clk,
+  input wire                       bram_data_ctr_en,
+  input wire [BRAM_CTR_WE-1:0]     bram_data_ctr_we,
+  input wire [BRAM_CTR_ADDR-1:0]   bram_data_ctr_addr,
+  input wire [BRAM_CTR_WIDTH-1:0]  bram_data_ctr_wrdata,
+  output wire [BRAM_CTR_WIDTH-1:0] bram_data_ctr_rddata,
 
-    input wire                       bram_data_ctr_rst,
-    input wire                       bram_data_ctr_clk,
-    input wire                       bram_data_ctr_en,
-    input wire [BRAM_CTR_WE-1:0]     bram_data_ctr_we,
-    input wire [BRAM_CTR_ADDR-1:0]   bram_data_ctr_addr,
-    input wire [BRAM_CTR_WIDTH-1:0]  bram_data_ctr_wrdata,
-    output wire [BRAM_CTR_WIDTH-1:0] bram_data_ctr_rddata,
+  /*------------------------------------------------------------------
+      BRAM Grid Control interface
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-        BRAM Grid Control interface
-    ------------------------------------------------------------------*/
+  input wire                       bram_grid_ctr_rst,
+  input wire                       bram_grid_ctr_clk,
+  input wire                       bram_grid_ctr_en,
+  input wire [BRAM_CTR_WE-1:0]     bram_grid_ctr_we,
+  input wire [BRAM_CTR_ADDR-1:0]   bram_grid_ctr_addr,
+  input wire [BRAM_CTR_WIDTH-1:0]  bram_grid_ctr_wrdata,
+  output wire [BRAM_CTR_WIDTH-1:0] bram_grid_ctr_rddata,
 
-    input wire                       bram_grid_ctr_rst,
-    input wire                       bram_grid_ctr_clk,
-    input wire                       bram_grid_ctr_en,
-    input wire [BRAM_CTR_WE-1:0]     bram_grid_ctr_we,
-    input wire [BRAM_CTR_ADDR-1:0]   bram_grid_ctr_addr,
-    input wire [BRAM_CTR_WIDTH-1:0]  bram_grid_ctr_wrdata,
-    output wire [BRAM_CTR_WIDTH-1:0] bram_grid_ctr_rddata,
+  /*------------------------------------------------------------------
+      AXI-Lite Control Slave interface
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-        AXI-Lite Control Slave interface
-    ------------------------------------------------------------------*/
+  input wire          s00_axi_aclk,
+  input wire          s00_axi_aresetn,
+  input wire [11:0]   s00_axi_awaddr,
+  input wire [2:0]    s00_axi_awprot,
+  input wire          s00_axi_awvalid,
+  output wire         s00_axi_awready,
+  input wire [31:0]   s00_axi_wdata,
+  input wire [3:0]    s00_axi_wstrb,
+  input wire          s00_axi_wvalid,
+  output wire         s00_axi_wready,
+  output wire [1:0]   s00_axi_bresp,
+  output wire         s00_axi_bvalid,
+  input wire          s00_axi_bready,
+  input wire [11:0]   s00_axi_araddr,
+  input wire [2:0]    s00_axi_arprot,
+  input wire          s00_axi_arvalid,
+  output wire         s00_axi_arready,
+  output wire [31:0]  s00_axi_rdata,
+  output wire [1:0]   s00_axi_rresp,
+  output wire         s00_axi_rvalid,
+  input wire          s00_axi_rready,
 
-    input wire          s00_axi_aclk,
-    input wire          s00_axi_aresetn,
-    input wire [11:0]   s00_axi_awaddr,
-    input wire [2:0]    s00_axi_awprot,
-    input wire          s00_axi_awvalid,
-    output wire         s00_axi_awready,
-    input wire [31:0]   s00_axi_wdata,
-    input wire [3:0]    s00_axi_wstrb,
-    input wire          s00_axi_wvalid,
-    output wire         s00_axi_wready,
-    output wire [1:0]   s00_axi_bresp,
-    output wire         s00_axi_bvalid,
-    input wire          s00_axi_bready,
-    input wire [11:0]   s00_axi_araddr,
-    input wire [2:0]    s00_axi_arprot,
-    input wire          s00_axi_arvalid,
-    output wire         s00_axi_arready,
-    output wire [31:0]  s00_axi_rdata,
-    output wire [1:0]   s00_axi_rresp,
-    output wire         s00_axi_rvalid,
-    input wire          s00_axi_rready,
+  /*------------------------------------------------------------------
+      AXI-Lite Scale Register Slave interface
+  ------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------
-        AXI-Lite Scale Register Slave interface
-    ------------------------------------------------------------------*/
-
-    input wire          s01_axi_aclk,
-    input wire          s01_axi_aresetn,
-    input wire [11:0]   s01_axi_awaddr,
-    input wire [2:0]    s01_axi_awprot,
-    input wire          s01_axi_awvalid,
-    output wire         s01_axi_awready,
-    input wire [31:0]   s01_axi_wdata,
-    input wire [3:0]    s01_axi_wstrb,
-    input wire          s01_axi_wvalid,
-    output wire         s01_axi_wready,
-    output wire [1:0]   s01_axi_bresp,
-    output wire         s01_axi_bvalid,
-    input wire          s01_axi_bready,
-    input wire [11:0]   s01_axi_araddr,
-    input wire [2:0]    s01_axi_arprot,
-    input wire          s01_axi_arvalid,
-    output wire         s01_axi_arready,
-    output wire [31:0]  s01_axi_rdata,
-    output wire [1:0]   s01_axi_rresp,
-    output wire         s01_axi_rvalid,
-    input wire          s01_axi_rready
-
+  input wire          s01_axi_aclk,
+  input wire          s01_axi_aresetn,
+  input wire [11:0]   s01_axi_awaddr,
+  input wire [2:0]    s01_axi_awprot,
+  input wire          s01_axi_awvalid,
+  output wire         s01_axi_awready,
+  input wire [31:0]   s01_axi_wdata,
+  input wire [3:0]    s01_axi_wstrb,
+  input wire          s01_axi_wvalid,
+  output wire         s01_axi_wready,
+  output wire [1:0]   s01_axi_bresp,
+  output wire         s01_axi_bvalid,
+  input wire          s01_axi_bready,
+  input wire [11:0]   s01_axi_araddr,
+  input wire [2:0]    s01_axi_arprot,
+  input wire          s01_axi_arvalid,
+  output wire         s01_axi_arready,
+  output wire [31:0]  s01_axi_rdata,
+  output wire [1:0]   s01_axi_rresp,
+  output wire         s01_axi_rvalid,
+  input wire          s01_axi_rready
   );
 
   /*************************************************************************************
@@ -230,9 +228,9 @@ module KanLayer #(
   *************************************************************************************/
 
   localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total data ram length
-  localparam DATA_ITRL_ADDR = `LOG2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
+  localparam DATA_ITRL_ADDR = $clog2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
 
-  localparam GRID_ITRL_ADDR = `LOG2(GRID_DEPTH);  // number of input address bits of total grid memory
+  localparam GRID_ITRL_ADDR = $clog2(GRID_DEPTH);  // number of input address bits of total grid memory
 
   /*************************************************************************************
    Internal Signals

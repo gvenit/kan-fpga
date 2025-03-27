@@ -2,7 +2,7 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-`include "utils.vh"
+// `include "utils.vh"
 
 /* 
  * LinearProcessingElement : Accepts and returns two AXI-Streams
@@ -46,7 +46,7 @@ module LinearProcessingElement #(
     // Fractional Bits of Output Data (D-AXIS)
     parameter FRACTIONAL_BITS_RSLT = 12,
     // tuser signal width
-    parameter USER_WIDTH = 8 , // 2 + `LOG2(PE_NUMBER_J),
+    parameter USER_WIDTH = 8 , // 2 + $clog2(PE_NUMBER_J),
     // Output Destination 
     parameter OUTPUT_DEST = 1,
     // Output Destination 
@@ -164,7 +164,7 @@ module LinearProcessingElement #(
     // Position of current PE in the j axis
     .PE_POSITION_J(PE_POSITION_J),
     // tuser signal width
-    .USER_WIDTH(USER_WIDTH) , // 2 + `LOG2(PE_NUMBER_J),
+    .USER_WIDTH(USER_WIDTH) , // 2 + $clog2(PE_NUMBER_J),
     // Output Destination 
     .OUTPUT_DEST(OUTPUT_DEST),
     // Output Destination 
