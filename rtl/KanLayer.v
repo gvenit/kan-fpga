@@ -5,7 +5,7 @@
  *   be drag-and-dropped in the Vivado Block Design.
  */
 
-// `include "utils.vh"
+`include "utils.vh"
 
 module KanLayer #(
   /*------------------------------------------------------------------
@@ -38,7 +38,7 @@ module KanLayer #(
   // number of elements on a single bram bank
   parameter DATA_BANK_DEPTH = 256,
   // number of address bits needed for each bank
-  parameter DATA_ADDR = $clog2(DATA_BANK_DEPTH),
+  parameter DATA_ADDR = `LOG2(DATA_BANK_DEPTH),
   // number of DATA_WE bits needed for each bank
   parameter DATA_WE = DATA_WIDTH_DATA / 8,
 
@@ -228,9 +228,9 @@ module KanLayer #(
   *************************************************************************************/
 
   localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total data ram length
-  localparam DATA_ITRL_ADDR = $clog2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
+  localparam DATA_ITRL_ADDR = `LOG2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
 
-  localparam GRID_ITRL_ADDR = $clog2(GRID_DEPTH);  // number of input address bits of total grid memory
+  localparam GRID_ITRL_ADDR = `LOG2(GRID_DEPTH);  // number of input address bits of total grid memory
 
   /*************************************************************************************
    Internal Signals
