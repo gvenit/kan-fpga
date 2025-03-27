@@ -8,6 +8,13 @@
 `include "utils.vh"
 
 module KanLayer #(
+
+    /*------------------------------------------------------------------
+      Genreal parameters of the architecture
+    ------------------------------------------------------------------*/
+    
+    parameter BATCH_SIZE = 1,
+
     /*------------------------------------------------------------------
       Bram controller mem interface parameters
     ------------------------------------------------------------------*/
@@ -54,7 +61,18 @@ module KanLayer #(
     // Use Common Share Channel 
     parameter SHARE_SCALE = 1,
     // Scale Channels
-    parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : DATA_CHANNELS,
+    parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : DATA_CHANNELS*BATCH_SIZE,
+
+    /*------------------------------------------------------------------
+      RESULT / OUTPUT parameters
+    ------------------------------------------------------------------*/
+
+    // Number of Independent AXI-Stream Result Channels per Batch
+    parameter RSLT_CHANNELS = 1,
+    // Width of AXI stream Output Data interface in bits
+    parameter DATA_WIDTH_RSLT = 16,
+    // Fractional bits of output data
+    parameter FRACTIONAL_BITS_RSLT = 12,
 
     /*------------------------------------------------------------------
       WEIGHT streams parameters
@@ -65,7 +83,7 @@ module KanLayer #(
     // Fractional bits of output data
     parameter FRACTIONAL_BITS_WEIGHT = 12,
     // Number of Independent AXI-Stream Weight Channels
-    parameter WEIGHT_CHANNELS = 1,
+    parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
 
     /*------------------------------------------------------------------
       SCALED_DIFF parameters
@@ -86,37 +104,32 @@ module KanLayer #(
     parameter FRACTIONAL_BITS_ACT = 12,
 
     /*------------------------------------------------------------------
-      RSTL parameters
-    ------------------------------------------------------------------*/
-
-    // Width of AXI stream Output Data interface in bits
-    parameter DATA_WIDTH_RSLT = 16,
-    // Fractional bits of output data
-    parameter FRACTIONAL_BITS_RSLT = 12,
-
-    /*------------------------------------------------------------------
       Various AXI parameters
     ------------------------------------------------------------------*/
 
-    // Propagate tkeep signal
-    parameter KEEP_ENABLE = (DATA_WIDTH_RSLT>8),
     // tkeep signal width (words per cycle)
     parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
 
     // Propagate tid signal
     parameter ID_ENABLE = 0,
     // tid signal width
-    parameter ID_WIDTH = 8,
+    parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
 
     // Propagate tdest signal
     parameter DEST_ENABLE = 0,
     // tdest signal width
-    parameter DEST_WIDTH = 8,
+    parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
 
     // Propagate tuser signal
     parameter USER_ENABLE = 0,
     // tuser signal width
-    parameter USER_WIDTH = 1,
+    parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
+
+    // Propagate tlast signal
+    parameter LAST_ENABLE = 1,
+
+    // Add Buffer on Output Streams
+    parameter EXTRA_CYCLE = 0,
 
     /*------------------------------------------------------------------
       Input / Output file constants
@@ -132,11 +145,7 @@ module KanLayer #(
     // Output Destination 
     parameter OUTPUT_DEST = 0,
     // Output Thread ID 
-    parameter OUTPUT_ID = 1,
-
-
-    // route via tdest
-    parameter TDEST_ROUTE = 0
+    parameter OUTPUT_ID = 1
   ) (
     /*------------------------------------------------------------------
         BRAM Data Control interface
@@ -502,7 +511,40 @@ module KanLayer #(
     .axis_scale_tuser(axis_scale_tuser)
   );
 
+  AxisSplitter #(
+    .OUTPUT_DATA_WIDTH(DATA_WIDTH_WEIGHT),
+    .CHANNELS(WEIGHT_CHANNELS),
+    .LAST_ENABLE(LAST_ENABLE),
+    .ID_ENABLE(ID_ENABLE),
+    .ID_WIDTH(ID_WIDTH),
+    .DEST_ENABLE(DEST_ENABLE),
+    .DEST_WIDTH(DEST_WIDTH),
+    .USER_ENABLE(USER_ENABLE),
+    .USER_WIDTH(USER_WIDTH),
+    .EXTRA_CYCLE(EXTRA_CYCLE)
+  ) axis_splitter_weights_inst (
+    .clk              ( ),
+    .rst              ( ),
+    .s_axis_tdata     ( ),
+    .s_axis_tkeep     ( ),
+    .s_axis_tvalid    ( ),
+    .s_axis_tready    ( ),
+    .s_axis_tlast     ( ),
+    .s_axis_tid       ( ),
+    .s_axis_tdest     ( ),
+    .s_axis_tuser     ( ),
+    .m_axis_tdata     (axis_weight_tdata),
+    .m_axis_tkeep     ( ),
+    .m_axis_tvalid    (axis_weight_tvalid),
+    .m_axis_tready    (axis_weight_tready),
+    .m_axis_tlast     (axis_weight_tlast),
+    .m_axis_tid       (axis_weight_tid),
+    .m_axis_tdest     (axis_weight_tdest),
+    .m_axis_tuser     (axis_weight_tuser)
+  );
+
   ParallelizedDataProcessor #(
+    .BATCH_SIZE(BATCH_SIZE),
     .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
     .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
     .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
@@ -515,24 +557,18 @@ module KanLayer #(
     .FRACTIONAL_BITS_ACT(FRACTIONAL_BITS_ACT),
     .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
     .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
-    .KEEP_ENABLE(KEEP_ENABLE),
-    .KEEP_WIDTH(KEEP_WIDTH),
     .ID_ENABLE(ID_ENABLE),
-    .ID_WIDTH(ID_WIDTH),
     .DEST_ENABLE(DEST_ENABLE),
-    .DEST_WIDTH(DEST_WIDTH),
     .USER_ENABLE(USER_ENABLE),
-    .USER_WIDTH(USER_WIDTH),
     .DATA_CHANNELS(DATA_CHANNELS),
-    .WEIGHT_CHANNELS(WEIGHT_CHANNELS),
+    .RSLT_CHANNELS(RSLT_CHANNELS),
     .SHARE_SCALE(SHARE_SCALE),
-    .SCALE_CHANNELS(SCALE_CHANNELS),
     .ROM_DATA_PATH(ROM_DATA_PATH),
     .OUTPUT_DEST(OUTPUT_DEST),
     .OUTPUT_ID(OUTPUT_ID)
   ) data_processor_inst (
     .clk(s00_axi_aclk),
-    .rst(s00_axi_aresetn),
+    .rst(~s00_axi_aresetn),
     .s_axis_data_tdata(axis_data_tdata),
     .s_axis_data_tvalid(axis_data_tvalid),
     .s_axis_data_tready(axis_data_tready),
@@ -570,7 +606,6 @@ module KanLayer #(
     .m_axis_data_tdest(axis_output_tdest),
     .m_axis_data_tuser(axis_output_tuser),
     .err_unalligned_data(err_unalligned_data),
-    .err_user_flag(err_user_flag),
     .core_rst(core_rst)
   );
 

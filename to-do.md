@@ -5,6 +5,7 @@
 - [ ] the axi-lite control interfaces must have a debouncer - talk about it and see where it is needed
 - [ ] assertions about the control ram input parameters and the used ones (especially in the grid)
 - [ ] make sure grid and data share all these parameters (width and so on)
+- [ ] if the batch size changes you have a lot of wrong modules in the top level module and many others that were yours
 
 ## Thing that might be wrong
 
