@@ -201,7 +201,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # KAN Layer parameters
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_len = DATA_CHANNELS.value * (N_in // DATA_CHANNELS.value)
-    grid_len = 5
+    grid_len = 8
     scale_len = (1,1,1) if SHARE_SCALE.value else (1,grid_len,data_len)
     rslt_len = RSLT_CHANNELS.value * (N_out // RSLT_CHANNELS.value)
     weight_len = data_len*grid_len
@@ -716,9 +716,9 @@ def main():
     
     for I,J,K in (
         # (1,1,1),
-        # (2,2,1),
+        (2,2,1),
         # (2,3,1),
-        (8,4,2),
+        # (8,4,2),
         # (5,5,5),
     ):
         N_in, N_out = 64,64

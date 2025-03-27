@@ -41,6 +41,8 @@ module MemoryControlUnit #(
   parameter ADDR_WIDTH_GRID = 32,
   // Scale Width of address bus in bits
   parameter ADDR_WIDTH_SCALE = 32,
+  // BRAM control has valid signal
+  parameter BRAM_VALID_SIG = 1
 ) (
   input  wire                                                     bram_clk,
   input  wire                                                     m_axis_aclk,
@@ -49,11 +51,12 @@ module MemoryControlUnit #(
   /*
    * Data BRAM Control Interface
    */
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_en;
-  // output wire [BATCH_SIZE*DATA_CHANNELS*WE-1:0]                   data_bram_we;  // Read Only Operations allowed
-  output wire [BATCH_SIZE*DATA_CHANNELS*ADDR-1:0]                 data_bram_addr;
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_en,
+  // output wire [BATCH_SIZE*DATA_CHANNELS*WE-1:0]                   data_bram_we,  // Read Only Operations allowed
+  output wire [BATCH_SIZE*DATA_CHANNELS*ADDR-1:0]                 data_bram_addr,
   // input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_wrdata;
-  output wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_rddata;
+  input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_rddata,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 
   /*
    * AXI Stream Data Output
@@ -69,62 +72,64 @@ module MemoryControlUnit #(
   /*
    * Grid BRAM Control Interface
    */
-  output wire                                                     grid_bram_en;
-  // output wire [WE-1:0]                                            grid_bram_we;  // Read Only Operations allowed
-  output wire [ADDR-1:0]                                          grid_bram_addr;
+  output wire                                                     grid_bram_en,
+  // output wire [WE-1:0]                                            grid_bram_we,  // Read Only Operations allowed
+  output wire [ADDR-1:0]                                          grid_bram_addr,
   // input  wire [WIDTH-1:0]                                         grid_bram_wrdata;
-  output wire [WIDTH-1:0]                                         grid_bram_rddata;
+  input  wire [WIDTH-1:0]                                         grid_bram_rddata,
+  input  wire                                                     grid_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 
   /*
    * AXI Stream Grid Output
    */
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      m_axis_data_tdata,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tvalid,
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tready,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tlast,
-  output wire [BATCH_SIZE*DATA_CHANNELS*ID_WIDTH-1:0]             m_axis_data_tid,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DEST_WIDTH-1:0]           m_axis_data_tdest,
-  output wire [BATCH_SIZE*DATA_CHANNELS*USER_WIDTH-1:0]           m_axis_data_tuser,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      m_axis_grid_tdata,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_grid_tvalid,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_grid_tready,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_grid_tlast,
+  output wire [BATCH_SIZE*DATA_CHANNELS*ID_WIDTH-1:0]             m_axis_grid_tid,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DEST_WIDTH-1:0]           m_axis_grid_tdest,
+  output wire [BATCH_SIZE*DATA_CHANNELS*USER_WIDTH-1:0]           m_axis_grid_tuser,
 
   /*
    * Scale BRAM Control Interface -- Available only when SHARE_SCALE == 0
    */
-  output wire [DATA_CHANNELS-1:0]                                 scle_bram_en;
-  // output wire [DATA_CHANNELS*WE-1:0]                              scle_bram_we;  // Read Only Operations allowed
-  output wire [DATA_CHANNELS*ADDR-1:0]                            scle_bram_addr;
+  output wire [DATA_CHANNELS-1:0]                                 scle_bram_en,
+  // output wire [DATA_CHANNELS*WE-1:0]                              scle_bram_we,  // Read Only Operations allowed
+  output wire [DATA_CHANNELS*ADDR-1:0]                            scle_bram_addr,
   // input  wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_wrdata;
-  output wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_rddata;
+  input  wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_rddata,
+  input  wire [DATA_CHANNELS-1:0]                                 scle_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 
   /*
    * Scale AXI lite Master Interface -- Available only when SHARE_SCALE == 1
    */
-  output wire [ADDR_WIDTH_SCALE-1:0]                              m_axil_araddr,
-  output wire [2:0]                                               m_axil_arprot,
-  output wire                                                     m_axil_arvalid,
-  input  wire                                                     m_axil_arready,
-  input  wire [DATA_WIDTH_SCALE-1:0]                              m_axil_rdata,
-  input  wire [1:0]                                               m_axil_rresp,
-  input  wire                                                     m_axil_rvalid,
-  output wire                                                     m_axil_rready,
+  output wire [ADDR_WIDTH_SCALE-1:0]                              m_axil_scle_araddr,
+  output wire [2:0]                                               m_axil_scle_arprot,
+  output wire                                                     m_axil_scle_arvalid,
+  input  wire                                                     m_axil_scle_arready,
+  input  wire [DATA_WIDTH_SCALE-1:0]                              m_axil_scle_rdata,
+  input  wire [1:0]                                               m_axil_scle_rresp,
+  input  wire                                                     m_axil_scle_rvalid,
+  output wire                                                     m_axil_scle_rready,
   
   /*
    * AXI Stream Scale Output
    */
-  output wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]               m_axis_data_tdata,
-  output wire [SCALE_CHANNELS-1:0]                                m_axis_data_tvalid,
-  input  wire [SCALE_CHANNELS-1:0]                                m_axis_data_tready,
-  output wire [SCALE_CHANNELS-1:0]                                m_axis_data_tlast,
-  output wire [SCALE_CHANNELS*ID_WIDTH-1:0]                       m_axis_data_tid,
-  output wire [SCALE_CHANNELS*DEST_WIDTH-1:0]                     m_axis_data_tdest,
-  output wire [SCALE_CHANNELS*USER_WIDTH-1:0]                     m_axis_data_tuser,
+  output wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]               m_axis_scle_tdata,
+  output wire [SCALE_CHANNELS-1:0]                                m_axis_scle_tvalid,
+  input  wire [SCALE_CHANNELS-1:0]                                m_axis_scle_tready,
+  output wire [SCALE_CHANNELS-1:0]                                m_axis_scle_tlast,
+  output wire [SCALE_CHANNELS*ID_WIDTH-1:0]                       m_axis_scle_tid,
+  output wire [SCALE_CHANNELS*DEST_WIDTH-1:0]                     m_axis_scle_tdest,
+  output wire [SCALE_CHANNELS*USER_WIDTH-1:0]                     m_axis_scle_tuser,
 
   /*
    * Control signals
    */
   input wire operation_start,
-  input wire [ADDR_WIDTH_DATA-1:0]  data_size;
-  input wire [ADDR_WIDTH_GRID-1:0]  grid_size;
-  input wire [ADDR_WIDTH_SCALE-1:0] scle_size;
+  input wire [ADDR_WIDTH_DATA-1:0]  data_size,
+  input wire [ADDR_WIDTH_GRID-1:0]  grid_size,
+  input wire [ADDR_WIDTH_SCALE-1:0] scle_size,
   
   /*
    * Interrupt signals
@@ -134,6 +139,22 @@ module MemoryControlUnit #(
   output reg operation_error
 
 );
+  // Input signals
+  wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_bram_rdvalid_int;
+  wire                                grid_bram_rdvalid_int;
+  wire [DATA_CHANNELS-1:0]            scle_bram_rdvalid_int;  // Ignore if BRAM_VALID_SIG == 0
+
+  generate
+    if (BRAM_VALID_SIG > 0) begin
+      assign data_bram_rdvalid_int = data_bram_rdvalid;
+      assign grid_bram_rdvalid_int = grid_bram_rdvalid;
+      assign scle_bram_rdvalid_int = scle_bram_rdvalid;
+    end else begin
+      assign data_bram_rdvalid_int = {BATCH_SIZE*DATA_CHANNELS{1'b1}};
+      assign grid_bram_rdvalid_int = 1'b1;
+      assign scle_bram_rdvalid_int = {DATA_CHANNELS{1'b1}};
+    end
+  endgenerate
 
   // Control Registers & Wires
   reg  op_in_progress_reg = 1'b0;
