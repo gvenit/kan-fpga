@@ -51,9 +51,9 @@ module MemoryControlUnit #(
   /*
    * Data BRAM Control Interface
    */
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_en,
-  // output wire [BATCH_SIZE*DATA_CHANNELS*WE-1:0]                   data_bram_we,  // Read Only Operations allowed
-  output wire [BATCH_SIZE*DATA_CHANNELS*ADDR-1:0]                 data_bram_addr,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_en;
+  // output wire [BATCH_SIZE*DATA_CHANNELS*WE-1:0]                   data_bram_we;  // Read Only Operations allowed
+  output wire [BATCH_SIZE*DATA_CHANNELS*ADDR-1:0]                 data_bram_addr;
   // input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_wrdata;
   input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_rddata,
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
@@ -75,7 +75,7 @@ module MemoryControlUnit #(
   output wire                                                     grid_bram_en,
   // output wire [WE-1:0]                                            grid_bram_we,  // Read Only Operations allowed
   output wire [ADDR-1:0]                                          grid_bram_addr,
-  // input  wire [WIDTH-1:0]                                         grid_bram_wrdata;
+  // input  wire [WIDTH-1:0]                                         grid_bram_wrdata,
   input  wire [WIDTH-1:0]                                         grid_bram_rddata,
   input  wire                                                     grid_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 
@@ -96,7 +96,7 @@ module MemoryControlUnit #(
   output wire [DATA_CHANNELS-1:0]                                 scle_bram_en,
   // output wire [DATA_CHANNELS*WE-1:0]                              scle_bram_we,  // Read Only Operations allowed
   output wire [DATA_CHANNELS*ADDR-1:0]                            scle_bram_addr,
-  // input  wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_wrdata;
+  // input  wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_wrdata,
   input  wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_rddata,
   input  wire [DATA_CHANNELS-1:0]                                 scle_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 

@@ -2,6 +2,8 @@
 `timescale 1ns/1ps
 `default_nettype none
 
+`include "utils.vh"
+
 /* 
  * LinearProcessingArray : Accepts N+M and returns N AXI-Streams. Input
  *   The module works as a systolic array for the Matrix-Matrix Multiplication.
@@ -102,7 +104,7 @@ module LinearProcessingArray #(
   output wire core_rst
 );
   // Global Local Parameters
-  localparam PE_WIDTH_J       = $clog2(PE_NUMBER_J);
+  localparam PE_WIDTH_J       = `LOG2(PE_NUMBER_J);
   localparam USER_WIDTH_INT   = 2 + PE_WIDTH_J + (USER_ENABLE ? USER_WIDTH : 0);
   // Operator 1 User Mask
   localparam OP1_USER_MASK_R  = 2'b01;
