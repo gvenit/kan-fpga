@@ -83,6 +83,15 @@ module KanLayer #(
   parameter FRACTIONAL_BITS_WEIGHT = 12,
   // Number of Independent AXI-Stream Weight Channels
   parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
+  // Propagate tkeep signal
+  parameter INPUT_KEEP_ENABLE_WEIGHT = (WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT>8),
+  // tkeep signal width (words per cycle)
+  parameter INPUT_KEEP_WIDTH_WEIGHT = ((WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT+7)/8),
+  // Propagate tkeep signal
+  parameter OUTPUT_KEEP_ENABLE_WEIGHT = (DATA_WIDTH_WEIGHT>8),
+  // tkeep signal width (words per cycle)
+  parameter OUTPUT_KEEP_WIDTH_WEIGHT = ((DATA_WIDTH_WEIGHT+7)/8),
+
 
   /*------------------------------------------------------------------
     SCALED_DIFF parameters
@@ -220,7 +229,27 @@ module KanLayer #(
   output wire [31:0]  s01_axi_rdata,
   output wire [1:0]   s01_axi_rresp,
   output wire         s01_axi_rvalid,
-  input wire          s01_axi_rready
+  input wire          s01_axi_rready,
+
+  /*------------------------------------------------------------------
+      AXI-Stream Weight Slave interface
+  ------------------------------------------------------------------*/
+  
+  input wire                                          s02_axis_aclk,
+  input wire                                          s02_axis_arstn,
+  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT-1:0] s02_axis_tdata,
+  input  wire [INPUT_KEEP_WIDTH_WEIGHT-1:0]           s02_axis_tkeep,
+  input  wire                                         s02_axis_tvalid,  
+  output wire                                         s02_axis_tready,
+  input  wire                                         s02_axis_tlast,
+  input  wire  [ID_WIDTH-1:0]                         s02_axis_tid,
+  input  wire  [DEST_WIDTH-1:0]                       s02_axis_tdest,
+  input  wire  [USER_WIDTH-1:0]                       s02_axis_tuser
+
+  /*------------------------------------------------------------------
+      AXI-Stream Results / Output Master interface
+  ------------------------------------------------------------------*/
+
   );
 
   /*************************************************************************************
@@ -521,16 +550,16 @@ module KanLayer #(
     .USER_WIDTH(USER_WIDTH),
     .EXTRA_CYCLE(EXTRA_CYCLE)
   ) axis_splitter_weights_inst (
-    .clk              ( ),
-    .rst              ( ),
-    .s_axis_tdata     ( ),
-    .s_axis_tkeep     ( ),
-    .s_axis_tvalid    ( ),
-    .s_axis_tready    ( ),
-    .s_axis_tlast     ( ),
-    .s_axis_tid       ( ),
-    .s_axis_tdest     ( ),
-    .s_axis_tuser     ( ),
+    .clk              (s02_axis_aclk),
+    .rst              (~s02_axis_arstn),
+    .s_axis_tdata     (s02_axis_tdata),
+    .s_axis_tkeep     (s02_axis_tkeep),
+    .s_axis_tvalid    (s02_axis_tvalid),
+    .s_axis_tready    (s02_axis_tready),
+    .s_axis_tlast     (s02_axis_tlast),
+    .s_axis_tid       (s02_axis_tid),
+    .s_axis_tdest     (s02_axis_tdest),
+    .s_axis_tuser     (s02_axis_tuser),
     .m_axis_tdata     (axis_weight_tdata),
     .m_axis_tkeep     ( ),
     .m_axis_tvalid    (axis_weight_tvalid),
