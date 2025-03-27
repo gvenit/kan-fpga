@@ -28,10 +28,6 @@ module RSWAFFunction #
   parameter DATA_WIDTH_RSLT = 16,
   // Fractional bits of output data
   parameter FRACTIONAL_BITS_RSLT = 12,
-  // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT>8),
-  // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -94,7 +90,7 @@ module RSWAFFunction #
     * AXI Stream output
     */
   output wire [CHANNELS*DATA_WIDTH_RSLT-1:0]          m_axis_data_tdata,
-  output wire [CHANNELS*KEEP_WIDTH-1:0]               m_axis_data_tkeep,
+  // output wire [CHANNELS*KEEP_WIDTH-1:0]               m_axis_data_tkeep,
   output wire [CHANNELS-1:0]                          m_axis_data_tvalid,
   input  wire [CHANNELS-1:0]                          m_axis_data_tready,
   output wire [CHANNELS-1:0]                          m_axis_data_tlast,
@@ -123,7 +119,7 @@ module RSWAFFunction #
   genvar CHN;
   generate 
 
-  if (SHARE_SCALE && SCALE_CHANNELS > 1) begin
+  if (SHARE_SCALE && CHANNELS > 1) begin
     axis_broadcast #(
       .M_COUNT(CHANNELS),
       .DATA_WIDTH(DATA_WIDTH_SCALE),
@@ -142,7 +138,7 @@ module RSWAFFunction #
       .rst(rst),
       // AXI input
       .s_axis_tdata(s_axis_scale_tdata),
-      // .s_axis_tkeep(s_axis_scale_tkeep),
+      .s_axis_tkeep(1'b1),
       .s_axis_tvalid(s_axis_scale_tvalid),
       .s_axis_tready(s_axis_scale_tready),
       .s_axis_tlast(s_axis_scale_tlast),
@@ -242,9 +238,9 @@ module RSWAFFunction #
       // Width of AXI stream interfaces in bits
       .DATA_WIDTH(DATA_WIDTH_DATA),
       // Propagate tkeep signal
-      .KEEP_ENABLE(KEEP_ENABLE),
+      .KEEP_ENABLE(0),
       // tkeep signal width (words per cycle)
-      .KEEP_WIDTH(KEEP_WIDTH),
+      .KEEP_WIDTH(1),
       // Propagate tlast signal
       .LAST_ENABLE(1),
       // Propagate tid signal
@@ -269,7 +265,7 @@ module RSWAFFunction #
       * AXI input
       */
       .s_axis_tdata(s_in_axis_data_tdata_slice),
-      // .s_axis_tkeep(s_in_axis_data_tkeep_slice),
+      .s_axis_tkeep(1'b1),
       .s_axis_tvalid(s_in_axis_data_tvalid_slice),
       .s_axis_tready(s_in_axis_data_tready_slice),
       .s_axis_tlast(s_in_axis_data_tlast_slice),
@@ -291,28 +287,28 @@ module RSWAFFunction #
     );
     
     axis_srl_fifo #(
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_DATA),
-    // Propagate tkeep signal
-    .KEEP_ENABLE(KEEP_ENABLE),
-    // tkeep signal width (words per cycle)
-    .KEEP_WIDTH(KEEP_WIDTH),
-    // Propagate tlast signal
-    .LAST_ENABLE(1),
-    // Propagate tid signal
-    .ID_ENABLE(ID_ENABLE),
-    // tid signal width
-    .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
-    .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
-    .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
-    .USER_ENABLE(USER_ENABLE),
-    // tuser signal width
-    .USER_WIDTH(USER_WIDTH),
-    // FIFO depth in cycles
-    .DEPTH(8)
+      // Width of AXI stream interfaces in bits
+      .DATA_WIDTH(DATA_WIDTH_DATA),
+      // Propagate tkeep signal
+      .KEEP_ENABLE(0),
+      // tkeep signal width (words per cycle)
+      .KEEP_WIDTH(1),
+      // Propagate tlast signal
+      .LAST_ENABLE(1),
+      // Propagate tid signal
+      .ID_ENABLE(ID_ENABLE),
+      // tid signal width
+      .ID_WIDTH(ID_WIDTH),
+      // Propagate tdest signal
+      .DEST_ENABLE(DEST_ENABLE),
+      // tdest signal width
+      .DEST_WIDTH(DEST_WIDTH),
+      // Propagate tuser signal
+      .USER_ENABLE(USER_ENABLE),
+      // tuser signal width
+      .USER_WIDTH(USER_WIDTH),
+      // FIFO depth in cycles
+      .DEPTH(8)
     ) axis_fifo_grid_inst (
       .clk(clk),
       .rst(rst),
@@ -321,7 +317,7 @@ module RSWAFFunction #
       * AXI input
       */
       .s_axis_tdata(s_in_axis_grid_tdata_slice),
-      // .s_axis_tkeep(s_in_axis_grid_tkeep_slice),
+      .s_axis_tkeep(1'b1),
       .s_axis_tvalid(s_in_axis_grid_tvalid_slice),
       .s_axis_tready(s_in_axis_grid_tready_slice),
       .s_axis_tlast(s_in_axis_grid_tlast_slice),
@@ -347,9 +343,9 @@ module RSWAFFunction #
       // Width of AXI stream interfaces in bits
       .DATA_WIDTH(DATA_WIDTH_DATA),
       // Propagate tkeep signal
-      .KEEP_ENABLE(KEEP_ENABLE),
+      .KEEP_ENABLE(0),
       // tkeep signal width (words per cycle)
-      .KEEP_WIDTH(KEEP_WIDTH),
+      .KEEP_WIDTH(1),
       // Propagate tlast signal
       .LAST_ENABLE(1),
       // Propagate tid signal
@@ -374,7 +370,7 @@ module RSWAFFunction #
       * AXI input
       */
       .s_axis_tdata(s_in_axis_scale_tdata_slice),
-      // .s_axis_tkeep(s_in_axis_scale_tkeep_slice),
+      .s_axis_tkeep(1'b1),
       .s_axis_tvalid(s_in_axis_scale_tvalid_slice),
       .s_axis_tready(s_in_axis_scale_tready_slice),
       .s_axis_tlast(s_in_axis_scale_tlast_slice),
@@ -395,25 +391,20 @@ module RSWAFFunction #
       .m_axis_tuser(s_fifo_axis_scale_tuser_slice)
     );
     
-    SubMultAbs
-    #(
+    SubMultAbs #(
       .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
       .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
       .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
       .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
       .DATA_WIDTH_RSLT(DATA_WIDTH_SCALED_DIFF),
       .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_SCALED_DIFF),
-      .KEEP_ENABLE(KEEP_ENABLE),
-      .KEEP_WIDTH(KEEP_WIDTH),
       .ID_ENABLE(ID_ENABLE),
       .ID_WIDTH(ID_WIDTH),
       .DEST_ENABLE(DEST_ENABLE),
       .DEST_WIDTH(DEST_WIDTH),
       .USER_ENABLE(USER_ENABLE),
       .USER_WIDTH(USER_WIDTH)
-    )
-    SubMultAbs_inst
-    (
+    ) SubMultAbs_inst (
       .clk(clk),
       .rst(rst),
       .s_axis_data_tdata(s_fifo_axis_data_tdata_slice),
@@ -458,16 +449,13 @@ module RSWAFFunction #
 
   endgenerate
 
-  Sech2Lutram
-  #(
+  Sech2Lutram #(
     .DATA_WIDTH_DATA(DATA_WIDTH_SCALED_DIFF),
     .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_SCALED_DIFF),
     .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
     .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
     .KEEP_ENABLE_DATA(0),
     .KEEP_WIDTH_DATA(1),
-    .KEEP_ENABLE_RSLT(KEEP_ENABLE),
-    .KEEP_WIDTH_RSLT(KEEP_WIDTH),
     .ID_ENABLE(ID_ENABLE),
     .ID_WIDTH(ID_WIDTH),
     .DEST_ENABLE(DEST_ENABLE),
@@ -476,9 +464,7 @@ module RSWAFFunction #
     .USER_WIDTH(USER_WIDTH),
     .CHANNELS(CHANNELS),
     .ROM_DATA_PATH(ROM_DATA_PATH)
-  )
-  Sech2Lutram_inst
-  (
+  ) Sech2Lutram_inst (
     .clk(clk),
     .rst(rst),
     .s_axis_0_tdata(scaled_diff_axis_data_tdata),
@@ -489,7 +475,7 @@ module RSWAFFunction #
     .s_axis_0_tdest(scaled_diff_axis_data_tdest),
     .s_axis_0_tuser(scaled_diff_axis_data_tuser),
     .m_axis_0_tdata(m_axis_data_tdata),
-    .m_axis_0_tkeep(m_axis_data_tkeep),
+    // .m_axis_0_tkeep(m_axis_data_tkeep),
     .m_axis_0_tlast(m_axis_data_tlast),
     .m_axis_0_tvalid(m_axis_data_tvalid),
     .m_axis_0_tready(m_axis_data_tready),

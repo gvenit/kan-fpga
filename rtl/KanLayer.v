@@ -457,7 +457,7 @@ module KanLayer #(
     .S_AXI_RREADY(s01_axi_rready)
 	);
 
-  MemoryControlUnit #(
+  MemoryUnit #(
     .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
     .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
     .DATA_CHANNELS(DATA_CHANNELS),
@@ -502,7 +502,7 @@ module KanLayer #(
     .axis_scale_tuser(axis_scale_tuser)
   );
 
-  DataProcessor #(
+  ParallelizedDataProcessor #(
     .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
     .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
     .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),

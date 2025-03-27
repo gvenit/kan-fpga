@@ -91,10 +91,11 @@ module SubMultAbs #(
   // output                  err_unalligned_data,
   // output                  err_unalligned_scale
 );
-  wire [DATA_WIDTH_RSLT-1:0] abs_rslt_corr;
-  wire [DATA_WIDTH_RSLT  :0] signed_rslt, abs_rslt;
+  `define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
 
-  assign m_axis_data_tdata = abs_rslt_corr;
+  wire signed [DATA_WIDTH_RSLT:0] signed_rslt;
+
+  assign m_axis_data_tdata = `abs(signed_rslt)[DATA_WIDTH_RSLT-1:0];
 
   SubMult
   #(
@@ -148,9 +149,6 @@ module SubMultAbs #(
     .m_axis_data_tuser(m_axis_data_tuser)
   );
 
-  assign abs_rslt = signed_rslt * ((signed_rslt[DATA_WIDTH_RSLT]) ? -1 : 1);
-  assign abs_rslt_corr = (abs_rslt == signed_rslt) ? {DATA_WIDTH_RSLT{signed_rslt[DATA_WIDTH_RSLT]}} : abs_rslt[DATA_WIDTH_RSLT-1:0];
-    
 endmodule
 
 `resetall

@@ -70,8 +70,17 @@ else:
 f = lambda x, dtype='float128', nbits=args.fr_bits_in : 1 - np.tanh(x.astype(dtype) / 2**nbits)**2
 
 y     = f(x) 
-y_int = y * (2**num_bits_out-1)
-y_int = y_int.astype(args.dtype_out)
+y_int = y * (2**args.fr_bits_out)
+# y_int = (y * (2**num_bits_out-1)).round()
+# y_int = y_int.astype(args.dtype_out)
+if (num_bits_out == args.fr_bits_out):
+    y_int = np.where(
+        y_int > 2**num_bits_out-1,
+        2**num_bits_out-1,
+        y_int.astype(args.dtype_out)
+    )
+else :
+    y_int = y_int.astype(args.dtype_out)
 
 if args.stats :
     diff = (y - (y_int / (2**num_bits_out)).astype(y.dtype))

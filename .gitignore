@@ -1,26 +1,28 @@
+<<<<<<< HEAD
 # python
 
 venv/*
 *-old*
 *_old*
+=======
+*old*
+>>>>>>> main
 __pycache__
 */tmp*
-/log
-/vivado
 
-py/*.out
-py/parsetab.py
-py/*.dot
-py/*codegen.py
-py/example*.py
+tb/
+out/
+data/
+vcd/
 
-parallelized/py/*.out
-parallelized/py/parsetab.py
-parallelized/py/*.dot
-parallelized/py/*codegen.py
-parallelized/py/example*.py
+py/
+!py/*_simgen.py
+!py/__init__.py
+# !py/example_codegen.py
 
+venv/*
 !venv/requirements.txt
+<<<<<<< HEAD
 !py/example_codegen.py
 test
 
@@ -30,3 +32,11 @@ vivado/vivado_22.2/KAN_SoC/KAN_SoC.cache
 vivado/vivado_22.2/KAN_SoC/KAN_SoC.hw
 vivado/vivado_22.2/KAN_SoC/KAN_SoC.ip_user_files
 vivado/vivado_22.2/KAN_SoC/KAN_SoC.sim
+=======
+
+test
+log
+vivado
+graphs
+dot
+>>>>>>> main
