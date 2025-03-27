@@ -28,7 +28,7 @@
  *  THIS MIGHT CHANGE IN FUTURE TESTS.
  */
 
-// `include "utils.vh"
+`include "utils.vh"
 
 module BramIntrfTranslator #(
   parameter IN_WIDTH = 32,    // width of input data
@@ -38,11 +38,11 @@ module BramIntrfTranslator #(
   parameter IN_WORD_DATA = IN_WIDTH / OUT_WIDTH,  // number of data packed in an input word
   /*-------------------------------------------------------------------------------------*/
   parameter OUT_DEPTH = 256,              // the depth of each BRAM bank
-  parameter OUT_ADDR = $clog2(OUT_DEPTH), // number of output address bits
+  parameter OUT_ADDR = `LOG2(OUT_DEPTH), // number of output address bits
   parameter OUT_WE = OUT_WIDTH / 8,       // number of output write-enable bits
   /*-------------------------------------------------------------------------------------*/
   parameter IN_DEPTH = BANKS * OUT_DEPTH, // number of total input data
-  parameter IN_ADDR = $clog2(IN_DEPTH),   // number of input address bits
+  parameter IN_ADDR = `LOG2(IN_DEPTH),   // number of input address bits
   parameter IN_WE = IN_WIDTH / 8          // number of input write-enable bits
 ) (
   /*-----------------------------------------------
@@ -71,8 +71,8 @@ module BramIntrfTranslator #(
   genvar i;
   integer j, k;
 
-  localparam INJ_BITS  = $clog2(IN_WORD_DATA);                  // injected bits to the addressing to account for multiple banks
-  localparam BANK_BITS = (BANKS < 2 ? 1 : $clog2(BANKS));       // number of bits needed to represent the number of banks
+  localparam INJ_BITS  = `LOG2(IN_WORD_DATA);                  // injected bits to the addressing to account for multiple banks
+  localparam BANK_BITS = (BANKS < 2 ? 1 : `LOG2(BANKS));       // number of bits needed to represent the number of banks
   localparam ITRL_ADDR = IN_ADDR + INJ_BITS;                    // each input address gets transformed into as many addresses as data in a word each with one extra bit
 
   reg  [INJ_BITS-1:0]  addr_injected_bits [IN_WORD_DATA-1:0];
