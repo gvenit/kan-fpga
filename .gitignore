@@ -6,6 +6,7 @@ venv/*
 __pycache__
 */tmp*
 /log
+/vivado
 
 py/*.out
 py/parsetab.py

@@ -1,0 +1,59 @@
+[*]
+[*] GTKWave Analyzer v3.3.116 (w)1999-2023 BSI
+[*] Tue Mar 11 15:13:18 2025
+[*]
+[dumpfile] "/home/gvenit/Projects/kan-fpga/parallelized/vcd/tb_LinearProcessingElement_1_1_0_0.vcd"
+[dumpfile_mtime] "Tue Mar 11 15:09:38 2025"
+[dumpfile_size] 47909
+[savefile] "/home/gvenit/Projects/kan-fpga/parallelized/vcd/tb_LinearProcessingElement_IO.gtkw"
+[timestart] 0
+[size] 1588 852
+[pos] 1663 -6
+*-15.378436 215000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_LinearProcessingElement_1_1_0_0.
+[sst_width] 276
+[signals_width] 190
+[sst_expanded] 1
+[sst_vpaned_height] 398
+@28
+tb_LinearProcessingElement_1_1_0_0.uut.clk
+tb_LinearProcessingElement_1_1_0_0.uut.rst
+tb_LinearProcessingElement_1_1_0_0.uut.err_unalligned_data
+@22
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_l_tdata[15:0]
+@28
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_l_tlast
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_l_tready
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_l_tvalid
+@22
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_t_tdata[15:0]
+@28
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_t_tlast
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_t_tready
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_t_tvalid
+@22
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_u_tdata[31:0]
+@28
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_u_tlast
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_u_tready
+tb_LinearProcessingElement_1_1_0_0.uut.s_axis_u_tvalid
+@22
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_r_tdata[15:0]
+@28
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_r_tlast
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_r_tready
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_r_tvalid
+@22
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_b_tdata[15:0]
+@28
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_b_tlast
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_b_tready
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_b_tvalid
+@22
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_d_tdata[31:0]
+@28
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_d_tlast
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_d_tready
+tb_LinearProcessingElement_1_1_0_0.uut.m_axis_d_tvalid
+[pattern_trace] 1
+[pattern_trace] 0
