@@ -13,12 +13,12 @@
  *    This might have timing implications.
  */
 
-// `include "utils.vh"
+`include "utils.vh"
 
 module Bram #(
   parameter WIDTH = 32,
   parameter DEPTH = 256,
-  parameter ADDR = $clog2(DEPTH),
+  parameter ADDR = `LOG2(DEPTH),
   // parameter ADDR = 8,
   parameter WE = WIDTH / 8
 ) (

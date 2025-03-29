@@ -53,9 +53,9 @@ module MemoryControlUnit #(
    */
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_en;
   // output wire [BATCH_SIZE*DATA_CHANNELS*WE-1:0]                   data_bram_we;  // Read Only Operations allowed
-  output wire [BATCH_SIZE*DATA_CHANNELS*ADDR-1:0]                 data_bram_addr;
+  output wire [BATCH_SIZE*DATA_CHANNELS*ADDR_WIDTH_DATA-1:0]      data_bram_addr;
   // input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_wrdata;
-  input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_rddata,
+  input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      data_bram_rddata,
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 
   /*
@@ -74,9 +74,9 @@ module MemoryControlUnit #(
    */
   output wire                                                     grid_bram_en,
   // output wire [WE-1:0]                                            grid_bram_we,  // Read Only Operations allowed
-  output wire [ADDR-1:0]                                          grid_bram_addr,
+  output wire [ADDR_WIDTH_GRID-1:0]                               grid_bram_addr,
   // input  wire [WIDTH-1:0]                                         grid_bram_wrdata,
-  input  wire [WIDTH-1:0]                                         grid_bram_rddata,
+  input  wire [DATA_WIDTH_DATA-1:0]                               grid_bram_rddata,
   input  wire                                                     grid_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 
   /*
@@ -95,9 +95,9 @@ module MemoryControlUnit #(
    */
   output wire [DATA_CHANNELS-1:0]                                 scle_bram_en,
   // output wire [DATA_CHANNELS*WE-1:0]                              scle_bram_we,  // Read Only Operations allowed
-  output wire [DATA_CHANNELS*ADDR-1:0]                            scle_bram_addr,
+  output wire [DATA_CHANNELS*ADDR_WIDTH_SCALE-1:0]                scle_bram_addr,
   // input  wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_wrdata,
-  input  wire [DATA_CHANNELS*WIDTH-1:0]                           scle_bram_rddata,
+  input  wire [DATA_CHANNELS*DATA_WIDTH_SCALE-1:0]                scle_bram_rddata,
   input  wire [DATA_CHANNELS-1:0]                                 scle_bram_rdvalid,  // Ignore if BRAM_VALID_SIG == 0
 
   /*
@@ -179,71 +179,80 @@ module MemoryControlUnit #(
   wire                                grid_error;
   wire [SCALE_CHANNELS-1:0]           scle_error;
 
-  // Lobal Scale FSM state logic
-  `define LOCAL_FSM_STATE_LOGIC(loc_fsm_state, loc_fsm_state_next, loc_counter_reg, loc_counter_reg_next, get_next) \ 
-    assign loc_countera_reg_next = (get_next) : loc_counter_reg + 1 : loc_counter_reg;
-    assign loc_counterd_reg_next = (get_next) : loc_counter_reg + 1 : loc_counter_reg;
-    always @(posedge clk ) begin
-      if (rst) begin
-        loc_fsm_state <= LOC_FSM_STR;
+  // Local FSM state logic
+  `define LOCAL_FSM_STATE_LOGIC(bram_en,bram_addr,bram_rddata,bram_rdvalid,loc_tready,fifo_tready, ADDR_WIDTH) \ 
+    // Local FSM Registers & Wires
+    reg [LOC_FSM_WIDTH-1:0]    loc_fsm_state, loc_fsm_state_next; \
+    reg [ADDR_WIDTH-1:0]       loc_counter_reg, loc_counter_reg_next; \
+    reg                        bram_en_reg; \
+    wire get_next = bram_rdvalid && loc_tready; \
 
-        loc_counter_reg <= 0;
+    assign bram_en = bram_en_reg && ((loc_fsm_state == LOC_FSM_STR) ? 1'b1 : fifo_tready); \
+    assign bram_addr = (loc_fsm_state == LOC_FSM_STR) ? 0 : loc_counter_reg;
 
-      end else begin
-        loc_fsm_state   <= loc_fsm_state_next;
-        loc_counter_reg <= 0;
-        case (loc_fsm_state_next)
-          LOC_FSM_STR: begin
+    assign loc_counter_reg_next = (get_next) : loc_counter_reg + 1 : loc_counter_reg; \
+    always @(posedge clk ) begin \
+      if (rst) begin  \
+        loc_fsm_state <= LOC_FSM_STR; \
 
-          end
-          LOC_FSM_OPE: begin
-            loc_counter_reg <= loc_counter_reg_next;
+        loc_counter_reg <= 0; \
 
-          end
-          LOC_FSM_END: begin
-            loc_counter_reg <= loc_counter_reg_next;
+      end else begin \
+        loc_fsm_state   <= loc_fsm_state_next; \
+        loc_counter_reg <= 0; \
+        bram_en_reg <= 1'b0;
+        case (loc_fsm_state_next) \
+          LOC_FSM_STR: begin \
+            bram_en_reg <= 1'b1;
+            loc_counter_reg <= loc_counter_reg_next; \
+          end \
+          LOC_FSM_OPE: begin \
+            loc_counter_reg <= loc_counter_reg_next; \
+            bram_en_reg <= 1'b1;
+
+          end \
+          LOC_FSM_END: begin \
+            loc_counter_reg <= loc_counter_reg_next; \
             
-          end
-          LOC_FSM_ERR: begin
+          end \
+          LOC_FSM_ERR: begin \
             
-          end
-          default: begin
-            
-          end 
-        endcase
-      end
-    end
+          end \
+          default: begin \
+          end \
+        endcase \
+      end \
+    end \
+  // Local Scale FSM next state logic
+  always @(*) begin \
+    case (loc_scle_fsm_state) \
+      LOC_FSM_STR: begin \
+        `LOC_CHECK_OP_START(glo_fsm_state == GLO_FSM_STR, fsm_state_next, scle_counter_reg_next, ADDR_WIDTH_SCALE) \
+      end \
+      LOC_FSM_OPE: begin \
 
-  // Lobal Scale FSM next state logic
-  always @(*) begin
-    case (loc_scle_fsm_state)
-      LOC_FSM_STR: begin
-        `LOC_CHECK_OP_START(glo_fsm_state == GLO_FSM_STR, fsm_state_next, scle_counter_reg_next, ADDR_WIDTH_SCALE)
-      end
-      LOC_FSM_OPE: begin
-
-      end
-      LOC_FSM_END: begin
-        if (op_done) begin
-          `LOC_CHECK_OP_START(glo_fsm_state == GLO_FSM_STR, fsm_state_next, scle_counter_reg_next, ADDR_WIDTH_SCALE)
-        end
-      end
-      LOC_FSM_ERR: begin
-        loc_scle_fsm_state_next <= LOC_FSM_STR;
+      end \
+      LOC_FSM_END: begin \
+        if (op_done) begin \
+          `LOC_CHECK_OP_START(glo_fsm_state == GLO_FSM_STR, fsm_state_next, scle_counter_reg_next, ADDR_WIDTH_SCALE) \
+        end \
+      end \
+      LOC_FSM_ERR: begin \
+        loc_scle_fsm_state_next <= LOC_FSM_STR; \
         
-      end
-      default: begin
-        loc_scle_fsm_state_next <= loc_scle_fsm_state;
+      end \
+      default: begin \
+        loc_scle_fsm_state_next <= loc_scle_fsm_state; \
         
-      end 
-    endcase
-    if (internal_error) begin
-      loc_scle_fsm_state_next <= LOC_FSM_ERR;
-    end
-    if (rst) begin
-      loc_scle_fsm_state_next <= LOC_FSM_STR;
-    end
-  end
+      end  \
+    endcase \
+    if (internal_error) begin \
+      loc_scle_fsm_state_next <= LOC_FSM_ERR; \
+    end \
+    if (rst) begin \
+      loc_scle_fsm_state_next <= LOC_FSM_STR; \
+    end \
+  end 
 
   // Global FSM states
   localparam GLO_FSM_WIDTH = 3;
@@ -393,7 +402,7 @@ module MemoryControlUnit #(
     if (SHARE_SCALE == 0) begin
       reg [ADDR_WIDTH_SCALE-1:0] scle_counter_reg, scle_counter_reg_next;
 
-      // Lobal Scale FSM output signals
+      // Local Scale FSM output signals
       reg  [GLO_FSM_WIDTH-1:0] loc_scle_fsm_state, loc_scle_fsm_state_next;
 
       
