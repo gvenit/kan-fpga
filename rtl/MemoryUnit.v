@@ -22,6 +22,15 @@ module MemoryUnit #(
     parameter DATA_ADDR = `LOG2(DATA_BANK_DEPTH),
 
     /*------------------------------------------------------------------
+      GRID parameters for AXI stream and BRAM interface
+    ------------------------------------------------------------------*/
+
+    // depth of the grid bram
+    parameter GRID_DEPTH = 256,
+    // number of address bits needed to represent the grid bram addresses
+    parameter GRID_ADDR = `LOG2(GRID_DEPTH),
+
+    /*------------------------------------------------------------------
       SCALE streams parameters
     ------------------------------------------------------------------*/
 
@@ -61,7 +70,7 @@ module MemoryUnit #(
     ------------------------------------------------------------------*/
 
     output wire                       bram_grid_en,
-    output wire [DATA_ADDR-1:0]       bram_grid_addr,
+    output wire [GRID_ADDR-1:0]       bram_grid_addr,
     input wire [DATA_WIDTH_DATA-1:0]  bram_grid_rddata,
     input wire                        bram_grid_rdstrobe,
     

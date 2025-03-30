@@ -7,18 +7,18 @@ module MultiBankBram #(
         parameter ADDR = `LOG2(DEPTH),
         parameter WE = WIDTH / 8
     ) (
-        input clk,
+        input wire clk,
 
-        input [BANKS-1:0] ena,    
-        input [(BANKS*WE)-1:0] wea,    
-        input [(BANKS*ADDR)-1:0] addra,  
-        input [(BANKS*WIDTH)-1:0] dina,  
-        output [(BANKS*WIDTH)-1:0] douta,
+        input wire [BANKS-1:0] ena,    
+        input wire [(BANKS*WE)-1:0] wea,    
+        input wire [(BANKS*ADDR)-1:0] addra,  
+        input wire [(BANKS*WIDTH)-1:0] dina,  
+        output wire [(BANKS*WIDTH)-1:0] douta,
 
-        input [BANKS-1:0] enb,    
-        input [(BANKS*ADDR)-1:0] addrb,  
-        output [(BANKS*WIDTH)-1:0] doutb,  
-        output [BANKS-1:0] validb
+        input wire [BANKS-1:0] enb,    
+        input wire [(BANKS*ADDR)-1:0] addrb,  
+        output wire [(BANKS*WIDTH)-1:0] doutb,  
+        output wire [BANKS-1:0] validb
     );
 
     genvar i;
@@ -27,8 +27,7 @@ module MultiBankBram #(
         for (i = 0; i < BANKS; i = i + 1) begin
             Bram #(
                 .WIDTH(WIDTH),
-                .DEPTH(DEPTH),
-                .ADDR(ADDR)
+                .DEPTH(DEPTH)
             ) bram_inst (
                 .clk(clk),
                 .ena(ena[i]),

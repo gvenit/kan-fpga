@@ -19,7 +19,6 @@ module Bram #(
   parameter WIDTH = 32,
   parameter DEPTH = 256,
   parameter ADDR = `LOG2(DEPTH),
-  // parameter ADDR = 8,
   parameter WE = WIDTH / 8
 ) (
   input wire clk,
