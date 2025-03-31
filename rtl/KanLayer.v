@@ -34,7 +34,7 @@ module KanLayer #(
   parameter DATA_CHANNELS = 1,
 
   // number of DATA bram banks
-  parameter DATA_BANKS = 4,
+  parameter DATA_BANKS = DATA_CHANNELS,
   // number of elements on a single bram bank
   parameter DATA_BANK_DEPTH = 256,
   // number of address bits needed for each bank
@@ -83,6 +83,15 @@ module KanLayer #(
   parameter FRACTIONAL_BITS_WEIGHT = 12,
   // Number of Independent AXI-Stream Weight Channels
   parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
+  // Propagate tkeep signal
+  parameter INPUT_KEEP_ENABLE_WEIGHT = (WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT>8),
+  // tkeep signal width (words per cycle)
+  parameter INPUT_KEEP_WIDTH_WEIGHT = ((WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT+7)/8),
+  // Propagate tkeep signal
+  parameter OUTPUT_KEEP_ENABLE_WEIGHT = (DATA_WIDTH_WEIGHT>8),
+  // tkeep signal width (words per cycle)
+  parameter OUTPUT_KEEP_WIDTH_WEIGHT = ((DATA_WIDTH_WEIGHT+7)/8),
+
 
   /*------------------------------------------------------------------
     SCALED_DIFF parameters
@@ -146,29 +155,46 @@ module KanLayer #(
   // Output Thread ID 
   parameter OUTPUT_ID = 1
 ) (
+
+  // Uncomment the following to set interface specific parameter on the bus interface.
+  //  (* X_INTERFACE_PARAMETER = "MASTER_TYPE <value>,MEM_ECC <value>,MEM_WIDTH <value>,MEM_SIZE <value>,READ_WRITE_MODE <value>" *)
   /*------------------------------------------------------------------
       BRAM Data Control interface
   ------------------------------------------------------------------*/
 
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr RST" *)
   input wire                       bram_data_ctr_rst,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr CLK" *)
   input wire                       bram_data_ctr_clk,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr EN" *)
   input wire                       bram_data_ctr_en,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr WE" *)
   input wire [BRAM_CTR_WE-1:0]     bram_data_ctr_we,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr ADDR" *)
   input wire [BRAM_CTR_ADDR-1:0]   bram_data_ctr_addr,
-  input wire [BRAM_CTR_WIDTH-1:0]  bram_data_ctr_wrdata,
-  output wire [BRAM_CTR_WIDTH-1:0] bram_data_ctr_rddata,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr DIN" *)
+  input wire [BRAM_CTR_WIDTH-1:0]  bram_data_ctr_din,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr DOUT" *)
+  output wire [BRAM_CTR_WIDTH-1:0] bram_data_ctr_dout,
 
   /*------------------------------------------------------------------
       BRAM Grid Control interface
   ------------------------------------------------------------------*/
 
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr RST" *)
   input wire                       bram_grid_ctr_rst,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr CLK" *)
   input wire                       bram_grid_ctr_clk,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr EN" *)
   input wire                       bram_grid_ctr_en,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr WE" *)
   input wire [BRAM_CTR_WE-1:0]     bram_grid_ctr_we,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr ADDR" *)
   input wire [BRAM_CTR_ADDR-1:0]   bram_grid_ctr_addr,
-  input wire [BRAM_CTR_WIDTH-1:0]  bram_grid_ctr_wrdata,
-  output wire [BRAM_CTR_WIDTH-1:0] bram_grid_ctr_rddata,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr DIN" *)
+  input wire [BRAM_CTR_WIDTH-1:0]  bram_grid_ctr_din,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr DOUT" *)
+  output wire [BRAM_CTR_WIDTH-1:0] bram_grid_ctr_dout,
 
   /*------------------------------------------------------------------
       AXI-Lite Control Slave interface
@@ -220,17 +246,41 @@ module KanLayer #(
   output wire [31:0]  s01_axi_rdata,
   output wire [1:0]   s01_axi_rresp,
   output wire         s01_axi_rvalid,
-  input wire          s01_axi_rready
+  input wire          s01_axi_rready,
+
+  /*------------------------------------------------------------------
+      AXI-Stream Weight Slave interface
+  ------------------------------------------------------------------*/
+  
+  input wire                                          s_axis_aclk,
+  input wire                                          s_axis_arstn,
+  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT-1:0] s_axis_tdata,
+  input  wire [INPUT_KEEP_WIDTH_WEIGHT-1:0]           s_axis_tkeep,
+  input  wire                                         s_axis_tvalid,  
+  output wire                                         s_axis_tready,
+  input  wire                                         s_axis_tlast,
+  input  wire  [ID_WIDTH-1:0]                         s_axis_tid,
+  input  wire  [DEST_WIDTH-1:0]                       s_axis_tdest,
+  input  wire  [USER_WIDTH-1:0]                       s_axis_tuser
+
+  /*------------------------------------------------------------------
+      AXI-Stream Results / Output Master interface
+  ------------------------------------------------------------------*/
+
   );
 
   /*************************************************************************************
    Local Paramters
   *************************************************************************************/
 
+  localparam IN_WORD_DATA = BRAM_CTR_WIDTH / DATA_WIDTH_DATA;
+
   localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total data ram length
   localparam DATA_ITRL_ADDR = `LOG2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
 
-  localparam GRID_ITRL_ADDR = `LOG2(GRID_DEPTH);  // number of input address bits of total grid memory
+  localparam GRID_ADDR = `LOG2(GRID_DEPTH);  // number of input address bits of total grid memory
+  localparam GRID_PHYS_DEPTH = GRID_DEPTH / IN_WORD_DATA;  // effective - physical depth of grid ram
+  localparam GRID_PHYS_ADDR = `LOG2(GRID_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
 
   /*************************************************************************************
    Internal Signals
@@ -251,18 +301,10 @@ module KanLayer #(
   wire [(DATA_BANKS*DATA_WIDTH_DATA)-1:0] mb_bram_data_rddata;
   wire [DATA_BANKS-1:0]                   mb_bram_data_rdstrobe;
     
-  // grid ram interface out of the translator into the internal brams
-
-  wire                        itrl_bram_grid_ctr_en;
-  wire [DATA_WE-1:0]          itrl_bram_grid_ctr_we;
-  wire [DATA_ADDR-1:0]        itrl_bram_grid_ctr_addr;
-  wire [DATA_WIDTH_DATA-1:0]  itrl_bram_grid_ctr_wrdata;
-  wire [DATA_WIDTH_DATA-1:0]  itrl_bram_grid_ctr_rddata;
-
   // grid ram interface for use internally in the architecture
 
   wire                        bram_grid_en;
-  wire [DATA_ADDR-1:0]        bram_grid_addr;
+  wire [GRID_ADDR-1:0]        bram_grid_addr;
   wire [DATA_WIDTH_DATA-1:0]  bram_grid_rddata;
   wire                        bram_grid_rdstrobe;
     
@@ -344,8 +386,8 @@ module KanLayer #(
     .en_i(bram_data_ctr_en),
     .we_i(bram_data_ctr_we),
     .addr_i(bram_data_ctr_addr[DATA_ITRL_ADDR-1:0]),
-    .wrdata_i(bram_data_ctr_wrdata),
-    .rddata_i(bram_data_ctr_rddata),
+    .wrdata_i(bram_data_ctr_din),
+    .rddata_i(bram_data_ctr_dout),
     .en_o(mb_bram_data_ctr_en),
     .we_o(mb_bram_data_ctr_we),
     .addr_o(mb_bram_data_ctr_addr),
@@ -370,34 +412,17 @@ module KanLayer #(
     .validb(mb_bram_data_rdstrobe)
   );
 
-  BramIntrfTranslator #(
-    .IN_WIDTH(BRAM_CTR_WIDTH),
-    .OUT_WIDTH(DATA_WIDTH_DATA),
-    .BANKS(1),
-    .OUT_DEPTH(GRID_DEPTH)
-  ) grid_bram_interface_translator_inst (
-    .en_i(bram_grid_ctr_en),
-    .we_i(bram_grid_ctr_we),
-    .addr_i(bram_grid_ctr_addr[GRID_ITRL_ADDR-1:0]),
-    .wrdata_i(bram_grid_ctr_wrdata),
-    .rddata_i(bram_grid_ctr_rddata),
-    .en_o(itrl_bram_grid_ctr_en),
-    .we_o(itrl_bram_grid_ctr_we),
-    .addr_o(itrl_bram_grid_ctr_addr),
-    .wrdata_o(itrl_bram_grid_ctr_wrdata),
-    .rddata_o(itrl_bram_grid_ctr_rddata)
-  );
-
-  Bram #(
-    .WIDTH(DATA_WIDTH_DATA),
-    .DEPTH(GRID_DEPTH)
+  MultiWidthDualPortBram #(
+    .PORT_B_WIDTH(DATA_WIDTH_DATA),
+    .PORT_B_DEPTH(GRID_DEPTH),
+    .PORT_A_WIDTH(BRAM_CTR_WIDTH)
   ) grid_bram_inst (
     .clk(bram_grid_ctr_clk),
-    .ena(itrl_bram_grid_ctr_en),
-    .wea(itrl_bram_grid_ctr_we),
-    .addra(itrl_bram_grid_ctr_addr),
-    .dina(itrl_bram_grid_ctr_wrdata),
-    .douta(itrl_bram_grid_ctr_rddata),
+    .ena(bram_grid_ctr_en),
+    .wea(bram_grid_ctr_we),
+    .addra(bram_grid_ctr_addr[GRID_PHYS_ADDR-1:0]),
+    .dina(bram_grid_ctr_din),
+    .douta(bram_grid_ctr_dout),
     .enb(bram_grid_en),
     .addrb(bram_grid_addr),
     .doutb(bram_grid_rddata),
@@ -470,6 +495,7 @@ module KanLayer #(
     .DATA_CHANNELS(DATA_CHANNELS),
     .DATA_BANKS(DATA_BANKS),
     .DATA_BANK_DEPTH(DATA_BANK_DEPTH),
+    .GRID_DEPTH(GRID_DEPTH),
     .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
     .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
     .SHARE_SCALE(SHARE_SCALE),
@@ -521,16 +547,16 @@ module KanLayer #(
     .USER_WIDTH(USER_WIDTH),
     .EXTRA_CYCLE(EXTRA_CYCLE)
   ) axis_splitter_weights_inst (
-    .clk              ( ),
-    .rst              ( ),
-    .s_axis_tdata     ( ),
-    .s_axis_tkeep     ( ),
-    .s_axis_tvalid    ( ),
-    .s_axis_tready    ( ),
-    .s_axis_tlast     ( ),
-    .s_axis_tid       ( ),
-    .s_axis_tdest     ( ),
-    .s_axis_tuser     ( ),
+    .clk              (s_axis_aclk),
+    .rst              (~s_axis_arstn),
+    .s_axis_tdata     (s_axis_tdata),
+    .s_axis_tkeep     (s_axis_tkeep),
+    .s_axis_tvalid    (s_axis_tvalid),
+    .s_axis_tready    (s_axis_tready),
+    .s_axis_tlast     (s_axis_tlast),
+    .s_axis_tid       (s_axis_tid),
+    .s_axis_tdest     (s_axis_tdest),
+    .s_axis_tuser     (s_axis_tuser),
     .m_axis_tdata     (axis_weight_tdata),
     .m_axis_tkeep     ( ),
     .m_axis_tvalid    (axis_weight_tvalid),
