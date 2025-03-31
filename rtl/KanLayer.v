@@ -78,19 +78,21 @@ module KanLayer #(
   ------------------------------------------------------------------*/
 
   // Width of AXI stream Input Weight interface in bits
+  parameter DATA_WIDTH_WEIGHT_DMA = 64,
+  // Width of input weight word
   parameter DATA_WIDTH_WEIGHT = 16,
-  // Fractional bits of output data
+  // Fractional bits of weight data
   parameter FRACTIONAL_BITS_WEIGHT = 12,
   // Number of Independent AXI-Stream Weight Channels
   parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
   // Propagate tkeep signal
-  parameter INPUT_KEEP_ENABLE_WEIGHT = (WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT>8),
+  parameter KEEP_ENABLE_WEIGHT_DMA = (DATA_WIDTH_WEIGHT_DMA>8),
   // tkeep signal width (words per cycle)
-  parameter INPUT_KEEP_WIDTH_WEIGHT = ((WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT+7)/8),
+  parameter KEEP_WIDTH_WEIGHT_DMA = ((DATA_WIDTH_WEIGHT_DMA+7)/8),
   // Propagate tkeep signal
-  parameter OUTPUT_KEEP_ENABLE_WEIGHT = (DATA_WIDTH_WEIGHT>8),
+  parameter KEEP_ENABLE_WEIGHT = (DATA_WIDTH_WEIGHT>8),
   // tkeep signal width (words per cycle)
-  parameter OUTPUT_KEEP_WIDTH_WEIGHT = ((DATA_WIDTH_WEIGHT+7)/8),
+  parameter KEEP_WIDTH_WEIGHT = ((DATA_WIDTH_WEIGHT+7)/8),
 
 
   /*------------------------------------------------------------------
@@ -163,17 +165,17 @@ module KanLayer #(
   ------------------------------------------------------------------*/
 
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr RST" *)
-  input wire                       bram_data_ctr_rst,
+  input  wire                      bram_data_ctr_rst,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr CLK" *)
-  input wire                       bram_data_ctr_clk,
+  input  wire                      bram_data_ctr_clk,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr EN" *)
-  input wire                       bram_data_ctr_en,
+  input  wire                      bram_data_ctr_en,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr WE" *)
-  input wire [BRAM_CTR_WE-1:0]     bram_data_ctr_we,
+  input  wire [BRAM_CTR_WE-1:0]    bram_data_ctr_we,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr ADDR" *)
-  input wire [BRAM_CTR_ADDR-1:0]   bram_data_ctr_addr,
+  input  wire [BRAM_CTR_ADDR-1:0]  bram_data_ctr_addr,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr DIN" *)
-  input wire [BRAM_CTR_WIDTH-1:0]  bram_data_ctr_din,
+  input  wire [BRAM_CTR_WIDTH-1:0] bram_data_ctr_din,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_data_ctr DOUT" *)
   output wire [BRAM_CTR_WIDTH-1:0] bram_data_ctr_dout,
 
@@ -182,17 +184,17 @@ module KanLayer #(
   ------------------------------------------------------------------*/
 
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr RST" *)
-  input wire                       bram_grid_ctr_rst,
+  input  wire                      bram_grid_ctr_rst,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr CLK" *)
-  input wire                       bram_grid_ctr_clk,
+  input  wire                      bram_grid_ctr_clk,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr EN" *)
-  input wire                       bram_grid_ctr_en,
+  input  wire                      bram_grid_ctr_en,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr WE" *)
-  input wire [BRAM_CTR_WE-1:0]     bram_grid_ctr_we,
+  input  wire [BRAM_CTR_WE-1:0]    bram_grid_ctr_we,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr ADDR" *)
-  input wire [BRAM_CTR_ADDR-1:0]   bram_grid_ctr_addr,
+  input  wire [BRAM_CTR_ADDR-1:0]  bram_grid_ctr_addr,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr DIN" *)
-  input wire [BRAM_CTR_WIDTH-1:0]  bram_grid_ctr_din,
+  input  wire [BRAM_CTR_WIDTH-1:0] bram_grid_ctr_din,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr DOUT" *)
   output wire [BRAM_CTR_WIDTH-1:0] bram_grid_ctr_dout,
 
@@ -200,68 +202,68 @@ module KanLayer #(
       AXI-Lite Control Slave interface
   ------------------------------------------------------------------*/
 
-  input wire          s00_axi_aclk,
-  input wire          s00_axi_aresetn,
-  input wire [11:0]   s00_axi_awaddr,
-  input wire [2:0]    s00_axi_awprot,
-  input wire          s00_axi_awvalid,
+  input  wire         s00_axi_aclk,
+  input  wire         s00_axi_aresetn,
+  input  wire [11:0]  s00_axi_awaddr,
+  input  wire [2:0]   s00_axi_awprot,
+  input  wire         s00_axi_awvalid,
   output wire         s00_axi_awready,
-  input wire [31:0]   s00_axi_wdata,
-  input wire [3:0]    s00_axi_wstrb,
-  input wire          s00_axi_wvalid,
+  input  wire [31:0]  s00_axi_wdata,
+  input  wire [3:0]   s00_axi_wstrb,
+  input  wire         s00_axi_wvalid,
   output wire         s00_axi_wready,
   output wire [1:0]   s00_axi_bresp,
   output wire         s00_axi_bvalid,
-  input wire          s00_axi_bready,
-  input wire [11:0]   s00_axi_araddr,
-  input wire [2:0]    s00_axi_arprot,
-  input wire          s00_axi_arvalid,
+  input  wire         s00_axi_bready,
+  input  wire [11:0]  s00_axi_araddr,
+  input  wire [2:0]   s00_axi_arprot,
+  input  wire         s00_axi_arvalid,
   output wire         s00_axi_arready,
   output wire [31:0]  s00_axi_rdata,
   output wire [1:0]   s00_axi_rresp,
   output wire         s00_axi_rvalid,
-  input wire          s00_axi_rready,
+  input  wire         s00_axi_rready,
 
   /*------------------------------------------------------------------
       AXI-Lite Scale Register Slave interface
   ------------------------------------------------------------------*/
 
-  input wire          s01_axi_aclk,
-  input wire          s01_axi_aresetn,
-  input wire [11:0]   s01_axi_awaddr,
-  input wire [2:0]    s01_axi_awprot,
-  input wire          s01_axi_awvalid,
+  input  wire         s01_axi_aclk,
+  input  wire         s01_axi_aresetn,
+  input  wire [11:0]  s01_axi_awaddr,
+  input  wire [2:0]   s01_axi_awprot,
+  input  wire         s01_axi_awvalid,
   output wire         s01_axi_awready,
-  input wire [31:0]   s01_axi_wdata,
-  input wire [3:0]    s01_axi_wstrb,
-  input wire          s01_axi_wvalid,
+  input  wire [31:0]  s01_axi_wdata,
+  input  wire [3:0]   s01_axi_wstrb,
+  input  wire         s01_axi_wvalid,
   output wire         s01_axi_wready,
   output wire [1:0]   s01_axi_bresp,
   output wire         s01_axi_bvalid,
-  input wire          s01_axi_bready,
-  input wire [11:0]   s01_axi_araddr,
-  input wire [2:0]    s01_axi_arprot,
-  input wire          s01_axi_arvalid,
+  input  wire         s01_axi_bready,
+  input  wire [11:0]  s01_axi_araddr,
+  input  wire [2:0]   s01_axi_arprot,
+  input  wire         s01_axi_arvalid,
   output wire         s01_axi_arready,
   output wire [31:0]  s01_axi_rdata,
   output wire [1:0]   s01_axi_rresp,
   output wire         s01_axi_rvalid,
-  input wire          s01_axi_rready,
+  input  wire         s01_axi_rready,
 
   /*------------------------------------------------------------------
       AXI-Stream Weight Slave interface
   ------------------------------------------------------------------*/
   
-  input wire                                          s_axis_aclk,
-  input wire                                          s_axis_arstn,
-  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT-1:0] s_axis_tdata,
-  input  wire [INPUT_KEEP_WIDTH_WEIGHT-1:0]           s_axis_tkeep,
-  input  wire                                         s_axis_tvalid,  
-  output wire                                         s_axis_tready,
-  input  wire                                         s_axis_tlast,
-  input  wire  [ID_WIDTH-1:0]                         s_axis_tid,
-  input  wire  [DEST_WIDTH-1:0]                       s_axis_tdest,
-  input  wire  [USER_WIDTH-1:0]                       s_axis_tuser
+  input  wire                                         s_axis_weight_aclk,
+  input  wire                                         s_axis_weight_arstn,
+  input  wire [DATA_WIDTH_WEIGHT_DMA-1:0]             s_axis_weight_tdata,
+  input  wire [KEEP_WIDTH_WEIGHT_DMA-1:0]             s_axis_weight_tkeep,
+  input  wire                                         s_axis_weight_tvalid,  
+  output wire                                         s_axis_weight_tready,
+  input  wire                                         s_axis_weight_tlast,
+  input  wire [ID_WIDTH-1:0]                          s_axis_weight_tid,
+  input  wire [DEST_WIDTH-1:0]                        s_axis_weight_tdest,
+  input  wire [USER_WIDTH-1:0]                        s_axis_weight_tuser
 
   /*------------------------------------------------------------------
       AXI-Stream Results / Output Master interface
@@ -535,9 +537,82 @@ module KanLayer #(
     .axis_scale_tuser(axis_scale_tuser)
   );
 
+  // Weight Registers & Wires
+  wire [WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT-1:0] axis_wght_splitter_in_tdata;
+  wire [INPUT_KEEP_WIDTH_WEIGHT-1:0]           axis_wght_splitter_in_tkeep;
+  wire                                         axis_wght_splitter_in_tvalid;
+  wire                                         axis_wght_splitter_in_tready;
+  wire                                         axis_wght_splitter_in_tlast;
+  wire [ID_WIDTH-1:0]                          axis_wght_splitter_in_tid;
+  wire [DEST_WIDTH-1:0]                        axis_wght_splitter_in_tdest;
+  wire [USER_WIDTH-1:0]                        axis_wght_splitter_in_tuser;
+
+  wire [WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT-1:0] axis_wght_splitter_out_tdata;
+  wire [WEIGHT_CHANNELS-1:0]                   axis_wght_splitter_out_tvalid;
+  wire [WEIGHT_CHANNELS-1:0]                   axis_wght_splitter_out_tready;
+  wire [WEIGHT_CHANNELS-1:0]                   axis_wght_splitter_out_tlast;
+  wire [WEIGHT_CHANNELS*ID_WIDTH-1:0]          axis_wght_splitter_out_tid;
+  wire [WEIGHT_CHANNELS*DEST_WIDTH-1:0]        axis_wght_splitter_out_tdest;
+  wire [WEIGHT_CHANNELS*USER_WIDTH-1:0]        axis_wght_splitter_out_tuser;
+
+  /*
+  * AXI4-Stream bus width adapter
+  */
+  axis_adapter #(
+      // Width of input AXI stream interface in bits
+      .S_DATA_WIDTH(DATA_WIDTH_WEIGHT_DMA),
+      // Propagate tkeep signal on input interface
+      // If disabled, tkeep assumed to be 1'b1
+      .S_KEEP_ENABLE(KEEP_ENABLE_WEIGHT_DMA),
+      // tkeep signal width (words per cycle) on input interface
+      .S_KEEP_WIDTH(KEEP_WIDTH_WEIGHT_DMA),
+      // Width of output AXI stream interface in bits
+      .M_DATA_WIDTH(WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT),
+      // Propagate tkeep signal on output interface
+      // If disabled, tkeep assumed to be 1'b1
+      .M_KEEP_ENABLE(KEEP_ENABLE_WEIGHT_DMA),
+      // tkeep signal width (words per cycle) on output interface
+      .M_KEEP_WIDTH(WEIGHT_CHANNELS*KEEP_WIDTH_WEIGHT),
+      // Propagate tid signal
+      .ID_ENABLE(ID_ENABLE),
+      // tid signal width
+      .ID_WIDTH(ID_WIDTH),
+      // Propagate tdest signal
+      .DEST_ENABLE(DEST_ENABLE),
+      // tdest signal width
+      .DEST_WIDTH(DEST_WIDTH),
+      // Propagate tuser signal
+      .USER_ENABLE(USER_ENABLE),
+      // tuser signal width
+      .USER_WIDTH(USER_WIDTH)
+  ) axis_adapter_wght_inst (
+      .clk(clk),
+      .rst(rst),
+      .s_axis_tdata(s_axis_weight_tdata),
+      .s_axis_tkeep(s_axis_weight_tkeep),
+      .s_axis_tvalid(s_axis_weight_tvalid),
+      .s_axis_tready(s_axis_weight_tready),
+      .s_axis_tlast(s_axis_weight_tlast),
+      .s_axis_tid(s_axis_weight_tid),
+      .s_axis_tdest(s_axis_weight_tdest),
+      .s_axis_tuser(s_axis_weight_tuser),
+      .m_axis_tdata(axis_wght_splitter_in_tdata),
+      .m_axis_tkeep(axis_wght_splitter_in_tkeep),
+      .m_axis_tvalid(axis_wght_splitter_in_tvalid),
+      .m_axis_tready(axis_wght_splitter_in_tready),
+      .m_axis_tlast(axis_wght_splitter_in_tlast),
+      .m_axis_tid(axis_wght_splitter_in_tid),
+      .m_axis_tdest(axis_wght_splitter_in_tdest),
+      .m_axis_tuser(axis_wght_splitter_in_tuser)
+  );
+
   AxisSplitter #(
     .OUTPUT_DATA_WIDTH(DATA_WIDTH_WEIGHT),
     .CHANNELS(WEIGHT_CHANNELS),
+    .INPUT_KEEP_ENABLE(INPUT_KEEP_ENABLE),
+    .INPUT_KEEP_WIDTH(INPUT_KEEP_WIDTH),
+    .OUTPUT_KEEP_ENABLE(0),
+    .OUTPUT_KEEP_WIDTH(1),
     .LAST_ENABLE(LAST_ENABLE),
     .ID_ENABLE(ID_ENABLE),
     .ID_WIDTH(ID_WIDTH),
@@ -549,22 +624,22 @@ module KanLayer #(
   ) axis_splitter_weights_inst (
     .clk              (s_axis_aclk),
     .rst              (~s_axis_arstn),
-    .s_axis_tdata     (s_axis_tdata),
-    .s_axis_tkeep     (s_axis_tkeep),
-    .s_axis_tvalid    (s_axis_tvalid),
-    .s_axis_tready    (s_axis_tready),
-    .s_axis_tlast     (s_axis_tlast),
-    .s_axis_tid       (s_axis_tid),
-    .s_axis_tdest     (s_axis_tdest),
-    .s_axis_tuser     (s_axis_tuser),
-    .m_axis_tdata     (axis_weight_tdata),
-    .m_axis_tkeep     ( ),
-    .m_axis_tvalid    (axis_weight_tvalid),
-    .m_axis_tready    (axis_weight_tready),
-    .m_axis_tlast     (axis_weight_tlast),
-    .m_axis_tid       (axis_weight_tid),
-    .m_axis_tdest     (axis_weight_tdest),
-    .m_axis_tuser     (axis_weight_tuser)
+    .s_axis_tdata     (axis_wght_splitter_in_tdata),
+    .s_axis_tkeep     (axis_wght_splitter_in_tkeep),
+    .s_axis_tvalid    (axis_wght_splitter_in_tvalid),
+    .s_axis_tready    (axis_wght_splitter_in_tready),
+    .s_axis_tlast     (axis_wght_splitter_in_tlast),
+    .s_axis_tid       (axis_wght_splitter_in_tid),
+    .s_axis_tdest     (axis_wght_splitter_in_tdest),
+    .s_axis_tuser     (axis_wght_splitter_in_tuser),
+    .m_axis_tdata     (axis_wght_splitter_out_tdata),
+    // .m_axis_tkeep     (axis_wght_splitter_out_tkeep),
+    .m_axis_tvalid    (axis_wght_splitter_out_tvalid),
+    .m_axis_tready    (axis_wght_splitter_out_tready),
+    .m_axis_tlast     (axis_wght_splitter_out_tlast),
+    .m_axis_tid       (axis_wght_splitter_out_tid),
+    .m_axis_tdest     (axis_wght_splitter_out_tdest),
+    .m_axis_tuser     (axis_wght_splitter_out_tuser)
   );
 
   ParallelizedDataProcessor #(
