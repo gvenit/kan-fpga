@@ -16,11 +16,16 @@
 `include "utils.vh"
 
 module Bram #(
-  parameter WIDTH = 32,
-  parameter DEPTH = 256,
-  parameter ADDR = `LOG2(DEPTH),
+  parameter WIDTHA = 32,
+  parameter DEPTHA = 256,
+  parameter ADDRA = `LOG2(DEPTH),
   // parameter ADDR = 8,
-  parameter WE = WIDTH / 8
+  parameter WEA = WIDTHA / 8,
+  parameter WIDTHB = 32,
+  parameter DEPTHB = 256,
+  parameter ADDRB = `LOG2(DEPTH),
+  // parameter ADDR = 8,
+  parameter WEB = WIDTHB / 8
 ) (
   input wire clk,
 

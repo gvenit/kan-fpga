@@ -530,7 +530,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # print(layer_wght_q.reshape(-1, DATA_CHANNELS.value, RSLT_CHANNELS.value))
     hex_list = lambda x: hex(x) if isinstance(x, int) else [hex_list(_) for _ in x]
     # print()
-    # print(layer_wght_q.shape)
+    print(layer_wght_q.shape)
     # print(layer_wght_q)
     # print(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)))
     # print(torch.stack( torch.split(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)), DATA_CHANNELS.value,0) ))
@@ -716,9 +716,9 @@ def main():
     
     for I,J,K in (
         # (1,1,1),
-        (2,2,1),
+        # (2,2,1),
         # (2,3,1),
-        # (8,4,2),
+        (8,4,2),
         # (5,5,5),
     ):
         N_in, N_out = 64,64

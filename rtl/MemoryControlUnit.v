@@ -3,6 +3,7 @@
 `default_nettype none
 
 module MemoryControlUnit #(
+  `include "MCUGlobalFSMparameters.vh"
   // Number of batches per run
   parameter BATCH_SIZE = 1,
   // Width of AXI stream Input Data & Grid interfaces in bits
@@ -126,10 +127,10 @@ module MemoryControlUnit #(
   /*
    * Control signals
    */
-  input wire operation_start,
-  input wire [ADDR_WIDTH_DATA-1:0]  data_size,
-  input wire [ADDR_WIDTH_GRID-1:0]  grid_size,
-  input wire [ADDR_WIDTH_SCALE-1:0] scle_size,
+  input  wire operation_start,
+  input  wire [ADDR_WIDTH_DATA-1:0]  data_size,
+  input  wire [ADDR_WIDTH_GRID-1:0]  grid_size,
+  input  wire [ADDR_WIDTH_SCALE-1:0] scle_size,
   
   /*
    * Interrupt signals
@@ -139,36 +140,11 @@ module MemoryControlUnit #(
   output reg operation_error
 
 );
-  // Input signals
-  wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_bram_rdvalid_int;
-  wire                                grid_bram_rdvalid_int;
-  wire [DATA_CHANNELS-1:0]            scle_bram_rdvalid_int;  // Ignore if BRAM_VALID_SIG == 0
-
-  generate
-    if (BRAM_VALID_SIG > 0) begin
-      assign data_bram_rdvalid_int = data_bram_rdvalid;
-      assign grid_bram_rdvalid_int = grid_bram_rdvalid;
-      assign scle_bram_rdvalid_int = scle_bram_rdvalid;
-    end else begin
-      assign data_bram_rdvalid_int = {BATCH_SIZE*DATA_CHANNELS{1'b1}};
-      assign grid_bram_rdvalid_int = 1'b1;
-      assign scle_bram_rdvalid_int = {DATA_CHANNELS{1'b1}};
-    end
-  endgenerate
-
   // Control Registers & Wires
   reg  op_in_progress_reg = 1'b0;
   reg  [ADDR_WIDTH_DATA-1:0]  data_size_reg;
   reg  [ADDR_WIDTH_GRID-1:0]  grid_size_reg;
   reg  [ADDR_WIDTH_SCALE-1:0] scle_size_reg;
-
-  // Local FSM states
-  localparam LOC_FSM_WIDTH = 3;
-  localparam LOC_FSM_ST0 = 0;
-  localparam LOC_FSM_STR = 1;
-  localparam LOC_FSM_OPE = 2;
-  localparam LOC_FSM_END = 3;
-  localparam LOC_FSM_ERR = 4;
 
   // Local FSM output signals
   wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_tlast_transmitted;
@@ -178,89 +154,6 @@ module MemoryControlUnit #(
   wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_error;
   wire                                grid_error;
   wire [SCALE_CHANNELS-1:0]           scle_error;
-
-  // Local FSM state logic
-  `define LOCAL_FSM_STATE_LOGIC(bram_en,bram_addr,bram_rddata,bram_rdvalid,loc_tready,fifo_tready, ADDR_WIDTH) \ 
-    // Local FSM Registers & Wires
-    reg [LOC_FSM_WIDTH-1:0]    loc_fsm_state, loc_fsm_state_next; \
-    reg [ADDR_WIDTH-1:0]       loc_counter_reg, loc_counter_reg_next; \
-    reg                        bram_en_reg; \
-    wire get_next = bram_rdvalid && loc_tready; \
-
-    assign bram_en = bram_en_reg && ((loc_fsm_state == LOC_FSM_STR) ? 1'b1 : fifo_tready); \
-    assign bram_addr = (loc_fsm_state == LOC_FSM_STR) ? 0 : loc_counter_reg;
-
-    assign loc_counter_reg_next = (get_next) : loc_counter_reg + 1 : loc_counter_reg; \
-    always @(posedge clk ) begin \
-      if (rst) begin  \
-        loc_fsm_state <= LOC_FSM_STR; \
-
-        loc_counter_reg <= 0; \
-
-      end else begin \
-        loc_fsm_state   <= loc_fsm_state_next; \
-        loc_counter_reg <= 0; \
-        bram_en_reg <= 1'b0;
-        case (loc_fsm_state_next) \
-          LOC_FSM_STR: begin \
-            bram_en_reg <= 1'b1;
-            loc_counter_reg <= loc_counter_reg_next; \
-          end \
-          LOC_FSM_OPE: begin \
-            loc_counter_reg <= loc_counter_reg_next; \
-            bram_en_reg <= 1'b1;
-
-          end \
-          LOC_FSM_END: begin \
-            loc_counter_reg <= loc_counter_reg_next; \
-            
-          end \
-          LOC_FSM_ERR: begin \
-            
-          end \
-          default: begin \
-          end \
-        endcase \
-      end \
-    end \
-  // Local Scale FSM next state logic
-  always @(*) begin \
-    case (loc_scle_fsm_state) \
-      LOC_FSM_STR: begin \
-        `LOC_CHECK_OP_START(glo_fsm_state == GLO_FSM_STR, fsm_state_next, scle_counter_reg_next, ADDR_WIDTH_SCALE) \
-      end \
-      LOC_FSM_OPE: begin \
-
-      end \
-      LOC_FSM_END: begin \
-        if (op_done) begin \
-          `LOC_CHECK_OP_START(glo_fsm_state == GLO_FSM_STR, fsm_state_next, scle_counter_reg_next, ADDR_WIDTH_SCALE) \
-        end \
-      end \
-      LOC_FSM_ERR: begin \
-        loc_scle_fsm_state_next <= LOC_FSM_STR; \
-        
-      end \
-      default: begin \
-        loc_scle_fsm_state_next <= loc_scle_fsm_state; \
-        
-      end  \
-    endcase \
-    if (internal_error) begin \
-      loc_scle_fsm_state_next <= LOC_FSM_ERR; \
-    end \
-    if (rst) begin \
-      loc_scle_fsm_state_next <= LOC_FSM_STR; \
-    end \
-  end 
-
-  // Global FSM states
-  localparam GLO_FSM_WIDTH = 3;
-  localparam GLO_FSM_ST0 = 0;
-  localparam GLO_FSM_STR = 1;
-  localparam GLO_FSM_OPE = 2;
-  localparam GLO_FSM_END = 3;
-  localparam GLO_FSM_ERR = 4;
 
   // Global FSM input signals
   wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg_next = data_op_done_reg | data_tlast_transmitted;
@@ -338,10 +231,22 @@ module MemoryControlUnit #(
   `define GLO_CHECK_OP_START \
     if (operation_start) begin \
       glo_fsm_state_next <= GLO_FSM_STR; \
-      data_size_reg <= data_size; \
-      grid_size_reg <= grid_size; \
+      if (data_size[ADDR_WIDTH_DATA] && (|data_size[ADDR_WIDTH_DATA-1:0])) begin
+        glo_fsm_state_next <= GLO_FSM_ERR; \
+      end else begin \
+        data_size_reg <= data_size; \
+      end \
+      if (grid_size[ADDR_WIDTH_DATA] && (|grid_size[ADDR_WIDTH_DATA-1:0])) begin
+        glo_fsm_state_next <= GLO_FSM_ERR; \
+      end else begin \
+        grid_size_reg <= grid_size; \
+      end \
       if (SCALE_CHANNELS == 0) begin \
-        scle_size_reg <= scle_size; \
+        if (scle_size[ADDR_WIDTH_DATA] && (|scle_size[ADDR_WIDTH_DATA-1:0])) begin
+          glo_fsm_state_next <= GLO_FSM_ERR; \
+        end else begin \
+          scle_size_reg <= scle_size; \
+        end \
       end \
     end else begin \
       glo_fsm_state_next <= GLO_FSM_ST0; \
@@ -383,28 +288,85 @@ module MemoryControlUnit #(
 
   genvar pos;
 
-  `define LOC_CHECK_OP_START(operation_start, fsm_state_next, counter_reg_next, counter_max, COUNTER_REG_SIZE)\
-    if (operation_start) begin \
-      counter_reg_next <= {COUNTER_REG_SIZE{1'b0}}; \
-      if(counter_max == 0) begin \
-        fsm_state_next <= LOC_FSM_ERR; \
-      end else if (counter_max == 1) begin \
-        fsm_state_next <= LOC_FSM_END; \
-      end else begin \
-        fsm_state_next <= LOC_FSM_OPE; \
-      end \
-    end else begin \
-      fsm_state_next <= LOC_FSM_STR; \
-    end 
-
  generate
   for (pos = 0; pos < BATCH_SIZE*DATA_CHANNELS; pos = pos + 1) begin
     if (SHARE_SCALE == 0) begin
-      reg [ADDR_WIDTH_SCALE-1:0] scle_counter_reg, scle_counter_reg_next;
+      // Local FIFO I/O
+      wire [DATA_WIDTH_DATA-1:0]  scle_fifo_in_axis_tdata,  scle_fifo_out_axis_tdata;
+      wire                        scle_fifo_in_axis_tvalid, scle_fifo_out_axis_tvalid;
+      wire                        scle_fifo_in_axis_tready, scle_fifo_out_axis_tready;
+      wire                        scle_fifo_in_axis_tlast,  scle_fifo_out_axis_tlast;
 
-      // Local Scale FSM output signals
-      reg  [GLO_FSM_WIDTH-1:0] loc_scle_fsm_state, loc_scle_fsm_state_next;
-
+      MCULocalFSM #(
+        `include "MCUGlobalFSMparametersInst.vh"
+        // Width of AXI stream Output interfaces in bits
+        .DATA_WIDTH(DATA_WIDTH_SCALE),
+        // Width of address bus in bits
+        .ADDR_WIDTH(ADDR_WIDTH_SCALE),
+        // Width of iteration counters
+        .ITER_WIDTH(ITER_WIDTH),
+        // BRAM control has valid signal
+        .BRAM_VALID_SIG(BRAM_VALID_SIG)
+      ) (
+        .clk(clk),
+        .rst(rst),
+        .bram_en(scle_bram_en[pos]),
+        // .bram_we(bram_we),  // Read Only Operations allowed
+        .bram_addr(scle_bram_addr[pos*ADDR_WIDTH_SCALE +: ADDR_WIDTH_SCALE]),
+        // .bram_wrdata(bram_wrdata),
+        .bram_rddata(scle_bram_rddata[pos*ADDR_WIDTH_SCALE +: ADDR_WIDTH_SCALE]),
+        .bram_rdvalid(scle_bram_rdvalid[pos]),
+        .m_axis_data_tdata(scle_fifo_in_axis_tdata),
+        .m_axis_data_tvalid(scle_fifo_in_axis_tvalid),
+        .m_axis_data_tready(scle_fifo_in_axis_tready),
+        .m_axis_data_tlast(scle_fifo_in_axis_tlast),
+        .glo_fsm_state(glo_fsm_state),
+        .addr_counter_max(scle_size_reg),
+        .inter_counter_max(1),
+        .intra_counter_max(1),
+        .tlast_transmitted(tlast_transmitted),
+        .error(error)
+      );
+      axis_srl_fifo #(
+        // Width of AXI stream interfaces in bits
+        .DATA_WIDTH(DATA_WIDTH_SCALE),
+        // Propagate tkeep signal
+        .KEEP_ENABLE(0),
+        // tkeep signal width (words per cycle)
+        .KEEP_WIDTH(1),
+        // Propagate tlast signal
+        .LAST_ENABLE(1),
+        // Propagate tid signal
+        .ID_ENABLE(0),
+        // tid signal width
+        .ID_WIDTH(1),
+        // Propagate tdest signal
+        .DEST_ENABLE(0),
+        // tdest signal width
+        .DEST_WIDTH(1),
+        // Propagate tuser signal
+        .USER_ENABLE(0),
+        // tuser signal width
+        .USER_WIDTH(1),
+        // FIFO depth in cycles
+        .DEPTH(8)
+      ) axis_fifo_scle_inst (
+        .clk(clk),
+        .rst(rst),
+        .s_axis_tdata(scle_fifo_in_axis_tdata),
+        .s_axis_tkeep(1'b1),
+        .s_axis_tvalid(scle_fifo_in_axis_tvalid),
+        .s_axis_tready(scle_fifo_in_axis_tready),
+        .s_axis_tlast(scle_fifo_in_axis_tlast),
+        .s_axis_tid(1'b0),
+        .s_axis_tdest(1'b0),
+        .s_axis_tuser(1'b0),
+        .m_axis_tdata(scle_fifo_out_axis_tdata),
+        .m_axis_tvalid(scle_fifo_out_axis_tvalid),
+        .m_axis_tready(scle_fifo_out_axis_tready),
+        .m_axis_tlast(scle_fifo_out_axis_tlast),
+      );
+    
       
     end
   end
