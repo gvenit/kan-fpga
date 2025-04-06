@@ -3,10 +3,13 @@
 ## Progress
 
 ***System Architecture***
-- [ ] naming conventions for internal signals - each module must have its own
-- [ ] parameter interdependences and values (see concerns)
+- [x] naming conventions for internal signals - each module must have its own
 - [ ] implement multiple batch design
+- [ ] parameter interdependences and values (see concerns)
 - [ ] specify and implement all the control signals
+- [ ] the axi adapter is the wrong module to connect the result streams to the master axis dma
+- [ ] specify how data processor reset works (`core_rst` signal). Is it from the zynq reset or is it by writing on an axi-lite reg?
+- [ ] specify the .txt directories in vivado
 
 ***Vitis Software***
 - [ ] general code outline
@@ -20,7 +23,7 @@
 
 ***Top Level Module Parameters***
 - [x] ~~ensure with assertions the expected parameter values~~: cannot be done in verilog, so it is aborted
-- [ ] there must be some association with the data channels and data banks
+- [x] there must be some association with the data channels and data banks
 - [ ] make sure grid and data share all these parameters (width and so on)
 - [ ] more strict specifications of depths
 
@@ -32,3 +35,12 @@
 
 - not sure if the scale register has the correct width
 - have not tried slicing the address bits in the top level module before. All the other times I used a slicer in the Vivado Block Design
+- the dma connections to the streams might have width mismatches (they use different parameters for width specification)
+- maybe dma needs different slave and master widths of data and keep
+
+# Problems
+
+- still too many dependencies
+- batch cannot be implemented - what happens with RAM control interface
+- no module for adapter/joiner
+- clear out the depths (the tables show bits or bytes? Are they correct?)
