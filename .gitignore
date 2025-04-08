@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-# python
-
-venv/*
-*-old*
-*_old*
-=======
 *old*
->>>>>>> main
 __pycache__
 */tmp*
 
@@ -15,6 +7,8 @@ out/
 data/
 vcd/
 
+rtl/DummyBRAM.v
+
 py/
 !py/*_simgen.py
 !py/__init__.py
@@ -22,7 +16,6 @@ py/
 
 venv/*
 !venv/requirements.txt
-<<<<<<< HEAD
 !py/example_codegen.py
 test
 
@@ -32,11 +25,9 @@ vivado/vivado_22.2/KAN_SoC/KAN_SoC.cache
 vivado/vivado_22.2/KAN_SoC/KAN_SoC.hw
 vivado/vivado_22.2/KAN_SoC/KAN_SoC.ip_user_files
 vivado/vivado_22.2/KAN_SoC/KAN_SoC.sim
-=======
 
 test
 log
 vivado
 graphs
 dot
->>>>>>> main

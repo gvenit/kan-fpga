@@ -20,4 +20,32 @@
    (x <= 32768) ? 15 : \
    -1)
 
+`define print_message(mes="") \
+   if (mes) begin \
+      $display("---- %s", mes); \
+   end
+
+`define assert(signal, value, custom_message="")  \
+   if (signal !== value) begin \
+      $display("ASSERTION FAILED in %m:"); \
+      print_message(custom_message); \
+      // $display("---- Time %0t",$time); \
+      $display("---- %s != %s",`"signal`", `"value`");   \
+      $display("---- %s = 0x%h",`"signal`",signal); \
+      $display("---- %s = 0x%h",`"value`",value); \
+      $finish; \
+   end
+
+`define assertTrue(signal, custom_message="")  \
+   if (~signal) begin       \
+      $display("ASSERTION FAILED in %m:"); \
+      print_message(custom_message); \
+      // $display("---- Time %0t",$time); \
+      $display("---- %s is not True",`"signal`");  \
+      $display("---- %s = 0x%h",`"signal`",signal); \
+      $finish; \
+   end
+
+`define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
+    
 `endif
