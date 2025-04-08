@@ -46,6 +46,10 @@ module RSWAFFunction #
   parameter SHARE_SCALE = 1,
   // Scale Channels
   parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : CHANNELS,
+  // Use Common Grid Channel 
+  parameter SHARE_GRID = 0,
+  // Grid Channels
+  parameter GRID_CHANNELS = (SHARE_GRID)? 1 : CHANNELS,
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt"
 )
@@ -67,13 +71,13 @@ module RSWAFFunction #
   /*
     * AXI Stream Grid input
     */
-  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0]          s_axis_grid_tdata,
-  input  wire [CHANNELS-1:0]                          s_axis_grid_tvalid,
-  output wire [CHANNELS-1:0]                          s_axis_grid_tready,
-  input  wire [CHANNELS-1:0]                          s_axis_grid_tlast,
-  input  wire [CHANNELS*ID_WIDTH-1:0]                 s_axis_grid_tid,
-  input  wire [CHANNELS*DEST_WIDTH-1:0]               s_axis_grid_tdest,
-  input  wire [CHANNELS*USER_WIDTH-1:0]               s_axis_grid_tuser,
+  input  wire [GRID_CHANNELS*DATA_WIDTH_DATA-1:0]     s_axis_grid_tdata,
+  input  wire [GRID_CHANNELS-1:0]                     s_axis_grid_tvalid,
+  output wire [GRID_CHANNELS-1:0]                     s_axis_grid_tready,
+  input  wire [GRID_CHANNELS-1:0]                     s_axis_grid_tlast,
+  input  wire [GRID_CHANNELS*ID_WIDTH-1:0]            s_axis_grid_tid,
+  input  wire [GRID_CHANNELS*DEST_WIDTH-1:0]          s_axis_grid_tdest,
+  input  wire [GRID_CHANNELS*USER_WIDTH-1:0]          s_axis_grid_tuser,
 
   /*
     * AXI Stream Scale input
@@ -100,6 +104,14 @@ module RSWAFFunction #
 );
 
   // Internal Registers & Wires
+  wire [CHANNELS*DATA_WIDTH_GRID-1:0]         s_axis_grid_tdata_int;
+  wire [CHANNELS-1:0]                         s_axis_grid_tvalid_int;
+  wire [CHANNELS-1:0]                         s_axis_grid_tready_int;
+  wire [CHANNELS-1:0]                         s_axis_grid_tlast_int;
+  wire [CHANNELS*ID_WIDTH-1:0]                s_axis_grid_tid_int;
+  wire [CHANNELS*DEST_WIDTH-1:0]              s_axis_grid_tdest_int;
+  wire [CHANNELS*USER_WIDTH-1:0]              s_axis_grid_tuser_int;
+  
   wire [CHANNELS*DATA_WIDTH_SCALE-1:0]        s_axis_scale_tdata_int;
   wire [CHANNELS-1:0]                         s_axis_scale_tvalid_int;
   wire [CHANNELS-1:0]                         s_axis_scale_tready_int;
@@ -118,6 +130,52 @@ module RSWAFFunction #
 
   genvar CHN;
   generate 
+
+  if (SHARE_GRID && CHANNELS > 1) begin
+    axis_broadcast #(
+      .M_COUNT(CHANNELS),
+      .DATA_WIDTH(DATA_WIDTH_GRID),
+      .KEEP_ENABLE(0),
+      .KEEP_WIDTH(1),
+      .LAST_ENABLE(1),
+      .ID_ENABLE(ID_ENABLE),
+      .ID_WIDTH(ID_WIDTH),
+      .DEST_ENABLE(DEST_ENABLE),
+      .DEST_WIDTH(DEST_WIDTH),
+      .USER_ENABLE(USER_ENABLE),
+      .USER_WIDTH(USER_WIDTH)
+    )
+    axis_broadcast_inst (
+      .clk(clk),
+      .rst(rst),
+      // AXI input
+      .s_axis_tdata(s_axis_grid_tdata),
+      .s_axis_tkeep(1'b1),
+      .s_axis_tvalid(s_axis_grid_tvalid),
+      .s_axis_tready(s_axis_grid_tready),
+      .s_axis_tlast(s_axis_grid_tlast),
+      .s_axis_tid(s_axis_grid_tid),
+      .s_axis_tdest(s_axis_grid_tdest),
+      .s_axis_tuser(s_axis_grid_tuser),
+      // AXI outputs
+      .m_axis_tdata(s_axis_grid_tdata_int),
+      // .m_axis_tkeep(s_axis_grid_tkeep_int),
+      .m_axis_tvalid(s_axis_grid_tvalid_int),
+      .m_axis_tready(s_axis_grid_tready_int),
+      .m_axis_tlast(s_axis_grid_tlast_int),
+      .m_axis_tid(s_axis_grid_tid_int),
+      .m_axis_tdest(s_axis_grid_tdest_int),
+      .m_axis_tuser(s_axis_grid_tuser_int)
+    );
+  end else begin
+    assign s_axis_grid_tdata_int   = s_axis_grid_tdata;
+    assign s_axis_grid_tvalid_int  = s_axis_grid_tvalid;
+    assign s_axis_grid_tready      = s_axis_grid_tready_int;
+    assign s_axis_grid_tlast_int   = s_axis_grid_tlast;
+    assign s_axis_grid_tid_int     = s_axis_grid_tid;
+    assign s_axis_grid_tdest_int   = s_axis_grid_tdest;
+    assign s_axis_grid_tuser_int   = s_axis_grid_tuser;
+  end
 
   if (SHARE_SCALE && CHANNELS > 1) begin
     axis_broadcast #(
@@ -155,8 +213,7 @@ module RSWAFFunction #
       .m_axis_tdest(s_axis_scale_tdest_int),
       .m_axis_tuser(s_axis_scale_tuser_int)
     );
-  end
-  else begin
+  end else begin
     assign s_axis_scale_tdata_int   = s_axis_scale_tdata;
     assign s_axis_scale_tvalid_int  = s_axis_scale_tvalid;
     assign s_axis_scale_tready      = s_axis_scale_tready_int;
@@ -216,14 +273,14 @@ module RSWAFFunction #
     assign s_in_axis_data_tdest_slice  = s_axis_data_tdest[(CHN+1)*DEST_WIDTH -1: CHN*DEST_WIDTH];
     assign s_in_axis_data_tuser_slice  = s_axis_data_tuser[(CHN+1)*USER_WIDTH -1: CHN*USER_WIDTH];
   
-    assign s_in_axis_grid_tdata_slice  = s_axis_grid_tdata[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
-    // assign s_in_axis_grid_tkeep_slice  = s_axis_grid_tkeep[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
-    assign s_in_axis_grid_tvalid_slice = s_axis_grid_tvalid[CHN];
-    assign s_axis_grid_tready[CHN]     = s_in_axis_grid_tready_slice;
-    assign s_in_axis_grid_tlast_slice  = s_axis_grid_tlast[CHN];
-    assign s_in_axis_grid_tid_slice    = s_axis_grid_tid  [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH];
-    assign s_in_axis_grid_tdest_slice  = s_axis_grid_tdest[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
-    assign s_in_axis_grid_tuser_slice  = s_axis_grid_tuser[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
+    assign s_in_axis_grid_tdata_slice  = s_axis_grid_tdata_int[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
+    // assign s_in_axis_grid_tkeep_slice  = s_axis_grid_tkeep_int[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
+    assign s_in_axis_grid_tvalid_slice = s_axis_grid_tvalid_int[CHN];
+    assign s_axis_grid_tready_int[CHN] = s_in_axis_grid_tready_slice;
+    assign s_in_axis_grid_tlast_slice  = s_axis_grid_tlast_int[CHN];
+    assign s_in_axis_grid_tid_slice    = s_axis_grid_tid_int  [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH];
+    assign s_in_axis_grid_tdest_slice  = s_axis_grid_tdest_int[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
+    assign s_in_axis_grid_tuser_slice  = s_axis_grid_tuser_int[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
   
     assign s_in_axis_scale_tdata_slice  = s_axis_scale_tdata_int[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
     // assign s_in_axis_scale_tkeep_slice  = s_axis_scale_tkeep_int[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];

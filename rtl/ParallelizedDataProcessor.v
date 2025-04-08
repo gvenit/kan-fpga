@@ -55,6 +55,10 @@ module ParallelizedDataProcessor #(
   parameter SHARE_SCALE = 1,
   // Scale Channels
   parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : DATA_CHANNELS*BATCH_SIZE,
+  // Use Common Grid Channel 
+  parameter SHARE_GRID = 0,
+  // Grid Channels
+  parameter GRID_CHANNELS = (SHARE_GRID)? 1 : DATA_CHANNELS*BATCH_SIZE,
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../../data/Sech2Lutram_n_16.12_16.16.txt",
   // Output Destination 
@@ -68,68 +72,68 @@ module ParallelizedDataProcessor #(
   /*
     * AXI Stream Data input
     */
-  input  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH_DATA-1:0]      s_axis_data_tdata,
-  input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                      s_axis_data_tvalid,
-  output wire [DATA_CHANNELS*BATCH_SIZE-1:0]                      s_axis_data_tready,
-  input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                      s_axis_data_tlast,
-  input  wire [DATA_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]             s_axis_data_tid,
-  input  wire [DATA_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]           s_axis_data_tdest,
-  input  wire [DATA_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]           s_axis_data_tuser,
+  input  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH_DATA-1:0]  s_axis_data_tdata,
+  input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tvalid,
+  output wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tready,
+  input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tlast,
+  input  wire [DATA_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]         s_axis_data_tid,
+  input  wire [DATA_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]       s_axis_data_tdest,
+  input  wire [DATA_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]       s_axis_data_tuser,
 
   /*      
     * AXI Stream Grid input  wire    
     */      
-  input  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH_DATA-1:0]      s_axis_grid_tdata,
-  input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                      s_axis_grid_tvalid,
-  output wire [DATA_CHANNELS*BATCH_SIZE-1:0]                      s_axis_grid_tready,
-  input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                      s_axis_grid_tlast,
-  input  wire [DATA_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]             s_axis_grid_tid,
-  input  wire [DATA_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]           s_axis_grid_tdest,
-  input  wire [DATA_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]           s_axis_grid_tuser,
+  input  wire [GRID_CHANNELS*DATA_WIDTH_DATA-1:0]             s_axis_grid_tdata,
+  input  wire [GRID_CHANNELS-1:0]                             s_axis_grid_tvalid,
+  output wire [GRID_CHANNELS-1:0]                             s_axis_grid_tready,
+  input  wire [GRID_CHANNELS-1:0]                             s_axis_grid_tlast,
+  input  wire [GRID_CHANNELS*ID_WIDTH-1:0]                    s_axis_grid_tid,
+  input  wire [GRID_CHANNELS*DEST_WIDTH-1:0]                  s_axis_grid_tdest,
+  input  wire [GRID_CHANNELS*USER_WIDTH-1:0]                  s_axis_grid_tuser,
 
   /*
     * AXI Stream Scale input
     */
-  input  wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]               s_axis_scale_tdata,
-  input  wire [SCALE_CHANNELS-1:0]                                s_axis_scale_tvalid,
-  output wire [SCALE_CHANNELS-1:0]                                s_axis_scale_tready,
-  input  wire [SCALE_CHANNELS-1:0]                                s_axis_scale_tlast,
-  input  wire [SCALE_CHANNELS*ID_WIDTH-1:0]                       s_axis_scale_tid,
-  input  wire [SCALE_CHANNELS*DEST_WIDTH-1:0]                     s_axis_scale_tdest,
-  input  wire [SCALE_CHANNELS*USER_WIDTH-1:0]                     s_axis_scale_tuser,
+  input  wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]           s_axis_scale_tdata,
+  input  wire [SCALE_CHANNELS-1:0]                            s_axis_scale_tvalid,
+  output wire [SCALE_CHANNELS-1:0]                            s_axis_scale_tready,
+  input  wire [SCALE_CHANNELS-1:0]                            s_axis_scale_tlast,
+  input  wire [SCALE_CHANNELS*ID_WIDTH-1:0]                   s_axis_scale_tid,
+  input  wire [SCALE_CHANNELS*DEST_WIDTH-1:0]                 s_axis_scale_tdest,
+  input  wire [SCALE_CHANNELS*USER_WIDTH-1:0]                 s_axis_scale_tuser,
 
   /*
     * AXI Stream Weight input
     */
-  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_SCALE-1:0]              s_axis_weight_tdata,
-  input  wire [WEIGHT_CHANNELS-1:0]                               s_axis_weight_tvalid,
-  output wire [WEIGHT_CHANNELS-1:0]                               s_axis_weight_tready,
-  input  wire [WEIGHT_CHANNELS-1:0]                               s_axis_weight_tlast,
-  input  wire [WEIGHT_CHANNELS*ID_WIDTH-1:0]                      s_axis_weight_tid,
-  input  wire [WEIGHT_CHANNELS*DEST_WIDTH-1:0]                    s_axis_weight_tdest,
-  input  wire [WEIGHT_CHANNELS*USER_WIDTH-1:0]                    s_axis_weight_tuser,
+  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_SCALE-1:0]          s_axis_weight_tdata,
+  input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_weight_tvalid,
+  output wire [WEIGHT_CHANNELS-1:0]                           s_axis_weight_tready,
+  input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_weight_tlast,
+  input  wire [WEIGHT_CHANNELS*ID_WIDTH-1:0]                  s_axis_weight_tid,
+  input  wire [WEIGHT_CHANNELS*DEST_WIDTH-1:0]                s_axis_weight_tdest,
+  input  wire [WEIGHT_CHANNELS*USER_WIDTH-1:0]                s_axis_weight_tuser,
 
   /*
     * AXI Stream output
     */
-  output wire [RSLT_CHANNELS*BATCH_SIZE*DATA_WIDTH_RSLT-1:0]      m_axis_data_tdata,
-  output wire [RSLT_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]           m_axis_data_tkeep,
-  output wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                      m_axis_data_tvalid,
-  input  wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                      m_axis_data_tready,
-  output wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                      m_axis_data_tlast,
-  output wire [RSLT_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]             m_axis_data_tid,
-  output wire [RSLT_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]           m_axis_data_tdest,
-  output wire [RSLT_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]           m_axis_data_tuser,
+  output wire [RSLT_CHANNELS*BATCH_SIZE*DATA_WIDTH_RSLT-1:0]  m_axis_data_tdata,
+  output wire [RSLT_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]       m_axis_data_tkeep,
+  output wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                  m_axis_data_tvalid,
+  input  wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                  m_axis_data_tready,
+  output wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                  m_axis_data_tlast,
+  output wire [RSLT_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]         m_axis_data_tid,
+  output wire [RSLT_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]       m_axis_data_tdest,
+  output wire [RSLT_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]       m_axis_data_tuser,
 
   /*
    * Error Outputs
    */
-  output wire                                                     err_unalligned_data,
+  output wire err_unalligned_data,
 
   /*
    * Interrupts
    */
-  output wire                                          core_rst
+  output wire core_rst
 );
   // Internal Activation Function Output AXI-Stream Wires
   wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH_ACT-1:0]             int_axis_act_func_tdata;
@@ -176,6 +180,10 @@ module ParallelizedDataProcessor #(
     .SHARE_SCALE(SHARE_SCALE),
     // Scale Channels
     .SCALE_CHANNELS(SCALE_CHANNELS),
+    // Use Common Grid Channel 
+    .SHARE_GRID(SHARE_GRID),
+    // Grid Channels
+    .GRID_CHANNELS(GRID_CHANNELS),
     // Path to ROM Data
     .ROM_DATA_PATH(ROM_DATA_PATH)
   ) act_func_inst (
