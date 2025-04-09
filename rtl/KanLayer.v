@@ -574,8 +574,69 @@ module KanLayer #(
   );
 
   /**********************************************
-    Weight streams AXI adapter
-    between the DMA Master and the Data Processor 
+    Slave AXI adapter
+    between the DMA Master
+    and the Weight Streams Splitter 
+
+    Naming conventions
+    - int_ : internal signal
+    - _axis_ : axi stream
+    - _s_ : input / slave interface
+    - _m_ : otuput / master interface
+  *********************************************/
+
+  wire [DATA_WIDTH_DMA-1:0]   int_s_axis_weight_adapter_tdata;
+  wire [KEEP_WIDTH_DMA-1:0]   int_s_axis_weight_adapter_tkeep;
+  wire                        int_s_axis_weight_adapter_tvalid;
+  wire                        int_s_axis_weight_adapter_tready;
+  wire                        int_s_axis_weight_adapter_tlast;
+  wire [ID_WIDTH-1:0]         int_s_axis_weight_adapter_tid;
+  wire [DEST_WIDTH-1:0]       int_s_axis_weight_adapter_tdest;
+  wire [USER_WIDTH-1:0]       int_s_axis_weight_adapter_tuser;
+
+  wire [WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT-1:0] int_m_axis_weight_adapter_tdata;
+  wire [WEIGHT_CHANNELS*KEEP_WIDTH_WEIGHT-1:0] int_m_axis_weight_adapter_tkeep;
+  wire                                         int_m_axis_weight_adapter_tvalid;
+  wire                                         int_m_axis_weight_adapter_tready;
+  wire                                         int_m_axis_weight_adapter_tlast;
+  wire [ID_WIDTH-1:0]                          int_m_axis_weight_adapter_tid;
+  wire [DEST_WIDTH-1:0]                        int_m_axis_weight_adapter_tdest;
+  wire [USER_WIDTH-1:0]                        int_m_axis_weight_adapter_tuser;
+
+  axis_adapter #(
+    .S_DATA_WIDTH(DATA_WIDTH_DMA),
+    .M_DATA_WIDTH(WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT),
+    .ID_ENABLE(ID_ENABLE),
+    .ID_WIDTH(ID_WIDTH),
+    .DEST_ENABLE(DEST_ENABLE),
+    .DEST_WIDTH(DEST_WIDTH),
+    .USER_ENABLE(USER_ENABLE),    // !!! Mismatch between this module and Axi Adapter values
+    .USER_WIDTH(USER_WIDTH)
+  ) axis_adapter_weight_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(int_s_axis_weight_adapter_tdata),
+    .s_axis_tkeep(int_s_axis_weight_adapter_tkeep),
+    .s_axis_tvalid(int_s_axis_weight_adapter_tvalid),
+    .s_axis_tready(int_s_axis_weight_adapter_tready),
+    .s_axis_tlast(int_s_axis_weight_adapter_tlast),
+    .s_axis_tid(int_s_axis_weight_adapter_tid),
+    .s_axis_tdest(int_s_axis_weight_adapter_tdest),
+    .s_axis_tuser(int_s_axis_weight_adapter_tuser),
+    .m_axis_tdata(int_m_axis_weight_adapter_tdata),
+    .m_axis_tkeep(int_m_axis_weight_adapter_tkeep),
+    .m_axis_tvalid(int_m_axis_weight_adapter_tvalid),
+    .m_axis_tready(int_m_axis_weight_adapter_tready),
+    .m_axis_tlast(int_m_axis_weight_adapter_tlast),
+    .m_axis_tid(int_m_axis_weight_adapter_tid),
+    .m_axis_tdest(int_m_axis_weight_adapter_tdest),
+    .m_axis_tuser(int_m_axis_weight_adapter_tuser)
+  );
+
+  /**********************************************
+    Weight streams AXI splitter
+    betweem the slave AXI adapter
+    and the Data Processor 
 
     Naming conventions
     - int_ : internal signal
@@ -637,74 +698,95 @@ module KanLayer #(
   );
 
   /**********************************************
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    PROBLEMATIC:
-    - My signals are correct
-    - The AXI adapter module is incorrect
-
-    Result streams AXI adapter between
-    the Data Processor and the DMA slave 
+    Result streams AXI Joiner between
+    the Data Processor and the master AXI adapter 
 
     Naming conventions
     - int_ : internal signal
     - _axis_ : axi stream
     - _s_ : input / slave interface
     - _m_ : otuput / master interface
+  *********************************************/
 
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  wire [RSLT_CHANNELS*DATA_WIDTH_RSLT-1:0]  int_s_axis_rslt_joiner_tdata;
+  wire [RSLT_CHANNELS-1:0]                  int_s_axis_rslt_joiner_tvalid;
+  wire [RSLT_CHANNELS-1:0]                  int_s_axis_rslt_joiner_tready;
+  wire [RSLT_CHANNELS-1:0]                  int_s_axis_rslt_joiner_tlast;
+  wire [RSLT_CHANNELS*ID_WIDTH-1:0]         int_s_axis_rslt_joiner_tid;
+  wire [RSLT_CHANNELS*DEST_WIDTH-1:0]       int_s_axis_rslt_joiner_tdest;
+  wire [RSLT_CHANNELS*USER_WIDTH-1:0]       int_s_axis_rslt_joiner_tuser;
+
+  wire [RSLT_CHANNELS*DATA_WIDTH_RSLT-1:0]  int_m_axis_rslt_joiner_tdata;
+  wire [RSLT_CHANNELS*KEEP_WIDTH_RSLT-1:0]  int_m_axis_rslt_joiner_tkeep;
+  wire                                      int_m_axis_rslt_joiner_tvalid;
+  wire                                      int_m_axis_rslt_joiner_tready;
+  wire                                      int_m_axis_rslt_joiner_tlast;
+  wire [ID_WIDTH-1:0]                       int_m_axis_rslt_joiner_tid;
+  wire [DEST_WIDTH-1:0]                     int_m_axis_rslt_joiner_tdest;
+  wire [USER_WIDTH-1:0]                     int_m_axis_rslt_joiner_tuser;
+
+  /* ADD JOINER MODULE */
+
+  /**********************************************
+    Master AXI adapter between
+    the Result Streams Joiner
+    and the DMA slave
+
+    Naming conventions
+    - int_ : internal signal
+    - _axis_ : axi stream
+    - _s_ : input / slave interface
+    - _m_ : otuput / master interface
   *********************************************/
 
   wire [RSLT_CHANNELS*DATA_WIDTH_RSLT-1:0]  int_s_axis_rslt_adapter_tdata;
-  wire [RSLT_CHANNELS-1:0]                  int_s_axis_rslt_adapter_tvalid;
-  wire [RSLT_CHANNELS-1:0]                  int_s_axis_rslt_adapter_tready;
-  wire [RSLT_CHANNELS-1:0]                  int_s_axis_rslt_adapter_tlast;
-  wire [RSLT_CHANNELS*ID_WIDTH-1:0]         int_s_axis_rslt_adapter_tid;
-  wire [RSLT_CHANNELS*DEST_WIDTH-1:0]       int_s_axis_rslt_adapter_tdest;
-  wire [RSLT_CHANNELS*USER_WIDTH-1:0]       int_s_axis_rslt_adapter_tuser;
+  wire [RSLT_CHANNELS*KEEP_WIDTH_RSLT-1:0]  int_s_axis_rslt_adapter_tkeep;
+  wire                                      int_s_axis_rslt_adapter_tvalid;
+  wire                                      int_s_axis_rslt_adapter_tready;
+  wire                                      int_s_axis_rslt_adapter_tlast;
+  wire [ID_WIDTH-1:0]                       int_s_axis_rslt_adapter_tid;
+  wire [DEST_WIDTH-1:0]                     int_s_axis_rslt_adapter_tdest;
+  wire [USER_WIDTH-1:0]                     int_s_axis_rslt_adapter_tuser;
 
-  wire [RSLT_CHANNELS*DATA_WIDTH_RSLT-1:0]  int_m_axis_rslt_adapter_tdata;
-  wire [RSLT_CHANNELS*KEEP_WIDTH_RSLT-1:0]  int_m_axis_rslt_adapter_tkeep;
-  wire                                      int_m_axis_rslt_adapter_tvalid;
-  wire                                      int_m_axis_rslt_adapter_tready;
-  wire                                      int_m_axis_rslt_adapter_tlast;
-  wire [ID_WIDTH-1:0]                       int_m_axis_rslt_adapter_tid;
-  wire [DEST_WIDTH-1:0]                     int_m_axis_rslt_adapter_tdest;
-  wire [USER_WIDTH-1:0]                     int_m_axis_rslt_adapter_tuser;
+  wire [DATA_WIDTH_DMA-1:0]   int_m_axis_rslt_adapter_tdata;
+  wire [KEEP_WIDTH_DMA-1:0]   int_m_axis_rslt_adapter_tkeep;
+  wire                        int_m_axis_rslt_adapter_tvalid;
+  wire                        int_m_axis_rslt_adapter_tready;
+  wire                        int_m_axis_rslt_adapter_tlast;
+  wire [ID_WIDTH-1:0]         int_m_axis_rslt_adapter_tid;
+  wire [DEST_WIDTH-1:0]       int_m_axis_rslt_adapter_tdest;
+  wire [USER_WIDTH-1:0]       int_m_axis_rslt_adapter_tuser;
 
-  // axis_adapter #(
-  //   .S_DATA_WIDTH(DATA_WIDTH_DMA),
-  //   .S_KEEP_ENABLE(KEEP_ENABLE_DMA),
-  //   .S_KEEP_WIDTH(KEEP_WIDTH_DMA),
-  //   .M_DATA_WIDTH(WEIGHT_CHANNELS*DATA_WIDTH_WEIGHT),
-  //   .M_KEEP_ENABLE(KEEP_ENABLE_DMA),
-  //   .M_KEEP_WIDTH(WEIGHT_CHANNELS*KEEP_WIDTH_WEIGHT),
-  //   .ID_ENABLE(ID_ENABLE),
-  //   .ID_WIDTH(ID_WIDTH),
-  //   .DEST_ENABLE(DEST_ENABLE),
-  //   .DEST_WIDTH(DEST_WIDTH),
-  //   .USER_ENABLE(USER_ENABLE),
-  //   .USER_WIDTH(USER_WIDTH)
-  // ) axis_adapter_weights_inst (
-  //   .clk(clk),
-  //   .rst(~aresetn),
-  //   .s_axis_tdata(s_axis_weight_tdata),
-  //   .s_axis_tkeep(s_axis_weight_tkeep),
-  //   .s_axis_tvalid(s_axis_weight_tvalid),
-  //   .s_axis_tready(s_axis_weight_tready),
-  //   .s_axis_tlast(s_axis_weight_tlast),
-  //   .s_axis_tid(s_axis_weight_tid),
-  //   .s_axis_tdest(s_axis_weight_tdest),
-  //   .s_axis_tuser(s_axis_weight_tuser),
-  //   .m_axis_tdata(axis_wght_splitter_in_tdata),
-  //   .m_axis_tkeep(axis_wght_splitter_in_tkeep),
-  //   .m_axis_tvalid(axis_wght_splitter_in_tvalid),
-  //   .m_axis_tready(axis_wght_splitter_in_tready),
-  //   .m_axis_tlast(axis_wght_splitter_in_tlast),
-  //   .m_axis_tid(axis_wght_splitter_in_tid),
-  //   .m_axis_tdest(axis_wght_splitter_in_tdest),
-  //   .m_axis_tuser(axis_wght_splitter_in_tuser)
-  // );
+
+  axis_adapter #(
+    .S_DATA_WIDTH(RSLT_CHANNELS*DATA_WIDTH_RSLT),
+    .M_DATA_WIDTH(DATA_WIDTH_DMA),
+    .ID_ENABLE(ID_ENABLE),
+    .ID_WIDTH(ID_WIDTH),
+    .DEST_ENABLE(DEST_ENABLE),
+    .DEST_WIDTH(DEST_WIDTH),
+    .USER_ENABLE(USER_ENABLE),    // !!! Mismatch between this module and Axi Adapter values
+    .USER_WIDTH(USER_WIDTH)
+  ) axis_adapter_rslt_inst (
+    .clk(clk),
+    .rst(rst),
+    .s_axis_tdata(int_s_axis_rslt_adapter_tdata),
+    .s_axis_tkeep(int_s_axis_rslt_adapter_tkeep),
+    .s_axis_tvalid(int_s_axis_rslt_adapter_tvalid),
+    .s_axis_tready(int_s_axis_rslt_adapter_tready),
+    .s_axis_tlast(int_s_axis_rslt_adapter_tlast),
+    .s_axis_tid(int_s_axis_rslt_adapter_tid),
+    .s_axis_tdest(int_s_axis_rslt_adapter_tdest),
+    .s_axis_tuser(int_s_axis_rslt_adapter_tuser),
+    .m_axis_tdata(int_m_axis_rslt_adapter_tdata),
+    .m_axis_tkeep(int_m_axis_rslt_adapter_tkeep),
+    .m_axis_tvalid(int_m_axis_rslt_adapter_tvalid),
+    .m_axis_tready(int_m_axis_rslt_adapter_tready),
+    .m_axis_tlast(int_m_axis_rslt_adapter_tlast),
+    .m_axis_tid(int_m_axis_rslt_adapter_tid),
+    .m_axis_tdest(int_m_axis_rslt_adapter_tdest),
+    .m_axis_tuser(int_m_axis_rslt_adapter_tuser)
+  );
 
   /**********************************************
     KAN parallelized datastream
@@ -896,27 +978,27 @@ module KanLayer #(
   assign int_data_mcu_rddata = int_data_bram_rddata_b;
   assign int_data_mcu_rdstrobe = int_data_bram_rdstrobe_b;
 
-  // grid bram port b to memory control unit
+  // connect dma slave to slave axi adapter
 
-  assign int_grid_bram_en_b = int_grid_mcu_en;
-  assign int_grid_bram_addr_b = int_grid_mcu_addr;
-  assign int_grid_mcu_rddata = int_grid_bram_rddata_b;
-  assign int_grid_mcu_rdstrobe = int_grid_bram_rdstrobe_b;
+  assign int_s_axis_weight_adapter_tdata = s_axis_weight_tdata;
+  assign int_s_axis_weight_adapter_tkeep = s_axis_weight_tkeep;
+  assign int_s_axis_weight_adapter_tvalid = s_axis_weight_tvalid;
+  assign s_axis_weight_tready = int_s_axis_weight_adapter_tready;
+  assign int_s_axis_weight_adapter_tlast = s_axis_weight_tlast;
+  assign int_s_axis_weight_adapter_tid = s_axis_weight_tid;
+  assign int_s_axis_weight_adapter_tdest = s_axis_weight_tdest;
+  assign int_s_axis_weight_adapter_tuser = s_axis_weight_tuser;
 
-  // scale reg to memory control unit
+  // connect slave axi adapter to axi splitter of the weight streams
 
-  assign int_axil_scale_mcu = int_axil_scale_reg;
-
-  // connect dma slave to axi splitter weight streams (!!!width parameters mismatch!!!)
-
-  assign int_s_axis_weight_splitter_tdata = s_axis_weight_tdata;
-  assign int_s_axis_weight_splitter_tkeep = s_axis_weight_tkeep;
-  assign int_s_axis_weight_splitter_tvalid = s_axis_weight_tvalid;
-  assign s_axis_weight_tready = int_s_axis_weight_splitter_tready;
-  assign int_s_axis_weight_splitter_tlast = s_axis_weight_tlast;
-  assign int_s_axis_weight_splitter_tid = s_axis_weight_tid;
-  assign int_s_axis_weight_splitter_tdest = s_axis_weight_tdest;
-  assign int_s_axis_weight_splitter_tuser = s_axis_weight_tuser;
+  assign int_s_axis_weight_splitter_tdata = int_m_axis_weight_adapter_tdata;
+  assign int_s_axis_weight_splitter_tkeep = int_m_axis_weight_adapter_tkeep;
+  assign int_s_axis_weight_splitter_tvalid = int_m_axis_weight_adapter_tvalid;
+  assign int_m_axis_weight_adapter_tready = int_s_axis_weight_splitter_tready;
+  assign int_s_axis_weight_splitter_tlast = int_m_axis_weight_adapter_tlast;
+  assign int_s_axis_weight_splitter_tid = int_m_axis_weight_adapter_tid;
+  assign int_s_axis_weight_splitter_tdest = int_m_axis_weight_adapter_tdest;
+  assign int_s_axis_weight_splitter_tuser = int_m_axis_weight_adapter_tuser;
 
   // Connect the data axis from mcu to data processor
 
@@ -958,26 +1040,37 @@ module KanLayer #(
   assign int_s_axis_weight_dp_tdest = int_m_axis_weight_splitter_tdest;
   assign int_s_axis_weight_dp_tuser = int_m_axis_weight_splitter_tuser;
 
-  // connect the rslt streams from data procesor to axi adapter
+  // connect the rslt streams from data procesor to axi joiner
 
-  assign int_s_axis_rslt_adapter_tdata = int_m_axis_rslt_dp_tdata;
-  assign int_s_axis_rslt_adapter_tvalid = int_m_axis_rslt_dp_tvalid;
-  assign int_m_axis_rslt_dp_tready = int_s_axis_rslt_adapter_tready;
-  assign int_s_axis_rslt_adapter_tlast = int_m_axis_rslt_dp_tlast;
-  assign int_s_axis_rslt_adapter_tid = int_m_axis_rslt_dp_tid;
-  assign int_s_axis_rslt_adapter_tdest = int_m_axis_rslt_dp_tdest;
-  assign int_s_axis_rslt_adapter_tuser = int_m_axis_rslt_dp_tuser;
+  assign int_s_axis_rslt_joiner_tdata = int_m_axis_rslt_dp_tdata;
+  assign int_s_axis_rslt_joiner_tvalid = int_m_axis_rslt_dp_tvalid;
+  assign int_m_axis_rslt_dp_tready = int_s_axis_rslt_joiner_tready;
+  assign int_s_axis_rslt_joiner_tlast = int_m_axis_rslt_dp_tlast;
+  assign int_s_axis_rslt_joiner_tid = int_m_axis_rslt_dp_tid;
+  assign int_s_axis_rslt_joiner_tdest = int_m_axis_rslt_dp_tdest;
+  assign int_s_axis_rslt_joiner_tuser = int_m_axis_rslt_dp_tuser;
 
-  // connect axi adapter result stream to dma master (!!!width parameters mismatch!!!)
+  // connect axi joiner of result streams to axi master adapter
 
-  assign int_m_axis_rslt_adapter_tdata = m_axis_rslt_tdata;
-  assign int_m_axis_rslt_adapter_tkeep = m_axis_rslt_tkeep;
-  assign int_m_axis_rslt_adapter_tvalid = m_axis_rslt_tvalid;
-  assign m_axis_rslt_tready = int_m_axis_rslt_adapter_tready;
-  assign int_m_axis_rslt_adapter_tlast = m_axis_rslt_tlast;
-  assign int_m_axis_rslt_adapter_tid = m_axis_rslt_tid;
-  assign int_m_axis_rslt_adapter_tdest = m_axis_rslt_tdest;
-  assign int_m_axis_rslt_adapter_tuser = m_axis_rslt_tuser;
+  assign int_s_axis_rslt_adapter_tdata = int_m_axis_rslt_joiner_tdata;
+  assign int_s_axis_rslt_adapter_tkeep = int_m_axis_rslt_joiner_tkeep;
+  assign int_s_axis_rslt_adapter_tvalid = int_m_axis_rslt_joiner_tvalid;
+  assign int_m_axis_rslt_joiner_tready = int_s_axis_rslt_adapter_tready;
+  assign int_s_axis_rslt_adapter_tlast = int_m_axis_rslt_joiner_tlast;
+  assign int_s_axis_rslt_adapter_tid = int_m_axis_rslt_joiner_tid;
+  assign int_s_axis_rslt_adapter_tdest = int_m_axis_rslt_joiner_tdest;
+  assign int_s_axis_rslt_adapter_tuser = int_m_axis_rslt_joiner_tuser;
+
+  // connect axi master adapter to external master axi interface
+
+  assign m_axis_rslt_tdata = int_m_axis_rslt_adapter_tdata;
+  assign m_axis_rslt_tkeep = int_m_axis_rslt_adapter_tkeep;
+  assign m_axis_rslt_tvalid = int_m_axis_rslt_adapter_tvalid;
+  assign int_m_axis_rslt_adapter_tready = m_axis_rslt_tready;
+  assign m_axis_rslt_tlast = int_m_axis_rslt_adapter_tlast;
+  assign m_axis_rslt_tid = int_m_axis_rslt_adapter_tid;
+  assign m_axis_rslt_tdest = int_m_axis_rslt_adapter_tdest;
+  assign m_axis_rslt_tuser = int_m_axis_rslt_adapter_tuser;
 
   // connect internal control signals !!!
 

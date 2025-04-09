@@ -10,6 +10,7 @@
 - [ ] the axi adapter is the wrong module to connect the result streams to the master axis dma
 - [ ] specify how data processor reset works (`core_rst` signal). Is it from the zynq reset or is it by writing on an axi-lite reg?
 - [ ] specify the .txt directories in vivado
+- [ ] weight streams and result streams need 
 
 ***Vitis Software***
 - [ ] general code outline
@@ -37,6 +38,7 @@
 - have not tried slicing the address bits in the top level module before. All the other times I used a slicer in the Vivado Block Design
 - the dma connections to the streams might have width mismatches (they use different parameters for width specification)
 - maybe dma needs different slave and master widths of data and keep
+- not sure that `USER_ENABLE` (and width for the matter) are correct for the AXI Adapters in the DMA
 
 # Problems
 
