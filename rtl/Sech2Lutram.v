@@ -18,13 +18,13 @@ module Sech2Lutram #(
   // Fractional bits of output wire data
   parameter FRACTIONAL_BITS_RSLT = 16,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE_DATA = (DATA_WIDTH_DATA>8),
+  parameter KEEP_ENABLE_DATA = (DATA_WIDTH_DATA > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_DATA = ((DATA_WIDTH_DATA+7)/8),
+  parameter KEEP_WIDTH_DATA = ((DATA_WIDTH_DATA + 7) / 8),
   // Propagate tkeep signal
-  parameter KEEP_ENABLE_RSLT = (DATA_WIDTH_RSLT>8),
+  parameter KEEP_ENABLE_RSLT = (DATA_WIDTH_RSLT > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_RSLT = ((DATA_WIDTH_RSLT+7)/8),
+  parameter KEEP_WIDTH_RSLT = ((DATA_WIDTH_RSLT + 7) / 8),
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width

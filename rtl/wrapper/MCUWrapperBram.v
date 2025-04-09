@@ -65,23 +65,23 @@ module MCUWrapperBram #(
   // Scale FIFO size per stream
   parameter FIFO_DEPTH_SCALE = (SHARE_SCALE) ? 0 : (BATCH_SIZE + DATA_CHANNELS)
 ) (
-  input  wire                         fsm_clk,
-  input  wire                         rst,
+  input  wire                                                     fsm_clk,
+  input  wire                                                     rst,
 
   /*
    * Control signals -- Corresponding clock : fsm_clk
    */
   input  wire operation_start,
-  input  wire [ADDR_WIDTH_DATA:0]     data_size,
-  input  wire [ADDR_WIDTH_GRID:0]     grid_size,
-  input  wire [ADDR_WIDTH_SCALE:0]    scle_size,
+  input  wire [ADDR_WIDTH_DATA:0]                                 data_size,
+  input  wire [ADDR_WIDTH_GRID:0]                                 grid_size,
+  input  wire [ADDR_WIDTH_SCALE:0]                                scle_size,
   
   /*
    * Interrupt signals -- Corresponding clock : fsm_clk
    */
-  output wire                         operation_busy,
-  output wire                         operation_complete,
-  output wire                         operation_error,
+  output wire                                                     operation_busy,
+  output wire                                                     operation_complete,
+  output wire                                                     operation_error,
 
   /*
    * Data BRAM Control Interface -- Corresponding clock : data_bram_clk

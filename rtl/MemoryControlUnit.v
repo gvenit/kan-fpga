@@ -67,23 +67,23 @@ module MemoryControlUnit #(
   // Scale FIFO size per stream
   parameter FIFO_DEPTH_SCALE = (SHARE_SCALE) ? 0 : $sqrt(BATCH_SIZE + DATA_CHANNELS)
 ) (
-  input  wire                         fsm_clk,
-  input  wire                         rst,
+  input  wire                                                       fsm_clk,
+  input  wire                                                       rst,
 
   /*
    * Control signals -- Corresponding clock : fsm_clk
    */
-  input  wire operation_start,
-  input  wire [ADDR_WIDTH_DATA:0]     data_size,
-  input  wire [ADDR_WIDTH_GRID:0]     grid_size,
-  input  wire [ADDR_WIDTH_SCALE:0]    scle_size,
+  input  wire                                                       operation_start,
+  input  wire [ADDR_WIDTH_DATA:0]                                   data_size,
+  input  wire [ADDR_WIDTH_GRID:0]                                   grid_size,
+  input  wire [ADDR_WIDTH_SCALE:0]                                  scle_size,
   
   /*
    * Interrupt signals -- Corresponding clock : fsm_clk
    */
-  output reg                          operation_busy,
-  output reg                          operation_complete,
-  output reg                          operation_error,
+  output reg                                                        operation_busy,
+  output reg                                                        operation_complete,
+  output reg                                                        operation_error,
 
   `ifdef DATA_IF_IS_BRAM
     /*
@@ -116,14 +116,14 @@ module MemoryControlUnit #(
   /*
    * AXI Stream Data Output -- Corresponding clock : m_axis_data_aclk
    */
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_aclk,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      m_axis_data_tdata,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tvalid,
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tready,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tlast,
-  output wire [BATCH_SIZE*DATA_CHANNELS*ID_WIDTH-1:0]             m_axis_data_tid,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DEST_WIDTH-1:0]           m_axis_data_tdest,
-  output wire [BATCH_SIZE*DATA_CHANNELS*USER_WIDTH-1:0]           m_axis_data_tuser,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_aclk,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]        m_axis_data_tdata,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_tvalid,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_tready,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_tlast,
+  output wire [BATCH_SIZE*DATA_CHANNELS*ID_WIDTH-1:0]               m_axis_data_tid,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DEST_WIDTH-1:0]             m_axis_data_tdest,
+  output wire [BATCH_SIZE*DATA_CHANNELS*USER_WIDTH-1:0]             m_axis_data_tuser,
 
   `ifdef GRID_IF_IS_BRAM
     /*
@@ -156,14 +156,14 @@ module MemoryControlUnit #(
   /*
    * AXI Stream Grid Output -- Corresponding clock : m_axis_grid_aclk
    */
-  output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_aclk,
-  output wire [GRID_CHANNELS_OUT*DATA_WIDTH_DATA-1:0]             m_axis_grid_tdata,
-  output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tvalid,
-  input  wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tready,
-  output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tlast,
-  output wire [GRID_CHANNELS_OUT*ID_WIDTH-1:0]                    m_axis_grid_tid,
-  output wire [GRID_CHANNELS_OUT*DEST_WIDTH-1:0]                  m_axis_grid_tdest,
-  output wire [GRID_CHANNELS_OUT*USER_WIDTH-1:0]                  m_axis_grid_tuser,
+  output wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_aclk,
+  output wire [GRID_CHANNELS_OUT*DATA_WIDTH_DATA-1:0]               m_axis_grid_tdata,
+  output wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_tvalid,
+  input  wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_tready,
+  output wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_tlast,
+  output wire [GRID_CHANNELS_OUT*ID_WIDTH-1:0]                      m_axis_grid_tid,
+  output wire [GRID_CHANNELS_OUT*DEST_WIDTH-1:0]                    m_axis_grid_tdest,
+  output wire [GRID_CHANNELS_OUT*USER_WIDTH-1:0]                    m_axis_grid_tuser,
 
   `ifdef SCALE_IF_IS_BRAM
     /*
@@ -196,14 +196,14 @@ module MemoryControlUnit #(
   /*
    * AXI Stream Scale Output -- Corresponding clock : m_axis_scle_aclk
    */
-  output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_aclk,
-  output wire [SCALE_CHANNELS_OUT*DATA_WIDTH_SCALE-1:0]           m_axis_scle_tdata,
-  output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tvalid,
-  input  wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tready,
-  output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tlast,
-  output wire [SCALE_CHANNELS_OUT*ID_WIDTH-1:0]                   m_axis_scle_tid,
-  output wire [SCALE_CHANNELS_OUT*DEST_WIDTH-1:0]                 m_axis_scle_tdest,
-  output wire [SCALE_CHANNELS_OUT*USER_WIDTH-1:0]                 m_axis_scle_tuser
+  output wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_aclk,
+  output wire [SCALE_CHANNELS_OUT*DATA_WIDTH_SCALE-1:0]             m_axis_scle_tdata,
+  output wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_tvalid,
+  input  wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_tready,
+  output wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_tlast,
+  output wire [SCALE_CHANNELS_OUT*ID_WIDTH-1:0]                     m_axis_scle_tid,
+  output wire [SCALE_CHANNELS_OUT*DEST_WIDTH-1:0]                   m_axis_scle_tdest,
+  output wire [SCALE_CHANNELS_OUT*USER_WIDTH-1:0]                   m_axis_scle_tuser
 );
 
   // Control Registers & Wires

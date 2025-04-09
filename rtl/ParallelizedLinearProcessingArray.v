@@ -19,46 +19,48 @@
  */
 
 module ParallelizedLinearProcessingArray #(
-    // Number of PEs in Processing Array i axis -- Number of results per batch per run
-    parameter PE_NUMBER_I = 1,
-    // Number of PEs in Processing Array j axis -- Number of partial sums per result
-    parameter PE_NUMBER_J = 1,
-    // Number of PEs in Processing Array k axis -- Number of batches per run
-    parameter BATCH_SIZE = 1,
-    // Enable module to do internal resets
-    parameter INTERNAL_RESET = 0,
-    // Data Width of Input Data (L-AXIS)
-    parameter DATA_WIDTH_OP0 = 16,
-    // Fractional Bits of Input Data (L-AXIS)
-    parameter FRACTIONAL_BITS_OP0 = 12,
-    // Treat operand 0 as unsigned
-    parameter IS_UNSIGNED_OP0 = 0,
-    // Data Width of Input Weights (U-AXIS)
-    parameter DATA_WIDTH_OP1 = 16,
-    // Fractional Bits of Input Weights (U-AXIS)
-    parameter FRACTIONAL_BITS_OP1 = 12,
-    // Treat operand 1 as unsigned
-    parameter IS_UNSIGNED_OP1 = 0,
-    // Data Width of Output Data (D-AXIS)
-    parameter DATA_WIDTH_RSLT = 16,
-    // Fractional Bits of Output Data (D-AXIS)
-    parameter FRACTIONAL_BITS_RSLT = 12,
-    // Propagate tid signal
-    parameter ID_ENABLE = 0,
-    // tid signal width
-    parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
-    // Propagate tdest signal
-    parameter DEST_ENABLE = 0,
-    // tdest signal width
-    parameter DEST_WIDTH = (DEST_ENABLE) ? 8 :1,
-    // Propagate tuser signal
-    parameter USER_ENABLE = 0,
-    // tuser signal width
-    parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1, 
-    // Output Destination 
-    parameter OUTPUT_DEST = 0,
-    // Output Thread ID 
-    parameter OUTPUT_ID = 1
+  // Number of PEs in Processing Array i axis -- Number of results per batch per run
+  parameter PE_NUMBER_I = 1,
+  // Number of PEs in Processing Array j axis -- Number of partial sums per result
+  parameter PE_NUMBER_J = 1,
+  // Number of PEs in Processing Array k axis -- Number of batches per run
+  parameter BATCH_SIZE = 1,
+  // Enable module to do internal resets
+  parameter INTERNAL_RESET = 0,
+  // Data Width of Input Data (L-AXIS)
+  parameter DATA_WIDTH_OP0 = 16,
+  // Fractional Bits of Input Data (L-AXIS)
+  parameter FRACTIONAL_BITS_OP0 = 12,
+  // Treat operand 0 as unsigned
+  parameter IS_UNSIGNED_OP0 = 0,
+  // Data Width of Input Weights (U-AXIS)
+  parameter DATA_WIDTH_OP1 = 16,
+  // Fractional Bits of Input Weights (U-AXIS)
+  parameter FRACTIONAL_BITS_OP1 = 12,
+  // Treat operand 1 as unsigned
+  parameter IS_UNSIGNED_OP1 = 0,
+  // Data Width of Output Data (D-AXIS)
+  parameter DATA_WIDTH_RSLT = 16,
+  // Fractional Bits of Output Data (D-AXIS)
+  parameter FRACTIONAL_BITS_RSLT = 12,
+  // Propagate tid signal
+  parameter ID_ENABLE = 0,
+  // tid signal width
+  parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
+  // Propagate tdest signal
+  parameter DEST_ENABLE = 0,
+  // tdest signal width
+  parameter DEST_WIDTH = (DEST_ENABLE) ? 8 :1,
+  // Propagate tuser signal
+  parameter USER_ENABLE = 0,
+  // tuser signal width
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1, 
+  // Output User
+  parameter OUTPUT_USER = 0,
+  // Output Destination 
+  parameter OUTPUT_DEST = 0,
+  // Output Thread ID 
+  parameter OUTPUT_ID = 0
 ) (
   input  wire                            clk,
   input  wire                            rst,
@@ -294,6 +296,10 @@ module ParallelizedLinearProcessingArray #(
             assign m_axis_d_tvalid    [DWN_POS]  = int_axis_ud_tvalid [NODE_D];
             assign int_axis_ud_tready [NODE_D]   = m_axis_d_tready   [DWN_POS];
             assign m_axis_d_tlast     [DWN_POS]  = int_axis_ud_tlast  [NODE_D];
+
+            assign m_axis_d_tdest     [DWN_POS*DEST_WIDTH] = (DEST_ENABLE) ? OUTPUT_DEST : {DEST_WIDTH{1'b0}};
+            assign m_axis_d_tid       [DWN_POS*ID_WIDTH]   = (ID_ENABLE)   ? OUTPUT_ID   : {ID_WIDTH{1'b0}};
+            assign m_axis_d_tuser     [DWN_POS*USER_WIDTH] = (USER_ENABLE) ? OUTPUT_USER : {USER_WIDTH{1'b0}};
           end 
         end 
       end

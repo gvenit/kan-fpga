@@ -13,9 +13,9 @@ module ExtendedAxisPacketSplitter # (
   // Width of AXI stream Data interfaces in bits
   parameter DATA_WIDTH = 16,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH>8),
+  parameter KEEP_ENABLE = (DATA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH+7)/8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width

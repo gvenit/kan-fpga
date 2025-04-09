@@ -19,34 +19,33 @@ module axil_fifo_rd #
   parameter FIFO_DELAY = 0
 )
 (
-    input  wire                     clk,
-    input  wire                     rst,
+  input  wire                     clk,
+  input  wire                     rst,
 
-    /*
-     * AXI-Lite slave interface
-     */
-    input  wire [ADDR_WIDTH-1:0]    s_axil_araddr,
-    input  wire [2:0]               s_axil_arprot,
-    input  wire                     s_axil_arvalid,
-    output wire                     s_axil_arready,
-    output wire [DATA_WIDTH-1:0]    s_axil_rdata,
-    output wire [1:0]               s_axil_rresp,
-    output wire                     s_axil_rvalid,
-    input  wire                     s_axil_rready,
+  /*
+    * AXI-Lite slave interface
+    */
+  input  wire [ADDR_WIDTH-1:0]    s_axil_araddr,
+  input  wire [2:0]               s_axil_arprot,
+  input  wire                     s_axil_arvalid,
+  output wire                     s_axil_arready,
+  output wire [DATA_WIDTH-1:0]    s_axil_rdata,
+  output wire [1:0]               s_axil_rresp,
+  output wire                     s_axil_rvalid,
+  input  wire                     s_axil_rready,
 
-    /*
-     * AXI-Lite master interface
-     */
-    output wire [ADDR_WIDTH-1:0]    m_axil_araddr,
-    output wire [2:0]               m_axil_arprot,
-    output wire                     m_axil_arvalid,
-    input  wire                     m_axil_arready,
-    input  wire [DATA_WIDTH-1:0]    m_axil_rdata,
-    input  wire [1:0]               m_axil_rresp,
-    input  wire                     m_axil_rvalid,
-    output wire                     m_axil_rready
+  /*
+    * AXI-Lite master interface
+    */
+  output wire [ADDR_WIDTH-1:0]    m_axil_araddr,
+  output wire [2:0]               m_axil_arprot,
+  output wire                     m_axil_arvalid,
+  input  wire                     m_axil_arready,
+  input  wire [DATA_WIDTH-1:0]    m_axil_rdata,
+  input  wire [1:0]               m_axil_rresp,
+  input  wire                     m_axil_rvalid,
+  output wire                     m_axil_rready
 );
-
   /*
    * AXI4 FIFO (read)
    */

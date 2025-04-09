@@ -11,9 +11,9 @@ module AxisPacketSplitter #(
   // Width of AXI stream Data interfaces in bits
   parameter DATA_WIDTH = 16,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH>8),
+  parameter KEEP_ENABLE = (DATA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH+7)/8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -39,21 +39,21 @@ module AxisPacketSplitter #(
   /*
    * Control signals
    */
-  input  wire operation_start,
+  input  wire                   operation_start,
   input  wire [PCKT_WIDTH-1:0]  packet_size,
   
   /*
    * Input Interrupt signals
    */
-  input  wire lock,
-  input  wire external_error,
+  input  wire                   lock,
+  input  wire                   external_error,
   
   /*
    * Output Interrupt signals
    */
-  output reg operation_busy,
-  output reg operation_complete,
-  output reg operation_error,
+  output reg                    operation_busy,
+  output reg                    operation_complete,
+  output reg                    operation_error,
 
   /*
    * AXI Stream Data input

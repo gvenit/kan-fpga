@@ -18,9 +18,9 @@ module AxisSplitter #(
   // tkeep signal width (words per cycle)
   parameter INPUT_KEEP_WIDTH = (INPUT_KEEP_ENABLE) ? ((CHANNELS*OUTPUT_DATA_WIDTH+7)/8) : CHANNELS,
   // Propagate tkeep signal
-  parameter OUTPUT_KEEP_ENABLE = (OUTPUT_DATA_WIDTH>8),
+  parameter OUTPUT_KEEP_ENABLE = (OUTPUT_DATA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter OUTPUT_KEEP_WIDTH = (OUTPUT_KEEP_ENABLE) ? ((OUTPUT_DATA_WIDTH+7)/8) : 1,
+  parameter OUTPUT_KEEP_WIDTH = (OUTPUT_KEEP_ENABLE) ? ((OUTPUT_DATA_WIDTH + 7) / 8) : 1,
   // Propagate tlast signal
   parameter LAST_ENABLE = 1,
   // Propagate tid signal
@@ -38,8 +38,8 @@ module AxisSplitter #(
   // Add Buffer on Output Streams
   parameter EXTRA_CYCLE = 0
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                                   clk,
+  input  wire                                   rst,
 
   /*
    * AXI Stream Data input

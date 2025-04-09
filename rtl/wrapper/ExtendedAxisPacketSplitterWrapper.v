@@ -12,9 +12,9 @@ module ExtendedAxisPacketSplitterWrapper # (
   // Width of AXI stream Data interfaces in bits
   parameter DATA_WIDTH = 16,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH>8),
+  parameter KEEP_ENABLE = (DATA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH+7)/8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -34,50 +34,50 @@ module ExtendedAxisPacketSplitterWrapper # (
   // Raise error flag if input packet non divisible
   parameter RAISE_NON_DIVISIBLE = 1
 ) (
-  input  wire                   clk,
-  input  wire                   rst,
-
-  /*
-   * Control signals
-   */
-  input  wire                   operation_start,
-  input  wire [PCKT_WIDTH-1:0]  packet_size,
+  input  wire                             clk,
+  input  wire                             rst,
   
-  /*
-   * Input Interrupt signals
-   */
-  input  wire external_error,
+  /*  
+   * Control signals  
+   */ 
+  input  wire                             operation_start,
+  input  wire [PCKT_WIDTH-1:0]            packet_size,
+    
+  /*  
+   * Input Interrupt signals  
+   */ 
+  input  wire                             external_error,
+    
+  /*  
+   * Output Interrupt signals 
+   */ 
+  output wire                             operation_busy,
+  output wire                             operation_complete,
+  output wire                             operation_error,
   
-  /*
-   * Output Interrupt signals
-   */
-  output wire operation_busy,
-  output wire operation_complete,
-  output wire operation_error,
-
-  /*
-   * AXI Stream Data input
-   */
-  input  wire [CHANNELS*DATA_WIDTH-1:0]  s_axis_tdata,
-  input  wire [CHANNELS*KEEP_WIDTH-1:0]  s_axis_tkeep,
-  input  wire [CHANNELS-1:0]             s_axis_tvalid,  
-  output wire [CHANNELS-1:0]             s_axis_tready,
-  input  wire [CHANNELS-1:0]             s_axis_tlast,
-  input  wire [CHANNELS*ID_WIDTH-1:0]    s_axis_tid,
-  input  wire [CHANNELS*DEST_WIDTH-1:0]  s_axis_tdest,
-  input  wire [CHANNELS*USER_WIDTH-1:0]  s_axis_tuser,
-
-  /*
-   * AXI Stream output
-   */
-  output wire [CHANNELS*DATA_WIDTH-1:0]  m_axis_tdata,
-  output wire [CHANNELS*KEEP_WIDTH-1:0]  m_axis_tkeep,
-  output wire [CHANNELS-1:0]             m_axis_tvalid,
-  input  wire [CHANNELS-1:0]             m_axis_tready,
-  output wire [CHANNELS-1:0]             m_axis_tlast,
-  output wire [CHANNELS*ID_WIDTH-1:0]    m_axis_tid,
-  output wire [CHANNELS*DEST_WIDTH-1:0]  m_axis_tdest,
-  output wire [CHANNELS*USER_WIDTH-1:0]  m_axis_tuser
+  /*  
+   * AXI Stream Data input  
+   */ 
+  input  wire [CHANNELS*DATA_WIDTH-1:0]   s_axis_tdata,
+  input  wire [CHANNELS*KEEP_WIDTH-1:0]   s_axis_tkeep,
+  input  wire [CHANNELS-1:0]              s_axis_tvalid,  
+  output wire [CHANNELS-1:0]              s_axis_tready,
+  input  wire [CHANNELS-1:0]              s_axis_tlast,
+  input  wire [CHANNELS*ID_WIDTH-1:0]     s_axis_tid,
+  input  wire [CHANNELS*DEST_WIDTH-1:0]   s_axis_tdest,
+  input  wire [CHANNELS*USER_WIDTH-1:0]   s_axis_tuser,
+  
+  /*  
+   * AXI Stream output  
+   */ 
+  output wire [CHANNELS*DATA_WIDTH-1:0]   m_axis_tdata,
+  output wire [CHANNELS*KEEP_WIDTH-1:0]   m_axis_tkeep,
+  output wire [CHANNELS-1:0]              m_axis_tvalid,
+  input  wire [CHANNELS-1:0]              m_axis_tready,
+  output wire [CHANNELS-1:0]              m_axis_tlast,
+  output wire [CHANNELS*ID_WIDTH-1:0]     m_axis_tid,
+  output wire [CHANNELS*DEST_WIDTH-1:0]   m_axis_tdest,
+  output wire [CHANNELS*USER_WIDTH-1:0]   m_axis_tuser
 );
 
   ExtendedAxisPacketSplitter #(

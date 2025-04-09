@@ -37,7 +37,7 @@ module MemoryUnit #(
     // Width of AXI stream Scale interface in bits
     parameter DATA_WIDTH_SCALE = 16,
     // Fractional bits of input scale
-    parameter FRACTIONAL_BITS_SCALE= 12,
+    parameter FRACTIONAL_BITS_SCALE = 12,
     // Use Common Share Channel 
     parameter SHARE_SCALE = 1,
     // Scale Channels

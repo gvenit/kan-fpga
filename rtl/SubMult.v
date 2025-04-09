@@ -17,15 +17,15 @@ module SubMult #(
   // Width of AXI stream Scale interface in bits
   parameter DATA_WIDTH_SCALE = 16,
   // Fractional bits of input scale
-  parameter FRACTIONAL_BITS_SCALE= 12,
+  parameter FRACTIONAL_BITS_SCALE = 12,
   // Width of AXI stream Output Data interface in bits
   parameter DATA_WIDTH_RSLT = 16,
   // Fractional bits of output data
   parameter FRACTIONAL_BITS_RSLT = 12,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT>8),
+  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT+7)/8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width

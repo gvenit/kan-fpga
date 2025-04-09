@@ -21,9 +21,9 @@ module KanLayer #(
   // Width of DMA streams
   parameter DATA_WIDTH_DMA = 64,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE_DMA = (DATA_WIDTH_DMA>8),
+  parameter KEEP_ENABLE_DMA = (DATA_WIDTH_DMA > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_DMA = (KEEP_ENABLE_DMA) ? ((DATA_WIDTH_DMA+7)/8) : 1,
+  parameter KEEP_WIDTH_DMA = (KEEP_ENABLE_DMA) ? ((DATA_WIDTH_DMA + 7) / 8) : 1,
 
   /*------------------------------------------------------------------
     Bram controller mem interface parameters
@@ -67,7 +67,7 @@ module KanLayer #(
   // Width of AXI stream Scale interface in bits
   parameter DATA_WIDTH_SCALE = 16,
   // Fractional bits of input scale
-  parameter FRACTIONAL_BITS_SCALE= 12,
+  parameter FRACTIONAL_BITS_SCALE = 12,
   // Use Common Share Channel 
   parameter SHARE_SCALE = 1,
   // Scale Channels
@@ -84,7 +84,7 @@ module KanLayer #(
   // Fractional bits of output data
   parameter FRACTIONAL_BITS_RSLT = 12,
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_RSLT = ((DATA_WIDTH_RSLT+7)/8),
+  parameter KEEP_WIDTH_RSLT = ((DATA_WIDTH_RSLT + 7) / 8),
 
   /*------------------------------------------------------------------
     WEIGHT streams parameters
@@ -97,9 +97,9 @@ module KanLayer #(
   // Number of Independent AXI-Stream Weight Channels
   parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE_WEIGHT = (DATA_WIDTH_WEIGHT>8),
+  parameter KEEP_ENABLE_WEIGHT = (DATA_WIDTH_WEIGHT > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_WEIGHT = (KEEP_ENABLE_WEIGHT) ? ((DATA_WIDTH_WEIGHT+7)/8) : 1,
+  parameter KEEP_WIDTH_WEIGHT = (KEEP_ENABLE_WEIGHT) ? ((DATA_WIDTH_WEIGHT + 7) / 8) : 1,
 
   /*------------------------------------------------------------------
     SCALED_DIFF parameters
@@ -211,49 +211,49 @@ module KanLayer #(
       AXI-Lite Control Slave interface
   ------------------------------------------------------------------*/
 
-  input  wire [11:0]  s_axi_ctr_awaddr,
-  input  wire [2:0]   s_axi_ctr_awprot,
-  input  wire         s_axi_ctr_awvalid,
-  output wire         s_axi_ctr_awready,
-  input  wire [31:0]  s_axi_ctr_wdata,
-  input  wire [3:0]   s_axi_ctr_wstrb,
-  input  wire         s_axi_ctr_wvalid,
-  output wire         s_axi_ctr_wready,
-  output wire [1:0]   s_axi_ctr_bresp,
-  output wire         s_axi_ctr_bvalid,
-  input  wire         s_axi_ctr_bready,
-  input  wire [11:0]  s_axi_ctr_araddr,
-  input  wire [2:0]   s_axi_ctr_arprot,
-  input  wire         s_axi_ctr_arvalid,
-  output wire         s_axi_ctr_arready,
-  output wire [31:0]  s_axi_ctr_rdata,
-  output wire [1:0]   s_axi_ctr_rresp,
-  output wire         s_axi_ctr_rvalid,
-  input  wire         s_axi_ctr_rready,
+  input  wire [11:0]  s_axil_ctr_awaddr,
+  input  wire [2:0]   s_axil_ctr_awprot,
+  input  wire         s_axil_ctr_awvalid,
+  output wire         s_axil_ctr_awready,
+  input  wire [31:0]  s_axil_ctr_wdata,
+  input  wire [3:0]   s_axil_ctr_wstrb,
+  input  wire         s_axil_ctr_wvalid,
+  output wire         s_axil_ctr_wready,
+  output wire [1:0]   s_axil_ctr_bresp,
+  output wire         s_axil_ctr_bvalid,
+  input  wire         s_axil_ctr_bready,
+  input  wire [11:0]  s_axil_ctr_araddr,
+  input  wire [2:0]   s_axil_ctr_arprot,
+  input  wire         s_axil_ctr_arvalid,
+  output wire         s_axil_ctr_arready,
+  output wire [31:0]  s_axil_ctr_rdata,
+  output wire [1:0]   s_axil_ctr_rresp,
+  output wire         s_axil_ctr_rvalid,
+  input  wire         s_axil_ctr_rready,
 
   /*------------------------------------------------------------------
       AXI-Lite Scale Register Slave interface
   ------------------------------------------------------------------*/
 
-  input  wire [11:0]  s_axi_scale_awaddr,
-  input  wire [2:0]   s_axi_scale_awprot,
-  input  wire         s_axi_scale_awvalid,
-  output wire         s_axi_scale_awready,
-  input  wire [31:0]  s_axi_scale_wdata,
-  input  wire [3:0]   s_axi_scale_wstrb,
-  input  wire         s_axi_scale_wvalid,
-  output wire         s_axi_scale_wready,
-  output wire [1:0]   s_axi_scale_bresp,
-  output wire         s_axi_scale_bvalid,
-  input  wire         s_axi_scale_bready,
-  input  wire [11:0]  s_axi_scale_araddr,
-  input  wire [2:0]   s_axi_scale_arprot,
-  input  wire         s_axi_scale_arvalid,
-  output wire         s_axi_scale_arready,
-  output wire [31:0]  s_axi_scale_rdata,
-  output wire [1:0]   s_axi_scale_rresp,
-  output wire         s_axi_scale_rvalid,
-  input  wire         s_axi_scale_rready,
+  input  wire [11:0]  s_axil_scale_awaddr,
+  input  wire [2:0]   s_axil_scale_awprot,
+  input  wire         s_axil_scale_awvalid,
+  output wire         s_axil_scale_awready,
+  input  wire [31:0]  s_axil_scale_wdata,
+  input  wire [3:0]   s_axil_scale_wstrb,
+  input  wire         s_axil_scale_wvalid,
+  output wire         s_axil_scale_wready,
+  output wire [1:0]   s_axil_scale_bresp,
+  output wire         s_axil_scale_bvalid,
+  input  wire         s_axil_scale_bready,
+  input  wire [11:0]  s_axil_scale_araddr,
+  input  wire [2:0]   s_axil_scale_arprot,
+  input  wire         s_axil_scale_arvalid,
+  output wire         s_axil_scale_arready,
+  output wire [31:0]  s_axil_scale_rdata,
+  output wire [1:0]   s_axil_scale_rresp,
+  output wire         s_axil_scale_rvalid,
+  input  wire         s_axil_scale_rready,
 
   /*------------------------------------------------------------------
       AXI-Stream Weight Slave interface
@@ -457,25 +457,25 @@ module KanLayer #(
     .scale_reg(int_axil_scale_reg),
     .S_AXI_ACLK(clk),
     .S_AXI_ARESETN(aresetn),
-    .S_AXI_AWADDR(s_axi_scale_awaddr),
-    .S_AXI_AWPROT(s_axi_scale_awprot),
-    .S_AXI_AWVALID(s_axi_scale_awvalid),
-    .S_AXI_AWREADY(s_axi_scale_awready),
-    .S_AXI_WDATA(s_axi_scale_wdata),
-    .S_AXI_WSTRB(s_axi_scale_wstrb),
-    .S_AXI_WVALID(s_axi_scale_wvalid),
-    .S_AXI_WREADY(s_axi_scale_wready),
-    .S_AXI_BRESP(s_axi_scale_bresp),
-    .S_AXI_BVALID(s_axi_scale_bvalid),
-    .S_AXI_BREADY(s_axi_scale_bready),
-    .S_AXI_ARADDR(s_axi_scale_araddr),
-    .S_AXI_ARPROT(s_axi_scale_arprot),
-    .S_AXI_ARVALID(s_axi_scale_arvalid),
-    .S_AXI_ARREADY(s_axi_scale_arready),
-    .S_AXI_RDATA(s_axi_scale_rdata),
-    .S_AXI_RRESP(s_axi_scale_rresp),
-    .S_AXI_RVALID(s_axi_scale_rvalid),
-    .S_AXI_RREADY(s_axi_scale_rready)
+    .S_AXI_AWADDR(s_axil_scale_awaddr),
+    .S_AXI_AWPROT(s_axil_scale_awprot),
+    .S_AXI_AWVALID(s_axil_scale_awvalid),
+    .S_AXI_AWREADY(s_axil_scale_awready),
+    .S_AXI_WDATA(s_axil_scale_wdata),
+    .S_AXI_WSTRB(s_axil_scale_wstrb),
+    .S_AXI_WVALID(s_axil_scale_wvalid),
+    .S_AXI_WREADY(s_axil_scale_wready),
+    .S_AXI_BRESP(s_axil_scale_bresp),
+    .S_AXI_BVALID(s_axil_scale_bvalid),
+    .S_AXI_BREADY(s_axil_scale_bready),
+    .S_AXI_ARADDR(s_axil_scale_araddr),
+    .S_AXI_ARPROT(s_axil_scale_arprot),
+    .S_AXI_ARVALID(s_axil_scale_arvalid),
+    .S_AXI_ARREADY(s_axil_scale_arready),
+    .S_AXI_RDATA(s_axil_scale_rdata),
+    .S_AXI_RRESP(s_axil_scale_rresp),
+    .S_AXI_RVALID(s_axil_scale_rvalid),
+    .S_AXI_RREADY(s_axil_scale_rready)
 	);
 
   /**********************************************
@@ -920,25 +920,25 @@ module KanLayer #(
     .ps_flag_1(ps_flag_1),
     .S_AXI_ACLK(clk),
     .S_AXI_ARESETN(aresetn),
-    .S_AXI_AWADDR(s_axi_ctr_awaddr),
-    .S_AXI_AWPROT(s_axi_ctr_awprot),
-    .S_AXI_AWVALID(s_axi_ctr_awvalid),
-    .S_AXI_AWREADY(s_axi_ctr_awready),
-    .S_AXI_WDATA(s_axi_ctr_wdata),
-    .S_AXI_WSTRB(s_axi_ctr_wstrb),
-    .S_AXI_WVALID(s_axi_ctr_wvalid),
-    .S_AXI_WREADY(s_axi_ctr_wready),
-    .S_AXI_BRESP(s_axi_ctr_bresp),
-    .S_AXI_BVALID(s_axi_ctr_bvalid),
-    .S_AXI_BREADY(s_axi_ctr_bready),
-    .S_AXI_ARADDR(s_axi_ctr_araddr),
-    .S_AXI_ARPROT(s_axi_ctr_arprot),
-    .S_AXI_ARVALID(s_axi_ctr_arvalid),
-    .S_AXI_ARREADY(s_axi_ctr_arready),
-    .S_AXI_RDATA(s_axi_ctr_rdata),
-    .S_AXI_RRESP(s_axi_ctr_rresp),
-    .S_AXI_RVALID(s_axi_ctr_rvalid),
-    .S_AXI_RREADY(s_axi_ctr_rready)
+    .S_AXI_AWADDR(s_axil_ctr_awaddr),
+    .S_AXI_AWPROT(s_axil_ctr_awprot),
+    .S_AXI_AWVALID(s_axil_ctr_awvalid),
+    .S_AXI_AWREADY(s_axil_ctr_awready),
+    .S_AXI_WDATA(s_axil_ctr_wdata),
+    .S_AXI_WSTRB(s_axil_ctr_wstrb),
+    .S_AXI_WVALID(s_axil_ctr_wvalid),
+    .S_AXI_WREADY(s_axil_ctr_wready),
+    .S_AXI_BRESP(s_axil_ctr_bresp),
+    .S_AXI_BVALID(s_axil_ctr_bvalid),
+    .S_AXI_BREADY(s_axil_ctr_bready),
+    .S_AXI_ARADDR(s_axil_ctr_araddr),
+    .S_AXI_ARPROT(s_axil_ctr_arprot),
+    .S_AXI_ARVALID(s_axil_ctr_arvalid),
+    .S_AXI_ARREADY(s_axil_ctr_arready),
+    .S_AXI_RDATA(s_axil_ctr_rdata),
+    .S_AXI_RRESP(s_axil_ctr_rresp),
+    .S_AXI_RVALID(s_axil_ctr_rvalid),
+    .S_AXI_RREADY(s_axil_ctr_rready)
 	);
 
   /*************************************************************************************

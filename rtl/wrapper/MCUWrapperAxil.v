@@ -35,7 +35,7 @@ module MCUWrapperAxil #(
   // Propagate tuser signal
   parameter USER_ENABLE = 0,
   // tuser signal width
-  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
+  parameter USER_WIDTH =                            (USER_ENABLE) ? 8 : 1,
   // Number of Independent AXI-Stream Data Channels per Batch
   parameter DATA_CHANNELS = 1,
   // Use Common Share Channel 
@@ -63,23 +63,23 @@ module MCUWrapperAxil #(
   // Scale FIFO size per stream
   parameter FIFO_DEPTH_SCALE = (SHARE_SCALE) ? 0 : (BATCH_SIZE + DATA_CHANNELS)
 ) (
-  input  wire                         fsm_clk,
-  input  wire                         rst,
+  input  wire                                                     fsm_clk,
+  input  wire                                                     rst,
 
   /*
    * Control signals -- Corresponding clock : fsm_clk
    */
   input  wire operation_start,
-  input  wire [ADDR_WIDTH_DATA:0]     data_size,
-  input  wire [ADDR_WIDTH_GRID:0]     grid_size,
-  input  wire [ADDR_WIDTH_SCALE:0]    scle_size,
+  input  wire [ADDR_WIDTH_DATA:0]                                 data_size,
+  input  wire [ADDR_WIDTH_GRID:0]                                 grid_size,
+  input  wire [ADDR_WIDTH_SCALE:0]                                scle_size,
   
   /*
    * Interrupt signals -- Corresponding clock : fsm_clk
    */
-  output wire                         operation_busy,
-  output wire                         operation_complete,
-  output wire                         operation_error,
+  output wire                                                     operation_busy,
+  output wire                                                     operation_complete,
+  output wire                                                     operation_error,
 
   /*
    * Data AXI lite Master Interface -- Corresponding clock : m_axil_data_aclk

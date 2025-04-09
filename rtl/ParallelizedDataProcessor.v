@@ -12,7 +12,7 @@ module ParallelizedDataProcessor #(
   // Width of AXI stream Scale interface in bits
   parameter DATA_WIDTH_SCALE = 16,
   // Fractional bits of input scale
-  parameter FRACTIONAL_BITS_SCALE= 12,
+  parameter FRACTIONAL_BITS_SCALE = 12,
   // Width of AXI stream Input Weight interface in bits
   parameter DATA_WIDTH_WEIGHT = 16,
   // Fractional bits of output data
@@ -30,9 +30,9 @@ module ParallelizedDataProcessor #(
   // Fractional bits of output data
   parameter FRACTIONAL_BITS_RSLT = 12,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT>8),
+  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT+7)/8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -61,13 +61,15 @@ module ParallelizedDataProcessor #(
   parameter GRID_CHANNELS = (SHARE_GRID)? 1 : DATA_CHANNELS*BATCH_SIZE,
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../../data/Sech2Lutram_n_16.12_16.16.txt",
+  // Output User
+  parameter OUTPUT_USER = 0,
   // Output Destination 
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 
   parameter OUTPUT_ID = 1
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                                                 clk,
+  input  wire                                                 rst,
 
   /*
     * AXI Stream Data input
@@ -128,22 +130,22 @@ module ParallelizedDataProcessor #(
   /*
    * Error Outputs
    */
-  output wire err_unalligned_data,
+  output wire                                                 err_unalligned_data,
 
   /*
    * Interrupts
    */
-  output wire core_rst
+  output wire                                                 core_rst
 );
   // Internal Activation Function Output AXI-Stream Wires
-  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH_ACT-1:0]             int_axis_act_func_tdata;
-  wire [DATA_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]                 int_axis_act_func_tkeep;
-  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                            int_axis_act_func_tvalid;
-  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                            int_axis_act_func_tready;
-  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                            int_axis_act_func_tlast;
-  wire [DATA_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]                   int_axis_act_func_tid;
-  wire [DATA_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]                 int_axis_act_func_tdest;
-  wire [DATA_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]                 int_axis_act_func_tuser;
+  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH_ACT-1:0]  int_axis_act_func_tdata;
+  wire [DATA_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]      int_axis_act_func_tkeep;
+  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tvalid;
+  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tready;
+  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tlast;
+  wire [DATA_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]        int_axis_act_func_tid;
+  wire [DATA_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]      int_axis_act_func_tdest;
+  wire [DATA_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]      int_axis_act_func_tuser;
   
   RSWAFFunction #(
     // Width of AXI stream Input Data & Grid interfaces in bits
@@ -257,6 +259,8 @@ module ParallelizedDataProcessor #(
     .USER_ENABLE(USER_ENABLE),
     // tuser signal width
     .USER_WIDTH(USER_WIDTH), 
+    // Output User 
+    .OUTPUT_USER(OUTPUT_USER),
     // Output Destination 
     .OUTPUT_DEST(OUTPUT_DEST),
     // Output Thread ID 

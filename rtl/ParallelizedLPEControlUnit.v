@@ -36,39 +36,33 @@ module ParallelizedLPEControlUnit #(
    * AXI Stream Up input
    */
   input  wire                         int_axis_u_tvalid,
-  // input  wire                         int_axis_u_tready,
   input  wire                         int_axis_u_tlast,
 
   /*
    * AXI Stream Down Output
    */
-  // input  wire                         int_axis_d_tvalid,
   input  wire                         int_axis_d_tready,
 
   /*
    * AXI Stream Left input
    */
   input  wire                         int_axis_l_tvalid,
-  // input  wire                         int_axis_l_tready,
   input  wire                         int_axis_l_tlast,
 
   /*
    * AXI Stream Right Output
    */
-  // input  wire                         int_axis_r_tvalid,
   input  wire                         int_axis_r_tready,
   
   /*
    * AXI Stream Top Output
    */
   input  wire                         int_axis_t_tvalid,
-  // input  wire                         int_axis_t_tready,
   input  wire                         int_axis_t_tlast,
 
   /*
    * AXI Stream Bottom Output
    */
-  // input  wire                         int_axis_b_tvalid,
   input  wire                         int_axis_b_tready,
 
   output wire                         store_l,
@@ -103,9 +97,6 @@ module ParallelizedLPEControlUnit #(
 
   // FSM Registers & Wires
   reg  [FSM_STATE_WIDTH-1:0] fsm_state, fsm_state_next;
-
-  // // DataFlow Registers & Wires
-  // reg  partial_sum_last_reg = 1'b0;
   
   // FSM input signals
   wire op0_flag  = int_axis_l_tvalid && int_axis_r_tready;
@@ -152,7 +143,7 @@ module ParallelizedLPEControlUnit #(
 
   reg  err_unalligned_data_reg;
 
-  // Output Control Registers & Wires
+  // // Output Control Registers & Wires -- For debugging
   // wire handshake_r = int_axis_r_tvalid && int_axis_r_tready;
   // wire handshake_d = int_axis_d_tvalid && int_axis_d_tready;
   // wire handshake_b = int_axis_b_tvalid && int_axis_b_tready;
@@ -416,7 +407,6 @@ module ParallelizedLPEControlUnit #(
 
   `define CHECK_OP_LAST \
       if (partial_sum_last_reg_next) begin \
-        // $display("Intr time: %0t : fsm_state = %h : %d %d %d", $time, fsm_state, partial_sum_last_reg_next, op_valid, int_axis_d_tready);\
         fsm_state_next <= FSM_END; \
       end else if(op0_last_flag|op1_last_flag) begin \
         fsm_state_next <= FSM_ERR; \

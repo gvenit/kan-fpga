@@ -19,28 +19,28 @@
  */
 
 module ParallelizedLinearProcessingElement #(
-    // Number of PEs in Processing Array i axis
-    parameter PE_NUMBER_I = 4,
-    // Number of PEs in Processing Array j axis
-    parameter PE_NUMBER_J = 4,
-    // Position of current PE in the i axis
-    parameter PE_POSITION_I = 0,
-    // Position of current PE in the j axis
-    parameter PE_POSITION_J = 0,
-    // Data Width of Input Data (L-AXIS)
-    parameter DATA_WIDTH_OP0 = 16,
-    // Fractional Bits of Input Data (L-AXIS)
-    parameter FRACTIONAL_BITS_OP0 = 12,
-    // Treat operand 0 as unsigned
-    parameter IS_UNSIGNED_OP0 = 0,
-    // Data Width of Input Weights (T-AXIS)
-    parameter DATA_WIDTH_OP1 = 16,
-    // Fractional Bits of Input Weights (T-AXIS)
-    parameter FRACTIONAL_BITS_OP1 = 12,
-    // Treat operand 1 as unsigned
-    parameter IS_UNSIGNED_OP1 = 0,
-    // Data Width of Output Data (D-AXIS)
-    parameter DATA_WIDTH_PSUM = DATA_WIDTH_OP0 + DATA_WIDTH_OP1
+  // Number of PEs in Processing Array i axis
+  parameter PE_NUMBER_I = 4,
+  // Number of PEs in Processing Array j axis
+  parameter PE_NUMBER_J = 4,
+  // Position of current PE in the i axis
+  parameter PE_POSITION_I = 0,
+  // Position of current PE in the j axis
+  parameter PE_POSITION_J = 0,
+  // Data Width of Input Data (L-AXIS)
+  parameter DATA_WIDTH_OP0 = 16,
+  // Fractional Bits of Input Data (L-AXIS)
+  parameter FRACTIONAL_BITS_OP0 = 12,
+  // Treat operand 0 as unsigned
+  parameter IS_UNSIGNED_OP0 = 0,
+  // Data Width of Input Weights (T-AXIS)
+  parameter DATA_WIDTH_OP1 = 16,
+  // Fractional Bits of Input Weights (T-AXIS)
+  parameter FRACTIONAL_BITS_OP1 = 12,
+  // Treat operand 1 as unsigned
+  parameter IS_UNSIGNED_OP1 = 0,
+  // Data Width of Output Data (D-AXIS)
+  parameter DATA_WIDTH_PSUM = DATA_WIDTH_OP0 + DATA_WIDTH_OP1
 ) (
   input  wire                            clk,
   input  wire                            rst,

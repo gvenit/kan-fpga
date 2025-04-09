@@ -15,49 +15,51 @@
  */
 
 module ParallelizedLPAWrapper #(
-    // Number of PEs in Processing Array i axis -- Number of results per batch per run
-    parameter PE_NUMBER_I = 1,
-    // Number of PEs in Processing Array j axis -- Number of partial sums per result
-    parameter PE_NUMBER_J = 1,
-    // Number of PEs in Processing Array k axis -- Number of batches per run
-    parameter BATCH_SIZE = 1,
-    // Enable module to do internal resets
-    parameter INTERNAL_RESET = 0,
-    // Data Width of Input Data (L-AXIS)
-    parameter DATA_WIDTH_OP0 = 16,
-    // Fractional Bits of Input Data (L-AXIS)
-    parameter FRACTIONAL_BITS_OP0 = 12,
-    // Treat operand 0 as unsigned
-    parameter IS_UNSIGNED_OP0 = 0,
-    // Data Width of Input Weights (U-AXIS)
-    parameter DATA_WIDTH_OP1 = 16,
-    // Fractional Bits of Input Weights (U-AXIS)
-    parameter FRACTIONAL_BITS_OP1 = 12,
-    // Treat operand 1 as unsigned
-    parameter IS_UNSIGNED_OP1 = 0,
-    // Data Width of Output Data (D-AXIS)
-    parameter DATA_WIDTH_RSLT = 16,
-    // Fractional Bits of Output Data (D-AXIS)
-    parameter FRACTIONAL_BITS_RSLT = 12,
-    // Propagate tid signal
-    parameter ID_ENABLE = 0,
-    // tid signal width
-    parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
-    // Propagate tdest signal
-    parameter DEST_ENABLE = 0,
-    // tdest signal width
-    parameter DEST_WIDTH = (DEST_ENABLE) ? 8 :1,
-    // Propagate tuser signal
-    parameter USER_ENABLE = 0,
-    // tuser signal width
-    parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1, 
-    // Output Destination 
-    parameter OUTPUT_DEST = 0,
-    // Output Thread ID 
-    parameter OUTPUT_ID = 1
+  // Number of PEs in Processing Array i axis -- Number of results per batch per run
+  parameter PE_NUMBER_I = 1,
+  // Number of PEs in Processing Array j axis -- Number of partial sums per result
+  parameter PE_NUMBER_J = 1,
+  // Number of PEs in Processing Array k axis -- Number of batches per run
+  parameter BATCH_SIZE = 1,
+  // Enable module to do internal resets
+  parameter INTERNAL_RESET = 0,
+  // Data Width of Input Data (L-AXIS)
+  parameter DATA_WIDTH_OP0 = 16,
+  // Fractional Bits of Input Data (L-AXIS)
+  parameter FRACTIONAL_BITS_OP0 = 12,
+  // Treat operand 0 as unsigned
+  parameter IS_UNSIGNED_OP0 = 0,
+  // Data Width of Input Weights (U-AXIS)
+  parameter DATA_WIDTH_OP1 = 16,
+  // Fractional Bits of Input Weights (U-AXIS)
+  parameter FRACTIONAL_BITS_OP1 = 12,
+  // Treat operand 1 as unsigned
+  parameter IS_UNSIGNED_OP1 = 0,
+  // Data Width of Output Data (D-AXIS)
+  parameter DATA_WIDTH_RSLT = 16,
+  // Fractional Bits of Output Data (D-AXIS)
+  parameter FRACTIONAL_BITS_RSLT = 12,
+  // Propagate tid signal
+  parameter ID_ENABLE = 0,
+  // tid signal width
+  parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
+  // Propagate tdest signal
+  parameter DEST_ENABLE = 0,
+  // tdest signal width
+  parameter DEST_WIDTH = (DEST_ENABLE) ? 8 :1,
+  // Propagate tuser signal
+  parameter USER_ENABLE = 0,
+  // tuser signal width
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1, 
+  // Output User
+  parameter OUTPUT_USER = 0,
+  // Output Destination 
+  parameter OUTPUT_DEST = 0,
+  // Output Thread ID 
+  parameter OUTPUT_ID = 1
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                                                 clk,
+  input  wire                                                 rst,
 
   /*
    * AXI Stream Top Input -- Weight Input
@@ -69,17 +71,6 @@ module ParallelizedLPAWrapper #(
   input  wire [PE_NUMBER_I*PE_NUMBER_J*ID_WIDTH-1:0]          s_axis_t_tid,
   input  wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        s_axis_t_tdest,
   input  wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        s_axis_t_tuser,
-
-  // /*
-  //  * AXI Stream Bottom Output -- Weights are dropped
-  //  */
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_RSLT-1:0]   m_axis_b_tdata,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tvalid,
-  // input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tready,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tlast,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*ID_WIDTH-1:0]          m_axis_b_tid,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        m_axis_b_tdest,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        m_axis_b_tuser,
 
   /*
    * AXI Stream Left Input -- Data Input
@@ -133,6 +124,7 @@ ParallelizedLinearProcessingArray #(
   .DEST_WIDTH(DEST_WIDTH),
   .USER_ENABLE(USER_ENABLE),
   .USER_WIDTH(USER_WIDTH), 
+  .OUTPUT_USER(OUTPUT_USER),
   .OUTPUT_DEST(OUTPUT_DEST),
   .OUTPUT_ID(OUTPUT_ID)
 ) parallelized_lpa_inst (
