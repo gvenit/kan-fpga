@@ -10,9 +10,9 @@ vcd/
 
 rtl/DummyBRAM.v
 
-py/
-!py/*_simgen.py
+!py/*simgen.py
 !py/__init__.py
+# py/
 # !py/example_codegen.py
 
 venv/*
