@@ -87,7 +87,7 @@ while [ $1 ] ; do
         fi
         lib_path="./lib"
 
-        LIB_RESOURCES="-y ./rtl"
+        LIB_RESOURCES="-y ./rtl -y ./rtl/wrapper"
         for lib_path_i in $lib_path/*/rtl; do
             LIB_RESOURCES="$LIB_RESOURCES -y $lib_path_i"
         done

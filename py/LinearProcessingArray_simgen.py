@@ -18,7 +18,7 @@ from py import addTimeScale, stripModule
 
 def LinearProcessingArray():
     return verilog.from_verilog.read_verilog_module(
-        os.path.join(TOP_DIR,'rtl/LPArray_wrapper.v')
+        os.path.join(TOP_DIR,'rtl/wrapper/LPArray_wrapper.v')
     )['LPArray_wrapper'] 
 
 def tb_LinearProcessingArray():

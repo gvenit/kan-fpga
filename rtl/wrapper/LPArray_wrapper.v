@@ -40,15 +40,15 @@ module LPArray_wrapper #(
     // Propagate tid signal
     parameter ID_ENABLE = 0,
     // tid signal width
-    parameter ID_WIDTH = 8,
+    parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
     // Propagate tdest signal
-    parameter DEST_ENABLE = 1,
+    parameter DEST_ENABLE = 0,
     // tdest signal width
-    parameter DEST_WIDTH = 8,
+    parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
     // Propagate tuser signal
-    parameter USER_ENABLE = 1,
+    parameter USER_ENABLE = 0,
     // tuser signal width
-    parameter USER_WIDTH = 8 , 
+    parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1 , 
     // Output Destination 
     parameter OUTPUT_DEST = 0,
     // Output Thread ID 

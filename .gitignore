@@ -10,14 +10,13 @@ vcd/
 
 rtl/DummyBRAM.v
 
-!py/*simgen.py
+py/*
+!py/*_simgen.py
 !py/__init__.py
-# py/
 # !py/example_codegen.py
 
 venv/*
 !venv/requirements.txt
-!py/example_codegen.py
 test
 
 # vivado

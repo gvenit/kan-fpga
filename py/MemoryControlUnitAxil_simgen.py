@@ -18,12 +18,12 @@ from py import addTimeScale, stripModule
     
 def MemoryControlUnitAxil():
     return verilog.from_verilog.read_verilog_module(
-        os.path.join(TOP_DIR,'rtl/MCUWrapperAxil.v')
+        os.path.join(TOP_DIR,'rtl/wrapper/MCUWrapperAxil.v')
     )['MCUWrapperAxil'] 
 
 def AxilRegisterIfRd():
     return verilog.from_verilog.read_verilog_module(
-        os.path.join(TOP_DIR,'rtl/axil_reg_if_rd_wrapper.v')
+        os.path.join(TOP_DIR,'rtl/wrapper/axil_reg_if_rd_wrapper.v')
     )['axil_reg_if_rd_wrapper'] 
 
 def DummyBRAM():
@@ -389,7 +389,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~clk),
         Wait(clk),
         
-        # Test 3 : Nominal Operation with conjestion (all streams)
+        # Test 3 : Nominal Operation with congestion (all streams)
         Wait(~clk),
         operation_start(1),
         data_size(max_data_len),
@@ -418,7 +418,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~clk),
         Wait(clk),
         
-        # Test 4 : Nominal Operation with conjestion (single stream)
+        # Test 4 : Nominal Operation with congestion (single stream)
         Wait(~clk),
         operation_start(1),
         data_size(max_data_len),
@@ -448,7 +448,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(clk),
         
         
-        # Test 5 : Nominal Operation with no conjestion
+        # Test 5 : Nominal Operation with no congestion
         Wait(~clk),
         operation_start(1),
         data_size(max_data_len),
@@ -490,7 +490,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
     per_chn_data_batch = per_chn_data.GenerateFor(chn_batch(0), chn_batch < BATCH_SIZE, chn_batch(chn_batch+1))
     LFT_POS = per_chn_data_batch.Localparam('LFT_POS', chn_batch * DATA_CHANNELS + chn_data)
     
-    conj_counter = per_chn_data_batch.Integer('conj_counter')
+    cong_counter = per_chn_data_batch.Integer('cong_counter')
     data_counter = per_chn_data_batch.Integer('data_counter')
     iter_counter = per_chn_data_batch.Integer('iter_counter')
     
@@ -617,12 +617,12 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 3 : Nominal Operation with conjestion (all streams)
+        # Test 3 : Nominal Operation with congestion (all streams)
         Wait(~loc_clk),
         For(iter_counter(0), iter_counter < max_grid_len, iter_counter(iter_counter+1))(
             For(data_counter(0), data_counter < max_data_len, data_counter(data_counter+1))(
                 m_axis_d_tready[LFT_POS](0),
-                For(conj_counter(0), conj_counter < CONGESTION_LEVEL, conj_counter(conj_counter+1))(
+                For(cong_counter(0), cong_counter < CONGESTION_LEVEL, cong_counter(cong_counter+1))(
                     While(~m_axis_d_tvalid[LFT_POS])(
                         Wait(loc_clk),
                         Wait(~loc_clk),
@@ -641,8 +641,8 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 4 : Nominal Operation with conjestion (single stream)
-        #       -- No conjestion for data
+        # Test 4 : Nominal Operation with congestion (single stream)
+        #       -- No congestion for data
         Wait(~loc_clk),
         m_axis_d_tready[LFT_POS](1),
         For(iter_counter(0), iter_counter < max_grid_len, iter_counter(iter_counter+1))(
@@ -661,7 +661,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 5 : Nominal Operation with no conjestion
+        # Test 5 : Nominal Operation with no congestion
         Wait(~loc_clk),
         m_axis_d_tready[LFT_POS](1),
         For(iter_counter(0), iter_counter < max_grid_len, iter_counter(iter_counter+1))(
@@ -685,7 +685,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
     if_grid = per_chn_data.GenerateIf(Ors(~SHARE_GRID, chn_data == 0))
     LFT_POS = if_grid.Localparam('LFT_POS',chn_data)
     
-    conj_counter = if_grid.Integer('conj_counter')
+    cong_counter = if_grid.Integer('cong_counter')
     data_counter = if_grid.Integer('data_counter')
     iter_counter = if_grid.Integer('iter_counter')
     
@@ -811,12 +811,12 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 3 : Nominal Operation with conjestion (all streams)
+        # Test 3 : Nominal Operation with congestion (all streams)
         Wait(~loc_clk),
         For(data_counter(0), data_counter < max_grid_len, data_counter(data_counter+1))(
             For(iter_counter(0), iter_counter < max_data_len, iter_counter(iter_counter+1))(
                 m_axis_g_tready[LFT_POS](0),
-                For(conj_counter(0), conj_counter < CONGESTION_LEVEL, conj_counter(conj_counter+1))(
+                For(cong_counter(0), cong_counter < CONGESTION_LEVEL, cong_counter(cong_counter+1))(
                     While(~m_axis_g_tvalid[LFT_POS])(
                         Wait(loc_clk),
                         Wait(~loc_clk),
@@ -835,8 +835,8 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 4 : Nominal Operation with conjestion (single stream)
-        #       -- No conjestion for grid
+        # Test 4 : Nominal Operation with congestion (single stream)
+        #       -- No congestion for grid
         Wait(~loc_clk),
         m_axis_g_tready[LFT_POS](1),
         For(data_counter(0), data_counter < max_grid_len, data_counter(data_counter+1))(
@@ -855,7 +855,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 5 : Nominal Operation with no conjestion
+        # Test 5 : Nominal Operation with no congestion
         Wait(~loc_clk),
         m_axis_g_tready[LFT_POS](1),
         For(data_counter(0), data_counter < max_grid_len, data_counter(data_counter+1))(
@@ -879,7 +879,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
     if_scle = per_chn_data.GenerateIf(Ors(~SHARE_SCALE, chn_data == 0))
     LFT_POS = if_scle.Localparam('LFT_POS',chn_data)
     
-    conj_counter = if_scle.Integer('conj_counter')
+    cong_counter = if_scle.Integer('cong_counter')
     data_counter = if_scle.Integer('data_counter')
     
     loc_clk    = m_axil_s_aclk[LFT_POS]
@@ -1004,11 +1004,11 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 3 : Nominal Operation with conjestion (all streams)
+        # Test 3 : Nominal Operation with congestion (all streams)
         Wait(~loc_clk),
         For(data_counter(0), data_counter < max_scle_len, data_counter(data_counter+1))(
             m_axis_s_tready[LFT_POS](0),
-            For(conj_counter(0), conj_counter < CONGESTION_LEVEL, conj_counter(conj_counter+1))(
+            For(cong_counter(0), cong_counter < CONGESTION_LEVEL, cong_counter(cong_counter+1))(
                 While(~m_axis_s_tvalid[LFT_POS])(
                     Wait(loc_clk),
                     Wait(~loc_clk),
@@ -1027,14 +1027,14 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 4 : Nominal Operation with conjestion (single stream)
-        #       -- Conjestion for scale LFT_POS == 0
+        # Test 4 : Nominal Operation with congestion (single stream)
+        #       -- congestion for scale LFT_POS == 0
         Wait(~loc_clk),
         m_axis_s_tready[LFT_POS](0),
         For(data_counter(0), data_counter < max_scle_len, data_counter(data_counter+1))(
             If(LFT_POS == 0)(
                 m_axis_s_tready[LFT_POS](0),
-                For(conj_counter(0), conj_counter < CONGESTION_LEVEL, conj_counter(conj_counter+1))(
+                For(cong_counter(0), cong_counter < CONGESTION_LEVEL, cong_counter(cong_counter+1))(
                     While(~m_axis_s_tvalid[LFT_POS])(
                         Wait(loc_clk),
                         Wait(~loc_clk),
@@ -1057,7 +1057,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         Wait(~loc_clk),
         Wait(loc_clk),
         
-        # Test 5 : Nominal Operation with no conjestion
+        # Test 5 : Nominal Operation with no congestion
         Wait(~loc_clk),
         m_axis_s_tready[LFT_POS](1),
         For(data_counter(0), data_counter < max_scle_len, data_counter(data_counter+1))(

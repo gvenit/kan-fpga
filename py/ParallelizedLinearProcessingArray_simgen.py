@@ -19,7 +19,7 @@ import numpy as np
 
 def ParallelizedLinearProcessingArray():
     return verilog.from_verilog.read_verilog_module(
-        os.path.join(TOP_DIR,'rtl/ParallelizedLPAWrapper.v')
+        os.path.join(TOP_DIR,'rtl/wrapper/ParallelizedLPAWrapper.v')
     )['ParallelizedLPAWrapper'] 
 
 def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):

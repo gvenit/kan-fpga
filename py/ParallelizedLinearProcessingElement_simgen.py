@@ -18,7 +18,7 @@ from py import addTimeScale, stripModule
 
 def ParallelizedLinearProcessingElement():
     return verilog.from_verilog.read_verilog_module(
-        os.path.join(TOP_DIR,'rtl/ParallelizedLPEWrapper.v')
+        os.path.join(TOP_DIR,'rtl/wrapper/ParallelizedLPEWrapper.v')
     )['ParallelizedLPEWrapper'] 
 
 def tb_ParallelizedLinearProcessingElement(I=1,J=1,i=0,j=0):
