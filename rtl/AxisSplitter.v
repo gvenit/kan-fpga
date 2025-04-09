@@ -16,25 +16,25 @@ module AxisSplitter #(
   // Propagate tkeep signal
   parameter INPUT_KEEP_ENABLE = (CHANNELS*OUTPUT_DATA_WIDTH>8),
   // tkeep signal width (words per cycle)
-  parameter INPUT_KEEP_WIDTH = ((CHANNELS*OUTPUT_DATA_WIDTH+7)/8),
+  parameter INPUT_KEEP_WIDTH = (INPUT_KEEP_ENABLE) ? ((CHANNELS*OUTPUT_DATA_WIDTH+7)/8) : CHANNELS,
   // Propagate tkeep signal
   parameter OUTPUT_KEEP_ENABLE = (OUTPUT_DATA_WIDTH>8),
   // tkeep signal width (words per cycle)
-  parameter OUTPUT_KEEP_WIDTH = ((OUTPUT_DATA_WIDTH+7)/8),
+  parameter OUTPUT_KEEP_WIDTH = (OUTPUT_KEEP_ENABLE) ? ((OUTPUT_DATA_WIDTH+7)/8) : 1,
   // Propagate tlast signal
   parameter LAST_ENABLE = 1,
   // Propagate tid signal
-  parameter ID_ENABLE = 1,
+  parameter ID_ENABLE = 0,
   // tid signal width
-  parameter ID_WIDTH = 8,
+  parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
   // Propagate tdest signal
-  parameter DEST_ENABLE = 1,
+  parameter DEST_ENABLE = 0,
   // tdest signal width
-  parameter DEST_WIDTH = 8,
+  parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
   // Propagate tuser signal
-  parameter USER_ENABLE = 1,
+  parameter USER_ENABLE = 0,
   // tuser signal width
-  parameter USER_WIDTH = 8,
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // Add Buffer on Output Streams
   parameter EXTRA_CYCLE = 0
 ) (

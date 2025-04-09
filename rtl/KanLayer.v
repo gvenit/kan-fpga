@@ -88,11 +88,11 @@ module KanLayer #(
   // Propagate tkeep signal
   parameter KEEP_ENABLE_WEIGHT_DMA = (DATA_WIDTH_WEIGHT_DMA>8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_WEIGHT_DMA = ((DATA_WIDTH_WEIGHT_DMA+7)/8),
+  parameter KEEP_WIDTH_WEIGHT_DMA = (KEEP_ENABLE_WEIGHT_DMA) ? ((DATA_WIDTH_WEIGHT_DMA+7)/8) : 1,
   // Propagate tkeep signal
   parameter KEEP_ENABLE_WEIGHT = (DATA_WIDTH_WEIGHT>8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_WEIGHT = ((DATA_WIDTH_WEIGHT+7)/8),
+  parameter KEEP_WIDTH_WEIGHT = (KEEP_ENABLE_WEIGHT) ? ((DATA_WIDTH_WEIGHT+7)/8) : 1,
 
 
   /*------------------------------------------------------------------
@@ -118,7 +118,7 @@ module KanLayer #(
   ------------------------------------------------------------------*/
 
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT+7)/8) : 1,
 
   // Propagate tid signal
   parameter ID_ENABLE = 0,

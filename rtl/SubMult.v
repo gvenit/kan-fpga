@@ -25,19 +25,19 @@ module SubMult #(
   // Propagate tkeep signal
   parameter KEEP_ENABLE = (DATA_WIDTH_RSLT>8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT+7)/8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
-  parameter ID_WIDTH = 8,
+  parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
   // Propagate tdest signal
   parameter DEST_ENABLE = 0,
   // tdest signal width
-  parameter DEST_WIDTH = 8,
+  parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
   // Propagate tuser signal
   parameter USER_ENABLE = 0,
   // tuser signal width
-  parameter USER_WIDTH = 1
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1
 ) (
   input wire clk,
   input wire rst,

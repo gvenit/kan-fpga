@@ -35,7 +35,7 @@ module MCUWrapperAxil #(
   // Propagate tuser signal
   parameter USER_ENABLE = 0,
   // tuser signal width
-  parameter USER_WIDTH = 1,
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // Number of Independent AXI-Stream Data Channels per Batch
   parameter DATA_CHANNELS = 1,
   // Use Common Share Channel 

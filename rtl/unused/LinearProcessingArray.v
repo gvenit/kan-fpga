@@ -48,7 +48,7 @@ module LinearProcessingArray #(
     // tdest signal width
     parameter DEST_WIDTH = (DEST_ENABLE) ? 8 :1,
     // Propagate tuser signal
-    parameter USER_ENABLE = 1,
+    parameter USER_ENABLE = 0,
     // tuser signal width
     parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1, 
     // Output Destination 

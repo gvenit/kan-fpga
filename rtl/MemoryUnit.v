@@ -48,9 +48,9 @@ module MemoryUnit #(
     ------------------------------------------------------------------*/
 
     // tid signal width
-    parameter ID_WIDTH = 8,
+    parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
     // tdest signal width
-    parameter DEST_WIDTH = 8,
+    parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
     // tuser signal width
     parameter USER_WIDTH = 1
 

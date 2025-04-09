@@ -32,7 +32,7 @@ module ParallelizedDataProcessor #(
   // Propagate tkeep signal
   parameter KEEP_ENABLE = (DATA_WIDTH_RSLT>8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = ((DATA_WIDTH_RSLT+7)/8),
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT+7)/8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width

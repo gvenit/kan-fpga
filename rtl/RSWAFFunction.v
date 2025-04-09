@@ -31,15 +31,15 @@ module RSWAFFunction #
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
-  parameter ID_WIDTH = 8,
+  parameter ID_WIDTH = (ID_ENABLE) ? 8 : 1,
   // Propagate tdest signal
   parameter DEST_ENABLE = 0,
   // tdest signal width
-  parameter DEST_WIDTH = 8,
+  parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
   // Propagate tuser signal
   parameter USER_ENABLE = 0,
   // tuser signal width
-  parameter USER_WIDTH = 1,
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // Number of Independent AXI-Stream Channels
   parameter CHANNELS = 1,
   // Use Common Share Channel 
@@ -47,7 +47,7 @@ module RSWAFFunction #
   // Scale Channels
   parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : CHANNELS,
   // Use Common Grid Channel 
-  parameter SHARE_GRID = 0,
+  parameter SHARE_GRID = 1,
   // Grid Channels
   parameter GRID_CHANNELS = (SHARE_GRID)? 1 : CHANNELS,
   // Path to ROM Data
