@@ -13,7 +13,7 @@ module MCULocalBramFSM #(
   // Width of intra-iteration counters
   parameter INTRA_ITER_WIDTH = 32,
   // BRAM control has valid signal
-  parameter BRAM_VALID_SIG = 1
+  parameter BRAM_ACK_SIG = 1
 ) (
   input  wire                        clk,
   input  wire                        rst,
@@ -26,7 +26,7 @@ module MCULocalBramFSM #(
   output wire [ADDR_WIDTH-1:0]       bram_addr,
   // input  wire [DATA_WIDTH-1:0]       bram_wrdata,
   input  wire [DATA_WIDTH-1:0]       bram_rddata,
-  input  wire                        bram_rdack,  // Ignore if BRAM_VALID_SIG == 0
+  input  wire                        bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
  
   /* 
    * AXI Stream Data Output 
@@ -61,7 +61,7 @@ module MCULocalBramFSM #(
   wire bram_rdack_int;
 
   generate
-    if (BRAM_VALID_SIG > 0) begin
+    if (BRAM_ACK_SIG > 0) begin
       assign bram_rdack_int = bram_rdack;
     end else begin
       assign bram_rdack_int = 1'b1;

@@ -18,8 +18,8 @@
 
 module MCUWrapperBram #(
   `include "rtl/MCUGlobalFSMParameters.vh"
-  // BRAM control has valid signal
-  parameter BRAM_VALID_SIG = 1,
+  // BRAM control has ack signal
+  parameter BRAM_ACK_SIG = 1,
   // Number of batches per run
   parameter BATCH_SIZE = 1,
   // Width of AXI stream Input Data & Grid interfaces in bits
@@ -92,7 +92,7 @@ module MCUWrapperBram #(
   output wire [BATCH_SIZE*DATA_CHANNELS*ADDR_WIDTH_DATA-1:0]      data_bram_addr,
   // input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_wrdata,
   input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      data_bram_rddata,
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdack,  // Ignore if BRAM_VALID_SIG == 0
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
 
   /*
    * AXI Stream Data Output -- Corresponding clock : m_axis_data_aclk
@@ -115,7 +115,7 @@ module MCUWrapperBram #(
   output wire [GRID_CHANNELS_IN*ADDR_WIDTH_DATA-1:0]              grid_bram_addr,
   // input  wire [GRID_CHANNELS_IN*WIDTH-1:0]                        grid_bram_wrdata,
   input  wire [GRID_CHANNELS_IN*DATA_WIDTH_DATA-1:0]              grid_bram_rddata,
-  input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_rdack,  // Ignore if BRAM_VALID_SIG == 0                                     
+  input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0                                     
 
   /*
    * AXI Stream Grid Output -- Corresponding clock : m_axis_grid_aclk
@@ -138,7 +138,7 @@ module MCUWrapperBram #(
   output wire [SCALE_CHANNELS_IN*ADDR_WIDTH_SCALE-1:0]            scle_bram_addr,
   // input  wire [SCALE_CHANNELS_IN*WIDTH-1:0]                       scle_bram_wrdata,
   input  wire [SCALE_CHANNELS_IN*DATA_WIDTH_SCALE-1:0]            scle_bram_rddata,
-  input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_rdack,  // Ignore if BRAM_VALID_SIG == 0
+  input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
 
   /*
    * AXI Stream Scale Output -- Corresponding clock : m_axis_scle_aclk
@@ -156,7 +156,7 @@ module MCUWrapperBram #(
  MemoryControlUnit #(
   `include "rtl/MCUGlobalFSMParametersInst.vh"
   // BRAM control has valid signal
-  .BRAM_VALID_SIG(BRAM_VALID_SIG),
+  .BRAM_ACK_SIG(BRAM_ACK_SIG),
   // Number of batches per run
   .BATCH_SIZE(BATCH_SIZE),
   // Width of AXI stream Input Data & Grid interfaces in bits

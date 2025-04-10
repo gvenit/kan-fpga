@@ -18,9 +18,9 @@
 
 module MemoryControlUnit #(
   `include "rtl/MCUGlobalFSMParameters.vh"
-  `ifdef BRAM_VALID_SIG_OPTION
-    // BRAM control has valid signal
-    parameter BRAM_VALID_SIG = 1,
+  `ifdef BRAM_ACK_SIG_OPTION
+    // BRAM control has ack signal
+    parameter BRAM_ACK_SIG = 1,
   `endif 
   // Number of batches per run
   parameter BATCH_SIZE = 1,
@@ -95,7 +95,7 @@ module MemoryControlUnit #(
     output wire [BATCH_SIZE*DATA_CHANNELS*ADDR_WIDTH_DATA-1:0]      data_bram_addr,
     // input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_wrdata,
     input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      data_bram_rddata,
-    input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdack,  // Ignore if BRAM_VALID_SIG == 0
+    input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
   `endif
 
   `ifdef DATA_IF_IS_AXIL
@@ -135,7 +135,7 @@ module MemoryControlUnit #(
     output wire [GRID_CHANNELS_IN*ADDR_WIDTH_DATA-1:0]              grid_bram_addr,
     // input  wire [GRID_CHANNELS_IN*WIDTH-1:0]                        grid_bram_wrdata,
     input  wire [GRID_CHANNELS_IN*DATA_WIDTH_DATA-1:0]              grid_bram_rddata,
-    input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_rdack,  // Ignore if BRAM_VALID_SIG == 0                                     
+    input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0                                     
   `endif
 
   `ifdef GRID_IF_IS_AXIL
@@ -175,7 +175,7 @@ module MemoryControlUnit #(
     output wire [SCALE_CHANNELS_IN*ADDR_WIDTH_SCALE-1:0]            scle_bram_addr,
     // input  wire [SCALE_CHANNELS_IN*WIDTH-1:0]                       scle_bram_wrdata,
     input  wire [SCALE_CHANNELS_IN*DATA_WIDTH_SCALE-1:0]            scle_bram_rddata,
-    input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_rdack,  // Ignore if BRAM_VALID_SIG == 0
+    input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
   `endif
 
   `ifdef SCALE_IF_IS_AXIL
@@ -389,9 +389,9 @@ module MemoryControlUnit #(
       `endif 
       #(
         `include "rtl/MCUGlobalFSMParametersInst.vh"
-        `ifdef BRAM_VALID_SIG_OPTION
+        `ifdef BRAM_ACK_SIG_OPTION
           // BRAM control has valid signal
-          .BRAM_VALID_SIG(BRAM_VALID_SIG),
+          .BRAM_ACK_SIG(BRAM_ACK_SIG),
         `endif 
         // Width of AXI stream Output interfaces in bits
         .DATA_WIDTH(DATA_WIDTH_SCALE),
@@ -607,9 +607,9 @@ module MemoryControlUnit #(
     `endif 
     #(
       `include "rtl/MCUGlobalFSMParametersInst.vh"
-      `ifdef BRAM_VALID_SIG_OPTION
+      `ifdef BRAM_ACK_SIG_OPTION
         // BRAM control has valid signal
-        .BRAM_VALID_SIG(BRAM_VALID_SIG),
+        .BRAM_ACK_SIG(BRAM_ACK_SIG),
       `endif 
       // Width of AXI stream Output interfaces in bits
       .DATA_WIDTH(DATA_WIDTH_SCALE),
@@ -742,9 +742,9 @@ module MemoryControlUnit #(
       `endif 
       #(
         `include "rtl/MCUGlobalFSMParametersInst.vh"
-        `ifdef BRAM_VALID_SIG_OPTION
+        `ifdef BRAM_ACK_SIG_OPTION
           // BRAM control has valid signal
-          .BRAM_VALID_SIG(BRAM_VALID_SIG),
+          .BRAM_ACK_SIG(BRAM_ACK_SIG),
         `endif 
         // Width of AXI stream Output interfaces in bits
         .DATA_WIDTH(DATA_WIDTH_DATA),
@@ -960,9 +960,9 @@ module MemoryControlUnit #(
     `endif 
     #(
       `include "rtl/MCUGlobalFSMParametersInst.vh"
-      `ifdef BRAM_VALID_SIG_OPTION
+      `ifdef BRAM_ACK_SIG_OPTION
         // BRAM control has valid signal
-        .BRAM_VALID_SIG(BRAM_VALID_SIG),
+        .BRAM_ACK_SIG(BRAM_ACK_SIG),
       `endif 
       // Width of AXI stream Output interfaces in bits
       .DATA_WIDTH(DATA_WIDTH_DATA),
@@ -1083,9 +1083,9 @@ module MemoryControlUnit #(
     `endif 
     #(
       `include "rtl/MCUGlobalFSMParametersInst.vh"
-      `ifdef BRAM_VALID_SIG_OPTION
+      `ifdef BRAM_ACK_SIG_OPTION
         // BRAM control has valid signal
-        .BRAM_VALID_SIG(BRAM_VALID_SIG),
+        .BRAM_ACK_SIG(BRAM_ACK_SIG),
       `endif 
       // Width of AXI stream Output interfaces in bits
       .DATA_WIDTH(DATA_WIDTH_DATA),

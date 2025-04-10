@@ -35,19 +35,19 @@
 `endif
 
 `ifdef DATA_IF_IS_BRAM
-	`ifndef BRAM_VALID_SIG_OPTION
-		`define BRAM_VALID_SIG_OPTION
+	`ifndef BRAM_ACK_SIG_OPTION
+		`define BRAM_ACK_SIG_OPTION
 	`endif
 `elsif GRID_IF_IS_BRAM
-	`ifndef BRAM_VALID_SIG_OPTION
-		`define BRAM_VALID_SIG_OPTION
+	`ifndef BRAM_ACK_SIG_OPTION
+		`define BRAM_ACK_SIG_OPTION
 	`endif
 `elsif SCALE_IF_IS_BRAM
-	`ifndef BRAM_VALID_SIG_OPTION
-		`define BRAM_VALID_SIG_OPTION
+	`ifndef BRAM_ACK_SIG_OPTION
+		`define BRAM_ACK_SIG_OPTION
 	`endif
 `else
-	`undef BRAM_VALID_SIG_OPTION
+	`undef BRAM_ACK_SIG_OPTION
 `endif 
 
 
