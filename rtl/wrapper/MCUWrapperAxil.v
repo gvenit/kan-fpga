@@ -17,7 +17,7 @@
  */
 
 module MCUWrapperAxil #(
-  `include "rtl/MCUGlobalFSMParameters.vh"
+  `include "MCUGlobalFSMParameters.vh"
   // Number of batches per run
   parameter BATCH_SIZE = 1,
   // Width of AXI stream Input Data & Grid interfaces in bits
@@ -158,7 +158,7 @@ module MCUWrapperAxil #(
 );
 
  MemoryControlUnit #(
-  `include "rtl/MCUGlobalFSMParametersInst.vh"
+  `include "MCUGlobalFSMParametersInst.vh"
   // Number of batches per run
   .BATCH_SIZE(BATCH_SIZE),
   // Width of AXI stream Input Data & Grid interfaces in bits

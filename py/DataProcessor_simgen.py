@@ -56,16 +56,16 @@ def tb_DataProcessor():
     s_axis_grid_tready = module.Wire('s_axis_grid_tready', DATA_CHANNELS)
     s_axis_grid_tuser  = module.Reg('s_axis_grid_tuser', USER_WIDTH* DATA_CHANNELS)
     
-    s_axis_scale_tdata  = module.Reg('s_axis_scale_tdata', DATA_WIDTH )
-    s_axis_scale_tlast  = module.Reg('s_axis_scale_tlast')
-    s_axis_scale_tvalid = module.Reg('s_axis_scale_tvalid')
-    s_axis_scale_tready = module.Wire('s_axis_scale_tready')
-    s_axis_scale_tuser  = module.Reg('s_axis_scale_tuser', USER_WIDTH)
+    s_axis_scle_tdata  = module.Reg('s_axis_scle_tdata', DATA_WIDTH )
+    s_axis_scle_tlast  = module.Reg('s_axis_scle_tlast')
+    s_axis_scle_tvalid = module.Reg('s_axis_scle_tvalid')
+    s_axis_scle_tready = module.Wire('s_axis_scle_tready')
+    s_axis_scle_tuser  = module.Reg('s_axis_scle_tuser', USER_WIDTH)
     
-    s_axis_weight_tdata  = module.Reg('s_axis_weight_tdata', DATA_WIDTH* WEIGHT_CHANNELS)
-    s_axis_weight_tlast  = module.Reg('s_axis_weight_tlast', WEIGHT_CHANNELS)
-    s_axis_weight_tvalid = module.Reg('s_axis_weight_tvalid', WEIGHT_CHANNELS)
-    s_axis_weight_tready = module.Wire('s_axis_weight_tready', WEIGHT_CHANNELS)
+    s_axis_wght_tdata  = module.Reg('s_axis_wght_tdata', DATA_WIDTH* WEIGHT_CHANNELS)
+    s_axis_wght_tlast  = module.Reg('s_axis_wght_tlast', WEIGHT_CHANNELS)
+    s_axis_wght_tvalid = module.Reg('s_axis_wght_tvalid', WEIGHT_CHANNELS)
+    s_axis_wght_tready = module.Wire('s_axis_wght_tready', WEIGHT_CHANNELS)
     
     m_axis_data_tdata  = module.Wire('m_axis_data_tdata', DATA_WIDTH* WEIGHT_CHANNELS)
     m_axis_data_tlast  = module.Wire('m_axis_data_tlast', WEIGHT_CHANNELS)
@@ -154,20 +154,20 @@ def tb_DataProcessor():
   // .s_axis_grid_tid(s_axis_grid_tid),
   // .s_axis_grid_tdest(s_axis_grid_tdest),
   .s_axis_grid_tuser(s_axis_grid_tuser),
-  .s_axis_scale_tdata(s_axis_scale_tdata),
-  .s_axis_scale_tvalid(s_axis_scale_tvalid),
-  .s_axis_scale_tready(s_axis_scale_tready),
-  .s_axis_scale_tlast(s_axis_scale_tlast),
-  // .s_axis_scale_tid(s_axis_scale_tid),
-  // .s_axis_scale_tdest(s_axis_scale_tdest),
-  .s_axis_scale_tuser(s_axis_scale_tuser),
-  .s_axis_weight_tdata(s_axis_weight_tdata),
-  .s_axis_weight_tvalid(s_axis_weight_tvalid),
-  .s_axis_weight_tready(s_axis_weight_tready),
-  .s_axis_weight_tlast(s_axis_weight_tlast),
-  // .s_axis_weight_tid(s_axis_weight_tid),
-  // .s_axis_weight_tdest(s_axis_weight_tdest),
-  // .s_axis_weight_tuser(s_axis_weight_tuser),
+  .s_axis_scle_tdata(s_axis_scle_tdata),
+  .s_axis_scle_tvalid(s_axis_scle_tvalid),
+  .s_axis_scle_tready(s_axis_scle_tready),
+  .s_axis_scle_tlast(s_axis_scle_tlast),
+  // .s_axis_scle_tid(s_axis_scle_tid),
+  // .s_axis_scle_tdest(s_axis_scle_tdest),
+  .s_axis_scle_tuser(s_axis_scle_tuser),
+  .s_axis_wght_tdata(s_axis_wght_tdata),
+  .s_axis_wght_tvalid(s_axis_wght_tvalid),
+  .s_axis_wght_tready(s_axis_wght_tready),
+  .s_axis_wght_tlast(s_axis_wght_tlast),
+  // .s_axis_wght_tid(s_axis_wght_tid),
+  // .s_axis_wght_tdest(s_axis_wght_tdest),
+  // .s_axis_wght_tuser(s_axis_wght_tuser),
   .m_axis_data_tdata(m_axis_data_tdata),
   .m_axis_data_tvalid(m_axis_data_tvalid),
   .m_axis_data_tready(m_axis_data_tready),
@@ -189,11 +189,11 @@ def tb_DataProcessor():
     reset_stmt.append(s_axis_grid_tlast(0))
     reset_stmt.append(s_axis_grid_tvalid(0))
     
-    reset_stmt.append(s_axis_scale_tlast(0))
-    reset_stmt.append(s_axis_scale_tvalid(0))
+    reset_stmt.append(s_axis_scle_tlast(0))
+    reset_stmt.append(s_axis_scle_tvalid(0))
     
-    reset_stmt.append(s_axis_weight_tvalid(0))
-    reset_stmt.append(s_axis_weight_tlast(0))
+    reset_stmt.append(s_axis_wght_tvalid(0))
+    reset_stmt.append(s_axis_wght_tlast(0))
 
     reset_stmt.append(m_axis_data_tready(0))
 
@@ -282,13 +282,13 @@ def tb_DataProcessor():
         Wait(reset_done),
         Wait(clk),
         
-        Wait(s_axis_scale_tready),
+        Wait(s_axis_scle_tready),
         Wait(~clk),
         Wait(clk),
         
-        s_axis_scale_tdata(int(scale_int)),
-        s_axis_scale_tvalid(1),
-        s_axis_scale_tlast(1),
+        s_axis_scle_tdata(int(scale_int)),
+        s_axis_scle_tvalid(1),
+        s_axis_scle_tlast(1),
         Wait(~clk),
         While(~s_axis_data_tready)(
             Wait(clk), 
@@ -297,8 +297,8 @@ def tb_DataProcessor():
         Wait(clk),
         Wait(~clk),
         
-        s_axis_scale_tvalid(0),
-        s_axis_scale_tlast(0),
+        s_axis_scle_tvalid(0),
+        s_axis_scle_tlast(0),
     )
 
     data_chn = module.Genvar('data_chn')
@@ -389,15 +389,15 @@ def tb_DataProcessor():
         Wait(reset_done),
         Wait(clk),
         
-        Wait(s_axis_weight_tready[weight_chn]),
+        Wait(s_axis_wght_tready[weight_chn]),
         Wait(~clk),
         # Wait(clk),
         
-        s_axis_weight_tvalid(1),
+        s_axis_wght_tvalid(1),
         For(i_weight(0), i_weight < len(weights_int), i_weight(i_weight+1))(
             Case(i_weight)(
                 *[
-                    When(i)( s_axis_weight_tdata.slice(
+                    When(i)( s_axis_wght_tdata.slice(
                         msb = (weight_chn+1)*DATA_WIDTH-1,
                         lsb = weight_chn * DATA_WIDTH
                     )(
@@ -410,21 +410,21 @@ def tb_DataProcessor():
                     for i, x_i in enumerate(weights_int)
                     # for i in range(len(weights_int))
                 ],
-                When( )(s_axis_weight_tdata.slice(
+                When( )(s_axis_wght_tdata.slice(
                     msb = (weight_chn+1)*DATA_WIDTH-1,
                     lsb = weight_chn * DATA_WIDTH
                 )(0))
             ),
-            s_axis_weight_tlast[weight_chn](i_weight == (len(weights_int)-1)),
+            s_axis_wght_tlast[weight_chn](i_weight == (len(weights_int)-1)),
             Wait(clk),
-            While(~s_axis_weight_tready[weight_chn])(
+            While(~s_axis_wght_tready[weight_chn])(
                 Wait(~clk),
                 Wait(clk),
             ),
             Wait(~clk),
         ),
-        s_axis_weight_tvalid[weight_chn](0),
-        s_axis_weight_tlast[weight_chn](0),
+        s_axis_wght_tvalid[weight_chn](0),
+        s_axis_wght_tlast[weight_chn](0),
     )
     
     finished = module.Reg('finished',WEIGHT_CHANNELS, initval=0)

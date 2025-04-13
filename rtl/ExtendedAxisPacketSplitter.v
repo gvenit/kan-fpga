@@ -30,8 +30,6 @@ module ExtendedAxisPacketSplitter # (
   parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // Width of Packet Size
   parameter PCKT_WIDTH = 32,
-  // Allow locking module in its current state
-  parameter ALLOW_LOCKS = 1,
   // Raise error flag if input packet non divisible
   parameter RAISE_NON_DIVISIBLE = 1
 ) (
@@ -42,7 +40,7 @@ module ExtendedAxisPacketSplitter # (
    * Control signals
    */
   input  wire operation_start,
-  input  wire [PCKT_WIDTH-1:0]  packet_size,
+  input  wire [PCKT_WIDTH-1:0]  pckt_size,
   
   /*
    * Input Interrupt signals
@@ -193,7 +191,7 @@ module ExtendedAxisPacketSplitter # (
         .clk                 (clk),
         .rst                 (rst),
         .operation_start     (operation_start),
-        .packet_size         (packet_size),
+        .pckt_size           (pckt_size),
         .lock                (int_lock),
         .external_error      (int_external_error),
         .operation_busy      (int_operation_busy),

@@ -67,13 +67,13 @@ module SubMultAbs #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [DATA_WIDTH_SCALE-1:0]  s_axis_scale_tdata,
-  input  wire                         s_axis_scale_tvalid,
-  output wire                         s_axis_scale_tready,
-  input  wire                         s_axis_scale_tlast,
-  input  wire [ID_WIDTH-1:0]          s_axis_scale_tid,
-  input  wire [DEST_WIDTH-1:0]        s_axis_scale_tdest,
-  input  wire [USER_WIDTH-1:0]        s_axis_scale_tuser,
+  input  wire [DATA_WIDTH_SCALE-1:0]  s_axis_scle_tdata,
+  input  wire                         s_axis_scle_tvalid,
+  output wire                         s_axis_scle_tready,
+  input  wire                         s_axis_scle_tlast,
+  input  wire [ID_WIDTH-1:0]          s_axis_scle_tid,
+  input  wire [DEST_WIDTH-1:0]        s_axis_scle_tdest,
+  input  wire [USER_WIDTH-1:0]        s_axis_scle_tuser,
 
   /*
     * AXI Stream output
@@ -132,13 +132,13 @@ module SubMultAbs #(
     .s_axis_grid_tid(s_axis_grid_tid),
     .s_axis_grid_tdest(s_axis_grid_tdest),
     .s_axis_grid_tuser(s_axis_grid_tuser),
-    .s_axis_scale_tdata(s_axis_scale_tdata),
-    .s_axis_scale_tvalid(s_axis_scale_tvalid),
-    .s_axis_scale_tready(s_axis_scale_tready),
-    .s_axis_scale_tlast(s_axis_scale_tlast),
-    .s_axis_scale_tid(s_axis_scale_tid),
-    .s_axis_scale_tdest(s_axis_scale_tdest),
-    .s_axis_scale_tuser(s_axis_scale_tuser),
+    .s_axis_scle_tdata(s_axis_scle_tdata),
+    .s_axis_scle_tvalid(s_axis_scle_tvalid),
+    .s_axis_scle_tready(s_axis_scle_tready),
+    .s_axis_scle_tlast(s_axis_scle_tlast),
+    .s_axis_scle_tid(s_axis_scle_tid),
+    .s_axis_scle_tdest(s_axis_scle_tdest),
+    .s_axis_scle_tuser(s_axis_scle_tuser),
     .m_axis_data_tdata(signed_rslt),
     .m_axis_data_tkeep(m_axis_data_tkeep),
     .m_axis_data_tvalid(m_axis_data_tvalid),

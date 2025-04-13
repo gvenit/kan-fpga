@@ -41,7 +41,7 @@ module ExtendedAxisPacketSplitterWrapper # (
    * Control signals  
    */ 
   input  wire                             operation_start,
-  input  wire [PCKT_WIDTH-1:0]            packet_size,
+  input  wire [PCKT_WIDTH-1:0]            pckt_size,
     
   /*  
    * Input Interrupt signals  
@@ -111,7 +111,7 @@ module ExtendedAxisPacketSplitterWrapper # (
     .clk                 (clk),
     .rst                 (rst),
     .operation_start     (operation_start),
-    .packet_size         (packet_size),
+    .pckt_size         (pckt_size),
     .external_error      (external_error),
     .operation_busy      (operation_busy),
     .operation_complete  (operation_complete),

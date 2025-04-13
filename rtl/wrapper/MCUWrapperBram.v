@@ -17,7 +17,7 @@
  */
 
 module MCUWrapperBram #(
-  `include "rtl/MCUGlobalFSMParameters.vh"
+  `include "MCUGlobalFSMParameters.vh"
   // BRAM control has ack signal
   parameter BRAM_ACK_SIG = 1,
   // Number of batches per run
@@ -154,7 +154,7 @@ module MCUWrapperBram #(
 );
 
  MemoryControlUnit #(
-  `include "rtl/MCUGlobalFSMParametersInst.vh"
+  `include "MCUGlobalFSMParametersInst.vh"
   // BRAM control has valid signal
   .BRAM_ACK_SIG(BRAM_ACK_SIG),
   // Number of batches per run

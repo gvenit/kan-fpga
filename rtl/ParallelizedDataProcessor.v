@@ -60,7 +60,7 @@ module ParallelizedDataProcessor #(
   // Grid Channels
   parameter GRID_CHANNELS = (SHARE_GRID)? 1 : DATA_CHANNELS*BATCH_SIZE,
   // Path to ROM Data
-  parameter ROM_DATA_PATH = "../../data/Sech2Lutram_n_16.12_16.16.txt",
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt",
   // Output User
   parameter OUTPUT_USER = 0,
   // Output Destination 
@@ -96,24 +96,24 @@ module ParallelizedDataProcessor #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]           s_axis_scale_tdata,
-  input  wire [SCALE_CHANNELS-1:0]                            s_axis_scale_tvalid,
-  output wire [SCALE_CHANNELS-1:0]                            s_axis_scale_tready,
-  input  wire [SCALE_CHANNELS-1:0]                            s_axis_scale_tlast,
-  input  wire [SCALE_CHANNELS*ID_WIDTH-1:0]                   s_axis_scale_tid,
-  input  wire [SCALE_CHANNELS*DEST_WIDTH-1:0]                 s_axis_scale_tdest,
-  input  wire [SCALE_CHANNELS*USER_WIDTH-1:0]                 s_axis_scale_tuser,
+  input  wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]           s_axis_scle_tdata,
+  input  wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tvalid,
+  output wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tready,
+  input  wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tlast,
+  input  wire [SCALE_CHANNELS*ID_WIDTH-1:0]                   s_axis_scle_tid,
+  input  wire [SCALE_CHANNELS*DEST_WIDTH-1:0]                 s_axis_scle_tdest,
+  input  wire [SCALE_CHANNELS*USER_WIDTH-1:0]                 s_axis_scle_tuser,
 
   /*
     * AXI Stream Weight input
     */
-  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_SCALE-1:0]          s_axis_weight_tdata,
-  input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_weight_tvalid,
-  output wire [WEIGHT_CHANNELS-1:0]                           s_axis_weight_tready,
-  input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_weight_tlast,
-  input  wire [WEIGHT_CHANNELS*ID_WIDTH-1:0]                  s_axis_weight_tid,
-  input  wire [WEIGHT_CHANNELS*DEST_WIDTH-1:0]                s_axis_weight_tdest,
-  input  wire [WEIGHT_CHANNELS*USER_WIDTH-1:0]                s_axis_weight_tuser,
+  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_SCALE-1:0]          s_axis_wght_tdata,
+  input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tvalid,
+  output wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tready,
+  input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tlast,
+  input  wire [WEIGHT_CHANNELS*ID_WIDTH-1:0]                  s_axis_wght_tid,
+  input  wire [WEIGHT_CHANNELS*DEST_WIDTH-1:0]                s_axis_wght_tdest,
+  input  wire [WEIGHT_CHANNELS*USER_WIDTH-1:0]                s_axis_wght_tuser,
 
   /*
     * AXI Stream output
@@ -205,13 +205,13 @@ module ParallelizedDataProcessor #(
     .s_axis_grid_tid(s_axis_grid_tid),
     .s_axis_grid_tdest(s_axis_grid_tdest),
     .s_axis_grid_tuser(s_axis_grid_tuser),
-    .s_axis_scale_tdata(s_axis_scale_tdata),
-    .s_axis_scale_tvalid(s_axis_scale_tvalid),
-    .s_axis_scale_tready(s_axis_scale_tready),
-    .s_axis_scale_tlast(s_axis_scale_tlast),
-    .s_axis_scale_tid(s_axis_scale_tid),
-    .s_axis_scale_tdest(s_axis_scale_tdest),
-    .s_axis_scale_tuser(s_axis_scale_tuser),
+    .s_axis_scle_tdata(s_axis_scle_tdata),
+    .s_axis_scle_tvalid(s_axis_scle_tvalid),
+    .s_axis_scle_tready(s_axis_scle_tready),
+    .s_axis_scle_tlast(s_axis_scle_tlast),
+    .s_axis_scle_tid(s_axis_scle_tid),
+    .s_axis_scle_tdest(s_axis_scle_tdest),
+    .s_axis_scle_tuser(s_axis_scle_tuser),
     .m_axis_data_tdata(int_axis_act_func_tdata),
     // .m_axis_data_tkeep(int_axis_act_func_tkeep),
     .m_axis_data_tvalid(int_axis_act_func_tvalid),
@@ -268,13 +268,13 @@ module ParallelizedDataProcessor #(
   ) parallelized_lpa_inst (
     .clk(clk),
     .rst(rst),
-    .s_axis_t_tdata(s_axis_weight_tdata),
-    .s_axis_t_tvalid(s_axis_weight_tvalid),
-    .s_axis_t_tready(s_axis_weight_tready),
-    .s_axis_t_tlast(s_axis_weight_tlast),
-    .s_axis_t_tid(s_axis_weight_tid),
-    .s_axis_t_tdest(s_axis_weight_tdest),
-    .s_axis_t_tuser(s_axis_weight_tuser),
+    .s_axis_t_tdata(s_axis_wght_tdata),
+    .s_axis_t_tvalid(s_axis_wght_tvalid),
+    .s_axis_t_tready(s_axis_wght_tready),
+    .s_axis_t_tlast(s_axis_wght_tlast),
+    .s_axis_t_tid(s_axis_wght_tid),
+    .s_axis_t_tdest(s_axis_wght_tdest),
+    .s_axis_t_tuser(s_axis_wght_tuser),
     .s_axis_l_tdata(int_axis_act_func_tdata),
     .s_axis_l_tvalid(int_axis_act_func_tvalid),
     .s_axis_l_tready(int_axis_act_func_tready),

@@ -34,6 +34,6 @@
   `define SCALE_IS_SHARED 0
 `endif
 
-`include "rtl/IFOptions.vh"
+`include "IFOptions.vh"
 
 `endif

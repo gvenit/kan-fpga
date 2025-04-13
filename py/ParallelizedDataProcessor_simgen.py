@@ -99,15 +99,15 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     s_axis_g_tvalid = ports['s_axis_grid_tvalid']
     s_axis_g_tready = ports['s_axis_grid_tready']
     
-    s_axis_s_tdata  = ports['s_axis_scale_tdata']
-    s_axis_s_tlast  = ports['s_axis_scale_tlast']
-    s_axis_s_tvalid = ports['s_axis_scale_tvalid']
-    s_axis_s_tready = ports['s_axis_scale_tready']
+    s_axis_s_tdata  = ports['s_axis_scle_tdata']
+    s_axis_s_tlast  = ports['s_axis_scle_tlast']
+    s_axis_s_tvalid = ports['s_axis_scle_tvalid']
+    s_axis_s_tready = ports['s_axis_scle_tready']
     
-    s_axis_w_tdata  = ports['s_axis_weight_tdata']
-    s_axis_w_tlast  = ports['s_axis_weight_tlast']
-    s_axis_w_tvalid = ports['s_axis_weight_tvalid']
-    s_axis_w_tready = ports['s_axis_weight_tready']
+    s_axis_w_tdata  = ports['s_axis_wght_tdata']
+    s_axis_w_tlast  = ports['s_axis_wght_tlast']
+    s_axis_w_tvalid = ports['s_axis_wght_tvalid']
+    s_axis_w_tready = ports['s_axis_wght_tready']
     
     m_axis_d_tdata  = ports['m_axis_data_tdata']
     m_axis_d_tlast  = ports['m_axis_data_tlast']

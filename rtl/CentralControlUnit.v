@@ -9,10 +9,45 @@
  *        The core also updates the PS with the core status and 
  *        some statistics about the data processing time and latency.
  * 
+ *    Signals :
+ *        fsm_clk -- The FSM Clock domain. It is expected to be the 
+ *            slowest clock of the KanLayer
+ *        rst -- The reset signal assosiated with the fsm_clk
+ *        operation_start -- An internal control signal for peripheral
+ *            initialization and for signaling the start of 
+ *            data processing throughout the core's submodules.
+ *            Synchronous to fsm_clk.
+ *        data_size, grid_size, scle_size, pckt_size -- System parameters.
+ *            Synchronous to fsm_clk. Valid when operation_start is True.
+ *        peripheral_operation_busy -- Status BUSY signal from peripherals.
+ *            Signal may have different clock domains than the module.
+ *        peripheral_operation_complete -- Status COMPLETE signal from peripherals.
+ *            Signal may have different clock domains than the module.
+ *        peripheral_operation_error -- Status ERROR signal from peripherals.
+ *            Signal may have different clock domains than the module.
+ *        operation_busy -- Status BUSY signal for KanLayer in general.
+ *            Signal operates on the FSM clock domain.
+ *        operation_complete -- Status COMPLETE signal for KanLayer in general.
+ *            Signal operates on the FSM clock domain.
+ *        operation_error -- Status ERROR signal for KanLayer in general.
+ *            Signal operates on the FSM clock domain.
+ *        internal_operation_error -- Status ERROR signal for KanLayer in general.
+ *            Signal operates on the FSM clock domain. For KanLayer internal use only.
+ *        locked -- Core is locked and awaiting actions from PS. Signal operates  
+ *            on the FSM clock domain.
+ *        pl2ps_intr -- Interrupt signal for PS. Signals PS for register updates
+ *            from the PL side. Signal operates on the FSM clock domain.
+ *        s_axil -- AXI-Lite interface for PS-PL communication
+ * 
  */
 
 module CentralControlUnit #(
-  `include "rtl/ControlRegisters.vh"
+  `include "ControlRegisters.vh"
+  `include "Peripherals.vh"
+  // Number of Independent AXI-Stream Data Channels
+  parameter DATA_CHANNELS = 1,
+  // Number of Independent AXI-Stream Result Channels per Batch
+  parameter RSLT_CHANNELS = 1,
   // Data Width of address bus in bits
   parameter ADDR_WIDTH_DATA = 32,
   // Grid Width of address bus in bits
@@ -20,9 +55,7 @@ module CentralControlUnit #(
   // Scale Width of address bus in bits
   parameter ADDR_WIDTH_SCALE = 32,
   // Width of Packet size bus in bits
-  parameter PKT_SIZE_WIDTH = ADDR_WIDTH_DATA + ADDR_WIDTH_GRID -1,
-  // Number of Peripherals to control
-  parameter NUM_PERIPHERALS = 1
+  parameter PCKT_SIZE_WIDTH = ADDR_WIDTH_DATA + ADDR_WIDTH_GRID -1
 ) (
   input  wire                                                       fsm_clk,
   input  wire                                                       rst,
@@ -34,14 +67,15 @@ module CentralControlUnit #(
   output reg  [ADDR_WIDTH_DATA:0]                                   data_size,
   output reg  [ADDR_WIDTH_GRID:0]                                   grid_size,
   output reg  [ADDR_WIDTH_SCALE:0]                                  scle_size,
-  output reg  [PKT_SIZE_WIDTH-1:0]                                  pkt_size,
+  output reg  [PCKT_SIZE_WIDTH-1:0]                                 pckt_size,
   
   /*
-   * Input Interrupt signals -- Corresponding clock : fsm_clk
+   * Input Interrupt signals -- Corresponding clock : Any
    */
   input  wire [NUM_PERIPHERALS-1:0]                                 peripheral_operation_busy,
   input  wire [NUM_PERIPHERALS-1:0]                                 peripheral_operation_complete,
   input  wire [NUM_PERIPHERALS-1:0]                                 peripheral_operation_error,
+  input  wire                                                       rslt_tlast,
 
   /*
    * Output Interrupt signals -- Corresponding clock : fsm_clk
@@ -49,50 +83,394 @@ module CentralControlUnit #(
   output reg                                                        operation_busy,
   output reg                                                        operation_complete,
   output reg                                                        operation_error,
+  output reg                                                        internal_operation_error,
+  output reg                                                        locked,
+  output reg                                                        pl2ps_intr,
 
   /*
    * AXI-Lite Control -- Corresponding clock : fsm_clk
    */
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 fsm_clk AWADDR" *)
-  (* X_INTERFACE_PARAMETER = "CLK_DOMAIN fsm_clk,READ_WRITE_MODE READ_WRITE,ADDR_WIDTH GRID_ADDR,PROTOCOL AXI4LITE,DATA_WIDTH DATA_WIDTH_GRID" *)
-  input  wire [CTLR_ADDR-1:0]   s_axil_ctrl_awaddr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr AWPROT" *)
-  input  wire [2:0]             s_axil_ctrl_awprot,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr AWVALID" *)
-  input  wire                   s_axil_ctrl_awvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr AWREADY" *)
-  output wire                   s_axil_ctrl_awready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr WDATA" *)
-  input  wire [31:0]            s_axil_ctrl_wdata,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr WSTRB" *)
-  input  wire [3:0]             s_axil_ctrl_wstrb,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr WVALID" *)
-  input  wire                   s_axil_ctrl_wvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr WREADY" *)
-  output wire                   s_axil_ctrl_wready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr BRESP" *)
-  output wire [1:0]             s_axil_ctrl_bresp,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr BVALID" *)
-  output wire                   s_axil_ctrl_bvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr BREADY" *)
-  input  wire                   s_axil_ctrl_bready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr ARADDR" *)
-  input  wire [CTLR_ADDR-1:0]   s_axil_ctrl_araddr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr ARPROT" *)
-  input  wire [2:0]             s_axil_ctrl_arprot,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr ARVALID" *)
-  input  wire                   s_axil_ctrl_arvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr ARREADY" *)
-  output wire                   s_axil_ctrl_arready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr RDATA" *)
-  output wire [31:0]            s_axil_ctrl_rdata,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr RRESP" *)
-  output wire [1:0]             s_axil_ctrl_rresp,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr RVALID" *)
-  output wire                   s_axil_ctrl_rvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_ctr RREADY" *)
-  input  wire                   s_axil_ctrl_rready
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil AWADDR" *)
+  (* X_INTERFACE_PARAMETER = "CLK_DOMAIN fsm_clk,READ_WRITE_MODE READ_WRITE,ADDR_WIDTH CTLR_ADDR,PROTOCOL AXI4LITE,32 32" *)
+  input  wire [CTLR_ADDR-1:0]   s_axil_awaddr,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil AWPROT" *)
+  input  wire [2:0]             s_axil_awprot,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil AWVALID" *)
+  input  wire                   s_axil_awvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil AWREADY" *)
+  output wire                   s_axil_awready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil WDATA" *)
+  input  wire [31:0]            s_axil_wdata,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil WSTRB" *)
+  input  wire [3:0]             s_axil_wstrb,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil WVALID" *)
+  input  wire                   s_axil_wvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil WREADY" *)
+  output wire                   s_axil_wready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil BRESP" *)
+  output wire [1:0]             s_axil_bresp,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil BVALID" *)
+  output wire                   s_axil_bvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil BREADY" *)
+  input  wire                   s_axil_bready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil ARADDR" *)
+  input  wire [CTLR_ADDR-1:0]   s_axil_araddr,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil ARPROT" *)
+  input  wire [2:0]             s_axil_arprot,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil ARVALID" *)
+  input  wire                   s_axil_arvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil ARREADY" *)
+  output wire                   s_axil_arready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil RDATA" *)
+  output wire [31:0]            s_axil_rdata,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil RRESP" *)
+  output wire [1:0]             s_axil_rresp,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil RVALID" *)
+  output wire                   s_axil_rvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil RREADY" *)
+  input  wire                   s_axil_rready
 );
+  // Local Parameters
+  localparam MAX_DATA_SIZE = 2 ** ADDR_WIDTH_DATA;
+  localparam MAX_GRID_SIZE = 2 ** ADDR_WIDTH_GRID;
+  localparam MAX_SCLE_SIZE = 2 ** ADDR_WIDTH_SCALE;
+  localparam MAX_PCKT_SIZE = 2 ** PCKT_SIZE_WIDTH;
+
+  // FSM States
+  localparam FSM_WIDTH = 3;
+  localparam FSM_ST0 = 0;
+  localparam FSM_STR = 1;
+  localparam FSM_OPE = 2;
+  localparam FSM_ERR = 3;
+  localparam FSM_END = 4;
+  localparam FSM_ITR = 5;
+
+  // FSM output states
+  reg  [FSM_WIDTH-1:0] fsm_state, fsm_state_next;
+  
+  // Peripheral sampler
+  reg  [NUM_PERIPHERALS-1:0] peripheral_operation_busy_reg, peripheral_operation_busy_reg_next;
+  reg  [NUM_PERIPHERALS-1:0] peripheral_operation_complete_reg, peripheral_operation_complete_reg_next;
+  reg  [NUM_PERIPHERALS-1:0] peripheral_operation_error_reg, peripheral_operation_error_reg_next;
+
+  integer peripheral;
+
+  // Capture interrupts
+  always @(*) begin
+    for (peripheral = 0; peripheral < NUM_PERIPHERALS; peripheral = peripheral + 1) begin
+      if (peripheral_operation_busy[peripheral]) begin
+        peripheral_operation_busy_reg_next <= peripheral_operation_busy[peripheral];
+      end
+      if (peripheral_operation_complete[peripheral]) begin
+        peripheral_operation_complete_reg_next <= peripheral_operation_complete[peripheral];
+      end
+      if (peripheral_operation_error[peripheral]) begin
+        peripheral_operation_error_reg_next <= peripheral_operation_error[peripheral];
+      end
+    end
+  end
+
+  // Sample interrupts & Clear captures
+  always @(posedge fsm_clk ) begin
+    peripheral_operation_busy_reg_next      <= {NUM_PERIPHERALS{1'b0}};
+    peripheral_operation_complete_reg_next  <= {NUM_PERIPHERALS{1'b0}};
+    peripheral_operation_error_reg_next     <= {NUM_PERIPHERALS{1'b0}};
+    if (rst) begin
+      peripheral_operation_busy_reg         <= {NUM_PERIPHERALS{1'b0}};
+      peripheral_operation_complete_reg     <= {NUM_PERIPHERALS{1'b0}};
+      peripheral_operation_error_reg        <= {NUM_PERIPHERALS{1'b0}};
+    end else begin
+      peripheral_operation_busy_reg         <= peripheral_operation_busy_reg_next;
+      peripheral_operation_complete_reg     <= peripheral_operation_complete_reg_next;
+      peripheral_operation_error_reg        <= peripheral_operation_error_reg_next;
+    end
+  end
+
+  // Input PL control signals
+  wire        rw_ps2pl_reg_en;
+  wire        rw_pl2ps_reg_en;
+  wire        wo_reg_en  = rslt_tlast; 
+  wire        wo_reg_rst = (fsm_state == FSM_STR);
+
+  // Read-Write Registers (PS -> PL) 
+  wire [31:0] data_size_rd, data_size_wr;
+  wire [31:0] grid_size_rd, grid_size_wr;
+  wire [31:0] scle_size_rd, scle_size_wr;
+  wire [31:0] rslt_size_rd, rslt_size_wr;
+  wire [31:0] pckt_size_rd, pckt_size_wr;
+
+  wire        data_loaded_rd, data_loaded_wr;
+  wire        grid_loaded_rd, grid_loaded_wr;
+  wire        scle_loaded_rd, scle_loaded_wr;
+  wire        wght_loaded_rd, wght_loaded_wr;
+
+  wire        operation_start_rd, operation_start_wr;
+
+  // Read-Only Registers (PS -> PL)
+  wire        interrupt_soft;
+  wire        interrupt_abort;
+  wire        interrupt_error;
+
+  // Read-Write Registers (PL -> PS)
+  wire        rslt_loaded_rd, rslt_loaded_wr;
+
+  wire        operation_done_rd, operation_done_wr;
+  
+  // Write-Only Registers (PL -> PS)
+  wire        operation_status_idle_wr;
+  wire        operation_status_busy_wr;
+  wire        operation_status_error_wr;
+  wire        operation_status_locked_wr;
+  wire        operation_status_valid_wr;
+
+  wire [31:0] operation_progress_rslt_wr;
+  wire [31:0] operation_progress_iter_wr;
+  wire [31:0] iteration_timer_wr;
+  wire [31:0] iteration_latency_wr;
+  wire [31:0] operation_timer_wr;
+  wire [31:0] operation_latency_wr;
+
+  CCURegisterFile #(
+  ) register_file (
+    .clk                        (fsm_clk),     
+    .rst                        (rst), 
+    .rw_ps2pl_reg_en            (rw_ps2pl_reg_en),             
+    .rw_pl2ps_reg_en            (rw_pl2ps_reg_en),             
+    .wo_reg_en                  (wo_reg_en), 
+    .wo_reg_rst                 (wo_reg_rst),
+    .data_size_rd               (data_size_rd),         
+    .grid_size_rd               (grid_size_rd),         
+    .scle_size_rd               (scle_size_rd),         
+    .rslt_size_rd               (rslt_size_rd),         
+    .pckt_size_rd               (pckt_size_rd),         
+    .data_size_wr               (data_size_wr),         
+    .grid_size_wr               (grid_size_wr),         
+    .scle_size_wr               (scle_size_wr),         
+    .rslt_size_wr               (rslt_size_wr),         
+    .pckt_size_wr               (pckt_size_wr),         
+    .data_loaded_rd             (data_loaded_rd),           
+    .grid_loaded_rd             (grid_loaded_rd),           
+    .scle_loaded_rd             (scle_loaded_rd),           
+    .wght_loaded_rd             (wght_loaded_rd),           
+    .data_loaded_wr             (data_loaded_wr),           
+    .grid_loaded_wr             (grid_loaded_wr),           
+    .scle_loaded_wr             (scle_loaded_wr),           
+    .wght_loaded_wr             (wght_loaded_wr),           
+    .operation_start_rd         (operation_start_rd),               
+    .operation_start_wr         (operation_start_wr),               
+    .interrupt_soft             (interrupt_soft),           
+    .interrupt_abort            (interrupt_abort),             
+    .interrupt_error            (interrupt_error),             
+    .rslt_loaded_rd             (rslt_loaded_rd),           
+    .rslt_loaded_wr             (rslt_loaded_wr),           
+    .operation_done_rd          (operation_done_rd),               
+    .operation_done_wr          (operation_done_wr),               
+    .operation_status_idle_wr   (operation_status_idle_wr),                     
+    .operation_status_busy_wr   (operation_status_busy_wr),                     
+    .operation_status_error_wr  (operation_status_error_wr),                       
+    .operation_status_locked_wr (operation_status_locked_wr),                       
+    .operation_status_valid_wr  (operation_status_valid_wr),                       
+    .operation_progress_rslt_wr (operation_progress_rslt_wr),                       
+    .operation_progress_iter_wr (operation_progress_iter_wr),                       
+    .iteration_timer_wr         (iteration_timer_wr),               
+    .iteration_latency_wr       (iteration_latency_wr),                 
+    .operation_timer_wr         (operation_timer_wr),               
+    .operation_latency_wr       (operation_latency_wr),
+    .s_axil_awaddr              (s_axil_awaddr),
+    .s_axil_awprot              (s_axil_awprot),
+    .s_axil_awvalid             (s_axil_awvalid),
+    .s_axil_awready             (s_axil_awready),
+    .s_axil_wdata               (s_axil_wdata),
+    .s_axil_wstrb               (s_axil_wstrb),
+    .s_axil_wvalid              (s_axil_wvalid),
+    .s_axil_wready              (s_axil_wready),
+    .s_axil_bresp               (s_axil_bresp),
+    .s_axil_bvalid              (s_axil_bvalid),
+    .s_axil_bready              (s_axil_bready),
+    .s_axil_araddr              (s_axil_araddr),
+    .s_axil_arprot              (s_axil_arprot),
+    .s_axil_arvalid             (s_axil_arvalid),
+    .s_axil_arready             (s_axil_arready),
+    .s_axil_rdata               (s_axil_rdata),
+    .s_axil_rresp               (s_axil_rresp),
+    .s_axil_rvalid              (s_axil_rvalid),
+    .s_axil_rready              (s_axil_rready)
+  );
+  // Check if operation is valid
+  wire operation_valid = &{
+    data_loaded_rd, |data_size_rd, data_size_rd <= MAX_DATA_SIZE,
+    grid_loaded_rd, |grid_size_rd, grid_size_rd <= MAX_GRID_SIZE,
+    scle_loaded_rd, |scle_size_rd, scle_size_rd <= MAX_SCLE_SIZE,
+    wght_loaded_rd, |pckt_size_rd, pckt_size_rd <= MAX_PCKT_SIZE
+  };
+  assign operation_status_valid_wr = operation_valid;
+
+  // Check if operation is idle
+  assign operation_status_idle_wr = ~|{operation_busy, operation_complete, operation_error};
+
+  // Check if operation is error
+  reg  interrupt_soft_reg;
+  wire internal_error = |peripheral_operation_error_reg;
+  wire external_error = interrupt_error || interrupt_abort || interrupt_soft_reg;
+
+  // Check if core is locked
+  reg  locked_next_error, locked_next_rslt_done;
+  wire locked_next = locked_next_error || locked_next_rslt_done;
+
+  // Check results exported -- Contain information about the next iteration
+  reg  unsigned [31:0] results_left_reg, results_exported_reg;
+
+  wire unsigned [31:0] results_iter_size         = (results_left_reg > RSLT_CHANNELS) ? RSLT_CHANNELS : results_left_reg;
+  wire unsigned [31:0] results_left_reg_next     = results_left_reg - results_iter_size;
+  wire unsigned [31:0] results_exported_reg_next = results_exported_reg + results_iter_size;
+
+  // Check iteration
+  reg  unsigned [31:0] iteration_reg;
+  wire unsigned [31:0] iteration_reg_next = iteration_reg + 1;
+
+  // Check if last iteration
+  wire last_iteration = (results_left_reg == 0);
+
+  // Global FSM state logic
+  always @(posedge fsm_clk ) begin
+    if (rst) begin
+      fsm_state <= FSM_ST0;
+
+      data_size <= {ADDR_WIDTH_DATA{1'b0}};
+      grid_size <= {ADDR_WIDTH_GRID{1'b0}};
+      scle_size <= {ADDR_WIDTH_SCALE{1'b0}};
+      pckt_size  <= {PCKT_SIZE_WIDTH{1'b0}};
+
+      operation_start       <= 1'b0;
+      operation_busy        <= 1'b0;
+      operation_complete    <= 1'b0;
+      operation_error       <= 1'b0;
+
+      results_left_reg      <= {32{1'b0}};
+      results_exported_reg  <= {32{1'b0}};
+
+      locked <= 1'b0;
+
+    end else begin
+      fsm_state <= fsm_state_next;
+
+      data_size <= {ADDR_WIDTH_DATA{1'b0}};
+      grid_size <= {ADDR_WIDTH_GRID{1'b0}};
+      scle_size <= {ADDR_WIDTH_SCALE{1'b0}};
+      pckt_size  <= {PCKT_SIZE_WIDTH{1'b0}};
+
+      results_left_reg      <= results_left_reg;
+      results_exported_reg  <= results_exported_reg;
+
+      iteration_reg         <= iteration_reg;
+
+      operation_start       <= 1'b0;
+      operation_busy        <= 1'b0;
+      operation_complete    <= 1'b0;
+      operation_error       <= 1'b0;
+
+      locked <= locked_next;
+
+      case (fsm_state_next)
+        FSM_ST0: begin
+          results_left_reg      <= {32{1'b0}};
+          results_exported_reg  <= {32{1'b0}};
+
+        end
+        FSM_STR: begin
+          data_size <= data_size_rd[ADDR_WIDTH_DATA :0];
+          grid_size <= grid_size_rd[ADDR_WIDTH_GRID :0];
+          scle_size <= scle_size_rd[ADDR_WIDTH_SCALE:0];
+          pckt_size  <= pckt_size_rd[PCKT_SIZE_WIDTH  :0];
+
+          results_left_reg      <= rslt_size_rd;
+          results_exported_reg  <= {32{1'b0}};
+
+          iteration_reg         <= {32{1'b0}};
+
+          operation_start <= 1'b1;
+          operation_busy  <= 1'b1;
+        end
+        FSM_OPE: begin
+          operation_busy  <= 1'b1;
+
+          if (rslt_tlast || fsm_state == FSM_STR) begin
+            results_left_reg      <= results_left_reg_next;
+            results_exported_reg  <= results_exported_reg_next;
+          end
+          if (rslt_tlast) begin
+            iteration_reg         <= iteration_reg_next;
+          end
+        end
+        FSM_END: begin
+          operation_complete <= 1'b1;
+        end
+        FSM_ERR: begin
+          internal_operation_error <= 1'b1;
+          operation_error <= 1'b1;
+        end
+        FSM_ITR: begin
+          internal_operation_error <= 1'b1;
+        end
+        default: begin
+          
+        end 
+      endcase
+    end
+  end
+
+  `define CHECK_OP_START \
+    if (operation_start) begin \
+      if (operation_valid) begin \
+        fsm_state_next <= FSM_STR; \
+      end else begin \
+        fsm_state_next <= FSM_ERR; \
+      end\
+    end else begin \
+      fsm_state_next <= FSM_ST0; \
+    end 
+
+  // Global FSM next state logic
+  always @(*) begin
+    case (fsm_state)
+      FSM_ST0: begin
+        `CHECK_OP_START
+      end
+      FSM_STR: begin
+        fsm_state_next <= FSM_OPE;
+      end
+      FSM_OPE: begin
+        if (last_iteration && rslt_tlast) begin
+          fsm_state_next <= FSM_END;
+        end
+      end
+      FSM_END: begin
+      end
+      FSM_ERR: begin
+        fsm_state_next <= FSM_ST0;
+        locked_next_error <= 1'b1;
+        
+      end
+      default: begin
+        fsm_state_next <= FSM_ST0;
+        locked_next_error <= 1'b0;
+        locked_next_rslt_done <= 1'b0;
+        
+      end 
+    endcase
+    if (internal_error) begin
+      fsm_state_next <= FSM_ERR;
+      locked_next_error <= 1'b1;
+    end
+    if (external_error) begin
+      fsm_state_next <= FSM_ITR;
+      locked_next_error <= 1'b0;
+    end
+    if (rst) begin
+      fsm_state_next <= FSM_ST0;
+    end
+  end
+
 
 endmodule
 

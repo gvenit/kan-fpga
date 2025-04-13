@@ -43,7 +43,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
     rst = ports['rst']
     
     operation_start         = ports['operation_start']
-    packet_size             = ports['packet_size']
+    pckt_size             = ports['pckt_size']
     
     external_error          = ports['external_error']
     
@@ -70,7 +70,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
     reset_stmt = []
     reset_stmt.append(reset_done(0))
     reset_stmt.append(operation_start(0))
-    reset_stmt.append(packet_size(0))
+    reset_stmt.append(pckt_size(0))
     reset_stmt.append(external_error(0))
     
     reset_stmt.append(m_axis_tready(0))
@@ -145,7 +145,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 0 : Blocking data stream when no operation in progress
         Wait(~clk),
         operation_start(0),
-        packet_size(0),
+        pckt_size(0),
         Wait(clk),
         
         For(cong_counter(0), cong_counter < CONGESTION_LEVEL, cong_counter.inc())(
@@ -169,19 +169,19 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 1 : Non divisible packet
         Wait(~clk),
         operation_start(1),
-        packet_size(pkt_len_0),
+        pckt_size(pkt_len_0),
         Wait(clk),
         Wait(~clk),
         
         operation_start(1),
-        packet_size(pkt_len_1),
+        pckt_size(pkt_len_1),
         AssertTrue(operation_busy),
         AssertFalse(operation_complete),
         Wait(clk),
         Wait(~clk),
         
         operation_start(0),
-        packet_size(0),
+        pckt_size(0),
         Wait(operation_busy),
         While(operation_busy)(
             AssertFalse(operation_error),
@@ -200,12 +200,12 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 2 : Divisible packet with congestion
         Wait(~clk),
         operation_start(1),
-        packet_size(pkt_len_1),
+        pckt_size(pkt_len_1),
         Wait(clk),
         Wait(~clk),
         
         operation_start(0),
-        packet_size(0),
+        pckt_size(0),
         Wait(operation_busy),
         While(operation_busy)(
             AssertFalse(operation_error),
@@ -220,12 +220,12 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 3 : Divisible packet (different packet size) with data sparcity
         Wait(~clk),
         operation_start(1),
-        packet_size(pkt_len_2),
+        pckt_size(pkt_len_2),
         Wait(clk),
         Wait(~clk),
         
         operation_start(0),
-        packet_size(0),
+        pckt_size(0),
         Wait(operation_busy),
         While(operation_busy)(
             AssertFalse(operation_error),
@@ -239,12 +239,12 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 4 : Divisible packet (different packet size) with max throughput
         Wait(~clk),
         operation_start(1),
-        packet_size(pkt_len_3),
+        pckt_size(pkt_len_3),
         Wait(clk),
         Wait(~clk),
         
         operation_start(0),
-        packet_size(0),
+        pckt_size(0),
         Wait(operation_busy),
         While(operation_busy)(
             AssertFalse(operation_error),
