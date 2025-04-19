@@ -67,13 +67,13 @@ module SubMult #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [DATA_WIDTH_SCALE-1:0]  s_axis_scale_tdata,
-  input  wire                         s_axis_scale_tvalid,
-  output wire                         s_axis_scale_tready,
-  input  wire                         s_axis_scale_tlast,
-  input  wire [ID_WIDTH-1:0]          s_axis_scale_tid,
-  input  wire [DEST_WIDTH-1:0]        s_axis_scale_tdest,
-  input  wire [USER_WIDTH-1:0]        s_axis_scale_tuser,
+  input  wire [DATA_WIDTH_SCALE-1:0]  s_axis_scle_tdata,
+  input  wire                         s_axis_scle_tvalid,
+  output wire                         s_axis_scle_tready,
+  input  wire                         s_axis_scle_tlast,
+  input  wire [ID_WIDTH-1:0]          s_axis_scle_tid,
+  input  wire [DEST_WIDTH-1:0]        s_axis_scle_tdest,
+  input  wire [USER_WIDTH-1:0]        s_axis_scle_tuser,
 
   /*
     * AXI Stream output
@@ -178,14 +178,14 @@ module SubMult #(
   assign stage_1_in_axis_grid_tuser   = (grid_lock) ? stage_1_fb_axis_grid_tuser  : s_axis_grid_tuser;
 
   // Stage 1 Scale Input
-  assign stage_1_in_axis_scale_tdata   = (scale_lock) ? stage_1_fb_axis_scale_tdata  : s_axis_scale_tdata;
-  // assign stage_1_in_axis_scale_tkeep   = (scale_lock) ? stage_1_fb_axis_scale_tkeep  : s_axis_scale_tkeep;
-  assign stage_1_in_axis_scale_tvalid  = (scale_lock) ? stage_1_fb_axis_scale_tvalid : s_axis_scale_tvalid;
-  assign s_axis_scale_tready           = (scale_lock) ? stage_1_fb_axis_scale_tready : stage_1_in_axis_scale_tready;
-  assign stage_1_in_axis_scale_tlast   = (scale_lock) ? stage_1_fb_axis_scale_tlast  : s_axis_scale_tlast;
-  assign stage_1_in_axis_scale_tid     = (scale_lock) ? stage_1_fb_axis_scale_tid    : s_axis_scale_tid;
-  assign stage_1_in_axis_scale_tdest   = (scale_lock) ? stage_1_fb_axis_scale_tdest  : s_axis_scale_tdest;
-  assign stage_1_in_axis_scale_tuser   = (scale_lock) ? stage_1_fb_axis_scale_tuser  : s_axis_scale_tuser;
+  assign stage_1_in_axis_scale_tdata   = (scale_lock) ? stage_1_fb_axis_scale_tdata  : s_axis_scle_tdata;
+  // assign stage_1_in_axis_scale_tkeep   = (scale_lock) ? stage_1_fb_axis_scale_tkeep  : s_axis_scle_tkeep;
+  assign stage_1_in_axis_scale_tvalid  = (scale_lock) ? stage_1_fb_axis_scale_tvalid : s_axis_scle_tvalid;
+  assign s_axis_scle_tready           = (scale_lock) ? stage_1_fb_axis_scale_tready : stage_1_in_axis_scale_tready;
+  assign stage_1_in_axis_scale_tlast   = (scale_lock) ? stage_1_fb_axis_scale_tlast  : s_axis_scle_tlast;
+  assign stage_1_in_axis_scale_tid     = (scale_lock) ? stage_1_fb_axis_scale_tid    : s_axis_scle_tid;
+  assign stage_1_in_axis_scale_tdest   = (scale_lock) ? stage_1_fb_axis_scale_tdest  : s_axis_scle_tdest;
+  assign stage_1_in_axis_scale_tuser   = (scale_lock) ? stage_1_fb_axis_scale_tuser  : s_axis_scle_tuser;
 
   // Stage 1 Data Feedback
   assign stage_1_fb_axis_data_tdata  = stage_1_out_axis_data_tdata;

@@ -1,5 +1,14 @@
+/*
+  This file contains the position of the registers shared between the PS and PL.
+  In the comments, it is specified if each register is a read-only, write-only or
+  a read-write register from the perspective of the PS.
+
+  When a write collision occurs, the PL value is dropped and the PS value is
+  preserved. 
+*/
+  
   // PS to PL
-  // Configuration signals -- Nulled from PL at the end of the operation
+  // Configuration signals -- Nulled from PL at the end of the operation -- READ-WRITE
   // Control Register : data length -- 4B -- Equals data_len / data_banks
   parameter CTRL_REG_DATA_LEN = 0,
   // Control Register : grid length -- 4B -- Equals grid_len / grid_banks
@@ -11,7 +20,7 @@
   // Control Register : packet length -- 4B -- Equals (data_len / data_banks) * (grid_len / grid_banks)
   parameter CTRL_REG_PCKT_LEN = 16,
 
-  // Control Data Transfer signals -- Nulled from PL at the end of the operation
+  // Control Data Transfer signals -- Nulled from PL at the end of the operation -- READ-WRITE
   // Control Register : data loaded -- 1B
   parameter CTRL_REG_DATA_LDR = 20,
   // Control Register : grid loaded -- 1B
@@ -21,20 +30,20 @@
   // Control Register : weights loaded -- 1B
   parameter CTRL_REG_WGHT_LDR = 23,
   
-  // Control Operation signals -- Nulled from PL at the start of the operation
+  // Control Operation signals -- Nulled from PL at the start of the operation -- READ-WRITE
   // Control Register : operation start -- 1B
   parameter CTRL_REG_OPER_STR = 24,
 
-  // Interrupt signals  -- Updated from PS when the status changes
+  // Interrupt signals  -- Updated from PS when the status changes -- WRITE-ONLY
   // Control Register : interrupt register -- 1B
   parameter CTRL_REG_INTR_REG = 25,
 
   // PL to PS
-  // Control Data Transfer signals -- Nulled from PS at the end of the transaction
+  // Control Data Transfer signals -- Nulled from PS at the end of the transaction -- READ-WRITE 
   // Control Register : results loaded -- 1B -- locked core until last result is transmitted and flag is nulled from PS
   parameter CTRL_REG_RSLT_LDR = 26,
 
-  // Control Operation Status signals -- Updated from PL when the status changes
+  // Control Operation Status signals -- Updated from PL when the status changes-- READ-ONLY
   // Control Register : operation status -- 1B
   parameter CTRL_REG_OPER_STS = 27,
   // Control Register : operation progress (results produced) -- 4B
@@ -50,14 +59,14 @@
   // Control Register : iteration latency -- 4B
   parameter CTRL_REG_OPER_LAT = 48,
 
-  // Control Operation Status signals -- Nulled from PS at the end of the transaction
+  // Control Operation Status signals -- Nulled from PS at the end of the transaction-- READ-WRITE
   // Control Register : operation done -- 1B -- locked core in idle state awaiting nulling or soft/hard reset
   parameter CTRL_REG_OPER_DNE = 52,
 
   // Number of Control Registers
   parameter NUM_CTRL_REGISTERS = CTRL_REG_OPER_DNE + 1,
   // Address Width of Control Register RAM
-  parameter CTLR_ADDR = `LOG2(NUM_CTRL_REGISTERS),
+  parameter CTLR_ADDR = `LOG2( NUM_CTRL_REGISTERS ),
 
   // Masks
 

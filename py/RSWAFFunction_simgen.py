@@ -65,10 +65,10 @@ def tb_RSWAFFunction():
     s_axis_grid_tvalid = ports['s_axis_grid_tvalid']
     s_axis_grid_tready = ports['s_axis_grid_tready']
     
-    s_axis_scale_tdata  = ports['s_axis_scale_tdata']
-    s_axis_scale_tlast  = ports['s_axis_scale_tlast']
-    s_axis_scale_tvalid = ports['s_axis_scale_tvalid']
-    s_axis_scale_tready = ports['s_axis_scale_tready']
+    s_axis_scle_tdata  = ports['s_axis_scle_tdata']
+    s_axis_scle_tlast  = ports['s_axis_scle_tlast']
+    s_axis_scle_tvalid = ports['s_axis_scle_tvalid']
+    s_axis_scle_tready = ports['s_axis_scle_tready']
     
     m_axis_data_tdata  = ports['m_axis_data_tdata']
     m_axis_data_tkeep  = ports['m_axis_data_tkeep']
@@ -96,9 +96,9 @@ def tb_RSWAFFunction():
     reset_stmt.append(s_axis_grid_tlast(0))
     reset_stmt.append(s_axis_grid_tvalid(0))
 
-    reset_stmt.append(s_axis_scale_tdata(0))
-    reset_stmt.append(s_axis_scale_tlast(0))
-    reset_stmt.append(s_axis_scale_tvalid(0))
+    reset_stmt.append(s_axis_scle_tdata(0))
+    reset_stmt.append(s_axis_scle_tlast(0))
+    reset_stmt.append(s_axis_scle_tvalid(0))
 
     reset_stmt.append(m_axis_data_tready(0))
 
@@ -153,7 +153,7 @@ def tb_RSWAFFunction():
                     'Count : %d,%d -- %X:%X:%X-%X:%X:%X-%X:%X:%X-%X:%X:%X -- is_Ready : %b', count_data,count_grid,
                     s_axis_data_tready,s_axis_data_tvalid,s_axis_data_tlast,
                     s_axis_grid_tready,s_axis_grid_tvalid,s_axis_grid_tlast,
-                    s_axis_scale_tready,s_axis_scale_tvalid,s_axis_scale_tlast,
+                    s_axis_scle_tready,s_axis_scle_tvalid,s_axis_scle_tlast,
                     m_axis_data_tready,m_axis_data_tvalid,m_axis_data_tlast,
                     is_Ready
                 )
@@ -173,36 +173,36 @@ def tb_RSWAFFunction():
             ),
             If(Ands(chn == 0, Not(is_Ready) == 0))(
                 is_Ready(0),
-                s_axis_scale_tdata(-5 << (FRACTIONAL_BITS_SCALE-2)),
-                s_axis_scale_tlast[chn](1),
-                s_axis_scale_tvalid[chn](1),
+                s_axis_scle_tdata(-5 << (FRACTIONAL_BITS_SCALE-2)),
+                s_axis_scle_tlast[chn](1),
+                s_axis_scle_tvalid[chn](1),
             ),
             If(Ands(
                 count_data == 0,
             ))(
-                s_axis_scale_tdata(1 << FRACTIONAL_BITS_SCALE),
-                s_axis_scale_tlast[chn](1),
-                s_axis_scale_tvalid[chn](1),
+                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tlast[chn](1),
+                s_axis_scle_tvalid[chn](1),
             ),
             If(Ands(
                 count_data != 0,
                 count_data < 25,
             ))(
-                s_axis_scale_tdata(5 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tdata(5 << FRACTIONAL_BITS_SCALE),
             ),
             If(Ands(
                 count_data == 25,
             ))(
-                s_axis_scale_tdata(1 << FRACTIONAL_BITS_SCALE-1),
-                s_axis_scale_tlast[chn](0),
-                s_axis_scale_tvalid[chn](0),
+                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE-1),
+                s_axis_scle_tlast[chn](0),
+                s_axis_scle_tvalid[chn](0),
             ),
             If(Ands(
                 count_data > 25,
                 count_data < 50,
             ))(
-                s_axis_scale_tdata.slice((chn+1)*DATA_WIDTH-1, chn*DATA_WIDTH)(
-                    s_axis_scale_tdata.slice((chn+1)*DATA_WIDTH-1, chn*DATA_WIDTH) + 8
+                s_axis_scle_tdata.slice((chn+1)*DATA_WIDTH-1, chn*DATA_WIDTH)(
+                    s_axis_scle_tdata.slice((chn+1)*DATA_WIDTH-1, chn*DATA_WIDTH) + 8
                 )
             ),
             Case(i_data)(
@@ -314,10 +314,10 @@ def tb_RSWAFFunction():
                 #     m_axis_grid_tvalid[chn],
                 # ),
             ))(
-                s_axis_scale_tvalid[chn](1)
+                s_axis_scle_tvalid[chn](1)
             ),
             If(Ors(
-                s_axis_scale_tvalid[chn],
+                s_axis_scle_tvalid[chn],
                 # count_grid == 10,
                 # Ands(
                 #     count_data == 30,
@@ -329,8 +329,8 @@ def tb_RSWAFFunction():
                 #     m_axis_grid_tvalid[chn],
                 # ),
             ))(
-                s_axis_scale_tvalid[chn](0),
-                s_axis_scale_tlast[chn](0)
+                s_axis_scle_tvalid[chn](0),
+                s_axis_scle_tlast[chn](0)
             ),
             If(Ands(count_data > 70, Not(timer_data), Not(m_axis_data_tvalid[chn])))(
                 Systask('finish')

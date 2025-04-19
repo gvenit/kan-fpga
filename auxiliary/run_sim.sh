@@ -68,32 +68,32 @@ eval set -- "$PARAMS"
 
 pc_path=$(dirname $(realpath "$(dirname $0)"))              # path/to/pc/top/directory/kan-fpga
 
-print_exec cd $pc_path
+print_exec cd $pc_path/rtl
 
 while [ $1 ] ; do 
     module=$1
 
-    if [ -e $(realpath -q "./rtl/$module.v") ]; then
+    if [ -e $(realpath -q "../rtl/$module.v") ]; then
         module="tb_$module"
     fi
-    if [ -e $(realpath -q "./tb/$module.v") ]; then
+    if [ -e $(realpath -q "../tb/$module.v") ]; then
         if [ $purge -ge 1 ]; then
-            if [ -e $(realpath -q "./out/$module.out") ]; then
+            if [ -e $(realpath -q "../out/$module.out") ]; then
                 print_exec rm "./out/$module.out"
             fi
-            if [ -e $(realpath -q "./vcd/$module.vcd") ]; then
-                print_exec rm -r "./vcd/$module.vcd"
+            if [ -e $(realpath -q "../vcd/$module.vcd") ]; then
+                print_exec rm -r "../vcd/$module.vcd"
             fi
         fi
-        lib_path="./lib"
+        lib_path="../lib"
 
-        LIB_RESOURCES="-y ./rtl -y ./rtl/wrapper"
+        LIB_RESOURCES="-y ../rtl -y ../rtl/wrapper"
         for lib_path_i in $lib_path/*/rtl; do
             LIB_RESOURCES="$LIB_RESOURCES -y $lib_path_i"
         done
 
-        print_exec iverilog $LIB_RESOURCES -Wall -o "./out/$module.out" "./tb/$module.v"
-        print_exec vvp $( [ verbose ] && echo -v ) -n "./out/$module.out"
+        print_exec iverilog $LIB_RESOURCES -Wall -o "../out/$module.out" "../tb/$module.v"
+        print_exec vvp $( [ verbose ] && echo -v ) -n "../out/$module.out"
         print_verbose -- Done
     else
         echo Module $module not found in testbench folder.

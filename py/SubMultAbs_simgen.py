@@ -67,10 +67,10 @@ def tb_SubMultAbs():
     s_axis_grid_tvalid  = ports['s_axis_grid_tvalid']
     s_axis_grid_tready  = ports['s_axis_grid_tready']
 
-    s_axis_scale_tdata  = ports['s_axis_scale_tdata']
-    s_axis_scale_tlast  = ports['s_axis_scale_tlast']
-    s_axis_scale_tvalid = ports['s_axis_scale_tvalid']
-    s_axis_scale_tready = ports['s_axis_scale_tready']
+    s_axis_scle_tdata  = ports['s_axis_scle_tdata']
+    s_axis_scle_tlast  = ports['s_axis_scle_tlast']
+    s_axis_scle_tvalid = ports['s_axis_scle_tvalid']
+    s_axis_scle_tready = ports['s_axis_scle_tready']
 
     m_axis_data_tdata   = ports['m_axis_data_tdata']
     m_axis_data_tlast   = ports['m_axis_data_tlast']
@@ -88,9 +88,9 @@ def tb_SubMultAbs():
     reset_stmt.append(s_axis_grid_tlast(0))
     reset_stmt.append(s_axis_grid_tvalid(0))
 
-    reset_stmt.append(s_axis_scale_tdata(0))
-    reset_stmt.append(s_axis_scale_tlast(0))
-    reset_stmt.append(s_axis_scale_tvalid(0))
+    reset_stmt.append(s_axis_scle_tdata(0))
+    reset_stmt.append(s_axis_scle_tlast(0))
+    reset_stmt.append(s_axis_scle_tvalid(0))
 
     reset_stmt.append(m_axis_data_tready(0))
 
@@ -140,7 +140,7 @@ def tb_SubMultAbs():
                 'Count : %d,%d -- %X:%X:%X-%X:%X:%X-%X:%X:%X-%X:%X:%X', count_data,count_grid,
                 s_axis_data_tready,s_axis_data_tvalid,s_axis_data_tlast,
                 s_axis_grid_tready,s_axis_grid_tvalid,s_axis_grid_tlast,
-                s_axis_scale_tready,s_axis_scale_tvalid,s_axis_scale_tlast,
+                s_axis_scle_tready,s_axis_scle_tvalid,s_axis_scle_tlast,
                 m_axis_data_tready,m_axis_data_tvalid,m_axis_data_tlast
             ),
             If(Ands(s_axis_data_tready,s_axis_data_tvalid))(
@@ -152,28 +152,28 @@ def tb_SubMultAbs():
             If(Ands(
                 count_data == 0,
             ))(
-                s_axis_scale_tdata(1 << FRACTIONAL_BITS_SCALE),
-                s_axis_scale_tlast(1),
-                s_axis_scale_tvalid(1),
+                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tlast(1),
+                s_axis_scle_tvalid(1),
             ),
             If(Ands(
                 count_data != 0,
                 count_data < 25,
             ))(
-                s_axis_scale_tdata(5 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tdata(5 << FRACTIONAL_BITS_SCALE),
             ),
             If(Ands(
                 count_data == 25,
             ))(
-                s_axis_scale_tdata(1 << FRACTIONAL_BITS_SCALE-1),
-                s_axis_scale_tlast(0),
-                s_axis_scale_tvalid(0),
+                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE-1),
+                s_axis_scle_tlast(0),
+                s_axis_scle_tvalid(0),
             ),
             If(Ands(
                 count_data > 25,
                 count_data < 50,
             ))(
-                s_axis_scale_tdata(s_axis_scale_tdata + 8),
+                s_axis_scle_tdata(s_axis_scle_tdata + 8),
             ),
             Case(i_data)(
                 When(4)(s_axis_data_tdata(values[4])),
@@ -284,7 +284,7 @@ def tb_SubMultAbs():
                 #     m_axis_grid_tvalid,
                 # ),
             ))(
-                s_axis_scale_tvalid(1)
+                s_axis_scle_tvalid(1)
             ),
             If(Ors(
                 # count_grid == 10,
@@ -298,7 +298,7 @@ def tb_SubMultAbs():
                 #     m_axis_grid_tvalid,
                 # ),
             ))(
-                s_axis_scale_tvalid(0)
+                s_axis_scle_tvalid(0)
             ),
             If(Ands(count_data > 70, Not(timer_data), Not(m_axis_data_tvalid)))(
                 Systask('finish')

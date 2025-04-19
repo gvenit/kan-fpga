@@ -27,7 +27,8 @@ generate
   for (i = 0; i < BANKS; i = i + 1) begin
     Bram #(
       .WIDTH(WIDTH),
-      .DEPTH(DEPTH)
+      .DEPTH(DEPTH),
+      .ADDR(ADDR)
     ) bram_inst (
       .clk(clk),
       .ena(ena[i]),

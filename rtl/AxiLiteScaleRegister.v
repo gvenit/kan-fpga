@@ -294,5 +294,6 @@
 	assign scale_reg = slv_reg1[SCALE_WIDTH-1:0];
 
 	// User logic ends
+	
 
 	endmodule
