@@ -2,6 +2,14 @@
 
 ## Progress
 
+***Day Planning***
+- [ ] Try  Cocotb for AXI memory and try to make sense of the signals
+- [ ] Correct mistakes in new top level module
+- [ ] Try to implement different memory interfaces
+- [ ] Make a new overleaf project and a templates
+- [ ] Write a small abstract about the Thesis
+- [ ] Make a software diagram
+
 ***System Architecture***
 - [x] naming conventions for internal signals - each module must have its own
 - [ ] implement multiple batch design
