@@ -46,3 +46,12 @@
 - batch cannot be implemented - what happens with RAM control interface
 - no module for adapter/joiner
 - clear out the depths (the tables show bits or bytes? Are they correct?)
+- if you want axi lite interface instead of BRAM you have to create the appropriate paramter section first - in vivado it is so full of mistakes that I cannot find actual mistakes that are not just parameters that have not been declared
+- the mcu has signals that have nothing to do with the ones I tried to connect to them
+
+<br>
+
+# Inquiries
+
+- [ ] what is grid and scale share?
+- [ ] why the instantiations of verilog headers?

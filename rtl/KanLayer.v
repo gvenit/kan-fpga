@@ -6,13 +6,14 @@
  */
 
 `include "utils.vh"
+`include "IFOptionsInst.vh"
 
 module KanLayer #(
+
   /*------------------------------------------------------------------
     Genreal parameters of the architecture
   ------------------------------------------------------------------*/
   
-  `include "rtl/IFOptionsInst.vh"
   parameter BATCH_SIZE = 1,
 
   /*------------------------------------------------------------------
@@ -69,7 +70,7 @@ module KanLayer #(
   // Pipeline Output Grid
   parameter PIPELINE_OUTPUT_GRID = 0,
 
-  `ifdef GRID_IF_IS_BRAM
+  // `ifdef GRID_IF_IS_BRAM
     // number of GRID bram banks
     parameter GRID_BANKS = DATA_CHANNELS,
     // number of elements on a single bram bank
@@ -78,7 +79,8 @@ module KanLayer #(
     parameter GRID_ADDR = `LOG2(GRID_BANK_DEPTH),
     // number of GRID_WE bits needed for each bank
     parameter GRID_WE = DATA_WIDTH_DATA / 8,
-  `endif 
+  // `endif 
+  
   /*------------------------------------------------------------------
     SCALE streams parameters
   ------------------------------------------------------------------*/
@@ -185,8 +187,8 @@ module KanLayer #(
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 fsm_clk CLK" *)
   (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF fsm_clk, ASSOCIATED_RESET aresetn, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0" *)
   input  wire         fsm_clk,
+
   (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 aresetn RST" *)
-  // (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
   (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_LOW" *)
   input  wire         aresetn,
 
@@ -197,6 +199,7 @@ module KanLayer #(
   /*------------------------------------------------------------------
       Generated Interrupts & Resets
   ------------------------------------------------------------------*/
+
   (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 aresetn RST" *)
   (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
   output wire         core_rst,
@@ -229,51 +232,52 @@ module KanLayer #(
   /*------------------------------------------------------------------
       BRAM Grid Control interface
   ------------------------------------------------------------------*/
-  `ifdef GRID_IF_IS_AXIL
-    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_grid_aclk CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_grid_aclk, ASSOCIATED_RESET aresetn, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0" *)
-    input  wire                   s_axil_grid_aclk,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWADDR" *)
-    (* X_INTERFACE_PARAMETER = "CLK_DOMAIN s_axil_grid_aclk,READ_WRITE_MODE READ_WRITE,ADDR_WIDTH GRID_ADDR,PROTOCOL AXI4LITE,DATA_WIDTH DATA_WIDTH_GRID" *)
-    input  wire [ADDR_WIDTH-1:0]  s_axil_grid_awaddr,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWPROT" *)
-    input  wire [2:0]             s_axil_grid_awprot,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWVALID" *)
-    input  wire                   s_axil_grid_awvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWREADY" *)
-    output wire                   s_axil_grid_awready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WDATA" *)
-    input  wire [DATA_WIDTH-1:0]  s_axil_grid_wdata,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WSTRB" *)
-    input  wire [STRB_WIDTH-1:0]  s_axil_grid_wstrb,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WVALID" *)
-    input  wire                   s_axil_grid_wvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WREADY" *)
-    output wire                   s_axil_grid_wready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid BRESP" *)
-    output wire [1:0]             s_axil_grid_bresp,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid BVALID" *)
-    output wire                   s_axil_grid_bvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid BREADY" *)
-    input  wire                   s_axil_grid_bready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARADDR" *)
-    input  wire [ADDR_WIDTH-1:0]  s_axil_grid_araddr,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARPROT" *)
-    input  wire [2:0]             s_axil_grid_arprot,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARVALID" *)
-    input  wire                   s_axil_grid_arvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARREADY" *)
-    output wire                   s_axil_grid_arready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RDATA" *)
-    output wire [DATA_WIDTH-1:0]  s_axil_grid_rdata,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RRESP" *)
-    output wire [1:0]             s_axil_grid_rresp,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RVALID" *)
-    output wire                   s_axil_grid_rvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RREADY" *)
-    input  wire                   s_axil_grid_rready,
+  
+  // `ifdef GRID_IF_IS_AXIL
+  //   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_grid_aclk CLK" *)
+  //   (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_grid_aclk, ASSOCIATED_RESET aresetn, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0" *)
+  //   input  wire                   s_axil_grid_aclk,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWADDR" *)
+  //   (* X_INTERFACE_PARAMETER = "CLK_DOMAIN s_axil_grid_aclk,READ_WRITE_MODE READ_WRITE,ADDR_WIDTH GRID_ADDR,PROTOCOL AXI4LITE,DATA_WIDTH DATA_WIDTH_GRID" *)
+  //   input  wire [ADDR_WIDTH-1:0]  s_axil_grid_awaddr,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWPROT" *)
+  //   input  wire [2:0]             s_axil_grid_awprot,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWVALID" *)
+  //   input  wire                   s_axil_grid_awvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWREADY" *)
+  //   output wire                   s_axil_grid_awready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WDATA" *)
+  //   input  wire [DATA_WIDTH-1:0]  s_axil_grid_wdata,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WSTRB" *)
+  //   input  wire [STRB_WIDTH-1:0]  s_axil_grid_wstrb,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WVALID" *)
+  //   input  wire                   s_axil_grid_wvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WREADY" *)
+  //   output wire                   s_axil_grid_wready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid BRESP" *)
+  //   output wire [1:0]             s_axil_grid_bresp,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid BVALID" *)
+  //   output wire                   s_axil_grid_bvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid BREADY" *)
+  //   input  wire                   s_axil_grid_bready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARADDR" *)
+  //   input  wire [ADDR_WIDTH-1:0]  s_axil_grid_araddr,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARPROT" *)
+  //   input  wire [2:0]             s_axil_grid_arprot,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARVALID" *)
+  //   input  wire                   s_axil_grid_arvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARREADY" *)
+  //   output wire                   s_axil_grid_arready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RDATA" *)
+  //   output wire [DATA_WIDTH-1:0]  s_axil_grid_rdata,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RRESP" *)
+  //   output wire [1:0]             s_axil_grid_rresp,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RVALID" *)
+  //   output wire                   s_axil_grid_rvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RREADY" *)
+  //   input  wire                   s_axil_grid_rready,
 
-  `elif GRID_IF_IS_BRAM
+  // `elif GRID_IF_IS_BRAM
     (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr CLK" *)
     input  wire                      bram_grid_ctrl_clk,
     (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr RST" *)
@@ -289,57 +293,57 @@ module KanLayer #(
     input  wire [BRAM_ctrl_WIDTH-1:0] bram_grid_ctrl_din,
     (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_grid_ctr DOUT" *)
     output wire [BRAM_ctrl_WIDTH-1:0] bram_grid_ctrl_dout,
-  `endif
+  // `endif
 
   /*------------------------------------------------------------------
       BRAM Scale Control interface
   ------------------------------------------------------------------*/
 
-  `ifdef SCALE_IF_IS_AXIL
-    (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_scle_aclk CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_scle_aclk, ASSOCIATED_RESET aresetn, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0" *)
-    input  wire                   s_axil_scle_aclk,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWADDR" *)
-    (* X_INTERFACE_PARAMETER = "CLK_DOMAIN s_axil_scle_aclk,READ_WRITE_MODE READ_WRITE,ADDR_WIDTH GRID_ADDR,PROTOCOL AXI4LITE,DATA_WIDTH DATA_WIDTH_GRID" *)
-    input  wire [ADDR_WIDTH-1:0]  s_axil_scle_awaddr,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWPROT" *)
-    input  wire [2:0]             s_axil_scle_awprot,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWVALID" *)
-    input  wire                   s_axil_scle_awvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWREADY" *)
-    output wire                   s_axil_scle_awready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WDATA" *)
-    input  wire [DATA_WIDTH-1:0]  s_axil_scle_wdata,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WSTRB" *)
-    input  wire [STRB_WIDTH-1:0]  s_axil_scle_wstrb,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WVALID" *)
-    input  wire                   s_axil_scle_wvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WREADY" *)
-    output wire                   s_axil_scle_wready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle BRESP" *)
-    output wire [1:0]             s_axil_scle_bresp,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle BVALID" *)
-    output wire                   s_axil_scle_bvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle BREADY" *)
-    input  wire                   s_axil_scle_bready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARADDR" *)
-    input  wire [ADDR_WIDTH-1:0]  s_axil_scle_araddr,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARPROT" *)
-    input  wire [2:0]             s_axil_scle_arprot,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARVALID" *)
-    input  wire                   s_axil_scle_arvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARREADY" *)
-    output wire                   s_axil_scle_arready,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RDATA" *)
-    output wire [DATA_WIDTH-1:0]  s_axil_scle_rdata,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RRESP" *)
-    output wire [1:0]             s_axil_scle_rresp,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RVALID" *)
-    output wire                   s_axil_scle_rvalid,
-    (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RREADY" *)
-    input  wire                   s_axil_scle_rready,
+  // `ifdef SCALE_IF_IS_AXIL
+  //   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_scle_aclk CLK" *)
+  //   (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_scle_aclk, ASSOCIATED_RESET aresetn, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0" *)
+  //   input  wire                   s_axil_scle_aclk,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWADDR" *)
+  //   (* X_INTERFACE_PARAMETER = "CLK_DOMAIN s_axil_scle_aclk,READ_WRITE_MODE READ_WRITE,ADDR_WIDTH GRID_ADDR,PROTOCOL AXI4LITE,DATA_WIDTH DATA_WIDTH_GRID" *)
+  //   input  wire [ADDR_WIDTH-1:0]  s_axil_scle_awaddr,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWPROT" *)
+  //   input  wire [2:0]             s_axil_scle_awprot,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWVALID" *)
+  //   input  wire                   s_axil_scle_awvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWREADY" *)
+  //   output wire                   s_axil_scle_awready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WDATA" *)
+  //   input  wire [DATA_WIDTH-1:0]  s_axil_scle_wdata,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WSTRB" *)
+  //   input  wire [STRB_WIDTH-1:0]  s_axil_scle_wstrb,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WVALID" *)
+  //   input  wire                   s_axil_scle_wvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WREADY" *)
+  //   output wire                   s_axil_scle_wready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle BRESP" *)
+  //   output wire [1:0]             s_axil_scle_bresp,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle BVALID" *)
+  //   output wire                   s_axil_scle_bvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle BREADY" *)
+  //   input  wire                   s_axil_scle_bready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARADDR" *)
+  //   input  wire [ADDR_WIDTH-1:0]  s_axil_scle_araddr,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARPROT" *)
+  //   input  wire [2:0]             s_axil_scle_arprot,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARVALID" *)
+  //   input  wire                   s_axil_scle_arvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARREADY" *)
+  //   output wire                   s_axil_scle_arready,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RDATA" *)
+  //   output wire [DATA_WIDTH-1:0]  s_axil_scle_rdata,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RRESP" *)
+  //   output wire [1:0]             s_axil_scle_rresp,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RVALID" *)
+  //   output wire                   s_axil_scle_rvalid,
+  //   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RREADY" *)
+  //   input  wire                   s_axil_scle_rready,
 
-  `elif SCALE_IF_IS_BRAM
+  // `elif SCALE_IF_IS_BRAM
     (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_scle_ctr CLK" *)
     input  wire                      bram_scle_ctrl_clk,
     (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_scle_ctr RST" *)
@@ -355,7 +359,8 @@ module KanLayer #(
     input  wire [BRAM_ctrl_WIDTH-1:0] bram_scle_ctrl_din,
     (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_scle_ctr DOUT" *)
     output wire [BRAM_ctrl_WIDTH-1:0] bram_scle_ctrl_dout,
-  `endif
+  // `endif
+
   /*------------------------------------------------------------------
       AXI-Lite Control Slave interface
   ------------------------------------------------------------------*/
@@ -430,10 +435,10 @@ module KanLayer #(
   ------------------------------------------------------------------*/
 
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 m_axis_rslt_aclk CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF m_axis_rslt_aclk, ASSOCIATED_RESET core_rst, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0" *)
+  (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF m_axis_rslt_aclk, ASSOCIATED_RESET core_rst, FREQ_HZ 100000000, FREQ_TOLERANCE_HZ 0" *)
   input  wire                       m_axis_rslt_aclk,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TDATA" *)
-    (* X_INTERFACE_PARAMETER = "CLK_DOMAIN m_axis_rslt_aclk,HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
+  (* X_INTERFACE_PARAMETER = "CLK_DOMAIN m_axis_rslt_aclk,HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
   output  wire [DATA_WIDTH_DMA-1:0] m_axis_rslt_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TKEEP" *)
   output  wire [KEEP_WIDTH_DMA-1:0] m_axis_rslt_tkeep,
@@ -449,6 +454,7 @@ module KanLayer #(
   output  wire [DEST_WIDTH-1:0]     m_axis_rslt_tdest,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TUSER" *)
   output  wire [USER_WIDTH-1:0]     m_axis_rslt_tuser
+
 );
 
   /*************************************************************************************
@@ -463,7 +469,6 @@ module KanLayer #(
   localparam GRID_EXTRL_DEPTH = GRID_DEPTH / IN_WORD_DATA;  // grid depth as seen from external ram control interface
   localparam GRID_EXTRL_ADDR = `LOG2(GRID_EXTRL_DEPTH);     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
 
-  localparam GRID_ADDR = `LOG2(GRID_DEPTH);  // number of input address bits of total grid memory
   localparam GRID_PHYS_DEPTH = GRID_DEPTH / IN_WORD_DATA;  // effective - physical depth of grid ram
   localparam GRID_PHYS_ADDR = `LOG2(GRID_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
 
@@ -566,140 +571,141 @@ module KanLayer #(
     .validb (int_data_bram_rdstrobe_b)
   );
 
- generate
-  if (SHARE_GRID) begin
-    // Port A
-    wire                        int_grid_ram_a_clk;
-    wire                        int_grid_ram_a_rst;
-    // Keep Write channels of Port A
-    wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_awaddr;
-    wire [2:0]                  int_grid_ram_a_s_axil_awprot;
-    wire                        int_grid_ram_a_s_axil_awvalid;
-    wire                        int_grid_ram_a_s_axil_awready;
-    wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_wdata;
-    wire [1-1:0]                int_grid_ram_a_s_axil_wstrb;
-    wire                        int_grid_ram_a_s_axil_wvalid;
-    wire                        int_grid_ram_a_s_axil_wready;
-    wire [1:0]                  int_grid_ram_a_s_axil_bresp;
-    wire                        int_grid_ram_a_s_axil_bvalid;
-    wire                        int_grid_ram_a_s_axil_bready;
-    // Keep Read channels of Port A
-    wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_araddr;
-    wire [2:0]                  int_grid_ram_a_s_axil_arprot;
-    wire                        int_grid_ram_a_s_axil_arvalid;
-    wire                        int_grid_ram_a_s_axil_arready;
-    wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_rdata;
-    wire [1:0]                  int_grid_ram_a_s_axil_rresp;
-    wire                        int_grid_ram_a_s_axil_rvalid;
-    wire                        int_grid_ram_a_s_axil_rready;
+//  generate
+//   if (SHARE_GRID) begin
+//     // Port A
+//     wire                        int_grid_ram_a_clk;
+//     wire                        int_grid_ram_a_rst;
+//     // Keep Write channels of Port A
+//     wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_awaddr;
+//     wire [2:0]                  int_grid_ram_a_s_axil_awprot;
+//     wire                        int_grid_ram_a_s_axil_awvalid;
+//     wire                        int_grid_ram_a_s_axil_awready;
+//     wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_wdata;
+//     wire [1-1:0]                int_grid_ram_a_s_axil_wstrb;
+//     wire                        int_grid_ram_a_s_axil_wvalid;
+//     wire                        int_grid_ram_a_s_axil_wready;
+//     wire [1:0]                  int_grid_ram_a_s_axil_bresp;
+//     wire                        int_grid_ram_a_s_axil_bvalid;
+//     wire                        int_grid_ram_a_s_axil_bready;
+//     // Keep Read channels of Port A
+//     wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_araddr;
+//     wire [2:0]                  int_grid_ram_a_s_axil_arprot;
+//     wire                        int_grid_ram_a_s_axil_arvalid;
+//     wire                        int_grid_ram_a_s_axil_arready;
+//     wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_a_s_axil_rdata;
+//     wire [1:0]                  int_grid_ram_a_s_axil_rresp;
+//     wire                        int_grid_ram_a_s_axil_rvalid;
+//     wire                        int_grid_ram_a_s_axil_rready;
 
-    // Port B
-    wire                        int_grid_ram_b_clk;
-    wire                        int_grid_ram_b_rst;
-    // Drop Write channels of Port B
-    wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_awaddr = {ADDR_WIDTH_GRID{1'b0}};
-    wire [2:0]                  int_grid_ram_b_s_axil_awprot = {2'b00};
-    wire                        int_grid_ram_b_s_axil_awvalid = 1'b0;
-    wire                        int_grid_ram_b_s_axil_awready;
-    wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_wdata = {ADDR_WIDTH_GRID{1'b0}};
-    wire [1-1:0]                int_grid_ram_b_s_axil_wstrb = 1'b0;
-    wire                        int_grid_ram_b_s_axil_wvalid = 1'b0;
-    wire                        int_grid_ram_b_s_axil_wready = 1'b0;
-    wire [1:0]                  int_grid_ram_b_s_axil_bresp;
-    wire                        int_grid_ram_b_s_axil_bvalid;
-    wire                        int_grid_ram_b_s_axil_bready = 1'b0;
-    // Keep Read channels of Port B
-    wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_araddr;
-    wire [2:0]                  int_grid_ram_b_s_axil_arprot;
-    wire                        int_grid_ram_b_s_axil_arvalid;
-    wire                        int_grid_ram_b_s_axil_arready;
-    wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_rdata;
-    wire [1:0]                  int_grid_ram_b_s_axil_rresp;
-    wire                        int_grid_ram_b_s_axil_rvalid;
-    wire                        int_grid_ram_b_s_axil_rready;
+//     // Port B
+//     wire                        int_grid_ram_b_clk;
+//     wire                        int_grid_ram_b_rst;
+//     // Drop Write channels of Port B
+//     wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_awaddr = {ADDR_WIDTH_GRID{1'b0}};
+//     wire [2:0]                  int_grid_ram_b_s_axil_awprot = {2'b00};
+//     wire                        int_grid_ram_b_s_axil_awvalid = 1'b0;
+//     wire                        int_grid_ram_b_s_axil_awready;
+//     wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_wdata = {ADDR_WIDTH_GRID{1'b0}};
+//     wire [1-1:0]                int_grid_ram_b_s_axil_wstrb = 1'b0;
+//     wire                        int_grid_ram_b_s_axil_wvalid = 1'b0;
+//     wire                        int_grid_ram_b_s_axil_wready = 1'b0;
+//     wire [1:0]                  int_grid_ram_b_s_axil_bresp;
+//     wire                        int_grid_ram_b_s_axil_bvalid;
+//     wire                        int_grid_ram_b_s_axil_bready = 1'b0;
+//     // Keep Read channels of Port B
+//     wire [ADDR_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_araddr;
+//     wire [2:0]                  int_grid_ram_b_s_axil_arprot;
+//     wire                        int_grid_ram_b_s_axil_arvalid;
+//     wire                        int_grid_ram_b_s_axil_arready;
+//     wire [DATA_WIDTH_GRID-1:0]  int_grid_ram_b_s_axil_rdata;
+//     wire [1:0]                  int_grid_ram_b_s_axil_rresp;
+//     wire                        int_grid_ram_b_s_axil_rvalid;
+//     wire                        int_grid_ram_b_s_axil_rready;
 
-    axil_dp_ram # (
-        // Width of data bus in bits
-        .DATA_WIDTH(DATA_WIDTH_GRID)
-        // Width of address bus in bits
-        .ADDR_WIDTH(ADDR_WIDTH_GRID),
-        // Width of wstrb (width of data bus in words)
-        .STRB_WIDTH(1),
-        // Extra pipeline register on output
-        .PIPELINE_OUTPUT(PIPELINE_OUTPUT_GRID)
-    ) grid_axil_ram (
-        .a_clk              (int_grid_ram_a_clk),
-        .a_rst              (int_grid_ram_a_rst),
-        .b_clk              (int_grid_ram_b_clk),
-        .b_rst              (int_grid_ram_b_rst),
-        .s_axil_a_awaddr    (int_grid_ram_a_s_axil_awaddr),
-        .s_axil_a_awprot    (int_grid_ram_a_s_axil_awprot),
-        .s_axil_a_awvalid   (int_grid_ram_a_s_axil_awvalid),
-        .s_axil_a_awready   (int_grid_ram_a_s_axil_awready),
-        .s_axil_a_wdata     (int_grid_ram_a_s_axil_wdata),
-        .s_axil_a_wstrb     (int_grid_ram_a_s_axil_wstrb),
-        .s_axil_a_wvalid    (int_grid_ram_a_s_axil_wvalid),
-        .s_axil_a_wready    (int_grid_ram_a_s_axil_wready),
-        .s_axil_a_bresp     (int_grid_ram_a_s_axil_bresp),
-        .s_axil_a_bvalid    (int_grid_ram_a_s_axil_bvalid),
-        .s_axil_a_bready    (int_grid_ram_a_s_axil_bready),
-        .s_axil_a_araddr    (int_grid_ram_a_s_axil_araddr),
-        .s_axil_a_arprot    (int_grid_ram_a_s_axil_arprot),
-        .s_axil_a_arvalid   (int_grid_ram_a_s_axil_arvalid),
-        .s_axil_a_arready   (int_grid_ram_a_s_axil_arready),
-        .s_axil_a_rdata     (int_grid_ram_a_s_axil_rdata),
-        .s_axil_a_rresp     (int_grid_ram_a_s_axil_rresp),
-        .s_axil_a_rvalid    (int_grid_ram_a_s_axil_rvalid),
-        .s_axil_a_rready    (int_grid_ram_a_s_axil_rready),
-        .s_axil_b_awaddr    (int_grid_ram_b_s_axil_awaddr),
-        .s_axil_b_awprot    (int_grid_ram_b_s_axil_awprot),
-        .s_axil_b_awvalid   (int_grid_ram_b_s_axil_awvalid),
-        .s_axil_b_awready   (int_grid_ram_b_s_axil_awready),
-        .s_axil_b_wdata     (int_grid_ram_b_s_axil_wdata),
-        .s_axil_b_wstrb     (int_grid_ram_b_s_axil_wstrb),
-        .s_axil_b_wvalid    (int_grid_ram_b_s_axil_wvalid),
-        .s_axil_b_wready    (int_grid_ram_b_s_axil_wready),
-        .s_axil_b_bresp     (int_grid_ram_b_s_axil_bresp),
-        .s_axil_b_bvalid    (int_grid_ram_b_s_axil_bvalid),
-        .s_axil_b_bready    (int_grid_ram_b_s_axil_bready),
-        .s_axil_b_araddr    (int_grid_ram_b_s_axil_araddr),
-        .s_axil_b_arprot    (int_grid_ram_b_s_axil_arprot),
-        .s_axil_b_arvalid   (int_grid_ram_b_s_axil_arvalid),
-        .s_axil_b_arready   (int_grid_ram_b_s_axil_arready),
-        .s_axil_b_rdata     (int_grid_ram_b_s_axil_rdata),
-        .s_axil_b_rresp     (int_grid_ram_b_s_axil_rresp),
-        .s_axil_b_rvalid    (int_grid_ram_b_s_axil_rvalid),
-        .s_axil_b_rready    (int_grid_ram_b_s_axil_rready)
-    );
+//     axil_dp_ram # (
+//         // Width of data bus in bits
+//         .DATA_WIDTH(DATA_WIDTH_GRID)
+//         // Width of address bus in bits
+//         .ADDR_WIDTH(ADDR_WIDTH_GRID),
+//         // Width of wstrb (width of data bus in words)
+//         .STRB_WIDTH(1),
+//         // Extra pipeline register on output
+//         .PIPELINE_OUTPUT(PIPELINE_OUTPUT_GRID)
+//     ) grid_axil_ram (
+//         .a_clk              (int_grid_ram_a_clk),
+//         .a_rst              (int_grid_ram_a_rst),
+//         .b_clk              (int_grid_ram_b_clk),
+//         .b_rst              (int_grid_ram_b_rst),
+//         .s_axil_a_awaddr    (int_grid_ram_a_s_axil_awaddr),
+//         .s_axil_a_awprot    (int_grid_ram_a_s_axil_awprot),
+//         .s_axil_a_awvalid   (int_grid_ram_a_s_axil_awvalid),
+//         .s_axil_a_awready   (int_grid_ram_a_s_axil_awready),
+//         .s_axil_a_wdata     (int_grid_ram_a_s_axil_wdata),
+//         .s_axil_a_wstrb     (int_grid_ram_a_s_axil_wstrb),
+//         .s_axil_a_wvalid    (int_grid_ram_a_s_axil_wvalid),
+//         .s_axil_a_wready    (int_grid_ram_a_s_axil_wready),
+//         .s_axil_a_bresp     (int_grid_ram_a_s_axil_bresp),
+//         .s_axil_a_bvalid    (int_grid_ram_a_s_axil_bvalid),
+//         .s_axil_a_bready    (int_grid_ram_a_s_axil_bready),
+//         .s_axil_a_araddr    (int_grid_ram_a_s_axil_araddr),
+//         .s_axil_a_arprot    (int_grid_ram_a_s_axil_arprot),
+//         .s_axil_a_arvalid   (int_grid_ram_a_s_axil_arvalid),
+//         .s_axil_a_arready   (int_grid_ram_a_s_axil_arready),
+//         .s_axil_a_rdata     (int_grid_ram_a_s_axil_rdata),
+//         .s_axil_a_rresp     (int_grid_ram_a_s_axil_rresp),
+//         .s_axil_a_rvalid    (int_grid_ram_a_s_axil_rvalid),
+//         .s_axil_a_rready    (int_grid_ram_a_s_axil_rready),
+//         .s_axil_b_awaddr    (int_grid_ram_b_s_axil_awaddr),
+//         .s_axil_b_awprot    (int_grid_ram_b_s_axil_awprot),
+//         .s_axil_b_awvalid   (int_grid_ram_b_s_axil_awvalid),
+//         .s_axil_b_awready   (int_grid_ram_b_s_axil_awready),
+//         .s_axil_b_wdata     (int_grid_ram_b_s_axil_wdata),
+//         .s_axil_b_wstrb     (int_grid_ram_b_s_axil_wstrb),
+//         .s_axil_b_wvalid    (int_grid_ram_b_s_axil_wvalid),
+//         .s_axil_b_wready    (int_grid_ram_b_s_axil_wready),
+//         .s_axil_b_bresp     (int_grid_ram_b_s_axil_bresp),
+//         .s_axil_b_bvalid    (int_grid_ram_b_s_axil_bvalid),
+//         .s_axil_b_bready    (int_grid_ram_b_s_axil_bready),
+//         .s_axil_b_araddr    (int_grid_ram_b_s_axil_araddr),
+//         .s_axil_b_arprot    (int_grid_ram_b_s_axil_arprot),
+//         .s_axil_b_arvalid   (int_grid_ram_b_s_axil_arvalid),
+//         .s_axil_b_arready   (int_grid_ram_b_s_axil_arready),
+//         .s_axil_b_rdata     (int_grid_ram_b_s_axil_rdata),
+//         .s_axil_b_rresp     (int_grid_ram_b_s_axil_rresp),
+//         .s_axil_b_rvalid    (int_grid_ram_b_s_axil_rvalid),
+//         .s_axil_b_rready    (int_grid_ram_b_s_axil_rready)
+//     );
 
-    // Connect Port A to S_AXIL_GRID interface
-    assign int_grid_ram_a_clk             = s_axil_grid_aclk;
-    assign int_grid_ram_a_rst             = aresetn;
-    assign int_grid_ram_a_s_axil_awaddr   = s_axil_grid_awaddr;
-    assign int_grid_ram_a_s_axil_awprot   = s_axil_grid_awprot;
-    assign int_grid_ram_a_s_axil_awvalid  = s_axil_grid_awvalid;
-    assign s_axil_grid_awready            = int_grid_ram_a_s_axil_awready;
-    assign int_grid_ram_a_s_axil_wdata    = s_axil_grid_wdata;
-    assign int_grid_ram_a_s_axil_wstrb    = s_axil_grid_wstrb;
-    assign int_grid_ram_a_s_axil_wvalid   = s_axil_grid_wvalid;
-    assign s_axil_grid_wready             = int_grid_ram_a_s_axil_wready;
-    assign s_axil_grid_bresp              = int_grid_ram_a_s_axil_bresp;
-    assign s_axil_grid_bvalid             = int_grid_ram_a_s_axil_bvalid;
-    assign int_grid_ram_a_s_axil_bready   = s_axil_grid_bready;
-    assign int_grid_ram_a_s_axil_araddr   = s_axil_grid_araddr;
-    assign int_grid_ram_a_s_axil_arprot   = s_axil_grid_arprot;
-    assign int_grid_ram_a_s_axil_arvalid  = s_axil_grid_arvalid;
-    assign s_axil_grid_arready            = int_grid_ram_a_s_axil_arready;
-    assign s_axil_grid_rdata              = int_grid_ram_a_s_axil_rdata;
-    assign s_axil_grid_rresp              = int_grid_ram_a_s_axil_rresp;
-    assign s_axil_grid_rvalid             = int_grid_ram_a_s_axil_rvalid;
-    assign int_grid_ram_a_s_axil_rready   = s_axil_grid_rready;
+//     // Connect Port A to S_AXIL_GRID interface
+//     assign int_grid_ram_a_clk             = s_axil_grid_aclk;
+//     assign int_grid_ram_a_rst             = aresetn;
+//     assign int_grid_ram_a_s_axil_awaddr   = s_axil_grid_awaddr;
+//     assign int_grid_ram_a_s_axil_awprot   = s_axil_grid_awprot;
+//     assign int_grid_ram_a_s_axil_awvalid  = s_axil_grid_awvalid;
+//     assign s_axil_grid_awready            = int_grid_ram_a_s_axil_awready;
+//     assign int_grid_ram_a_s_axil_wdata    = s_axil_grid_wdata;
+//     assign int_grid_ram_a_s_axil_wstrb    = s_axil_grid_wstrb;
+//     assign int_grid_ram_a_s_axil_wvalid   = s_axil_grid_wvalid;
+//     assign s_axil_grid_wready             = int_grid_ram_a_s_axil_wready;
+//     assign s_axil_grid_bresp              = int_grid_ram_a_s_axil_bresp;
+//     assign s_axil_grid_bvalid             = int_grid_ram_a_s_axil_bvalid;
+//     assign int_grid_ram_a_s_axil_bready   = s_axil_grid_bready;
+//     assign int_grid_ram_a_s_axil_araddr   = s_axil_grid_araddr;
+//     assign int_grid_ram_a_s_axil_arprot   = s_axil_grid_arprot;
+//     assign int_grid_ram_a_s_axil_arvalid  = s_axil_grid_arvalid;
+//     assign s_axil_grid_arready            = int_grid_ram_a_s_axil_arready;
+//     assign s_axil_grid_rdata              = int_grid_ram_a_s_axil_rdata;
+//     assign s_axil_grid_rresp              = int_grid_ram_a_s_axil_rresp;
+//     assign s_axil_grid_rvalid             = int_grid_ram_a_s_axil_rvalid;
+//     assign int_grid_ram_a_s_axil_rready   = s_axil_grid_rready;
 
-  end else begin
-    `define GRID_IF_IS_BRAM
+//   end else begin
+//     `define GRID_IF_IS_BRAM
+
     /**********************************************
       Interface Translator between BRAM Controller
-      and Data BRAM
+      and Grid BRAM
 
       Naming conventions
       - int_ : internal signal
@@ -708,10 +714,10 @@ module KanLayer #(
       - _o : output / master interface
     *********************************************/
     wire                                    int_grid_bram_ctrl_en_i;
-    wire [BRAM_ctrl_WE-1:0]                  int_grid_bram_ctrl_we_i;
+    wire [BRAM_ctrl_WE-1:0]                 int_grid_bram_ctrl_we_i;
     wire [DATA_ITRL_ADDR-1:0]               int_grid_bram_ctrl_addr_i;
-    wire [BRAM_ctrl_WIDTH-1:0]               int_grid_bram_ctrl_wrdata_i;
-    wire [BRAM_ctrl_WIDTH-1:0]               int_grid_bram_ctrl_rddata_i;
+    wire [BRAM_ctrl_WIDTH-1:0]              int_grid_bram_ctrl_wrdata_i;
+    wire [BRAM_ctrl_WIDTH-1:0]              int_grid_bram_ctrl_rddata_i;
     
     wire [GRID_BANKS-1:0]                   int_grid_bram_ctrl_en_o;
     wire [(GRID_BANKS*DATA_WE)-1:0]         int_grid_bram_ctrl_we_o;
@@ -724,7 +730,7 @@ module KanLayer #(
       .OUT_WIDTH (DATA_WIDTH_DATA),
       .BANKS     (DATA_BANKS),
       .OUT_DEPTH (DATA_BANK_DEPTH)
-    ) data_bram_interface_translator_inst (
+    ) grid_bram_interface_translator_inst (
       .en_i     (int_grid_bram_ctrl_en_i),
       .we_i     (int_grid_bram_ctrl_we_i),
       .addr_i   (int_grid_bram_ctrl_addr_i),
@@ -773,7 +779,7 @@ module KanLayer #(
       .doutb  (int_grid_bram_rddata_b),
       .validb (int_grid_bram_rdstrobe_b)
     );
-  end
+  // end
   
   // bram control interface to the grid bram port a
 
@@ -784,7 +790,8 @@ module KanLayer #(
   assign int_grid_bram_wrdata_a = bram_grid_ctrl_din;
   assign bram_grid_ctrl_dout     = int_grid_bram_rddata_a;
 
- endgenerate
+//  endgenerate
+
   /**********************************************
     Grid BRAM
 
@@ -916,45 +923,26 @@ module KanLayer #(
   wire [SCALE_CHANNELS_OUT*USER_WIDTH-1:0]          int_m_axis_scle_mcu_tuser;
 
   MemoryControlUnit #(
-    `include "rtl/MCUGlobalFSMParametersInst.vh"
-    // BRAM control has valid signal
+    `include "MCUGlobalFSMParametersInst.vh"
     .BRAM_ACK_SIG(1),
-    // Number of batches per run
     .BATCH_SIZE(BATCH_SIZE),
-    // Width of AXI stream Input Data & Grid interfaces in bits
     .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
-    // Width of AXI stream Scale interface in bits
     .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
-    // Propagate tid signal
     .ID_ENABLE(ID_ENABLE),
-    // tid signal width
     .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
     .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
     .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
     .USER_ENABLE(USER_ENABLE),
-    // tuser signal width
     .USER_WIDTH(USER_WIDTH),
-    // Number of Independent AXI-Stream Data Channels per Batch
     .DATA_CHANNELS(DATA_CHANNELS),
-    // Use Common Share Channel 
     .SHARE_SCALE(SHARE_SCALE),
-    // Use Common Grid Channel 
     .SHARE_GRID(SHARE_GRID),
-    // Data Width of address bus in bits
-    .ADDR_WIDTH_DATA(ADDR_WIDTH_DATA),
-    // Grid Width of address bus in bits
-    .ADDR_WIDTH_GRID(ADDR_WIDTH_GRID),
-    // Scale Width of address bus in bits
-    .ADDR_WIDTH_SCALE(ADDR_WIDTH_SCALE),
-    // Data FIFO size per stream
-    .FIFO_DEPTH_DATA(FIFO_DEPTH_DATA),
-    // Grid FIFO size per stream
-    .FIFO_DEPTH_GRID(FIFO_DEPTH_GRID),
-    // Scale FIFO size per stream
-    .FIFO_DEPTH_SCALE(FIFO_DEPTH_SCALE)
+    // .ADDR_WIDTH_DATA(ADDR_WIDTH_DATA),
+    // .ADDR_WIDTH_GRID(ADDR_WIDTH_GRID),
+    // .ADDR_WIDTH_SCALE(ADDR_WIDTH_SCALE),
+    // .FIFO_DEPTH_DATA(FIFO_DEPTH_DATA),
+    // .FIFO_DEPTH_GRID(FIFO_DEPTH_GRID),
+    // .FIFO_DEPTH_SCALE(FIFO_DEPTH_SCALE)
   ) mcu_inst (
     .fsm_clk              (fsm_clk),
     .rst                  (rst),

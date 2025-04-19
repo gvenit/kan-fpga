@@ -14,7 +14,8 @@
  * 
  */
 
-`include "rtl/IFOptions.vh"
+//`include "rtl/IFOptions.vh"
+`include "IFOptions.vh"
 
 module MemoryControlUnit #(
   `include "rtl/MCUGlobalFSMParameters.vh"
