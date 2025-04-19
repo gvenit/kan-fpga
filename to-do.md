@@ -4,8 +4,8 @@
 
 ***Day Planning***
 - [ ] Try  Cocotb for AXI memory and try to make sense of the signals
-- [ ] Correct mistakes in new top level module
-- [ ] Try to implement different memory interfaces
+- [x] Correct mistakes in new top level module
+- [ ] Test that the alexforencich ram works with custom depths and widths or if it needs an adapter
 - [ ] Make a new overleaf project and a templates
 - [ ] Write a small abstract about the Thesis
 - [ ] Make a software diagram
@@ -51,8 +51,8 @@
 # Problems
 
 - still too many dependencies
-- batch cannot be implemented - what happens with RAM control interface
-- no module for adapter/joiner
+- batch not implemented yet - it seems there is only as a parameter in the Data Processor and Memory Control Unit. Also in some global parameters but nowhere else
+- no module for joiner for joining the results into DMA
 - clear out the depths (the tables show bits or bytes? Are they correct?)
 - if you want axi lite interface instead of BRAM you have to create the appropriate paramter section first - in vivado it is so full of mistakes that I cannot find actual mistakes that are not just parameters that have not been declared
 - the mcu has signals that have nothing to do with the ones I tried to connect to them
@@ -61,5 +61,6 @@
 
 # Inquiries
 
-- [ ] what is grid and scale share?
-- [ ] why the instantiations of verilog headers?
+- [x] what is grid and scale share?
+- [x] why the instantiations of verilog headers?
+- [ ] when do we need the axi lite interface and when the BRAM interface?

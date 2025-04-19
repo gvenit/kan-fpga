@@ -2,16 +2,16 @@
 `define IF_OPTIONS_INST_H
 
 // Uncomment for AXI-Lite IF for Data 
-`define DATA_IF_IS_AXIL
+//`define DATA_IF_IS_AXIL
 
 // Uncomment for Bram IF for Data 
-// `define DATA_IF_IS_BRAM
+ `define DATA_IF_IS_BRAM
 
 // Uncomment for SHARE_GRID == 1
-`define GRID_IS_SHARED
+//`define GRID_IS_SHARED
 
 // Uncomment for SHARE_SCALE == 1
-`define SCALE_IS_SHARED
+//`define SCALE_IS_SHARED
 
 // Macro fixups -- DO NOT EDIT BEYOND THIS POINT
 `ifdef GRID_IS_SHARED
