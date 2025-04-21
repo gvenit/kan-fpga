@@ -33,26 +33,27 @@ module ExtendedAxisPacketSplitter # (
   // Raise error flag if input packet non divisible
   parameter RAISE_NON_DIVISIBLE = 1
 ) (
-  input  wire                   clk,
-  input  wire                   rst,
+  input  wire                            clk,
+  input  wire                            rst,
 
   /*
    * Control signals
    */
-  input  wire operation_start,
-  input  wire [PCKT_WIDTH-1:0]  pckt_size,
+  input  wire                            operation_start,
+  input  wire [PCKT_WIDTH-1:0]           pckt_size,
   
   /*
    * Input Interrupt signals
    */
-  input  wire external_error,
+  input  wire                            external_error,
   
   /*
    * Output Interrupt signals
    */
-  output reg operation_busy,
-  output reg operation_complete,
-  output reg operation_error,
+  output reg                             operation_busy,
+  output reg                             operation_complete,
+  output reg                             operation_error,
+  output reg  [CHANNELS-1:0]             transmission,
 
   /*
    * AXI Stream Data input
@@ -82,11 +83,12 @@ module ExtendedAxisPacketSplitter # (
   wire [CHANNELS-1:0] operation_busy_bus;
   wire [CHANNELS-1:0] operation_complete_bus;
   wire [CHANNELS-1:0] operation_error_bus;
+  wire [CHANNELS-1:0] transmission_wire;
   wire [CHANNELS-1:0] lock_bus;
 
   wire int_external_error; 
 
-  genvar chn;
+  genvar CHN;
 
   generate
     if (CHANNELS == 1) begin
@@ -140,11 +142,12 @@ module ExtendedAxisPacketSplitter # (
       end
     end
 
-    for (chn = 0; chn < CHANNELS; chn = chn + 1) begin
+    for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin
       wire                   int_lock; 
       wire                   int_operation_busy;
       wire                   int_operation_complete;
       wire                   int_operation_error;
+      wire                   int_transmission;
       wire [DATA_WIDTH-1:0]  int_s_axis_tdata;
       wire [KEEP_WIDTH-1:0]  int_s_axis_tkeep;
       wire                   int_s_axis_tvalid;
@@ -197,6 +200,7 @@ module ExtendedAxisPacketSplitter # (
         .operation_busy      (int_operation_busy),
         .operation_complete  (int_operation_complete),
         .operation_error     (int_operation_error),
+        .transmission        (int_transmission),
         .s_axis_tdata        (int_s_axis_tdata),
         .s_axis_tkeep        (int_s_axis_tkeep),
         .s_axis_tvalid       (int_s_axis_tvalid),  
@@ -213,32 +217,35 @@ module ExtendedAxisPacketSplitter # (
         .m_axis_tid          (int_m_axis_tid),
         .m_axis_tdest        (int_m_axis_tdest),
         .m_axis_tuser        (int_m_axis_tuser)
-    );
+      );
 
-    assign int_lock                     = lock_bus[chn];
-    assign operation_busy_bus[chn]      = int_operation_busy;
-    assign operation_complete_bus[chn]  = int_operation_complete;
-    assign operation_error_bus[chn]     = int_operation_error;
+      assign int_lock                     = lock_bus[CHN];
+      assign operation_busy_bus[CHN]      = int_operation_busy;
+      assign operation_complete_bus[CHN]  = int_operation_complete;
+      assign operation_error_bus[CHN]     = int_operation_error;
 
-    assign int_s_axis_tdata     = s_axis_tdata  [chn*DATA_WIDTH +: DATA_WIDTH];
-    assign int_s_axis_tkeep     = s_axis_tkeep  [chn*KEEP_WIDTH +: KEEP_WIDTH];
-    assign int_s_axis_tvalid    = s_axis_tvalid [chn];
-    assign s_axis_tready [chn]  = int_s_axis_tready;
-    assign int_s_axis_tlast     = s_axis_tlast  [chn];
-    assign int_s_axis_tid       = s_axis_tid    [chn*ID_WIDTH +: ID_WIDTH];
-    assign int_s_axis_tdest     = s_axis_tdest  [chn*DEST_WIDTH +: DEST_WIDTH];
-    assign int_s_axis_tuser     = s_axis_tuser  [chn*USER_WIDTH +: USER_WIDTH];
+      assign int_s_axis_tdata     = s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH];
+      assign int_s_axis_tkeep     = s_axis_tkeep  [CHN*KEEP_WIDTH +: KEEP_WIDTH];
+      assign int_s_axis_tvalid    = s_axis_tvalid [CHN];
+      assign s_axis_tready [CHN]  = int_s_axis_tready;
+      assign int_s_axis_tlast     = s_axis_tlast  [CHN];
+      assign int_s_axis_tid       = s_axis_tid    [CHN*ID_WIDTH +: ID_WIDTH];
+      assign int_s_axis_tdest     = s_axis_tdest  [CHN*DEST_WIDTH +: DEST_WIDTH];
+      assign int_s_axis_tuser     = s_axis_tuser  [CHN*USER_WIDTH +: USER_WIDTH];
 
-    assign m_axis_tdata  [chn*DATA_WIDTH +: DATA_WIDTH] = int_m_axis_tdata;
-    assign m_axis_tkeep  [chn*KEEP_WIDTH +: KEEP_WIDTH] = int_m_axis_tkeep;
-    assign m_axis_tvalid [chn]                          = int_m_axis_tvalid;
-    assign int_m_axis_tready                            = m_axis_tready [chn];
-    assign m_axis_tlast  [chn]                          = int_m_axis_tlast;
-    assign m_axis_tid    [chn*ID_WIDTH +: ID_WIDTH]     = int_m_axis_tid;
-    assign m_axis_tdest  [chn*DEST_WIDTH +: DEST_WIDTH] = int_m_axis_tdest;
-    assign m_axis_tuser  [chn*USER_WIDTH +: USER_WIDTH] = int_m_axis_tuser;
+      assign m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH] = int_m_axis_tdata;
+      assign m_axis_tkeep  [CHN*KEEP_WIDTH +: KEEP_WIDTH] = int_m_axis_tkeep;
+      assign m_axis_tvalid [CHN]                          = int_m_axis_tvalid;
+      assign int_m_axis_tready                            = m_axis_tready [CHN];
+      assign m_axis_tlast  [CHN]                          = int_m_axis_tlast;
+      assign m_axis_tid    [CHN*ID_WIDTH +: ID_WIDTH]     = int_m_axis_tid;
+      assign m_axis_tdest  [CHN*DEST_WIDTH +: DEST_WIDTH] = int_m_axis_tdest;
+      assign m_axis_tuser  [CHN*USER_WIDTH +: USER_WIDTH] = int_m_axis_tuser;
 
-  end
+      always @(*) begin
+        transmission[CHN] <= int_transmission;
+      end
+    end
 
   endgenerate
 endmodule

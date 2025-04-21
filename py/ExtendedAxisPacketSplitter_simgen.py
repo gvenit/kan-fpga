@@ -42,14 +42,14 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
     clk = ports['clk']
     rst = ports['rst']
     
-    operation_start         = ports['operation_start']
+    operation_start       = ports['operation_start']
     pckt_size             = ports['pckt_size']
     
-    external_error          = ports['external_error']
+    external_error        = ports['external_error']
     
-    operation_busy          = ports['operation_busy']
-    operation_complete      = ports['operation_complete']
-    operation_error         = ports['operation_error']
+    operation_busy        = ports['operation_busy']
+    operation_complete    = ports['operation_complete']
+    operation_error       = ports['operation_error']
     
     s_axis_tdata          = ports['s_axis_tdata']
     s_axis_tlast          = ports['s_axis_tlast']
@@ -130,7 +130,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
     def AssertFalse(signal):
         return EmbeddedCode(f'`assertFalse({signal})')
     
-    max_pkt_len = 12
+    max_pckt_len = 12
     pkt_len_0 = 5
     pkt_len_1 = 3
     pkt_len_2 = 6
@@ -301,14 +301,14 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         Wait(~clk),
         s_axis_tvalid[chn](1),
         s_axis_tlast[chn](0),
-        For(data_counter(0), Ors(data_counter < max_pkt_len, operation_error), data_counter.inc())(
+        For(data_counter(0), Ands(data_counter < max_pckt_len, ~operation_error), data_counter.inc())(
             Wait(~clk),
             While(~Ors(s_axis_tready[chn],operation_error))(
                 Wait(clk),
                 Wait(~clk),
             ),
             data_slice(data_counter*(chn+1)),
-            s_axis_tlast[chn](data_counter == max_pkt_len-1),
+            s_axis_tlast[chn](data_counter == max_pckt_len-1),
             Wait(clk),
         ),
         Wait(~clk),
@@ -318,14 +318,14 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         
         # Test 2 : Divisible packet with congestion
         Wait(~clk),
-        For(data_counter(0), Ors(data_counter < max_pkt_len, operation_error), data_counter.inc())(
+        For(data_counter(0), Ands(data_counter < max_pckt_len, ~operation_error), data_counter.inc())(
             s_axis_tvalid[chn](1),
             While(~Ors(s_axis_tready[chn],operation_error))(
                 Wait(clk),
                 Wait(~clk),
             ),
             data_slice(data_counter*(chn+1)),
-            s_axis_tlast[chn](data_counter == max_pkt_len-1),
+            s_axis_tlast[chn](data_counter == max_pckt_len-1),
             Wait(clk),
             Wait(~clk),
         ),
@@ -336,7 +336,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         
         # Test 3 : Divisible packet (different packet size) with data sparcity
         Wait(~clk),
-        For(data_counter(0), Ors(data_counter < max_pkt_len, operation_error), data_counter.inc())(
+        For(data_counter(0), Ands(data_counter < max_pckt_len, ~operation_error), data_counter.inc())(
             s_axis_tvalid[chn](0),
             For(cong_counter(0), cong_counter < CONGESTION_LEVEL, cong_counter.inc())(
                 While(~Ors(s_axis_tready[chn],operation_error))(
@@ -348,7 +348,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
             ),
             s_axis_tvalid[chn](1),
             data_slice(data_counter*(chn+1)),
-            s_axis_tlast[chn](data_counter == max_pkt_len-1),
+            s_axis_tlast[chn](data_counter == max_pckt_len-1),
             Wait(clk),
             Wait(~clk),
         ),
@@ -360,13 +360,13 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 4 : Divisible packet (different packet size) with max throughput
         Wait(~clk),
         s_axis_tvalid[chn](1),
-        For(data_counter(0), Ors(data_counter < max_pkt_len, operation_error), data_counter.inc())(
+        For(data_counter(0), Ands(data_counter < max_pckt_len, ~operation_error), data_counter.inc())(
             While(~Ors(s_axis_tready[chn],operation_error))(
                 Wait(clk),
                 Wait(~clk),
             ),
             data_slice(data_counter*(chn+1)),
-            s_axis_tlast[chn](data_counter == max_pkt_len-1),
+            s_axis_tlast[chn](data_counter == max_pckt_len-1),
             Wait(clk),
             Wait(~clk),
         ),
@@ -403,7 +403,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 1 : Non divisible packet
         Wait(~clk),
         m_axis_tready[chn](1),
-        For(data_counter(0), data_counter < max_pkt_len, data_counter(data_counter+1))(
+        For(data_counter(0), data_counter < max_pckt_len, data_counter(data_counter+1))(
             m_axis_tready[chn](0),
             While(~m_axis_tvalid[chn])(
                 Wait(clk),
@@ -411,7 +411,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
             ),
             m_axis_tready[chn](1),
             Assert(data_slice, data_counter*(chn+1)),
-            Assert(m_axis_tlast[chn], Ors(data_counter%pkt_len_0 == pkt_len_0-1, data_counter == max_pkt_len-1)),
+            Assert(m_axis_tlast[chn], Ors(data_counter%pkt_len_0 == pkt_len_0-1, data_counter == max_pckt_len-1)),
             Wait(clk),
             Wait(~clk),
         ),
@@ -421,7 +421,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         
         # Test 2 : Divisible packet with congestion
         Wait(~clk),
-        For(data_counter(0), data_counter < max_pkt_len, data_counter(data_counter+1))(
+        For(data_counter(0), data_counter < max_pckt_len, data_counter(data_counter+1))(
             m_axis_tready[chn](0),
             For(cong_counter(0), cong_counter < CONGESTION_LEVEL, cong_counter(cong_counter+1))(
                 While(~m_axis_tvalid[chn])(
@@ -444,7 +444,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 3 : Divisible packet (different packet size) with data sparcity
         Wait(~clk),
         m_axis_tready[chn](1),
-        For(data_counter(0), data_counter < max_pkt_len, data_counter(data_counter+1))(
+        For(data_counter(0), data_counter < max_pckt_len, data_counter(data_counter+1))(
             m_axis_tready[chn](0),
             While(~m_axis_tvalid[chn])(
                 Wait(clk),
@@ -463,7 +463,7 @@ def tb_ExtendedAxisPacketSplitter(channels=1):
         # Test 4 : Divisible packet (different packet size) with max throughput
         Wait(~clk),
         m_axis_tready[chn](1),
-        For(data_counter(0), data_counter < max_pkt_len, data_counter(data_counter+1))(
+        For(data_counter(0), data_counter < max_pckt_len, data_counter(data_counter+1))(
             m_axis_tready[chn](0),
             While(~m_axis_tvalid[chn])(
                 Wait(clk),

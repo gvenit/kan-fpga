@@ -54,6 +54,7 @@ module AxisPacketSplitter #(
   output reg                    operation_busy,
   output reg                    operation_complete,
   output reg                    operation_error,
+  output reg                    transmission,       // Active high if bus transmitted data in the current cycle
 
   /*
    * AXI Stream Data input
@@ -242,6 +243,14 @@ module AxisPacketSplitter #(
     .m_axis_tdest(m_axis_tdest),
     .m_axis_tuser(m_axis_tuser)
   );
+
+  // Transmission flag
+  always @(posedge clk ) begin
+    transmission <= 1'b0;
+    if (m_axis_tvalid && m_axis_tready) begin
+      transmission <= 1'b1;
+    end
+  end
 
 endmodule
 

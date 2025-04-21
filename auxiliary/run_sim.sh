@@ -22,7 +22,7 @@ print_exec () {
 }
 usage () {
     echo NAME
-    echo "      run_sim.sh [-h] [-d] [-v] <top_module> [:<top_modules>]" 
+    echo "      run_sim.sh [-h] [-d] [-v] [-p] <top_module> [:<top_modules>]" 
     echo
     echo DESCRIPTION
     echo "      Compiles and executes the simutalion for the proviced testbench."
@@ -50,10 +50,6 @@ while [ "$#" -gt 0 ] ; do
             purge=1
             update=""
             shift ;;
-        -u|--update) 
-            purge=0
-            update="-u"
-            shift ;;
         -*|--*=)  # unsupported flags
             echo "Error: Unsupported flag $1" >&2
             exit 1 ;;
@@ -79,7 +75,7 @@ while [ $1 ] ; do
     if [ -e $(realpath -q "../tb/$module.v") ]; then
         if [ $purge -ge 1 ]; then
             if [ -e $(realpath -q "../out/$module.out") ]; then
-                print_exec rm "./out/$module.out"
+                print_exec rm "../out/$module.out"
             fi
             if [ -e $(realpath -q "../vcd/$module.vcd") ]; then
                 print_exec rm -r "../vcd/$module.vcd"
