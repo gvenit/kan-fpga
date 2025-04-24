@@ -237,7 +237,7 @@ generate
 
   genvar CHN;
   for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin
-    assign s_axis_tuser_int[CHN*(USER_WIDTH+1) +: USER_WIDTH+1] = {generate_tlast, s_axis_tuser[CHN*(USER_WIDTH+1) +: USER_WIDTH]};
+    assign s_axis_tuser_int[CHN*(USER_WIDTH+1) +: USER_WIDTH+1] = {generate_tlast, s_axis_tuser[CHN*USER_WIDTH +: USER_WIDTH]};
   end
 
   axis_mux #(

@@ -40,10 +40,13 @@
  *        s_axil -- AXI-Lite interface for PS-PL communication
  * 
  */
+`include "utils.vh"
 
 module CentralControlUnit #(
   `include "ControlRegisters.vh"
   `include "Peripherals.vh"
+  // Number of PEs in Processing Array k axis -- Number of batches per run
+  parameter BATCH_SIZE = 1,
   // Number of Independent AXI-Stream Data Channels
   parameter DATA_CHANNELS = 1,
   // Number of Independent AXI-Stream Result Channels per Batch
@@ -68,6 +71,8 @@ module CentralControlUnit #(
   output reg  [ADDR_WIDTH_GRID:0]                                   grid_size,
   output reg  [ADDR_WIDTH_SCALE:0]                                  scle_size,
   output reg  [PCKT_SIZE_WIDTH-1:0]                                 pckt_size,
+  output reg  [RSLT_CHANNELS-1:0]                                   use_channels,
+  output reg  [BATCH_SIZE-1:0]                                      use_batch,
   
   /*
    * Input Interrupt signals -- Corresponding clock : Any
@@ -75,6 +80,7 @@ module CentralControlUnit #(
   input  wire [NUM_PERIPHERALS-1:0]                                 peripheral_operation_busy,
   input  wire [NUM_PERIPHERALS-1:0]                                 peripheral_operation_complete,
   input  wire [NUM_PERIPHERALS-1:0]                                 peripheral_operation_error,
+  input  wire [NUM_PERIPHERALS-1:0]                                 peripheral_transmission,
   input  wire                                                       rslt_tlast,
 
   /*
@@ -309,7 +315,7 @@ module CentralControlUnit #(
   assign operation_status_idle_wr = ~|{operation_busy, operation_complete, operation_error};
 
   // Check if operation is error
-  reg  interrupt_soft_reg;
+  reg  interrupt_soft_reg, interrupt_soft_reg_early;
   wire internal_error = |peripheral_operation_error_reg;
   wire external_error = interrupt_error || interrupt_abort || interrupt_soft_reg;
 
@@ -323,6 +329,15 @@ module CentralControlUnit #(
   wire unsigned [31:0] results_iter_size         = (results_left_reg > RSLT_CHANNELS) ? RSLT_CHANNELS : results_left_reg;
   wire unsigned [31:0] results_left_reg_next     = results_left_reg - results_iter_size;
   wire unsigned [31:0] results_exported_reg_next = results_exported_reg + results_iter_size;
+
+  wire [RSLT_CHANNELS-1:0] use_channels_next;
+
+  generate
+    genvar CHN;
+    for (CHN=0; CHN<RSLT_CHANNELS; CHN=CHN+1) begin
+      assign use_channels_next[CHN] = CHN < results_iter_size;
+    end
+  endgenerate
 
   // Check iteration
   reg  unsigned [31:0] iteration_reg;
@@ -350,6 +365,8 @@ module CentralControlUnit #(
       results_exported_reg  <= {32{1'b0}};
 
       locked <= 1'b0;
+      interrupt_soft_reg        <= 1'b0;
+      interrupt_soft_reg_early  <= 1'b0;
 
     end else begin
       fsm_state <= fsm_state_next;
@@ -369,19 +386,25 @@ module CentralControlUnit #(
       operation_complete    <= 1'b0;
       operation_error       <= 1'b0;
 
-      locked <= locked_next;
+      locked                <= locked_next;
+
+      // Soft Interrupts -- Capture soft interrupts, activate at the end of an iteration
+      interrupt_soft_reg        <= interrupt_soft_reg;
+      interrupt_soft_reg_early  <= interrupt_soft_reg_early || interrupt_soft;
 
       case (fsm_state_next)
         FSM_ST0: begin
           results_left_reg      <= {32{1'b0}};
           results_exported_reg  <= {32{1'b0}};
 
+          interrupt_soft_reg        <= 1'b0;
+          interrupt_soft_reg_early  <= 1'b0;
         end
         FSM_STR: begin
           data_size <= data_size_rd[ADDR_WIDTH_DATA :0];
           grid_size <= grid_size_rd[ADDR_WIDTH_GRID :0];
           scle_size <= scle_size_rd[ADDR_WIDTH_SCALE:0];
-          pckt_size  <= pckt_size_rd[PCKT_SIZE_WIDTH  :0];
+          pckt_size <= pckt_size_rd[PCKT_SIZE_WIDTH :0];
 
           results_left_reg      <= rslt_size_rd;
           results_exported_reg  <= {32{1'b0}};
@@ -399,7 +422,9 @@ module CentralControlUnit #(
             results_exported_reg  <= results_exported_reg_next;
           end
           if (rslt_tlast) begin
-            iteration_reg         <= iteration_reg_next;
+            iteration_reg             <= iteration_reg_next;
+            interrupt_soft_reg        <= interrupt_soft_reg_early || interrupt_soft;
+            interrupt_soft_reg_early  <= 1'b0;
           end
         end
         FSM_END: begin
@@ -419,22 +444,23 @@ module CentralControlUnit #(
     end
   end
 
-  `define CHECK_OP_START \
-    if (operation_start) begin \
-      if (operation_valid) begin \
-        fsm_state_next <= FSM_STR; \
-      end else begin \
-        fsm_state_next <= FSM_ERR; \
-      end\
-    end else begin \
-      fsm_state_next <= FSM_ST0; \
-    end 
-
   // Global FSM next state logic
   always @(*) begin
+    fsm_state_next        <= FSM_ST0;
+    locked_next_error     <= 1'b0;
+    locked_next_rslt_done <= 1'b0;
+
     case (fsm_state)
       FSM_ST0: begin
-        `CHECK_OP_START
+        if (operation_start) begin 
+          if (operation_valid) begin 
+            fsm_state_next <= FSM_STR; 
+          end else begin 
+            fsm_state_next <= FSM_ERR; 
+          end
+        end else begin 
+          fsm_state_next <= FSM_ST0; 
+        end 
       end
       FSM_STR: begin
         fsm_state_next <= FSM_OPE;
@@ -445,26 +471,29 @@ module CentralControlUnit #(
         end
       end
       FSM_END: begin
+        // Lock core until RSLT_LOADED is acknowledged (nulled) from PS
+        if (rslt_loaded_rd) begin
+          fsm_state_next        <= FSM_END;
+          locked_next_rslt_done <= 1'b1;
+        end
       end
       FSM_ERR: begin
-        fsm_state_next <= FSM_ST0;
+        // Lock core until external error occures
         locked_next_error <= 1'b1;
-        
+        fsm_state_next    <= FSM_ERR;
       end
       default: begin
-        fsm_state_next <= FSM_ST0;
-        locked_next_error <= 1'b0;
-        locked_next_rslt_done <= 1'b0;
-        
       end 
     endcase
     if (internal_error) begin
-      fsm_state_next <= FSM_ERR;
-      locked_next_error <= 1'b1;
+      fsm_state_next        <= FSM_ERR;
+      locked_next_error     <= 1'b1;
+      locked_next_rslt_done <= 1'b0;
     end
     if (external_error) begin
-      fsm_state_next <= FSM_ITR;
-      locked_next_error <= 1'b0;
+      fsm_state_next        <= FSM_ITR;
+      locked_next_error     <= 1'b0;
+      locked_next_rslt_done <= 1'b0;
     end
     if (rst) begin
       fsm_state_next <= FSM_ST0;

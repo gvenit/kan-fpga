@@ -254,7 +254,7 @@ generate
       operation_busy     <= 1'b0;
       operation_complete <= 1'b0;
       operation_error    <= 1'b0;
-      transmission       <= |batch_transmission;
+      transmission       <= m_axis_tready && m_axis_tvalid;
       if (|batch_operation_error || invalid_batch_config) begin
         operation_error    <= 1'b1;
       end else if (op_done) begin

@@ -133,39 +133,35 @@ module RSWAFFunction #
 
   if (SHARE_GRID && CHANNELS > 1) begin
     axis_broadcast #(
-      .M_COUNT(CHANNELS),
-      .DATA_WIDTH(DATA_WIDTH_DATA),
-      .KEEP_ENABLE(0),
-      .KEEP_WIDTH(1),
-      .LAST_ENABLE(1),
-      .ID_ENABLE(ID_ENABLE),
-      .ID_WIDTH(ID_WIDTH),
-      .DEST_ENABLE(DEST_ENABLE),
-      .DEST_WIDTH(DEST_WIDTH),
-      .USER_ENABLE(USER_ENABLE),
-      .USER_WIDTH(USER_WIDTH)
-    )
-    axis_broadcast_inst (
-      .clk(clk),
-      .rst(rst),
-      // AXI input
-      .s_axis_tdata(s_axis_grid_tdata),
-      .s_axis_tkeep(1'b1),
-      .s_axis_tvalid(s_axis_grid_tvalid),
-      .s_axis_tready(s_axis_grid_tready),
-      .s_axis_tlast(s_axis_grid_tlast),
-      .s_axis_tid(s_axis_grid_tid),
-      .s_axis_tdest(s_axis_grid_tdest),
-      .s_axis_tuser(s_axis_grid_tuser),
-      // AXI outputs
-      .m_axis_tdata(s_axis_grid_tdata_int),
-      // .m_axis_tkeep(s_axis_grid_tkeep_int),
-      .m_axis_tvalid(s_axis_grid_tvalid_int),
-      .m_axis_tready(s_axis_grid_tready_int),
-      .m_axis_tlast(s_axis_grid_tlast_int),
-      .m_axis_tid(s_axis_grid_tid_int),
-      .m_axis_tdest(s_axis_grid_tdest_int),
-      .m_axis_tuser(s_axis_grid_tuser_int)
+      .M_COUNT            (CHANNELS),
+      .DATA_WIDTH         (DATA_WIDTH_DATA),
+      .KEEP_ENABLE        (0),
+      .KEEP_WIDTH         (1),
+      .LAST_ENABLE        (1),
+      .ID_ENABLE          (ID_ENABLE),
+      .ID_WIDTH           (ID_WIDTH),
+      .DEST_ENABLE        (DEST_ENABLE),
+      .DEST_WIDTH         (DEST_WIDTH),
+      .USER_ENABLE        (USER_ENABLE),
+      .USER_WIDTH         (USER_WIDTH)
+    ) axis_broadcast_inst (
+      .clk                (clk),
+      .rst                (rst),
+      .s_axis_tdata       (s_axis_grid_tdata),
+      .s_axis_tkeep       (1'b1),
+      .s_axis_tvalid      (s_axis_grid_tvalid),
+      .s_axis_tready      (s_axis_grid_tready),
+      .s_axis_tlast       (s_axis_grid_tlast),
+      .s_axis_tid         (s_axis_grid_tid),
+      .s_axis_tdest       (s_axis_grid_tdest),
+      .s_axis_tuser       (s_axis_grid_tuser),
+      .m_axis_tdata       (s_axis_grid_tdata_int),
+      .m_axis_tvalid      (s_axis_grid_tvalid_int),
+      .m_axis_tready      (s_axis_grid_tready_int),
+      .m_axis_tlast       (s_axis_grid_tlast_int),
+      .m_axis_tid         (s_axis_grid_tid_int),
+      .m_axis_tdest       (s_axis_grid_tdest_int),
+      .m_axis_tuser       (s_axis_grid_tuser_int)
     );
   end else begin
     assign s_axis_grid_tdata_int   = s_axis_grid_tdata;
@@ -179,39 +175,35 @@ module RSWAFFunction #
 
   if (SHARE_SCALE && CHANNELS > 1) begin
     axis_broadcast #(
-      .M_COUNT(CHANNELS),
-      .DATA_WIDTH(DATA_WIDTH_SCALE),
-      .KEEP_ENABLE(0),
-      .KEEP_WIDTH(1),
-      .LAST_ENABLE(1),
-      .ID_ENABLE(ID_ENABLE),
-      .ID_WIDTH(ID_WIDTH),
-      .DEST_ENABLE(DEST_ENABLE),
-      .DEST_WIDTH(DEST_WIDTH),
-      .USER_ENABLE(USER_ENABLE),
-      .USER_WIDTH(USER_WIDTH)
-    )
-    axis_broadcast_inst (
-      .clk(clk),
-      .rst(rst),
-      // AXI input
-      .s_axis_tdata(s_axis_scle_tdata),
-      .s_axis_tkeep(1'b1),
-      .s_axis_tvalid(s_axis_scle_tvalid),
-      .s_axis_tready(s_axis_scle_tready),
-      .s_axis_tlast(s_axis_scle_tlast),
-      .s_axis_tid(s_axis_scle_tid),
-      .s_axis_tdest(s_axis_scle_tdest),
-      .s_axis_tuser(s_axis_scle_tuser),
-      // AXI outputs
-      .m_axis_tdata(s_axis_scle_tdata_int),
-      // .m_axis_tkeep(s_axis_scle_tkeep_int),
-      .m_axis_tvalid(s_axis_scle_tvalid_int),
-      .m_axis_tready(s_axis_scle_tready_int),
-      .m_axis_tlast(s_axis_scle_tlast_int),
-      .m_axis_tid(s_axis_scle_tid_int),
-      .m_axis_tdest(s_axis_scle_tdest_int),
-      .m_axis_tuser(s_axis_scle_tuser_int)
+      .M_COUNT          (CHANNELS),
+      .DATA_WIDTH       (DATA_WIDTH_SCALE),
+      .KEEP_ENABLE      (0),
+      .KEEP_WIDTH       (1),
+      .LAST_ENABLE      (1),
+      .ID_ENABLE        (ID_ENABLE),
+      .ID_WIDTH         (ID_WIDTH),
+      .DEST_ENABLE      (DEST_ENABLE),
+      .DEST_WIDTH       (DEST_WIDTH),
+      .USER_ENABLE      (USER_ENABLE),
+      .USER_WIDTH       (USER_WIDTH)
+    ) axis_broadcast_inst (
+      .clk              (clk),
+      .rst              (rst),
+      .s_axis_tdata     (s_axis_scle_tdata),
+      .s_axis_tkeep     (1'b1),
+      .s_axis_tvalid    (s_axis_scle_tvalid),
+      .s_axis_tready    (s_axis_scle_tready),
+      .s_axis_tlast     (s_axis_scle_tlast),
+      .s_axis_tid       (s_axis_scle_tid),
+      .s_axis_tdest     (s_axis_scle_tdest),
+      .s_axis_tuser     (s_axis_scle_tuser),
+      .m_axis_tdata     (s_axis_scle_tdata_int),
+      .m_axis_tvalid    (s_axis_scle_tvalid_int),
+      .m_axis_tready    (s_axis_scle_tready_int),
+      .m_axis_tlast     (s_axis_scle_tlast_int),
+      .m_axis_tid       (s_axis_scle_tid_int),
+      .m_axis_tdest     (s_axis_scle_tdest_int),
+      .m_axis_tuser     (s_axis_scle_tuser_int)
     );
   end else begin
     assign s_axis_scle_tdata_int   = s_axis_scle_tdata;
@@ -265,7 +257,7 @@ module RSWAFFunction #
     wire [USER_WIDTH-1:0]       scaled_diff_axis_data_tuser_slice;
     
     assign s_in_axis_data_tdata_slice  = s_axis_data_tdata[(CHN+1)*DATA_WIDTH_DATA -1: CHN*DATA_WIDTH_DATA];
-    // assign s_in_axis_data_tkeep_slice  = s_axis_data_tkeep[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
+    // assign s_in_axis_data_tkeep_slice  = s_axis_data_tkeep[CHN*KEEP_WIDTH_DATA +: KEEP_WIDTH_DATA];
     assign s_in_axis_data_tvalid_slice = s_axis_data_tvalid[CHN];
     assign s_axis_data_tready[CHN]     = s_in_axis_data_tready_slice;
     assign s_in_axis_data_tlast_slice  = s_axis_data_tlast[CHN];
@@ -273,23 +265,23 @@ module RSWAFFunction #
     assign s_in_axis_data_tdest_slice  = s_axis_data_tdest[(CHN+1)*DEST_WIDTH -1: CHN*DEST_WIDTH];
     assign s_in_axis_data_tuser_slice  = s_axis_data_tuser[(CHN+1)*USER_WIDTH -1: CHN*USER_WIDTH];
   
-    assign s_in_axis_grid_tdata_slice  = s_axis_grid_tdata_int[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
-    // assign s_in_axis_grid_tkeep_slice  = s_axis_grid_tkeep_int[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
+    assign s_in_axis_grid_tdata_slice  = s_axis_grid_tdata_int[CHN*DATA_WIDTH_DATA +: DATA_WIDTH_DATA];
+    // assign s_in_axis_grid_tkeep_slice  = s_axis_grid_tkeep_int[CHN*KEEP_WIDTH_DATA +: KEEP_WIDTH_DATA];
     assign s_in_axis_grid_tvalid_slice = s_axis_grid_tvalid_int[CHN];
     assign s_axis_grid_tready_int[CHN] = s_in_axis_grid_tready_slice;
     assign s_in_axis_grid_tlast_slice  = s_axis_grid_tlast_int[CHN];
-    assign s_in_axis_grid_tid_slice    = s_axis_grid_tid_int  [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH];
-    assign s_in_axis_grid_tdest_slice  = s_axis_grid_tdest_int[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
-    assign s_in_axis_grid_tuser_slice  = s_axis_grid_tuser_int[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
+    assign s_in_axis_grid_tid_slice    = s_axis_grid_tid_int  [CHN*ID_WIDTH +: ID_WIDTH];
+    assign s_in_axis_grid_tdest_slice  = s_axis_grid_tdest_int[CHN*DEST_WIDTH +: DEST_WIDTH];
+    assign s_in_axis_grid_tuser_slice  = s_axis_grid_tuser_int[CHN*USER_WIDTH +: USER_WIDTH];
   
-    assign s_in_axis_scale_tdata_slice  = s_axis_scle_tdata_int[(CHN+1)*DATA_WIDTH_DATA-1 : CHN*DATA_WIDTH_DATA];
-    // assign s_in_axis_scale_tkeep_slice  = s_axis_scle_tkeep_int[(CHN+1)*KEEP_WIDTH_DATA-1 : CHN*KEEP_WIDTH_DATA];
+    assign s_in_axis_scale_tdata_slice  = s_axis_scle_tdata_int[CHN*DATA_WIDTH_DATA +: DATA_WIDTH_DATA];
+    // assign s_in_axis_scale_tkeep_slice  = s_axis_scle_tkeep_int[CHN*KEEP_WIDTH_DATA +: KEEP_WIDTH_DATA];
     assign s_in_axis_scale_tvalid_slice = s_axis_scle_tvalid_int[CHN];
     assign s_axis_scle_tready_int[CHN] = s_in_axis_scale_tready_slice;
     assign s_in_axis_scale_tlast_slice  = s_axis_scle_tlast_int[CHN];
-    assign s_in_axis_scale_tid_slice    = s_axis_scle_tid_int  [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH];
-    assign s_in_axis_scale_tdest_slice  = s_axis_scle_tdest_int[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH];
-    assign s_in_axis_scale_tuser_slice  = s_axis_scle_tuser_int[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH];
+    assign s_in_axis_scale_tid_slice    = s_axis_scle_tid_int  [CHN*ID_WIDTH +: ID_WIDTH];
+    assign s_in_axis_scale_tdest_slice  = s_axis_scle_tdest_int[CHN*DEST_WIDTH +: DEST_WIDTH];
+    assign s_in_axis_scale_tuser_slice  = s_axis_scle_tuser_int[CHN*USER_WIDTH +: USER_WIDTH];
 
     axis_srl_fifo #(
       // Width of AXI stream interfaces in bits
@@ -315,32 +307,23 @@ module RSWAFFunction #
       // FIFO depth in cycles
       .DEPTH(8)
     ) axis_fifo_data_inst (
-      .clk(clk),
-      .rst(rst),
-
-      /*
-      * AXI input
-      */
-      .s_axis_tdata(s_in_axis_data_tdata_slice),
-      .s_axis_tkeep(1'b1),
-      .s_axis_tvalid(s_in_axis_data_tvalid_slice),
-      .s_axis_tready(s_in_axis_data_tready_slice),
-      .s_axis_tlast(s_in_axis_data_tlast_slice),
-      .s_axis_tid(s_in_axis_data_tid_slice),
-      .s_axis_tdest(s_in_axis_data_tdest_slice),
-      .s_axis_tuser(s_in_axis_data_tuser_slice),
-
-      /*
-      * AXI output
-      */
-      .m_axis_tdata(s_fifo_axis_data_tdata_slice),
-      // .m_axis_tkeep(s_fifo_axis_data_tkeep_slice),
-      .m_axis_tvalid(s_fifo_axis_data_tvalid_slice),
-      .m_axis_tready(s_fifo_axis_data_tready_slice),
-      .m_axis_tlast(s_fifo_axis_data_tlast_slice),
-      .m_axis_tid(s_fifo_axis_data_tid_slice),
-      .m_axis_tdest(s_fifo_axis_data_tdest_slice),
-      .m_axis_tuser(s_fifo_axis_data_tuser_slice)
+      .clk              (clk),
+      .rst              (rst),
+      .s_axis_tdata     (s_in_axis_data_tdata_slice),
+      .s_axis_tkeep     (1'b1),
+      .s_axis_tvalid    (s_in_axis_data_tvalid_slice),
+      .s_axis_tready    (s_in_axis_data_tready_slice),
+      .s_axis_tlast     (s_in_axis_data_tlast_slice),
+      .s_axis_tid       (s_in_axis_data_tid_slice),
+      .s_axis_tdest     (s_in_axis_data_tdest_slice),
+      .s_axis_tuser     (s_in_axis_data_tuser_slice),
+      .m_axis_tdata     (s_fifo_axis_data_tdata_slice),
+      .m_axis_tvalid    (s_fifo_axis_data_tvalid_slice),
+      .m_axis_tready    (s_fifo_axis_data_tready_slice),
+      .m_axis_tlast     (s_fifo_axis_data_tlast_slice),
+      .m_axis_tid       (s_fifo_axis_data_tid_slice),
+      .m_axis_tdest     (s_fifo_axis_data_tdest_slice),
+      .m_axis_tuser     (s_fifo_axis_data_tuser_slice)
     );
     
     axis_srl_fifo #(
@@ -367,32 +350,23 @@ module RSWAFFunction #
       // FIFO depth in cycles
       .DEPTH(8)
     ) axis_fifo_grid_inst (
-      .clk(clk),
-      .rst(rst),
-
-      /*
-      * AXI input
-      */
-      .s_axis_tdata(s_in_axis_grid_tdata_slice),
-      .s_axis_tkeep(1'b1),
-      .s_axis_tvalid(s_in_axis_grid_tvalid_slice),
-      .s_axis_tready(s_in_axis_grid_tready_slice),
-      .s_axis_tlast(s_in_axis_grid_tlast_slice),
-      .s_axis_tid(s_in_axis_grid_tid_slice),
-      .s_axis_tdest(s_in_axis_grid_tdest_slice),
-      .s_axis_tuser(s_in_axis_grid_tuser_slice),
-
-      /*
-      * AXI output
-      */
-      .m_axis_tdata(s_fifo_axis_grid_tdata_slice),
-      // .m_axis_tkeep(s_fifo_axis_grid_tkeep_slice),
-      .m_axis_tvalid(s_fifo_axis_grid_tvalid_slice),
-      .m_axis_tready(s_fifo_axis_grid_tready_slice),
-      .m_axis_tlast(s_fifo_axis_grid_tlast_slice),
-      .m_axis_tid(s_fifo_axis_grid_tid_slice),
-      .m_axis_tdest(s_fifo_axis_grid_tdest_slice),
-      .m_axis_tuser(s_fifo_axis_grid_tuser_slice)
+      .clk            (clk),
+      .rst            (rst),
+      .s_axis_tdata   (s_in_axis_grid_tdata_slice),
+      .s_axis_tkeep   (1'b1),
+      .s_axis_tvalid  (s_in_axis_grid_tvalid_slice),
+      .s_axis_tready  (s_in_axis_grid_tready_slice),
+      .s_axis_tlast   (s_in_axis_grid_tlast_slice),
+      .s_axis_tid     (s_in_axis_grid_tid_slice),
+      .s_axis_tdest   (s_in_axis_grid_tdest_slice),
+      .s_axis_tuser   (s_in_axis_grid_tuser_slice),
+      .m_axis_tdata   (s_fifo_axis_grid_tdata_slice),
+      .m_axis_tvalid  (s_fifo_axis_grid_tvalid_slice),
+      .m_axis_tready  (s_fifo_axis_grid_tready_slice),
+      .m_axis_tlast   (s_fifo_axis_grid_tlast_slice),
+      .m_axis_tid     (s_fifo_axis_grid_tid_slice),
+      .m_axis_tdest   (s_fifo_axis_grid_tdest_slice),
+      .m_axis_tuser   (s_fifo_axis_grid_tuser_slice)
     );
     
     
@@ -420,125 +394,116 @@ module RSWAFFunction #
       // FIFO depth in cycles
       .DEPTH(8)
     ) axis_fifo_scale_inst (
-      .clk(clk),
-      .rst(rst),
-
-      /*
-      * AXI input
-      */
-      .s_axis_tdata(s_in_axis_scale_tdata_slice),
-      .s_axis_tkeep(1'b1),
-      .s_axis_tvalid(s_in_axis_scale_tvalid_slice),
-      .s_axis_tready(s_in_axis_scale_tready_slice),
-      .s_axis_tlast(s_in_axis_scale_tlast_slice),
-      .s_axis_tid(s_in_axis_scale_tid_slice),
-      .s_axis_tdest(s_in_axis_scale_tdest_slice),
-      .s_axis_tuser(s_in_axis_scale_tuser_slice),
-
-      /*
-      * AXI output
-      */
-      .m_axis_tdata(s_fifo_axis_scale_tdata_slice),
-      // .m_axis_tkeep(s_fifo_axis_scale_tkeep_slice),
-      .m_axis_tvalid(s_fifo_axis_scale_tvalid_slice),
-      .m_axis_tready(s_fifo_axis_scale_tready_slice),
-      .m_axis_tlast(s_fifo_axis_scale_tlast_slice),
-      .m_axis_tid(s_fifo_axis_scale_tid_slice),
-      .m_axis_tdest(s_fifo_axis_scale_tdest_slice),
-      .m_axis_tuser(s_fifo_axis_scale_tuser_slice)
+      .clk              (clk),
+      .rst              (rst),
+      .s_axis_tdata     (s_in_axis_scale_tdata_slice),
+      .s_axis_tkeep     (1'b1),
+      .s_axis_tvalid    (s_in_axis_scale_tvalid_slice),
+      .s_axis_tready    (s_in_axis_scale_tready_slice),
+      .s_axis_tlast     (s_in_axis_scale_tlast_slice),
+      .s_axis_tid       (s_in_axis_scale_tid_slice),
+      .s_axis_tdest     (s_in_axis_scale_tdest_slice),
+      .s_axis_tuser     (s_in_axis_scale_tuser_slice),
+      .m_axis_tdata     (s_fifo_axis_scale_tdata_slice),
+      .m_axis_tvalid    (s_fifo_axis_scale_tvalid_slice),
+      .m_axis_tready    (s_fifo_axis_scale_tready_slice),
+      .m_axis_tlast     (s_fifo_axis_scale_tlast_slice),
+      .m_axis_tid       (s_fifo_axis_scale_tid_slice),
+      .m_axis_tdest     (s_fifo_axis_scale_tdest_slice),
+      .m_axis_tuser     (s_fifo_axis_scale_tuser_slice)
     );
     
     SubMultAbs #(
-      .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
-      .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
-      .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
-      .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
-      .DATA_WIDTH_RSLT(DATA_WIDTH_SCALED_DIFF),
-      .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_SCALED_DIFF),
-      .ID_ENABLE(ID_ENABLE),
-      .ID_WIDTH(ID_WIDTH),
-      .DEST_ENABLE(DEST_ENABLE),
-      .DEST_WIDTH(DEST_WIDTH),
-      .USER_ENABLE(USER_ENABLE),
-      .USER_WIDTH(USER_WIDTH)
+      .DATA_WIDTH_DATA        (DATA_WIDTH_DATA),
+      .FRACTIONAL_BITS_DATA   (FRACTIONAL_BITS_DATA),
+      .DATA_WIDTH_SCALE       (DATA_WIDTH_SCALE),
+      .FRACTIONAL_BITS_SCALE  (FRACTIONAL_BITS_SCALE),
+      .DATA_WIDTH_RSLT        (DATA_WIDTH_SCALED_DIFF),
+      .FRACTIONAL_BITS_RSLT   (FRACTIONAL_BITS_SCALED_DIFF),
+      .ID_ENABLE              (ID_ENABLE),
+      .ID_WIDTH               (ID_WIDTH),
+      .DEST_ENABLE            (DEST_ENABLE),
+      .DEST_WIDTH             (DEST_WIDTH),
+      .USER_ENABLE            (USER_ENABLE),
+      .USER_WIDTH             (USER_WIDTH)
     ) SubMultAbs_inst (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_data_tdata(s_fifo_axis_data_tdata_slice),
-      .s_axis_data_tvalid(s_fifo_axis_data_tvalid_slice),
-      .s_axis_data_tready(s_fifo_axis_data_tready_slice),
-      .s_axis_data_tlast(s_fifo_axis_data_tlast_slice),
-      .s_axis_data_tid(s_fifo_axis_data_tid_slice),
-      .s_axis_data_tdest(s_fifo_axis_data_tdest_slice),
-      .s_axis_data_tuser(s_fifo_axis_data_tuser_slice),
-      .s_axis_grid_tdata(s_fifo_axis_grid_tdata_slice),
-      .s_axis_grid_tvalid(s_fifo_axis_grid_tvalid_slice),
-      .s_axis_grid_tready(s_fifo_axis_grid_tready_slice),
-      .s_axis_grid_tlast(s_fifo_axis_grid_tlast_slice),
-      .s_axis_grid_tid(s_fifo_axis_grid_tid_slice),
-      .s_axis_grid_tdest(s_fifo_axis_grid_tdest_slice),
-      .s_axis_grid_tuser(s_fifo_axis_grid_tuser_slice),
-      .s_axis_scle_tdata(s_fifo_axis_scale_tdata_slice),
-      .s_axis_scle_tvalid(s_fifo_axis_scale_tvalid_slice),
-      .s_axis_scle_tready(s_fifo_axis_scale_tready_slice),
-      .s_axis_scle_tlast(s_fifo_axis_scale_tlast_slice),
-      .s_axis_scle_tid(s_fifo_axis_scale_tid_slice),
-      .s_axis_scle_tdest(s_fifo_axis_scale_tdest_slice),
-      .s_axis_scle_tuser(s_fifo_axis_scale_tuser_slice),
-      .m_axis_data_tdata(scaled_diff_axis_data_tdata_slice),
-      .m_axis_data_tvalid(scaled_diff_axis_data_tvalid_slice),
-      .m_axis_data_tready(scaled_diff_axis_data_tready_slice),
-      .m_axis_data_tlast(scaled_diff_axis_data_tlast_slice),
-      .m_axis_data_tid(scaled_diff_axis_data_tid_slice),
-      .m_axis_data_tdest(scaled_diff_axis_data_tdest_slice),
-      .m_axis_data_tuser(scaled_diff_axis_data_tuser_slice)
+      .clk                    (clk),
+      .rst                    (rst),
+      .s_axis_data_tdata      (s_fifo_axis_data_tdata_slice),
+      .s_axis_data_tvalid     (s_fifo_axis_data_tvalid_slice),
+      .s_axis_data_tready     (s_fifo_axis_data_tready_slice),
+      .s_axis_data_tlast      (s_fifo_axis_data_tlast_slice),
+      .s_axis_data_tid        (s_fifo_axis_data_tid_slice),
+      .s_axis_data_tdest      (s_fifo_axis_data_tdest_slice),
+      .s_axis_data_tuser      (s_fifo_axis_data_tuser_slice),
+      .s_axis_grid_tdata      (s_fifo_axis_grid_tdata_slice),
+      .s_axis_grid_tvalid     (s_fifo_axis_grid_tvalid_slice),
+      .s_axis_grid_tready     (s_fifo_axis_grid_tready_slice),
+      .s_axis_grid_tlast      (s_fifo_axis_grid_tlast_slice),
+      .s_axis_grid_tid        (s_fifo_axis_grid_tid_slice),
+      .s_axis_grid_tdest      (s_fifo_axis_grid_tdest_slice),
+      .s_axis_grid_tuser      (s_fifo_axis_grid_tuser_slice),
+      .s_axis_scle_tdata      (s_fifo_axis_scale_tdata_slice),
+      .s_axis_scle_tvalid     (s_fifo_axis_scale_tvalid_slice),
+      .s_axis_scle_tready     (s_fifo_axis_scale_tready_slice),
+      .s_axis_scle_tlast      (s_fifo_axis_scale_tlast_slice),
+      .s_axis_scle_tid        (s_fifo_axis_scale_tid_slice),
+      .s_axis_scle_tdest      (s_fifo_axis_scale_tdest_slice),
+      .s_axis_scle_tuser      (s_fifo_axis_scale_tuser_slice),
+      .m_axis_data_tdata      (scaled_diff_axis_data_tdata_slice),
+      .m_axis_data_tvalid     (scaled_diff_axis_data_tvalid_slice),
+      .m_axis_data_tready     (scaled_diff_axis_data_tready_slice),
+      .m_axis_data_tlast      (scaled_diff_axis_data_tlast_slice),
+      .m_axis_data_tid        (scaled_diff_axis_data_tid_slice),
+      .m_axis_data_tdest      (scaled_diff_axis_data_tdest_slice),
+      .m_axis_data_tuser      (scaled_diff_axis_data_tuser_slice)
     );
 
-    assign scaled_diff_axis_data_tdata [(CHN+1)*DATA_WIDTH_SCALED_DIFF-1 : CHN*DATA_WIDTH_SCALED_DIFF]  = scaled_diff_axis_data_tdata_slice;
+    assign scaled_diff_axis_data_tdata [CHN*DATA_WIDTH_SCALED_DIFF +: DATA_WIDTH_SCALED_DIFF]  = scaled_diff_axis_data_tdata_slice;
     assign scaled_diff_axis_data_tlast [CHN] = scaled_diff_axis_data_tlast_slice;
     assign scaled_diff_axis_data_tvalid[CHN] = scaled_diff_axis_data_tvalid_slice;
     assign scaled_diff_axis_data_tready_slice= scaled_diff_axis_data_tready[CHN];
-    assign scaled_diff_axis_data_tid   [(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH]      = scaled_diff_axis_data_tid_slice;
-    assign scaled_diff_axis_data_tdest [(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH]  = scaled_diff_axis_data_tdest_slice;
-    assign scaled_diff_axis_data_tuser [(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH]  = scaled_diff_axis_data_tuser_slice;
+    assign scaled_diff_axis_data_tid   [CHN*ID_WIDTH +: ID_WIDTH]      = scaled_diff_axis_data_tid_slice;
+    assign scaled_diff_axis_data_tdest [CHN*DEST_WIDTH +: DEST_WIDTH]  = scaled_diff_axis_data_tdest_slice;
+    assign scaled_diff_axis_data_tuser [CHN*USER_WIDTH +: USER_WIDTH]  = scaled_diff_axis_data_tuser_slice;
     
   end
 
   endgenerate
 
   Sech2Lutram #(
-    .DATA_WIDTH_DATA(DATA_WIDTH_SCALED_DIFF),
-    .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_SCALED_DIFF),
-    .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
-    .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
-    .KEEP_ENABLE_DATA(0),
-    .KEEP_WIDTH_DATA(1),
-    .ID_ENABLE(ID_ENABLE),
-    .ID_WIDTH(ID_WIDTH),
-    .DEST_ENABLE(DEST_ENABLE),
-    .DEST_WIDTH(DEST_WIDTH),
-    .USER_ENABLE(USER_ENABLE),
-    .USER_WIDTH(USER_WIDTH),
-    .CHANNELS(CHANNELS),
-    .ROM_DATA_PATH(ROM_DATA_PATH)
+    .DATA_WIDTH_DATA      (DATA_WIDTH_SCALED_DIFF),
+    .FRACTIONAL_BITS_DATA (FRACTIONAL_BITS_SCALED_DIFF),
+    .DATA_WIDTH_RSLT      (DATA_WIDTH_RSLT),
+    .FRACTIONAL_BITS_RSLT (FRACTIONAL_BITS_RSLT),
+    .KEEP_ENABLE_DATA     (0),
+    .KEEP_WIDTH_DATA      (1),
+    .ID_ENABLE            (ID_ENABLE),
+    .ID_WIDTH             (ID_WIDTH),
+    .DEST_ENABLE          (DEST_ENABLE),
+    .DEST_WIDTH           (DEST_WIDTH),
+    .USER_ENABLE          (USER_ENABLE),
+    .USER_WIDTH           (USER_WIDTH),
+    .CHANNELS             (CHANNELS),
+    .ROM_DATA_PATH        (ROM_DATA_PATH)
   ) Sech2Lutram_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_0_tdata(scaled_diff_axis_data_tdata),
-    .s_axis_0_tlast(scaled_diff_axis_data_tlast),
-    .s_axis_0_tvalid(scaled_diff_axis_data_tvalid),
-    .s_axis_0_tready(scaled_diff_axis_data_tready),
-    .s_axis_0_tid(scaled_diff_axis_data_tid),
-    .s_axis_0_tdest(scaled_diff_axis_data_tdest),
-    .s_axis_0_tuser(scaled_diff_axis_data_tuser),
-    .m_axis_0_tdata(m_axis_data_tdata),
-    // .m_axis_0_tkeep(m_axis_data_tkeep),
-    .m_axis_0_tlast(m_axis_data_tlast),
-    .m_axis_0_tvalid(m_axis_data_tvalid),
-    .m_axis_0_tready(m_axis_data_tready),
-    .m_axis_0_tid(m_axis_data_tid),
-    .m_axis_0_tdest(m_axis_data_tdest),
-    .m_axis_0_tuser(m_axis_data_tuser)
+    .clk                  (clk),
+    .rst                  (rst),
+    .s_axis_0_tdata       (scaled_diff_axis_data_tdata),
+    .s_axis_0_tlast       (scaled_diff_axis_data_tlast),
+    .s_axis_0_tvalid      (scaled_diff_axis_data_tvalid),
+    .s_axis_0_tready      (scaled_diff_axis_data_tready),
+    .s_axis_0_tid         (scaled_diff_axis_data_tid),
+    .s_axis_0_tdest       (scaled_diff_axis_data_tdest),
+    .s_axis_0_tuser       (scaled_diff_axis_data_tuser),
+    .m_axis_0_tdata       (m_axis_data_tdata),
+    // .m_axis_0_tkeep       (m_axis_data_tkeep),
+    .m_axis_0_tlast       (m_axis_data_tlast),
+    .m_axis_0_tvalid      (m_axis_data_tvalid),
+    .m_axis_0_tready      (m_axis_data_tready),
+    .m_axis_0_tid         (m_axis_data_tid),
+    .m_axis_0_tdest       (m_axis_data_tdest),
+    .m_axis_0_tuser       (m_axis_data_tuser)
   );
 
 endmodule

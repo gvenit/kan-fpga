@@ -32,13 +32,13 @@ generate
     ) bram_inst (
       .clk(clk),
       .ena(ena[i]),
-      .wea(wea[(i+1)*WE-1 : i*WE]),
-      .addra(addra[(i+1)*ADDR-1 : i*ADDR]),
-      .dina(dina[(i+1)*WIDTH-1 : i*WIDTH]),
-      .douta(douta[(i+1)*WIDTH-1 : i*WIDTH]),
+      .wea(wea[i*WE +: WE]),
+      .addra(addra[i*ADDR +: ADDR]),
+      .dina(dina[i*WIDTH +: WIDTH]),
+      .douta(douta[i*WIDTH +: WIDTH]),
       .enb(enb[i]),
-      .addrb(addrb[(i+1)*ADDR-1 : i*ADDR]),
-      .doutb(doutb[(i+1)*WIDTH-1 : i*WIDTH]),
+      .addrb(addrb[i*ADDR +: ADDR]),
+      .doutb(doutb[i*WIDTH +: WIDTH]),
       .validb(validb[i])
     );
   end

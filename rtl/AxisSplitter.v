@@ -158,11 +158,11 @@ module AxisSplitter #(
   generate
     for ( CHN = 0 ; CHN < CHANNELS ; CHN=CHN+1 ) begin
       // Break Internal AXI_Stream Data into channels
-      assign int_axis_chn_tdata    [CHN] = int_axis_tdata  [(CHN+1)*OUTPUT_DATA_WIDTH-1 : CHN*OUTPUT_DATA_WIDTH];
+      assign int_axis_chn_tdata    [CHN] = int_axis_tdata  [CHN*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH];
 
       if (INPUT_KEEP_ENABLE) begin
         // Split KEEP signal to the corresponding channel
-        assign int_axis_chn_tkeep  [CHN] = int_axis_tkeep [(CHN+1)*OUTPUT_KEEP_WIDTH-1 : CHN*OUTPUT_KEEP_WIDTH];
+        assign int_axis_chn_tkeep  [CHN] = int_axis_tkeep [CHN*OUTPUT_KEEP_WIDTH +: OUTPUT_KEEP_WIDTH];
 
         // Check if there is data to keep in each channel
         assign keep_channels       [CHN] = |( int_axis_chn_tkeep[CHN] );
@@ -200,36 +200,36 @@ module AxisSplitter #(
           // 0 to bypass, 1 for simple buffer, 2 for skid buffer
           .REG_TYPE(2)
         ) out_axis_register_inst (
-          .clk(clk),
-          .rst(rst),
-          .s_axis_tdata(int_axis_chn_tdata[CHN]),
-          .s_axis_tkeep(int_axis_chn_tkeep[CHN]),
-          .s_axis_tvalid(int_axis_chn_tvalid[CHN]),
-          .s_axis_tready(int_axis_chn_tready[CHN]),
-          .s_axis_tlast(int_axis_tlast),
-          .s_axis_tid(int_axis_tid),
-          .s_axis_tdest(int_axis_tdest),
-          .s_axis_tuser(int_axis_tuser),
-          .m_axis_tdata(m_axis_tdata[(CHN+1)*OUTPUT_DATA_WIDTH-1 : CHN*OUTPUT_DATA_WIDTH]),
-          .m_axis_tkeep(m_axis_tkeep[(CHN+1)*OUTPUT_KEEP_WIDTH-1 : CHN*OUTPUT_KEEP_WIDTH]),
-          .m_axis_tvalid(m_axis_tvalid[CHN]),
-          .m_axis_tready(m_axis_tready[CHN]),
-          .m_axis_tlast(m_axis_tlast[CHN]),
-          .m_axis_tid(m_axis_tid[(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH]),
-          .m_axis_tdest(m_axis_tdest[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH]),
-          .m_axis_tuser(m_axis_tuser[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH])
+          .clk            (clk),
+          .rst            (rst),
+          .s_axis_tdata   (int_axis_chn_tdata[CHN]),
+          .s_axis_tkeep   (int_axis_chn_tkeep[CHN]),
+          .s_axis_tvalid  (int_axis_chn_tvalid[CHN]),
+          .s_axis_tready  (int_axis_chn_tready[CHN]),
+          .s_axis_tlast   (int_axis_tlast),
+          .s_axis_tid     (int_axis_tid),
+          .s_axis_tdest   (int_axis_tdest),
+          .s_axis_tuser   (int_axis_tuser),
+          .m_axis_tdata   (m_axis_tdata[CHN*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH]),
+          .m_axis_tkeep   (m_axis_tkeep[CHN*OUTPUT_KEEP_WIDTH +: OUTPUT_KEEP_WIDTH]),
+          .m_axis_tvalid  (m_axis_tvalid[CHN]),
+          .m_axis_tready  (m_axis_tready[CHN]),
+          .m_axis_tlast   (m_axis_tlast[CHN]),
+          .m_axis_tid     (m_axis_tid[CHN*ID_WIDTH +: ID_WIDTH]),
+          .m_axis_tdest   (m_axis_tdest[CHN*DEST_WIDTH +: DEST_WIDTH]),
+          .m_axis_tuser   (m_axis_tuser[CHN*USER_WIDTH +: USER_WIDTH])
         );
 
       end else begin
-          assign m_axis_tdata[(CHN+1)*OUTPUT_DATA_WIDTH-1 : CHN*OUTPUT_DATA_WIDTH] = int_axis_chn_tdata[CHN];
-          assign m_axis_tvalid[CHN]                                                = int_axis_chn_tvalid[CHN];
-          assign int_axis_chn_tready[CHN]                                          = m_axis_tready[CHN];
-          assign m_axis_tlast[CHN]                                                 = int_axis_tlast;
-          assign m_axis_tid[(CHN+1)*ID_WIDTH-1 : CHN*ID_WIDTH]                     = int_axis_tid;
-          assign m_axis_tdest[(CHN+1)*DEST_WIDTH-1 : CHN*DEST_WIDTH]               = int_axis_tdest;
-          assign m_axis_tuser[(CHN+1)*USER_WIDTH-1 : CHN*USER_WIDTH]               = int_axis_tuser;
+          assign m_axis_tdata[CHN*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH] = int_axis_chn_tdata[CHN];
+          assign m_axis_tvalid[CHN]                                       = int_axis_chn_tvalid[CHN];
+          assign int_axis_chn_tready[CHN]                                 = m_axis_tready[CHN];
+          assign m_axis_tlast[CHN]                                        = int_axis_tlast;
+          assign m_axis_tid[CHN*ID_WIDTH +: ID_WIDTH]                     = int_axis_tid;
+          assign m_axis_tdest[CHN*DEST_WIDTH +: DEST_WIDTH]               = int_axis_tdest;
+          assign m_axis_tuser[CHN*USER_WIDTH +: USER_WIDTH]               = int_axis_tuser;
 
-          assign m_axis_tkeep[(CHN+1)*OUTPUT_KEEP_WIDTH-1 : CHN*OUTPUT_KEEP_WIDTH] = (OUTPUT_KEEP_ENABLE) ? int_axis_chn_tkeep[CHN]  : {OUTPUT_KEEP_WIDTH{1'bX}};
+          assign m_axis_tkeep[CHN*OUTPUT_KEEP_WIDTH +: OUTPUT_KEEP_WIDTH] = (OUTPUT_KEEP_ENABLE) ? int_axis_chn_tkeep[CHN]  : {OUTPUT_KEEP_WIDTH{1'bX}};
       end
 
     end

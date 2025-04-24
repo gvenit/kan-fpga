@@ -20,6 +20,9 @@
    (x <= 32768) ? 15 : \
    -1)
 
+`define MAX(a,b) \
+   ((a < b) ? b : a)
+
 `ifndef print_message
 `define print_message(mes="") \
    if (mes) begin \
