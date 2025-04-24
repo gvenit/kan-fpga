@@ -26,6 +26,10 @@
 
 ***Thesis-Paper Writing***
 - [ ] decide on diagrams
+- [ ] greek or english
+- [ ] title
+- [ ] abstract
+- [ ] τριμελης
 - [ ] general outline of the thesis
 
 ## Concerns
@@ -56,6 +60,11 @@
 - clear out the depths (the tables show bits or bytes? Are they correct?)
 - if you want axi lite interface instead of BRAM you have to create the appropriate paramter section first - in vivado it is so full of mistakes that I cannot find actual mistakes that are not just parameters that have not been declared
 - the mcu has signals that have nothing to do with the ones I tried to connect to them
+
+- cannot use 16 bit data values in AXI in the Block Design - neither smaller. We get errors like:
+    ```
+    [IP_Flow 19-3461] Value '16' is out of the range for parameter 'MI Data Width(MI_DATA_WIDTH)' for BD Cell 'ps7_0_axi_periph/m00_couplers/auto_ds' . Valid values are - 64, 128, 256, 512, 1024
+    ````
 
 <br>
 
