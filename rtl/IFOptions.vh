@@ -1,5 +1,38 @@
-`ifndef IF_OPTIONS_H
-`define IF_OPTIONS_H
+`ifndef IF_OPTIONS_INST_H
+`define IF_OPTIONS_INST_H
+
+// Uncomment for AXI-Lite IF for Data 
+`define DATA_IF_IS_AXIL
+
+// Uncomment for Bram IF for Data 
+//  `define DATA_IF_IS_BRAM
+
+// Uncomment for GRID_SHARE == 1
+`define GRID_IS_SHARED
+
+// Uncomment for SCALE_SHARE == 1
+`define SCALE_IS_SHARED
+
+// Macro fixups -- DO NOT EDIT BEYOND THIS POINT
+`ifndef GRID_IS_SHARED
+  `define GRID_IF_IS_BRAM
+  `undef GRID_IS_SHARED
+  `define GRID_IS_SHARED 0
+`elsif GRID_IS_SHARED
+  `define GRID_IF_IS_AXIL
+  `undef GRID_IS_SHARED
+  `define GRID_IS_SHARED 1
+`endif
+
+`ifndef SCALE_IS_SHARED
+  `define SCALE_IF_IS_BRAM
+  `undef SCALE_IS_SHARED
+  `define SCALE_IS_SHARED 0
+`elsif SCALE_IS_SHARED
+  `define SCALE_IF_IS_AXIL
+  `undef SCALE_IS_SHARED
+  `define SCALE_IS_SHARED 1
+`endif
 
 // Data Interface Options DATA_IF_IS_AXIL, DATA_IF_IS_BRAM
 `ifdef DATA_IF_IS_AXIL

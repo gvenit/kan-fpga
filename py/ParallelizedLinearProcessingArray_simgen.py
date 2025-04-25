@@ -33,10 +33,10 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
     PE_NUMBER_J          : Localparam = params['PE_NUMBER_J']
     BATCH_SIZE           : Localparam = params['BATCH_SIZE']
     INTERNAL_RESET       : Localparam = params['INTERNAL_RESET']
-    DATA_WIDTH           : Localparam = params['DATA_WIDTH_OP0']
-    FRACTIONAL_BITS_OP0  : Localparam = params['FRACTIONAL_BITS_OP0']
-    FRACTIONAL_BITS_OP1  : Localparam = params['FRACTIONAL_BITS_OP1']
-    FRACTIONAL_BITS_RSLT : Localparam = params['FRACTIONAL_BITS_RSLT']
+    DATA_WIDTH           : Localparam = params['OP0_WIDTH']
+    OP0_FRACTIONAL_BITS  : Localparam = params['OP0_FRACTIONAL_BITS']
+    OP1_FRACTIONAL_BITS  : Localparam = params['OP1_FRACTIONAL_BITS']
+    RSLT_FRACTIONAL_BITS : Localparam = params['RSLT_FRACTIONAL_BITS']
     IS_UNSIGNED_OP0      : Localparam = params['IS_UNSIGNED_OP0']
 
     PE_NUMBER_I.value = I
@@ -45,16 +45,16 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
 
     INTERNAL_RESET.value = 1
     DATA_WIDTH.value = 16
-    FRACTIONAL_BITS_OP0.value = 12
-    FRACTIONAL_BITS_OP1.value = 12
-    FRACTIONAL_BITS_RSLT.value = 12
+    OP0_FRACTIONAL_BITS.value = 12
+    OP1_FRACTIONAL_BITS.value = 12
+    RSLT_FRACTIONAL_BITS.value = 12
     IS_UNSIGNED_OP0.value = 0
     
     # print(params.keys())
     # print(ports.keys())
     
-    params['DATA_WIDTH_OP1'].value = DATA_WIDTH
-    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
+    params['OP1_WIDTH'].value = DATA_WIDTH
+    params['RSLT_WIDTH'].value = DATA_WIDTH
     
     reset_done = module.Reg('reset_done', initval=0)
 
@@ -167,13 +167,13 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             values[(k*J+j) % len(values)]
                 for k in range(K)
         ] for j in range(J)
-    ]).astype('float32') / 2**FRACTIONAL_BITS_OP0.value
+    ]).astype('float32') / 2**OP0_FRACTIONAL_BITS.value
     test4_op0 = np.array([[[
                 values[((n*K+k)*J+j) % len(values)]
                     for k in range(K)
             ] for j in range(J)
         ] for n in range(len(values)**2)
-    ]).astype('float32') / 2**FRACTIONAL_BITS_OP0.value
+    ]).astype('float32') / 2**OP0_FRACTIONAL_BITS.value
     
     per_channel_jk.Initial(
         Wait(reset_done),
@@ -351,13 +351,13 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             values[(j*I+i) % len(values)]
                 for j in range(J)
         ] for i in range(I)
-    ]).astype('float32') / 2**FRACTIONAL_BITS_OP0.value
+    ]).astype('float32') / 2**OP0_FRACTIONAL_BITS.value
     test4_op1 = np.array([[[
                 values[((n*K+j)*I+i) % len(values)]
                     for j in range(J)
             ] for i in range(I)
         ] for n in range(len(values)**2)
-    ]).astype('float32') / 2**FRACTIONAL_BITS_OP0.value
+    ]).astype('float32') / 2**OP0_FRACTIONAL_BITS.value
     
     per_channel_ij.Initial(
         Wait(reset_done),
@@ -529,8 +529,8 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
     print(test3_res)
     print(test4_res)
     
-    test3_res = (test3_res * 2**FRACTIONAL_BITS_RSLT.value).astype(f'int{2*DATA_WIDTH.value}')
-    test4_res = (test4_res * 2**FRACTIONAL_BITS_RSLT.value).astype(f'int{2*DATA_WIDTH.value}')
+    test3_res = (test3_res * 2**RSLT_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}')
+    test4_res = (test4_res * 2**RSLT_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}')
     
     print([hex(x) for x in test3_res])
     print([hex(x) for x in test4_res])

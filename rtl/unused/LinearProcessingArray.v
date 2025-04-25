@@ -24,21 +24,21 @@ module LinearProcessingArray #(
     // Enable module to do internal resets
     parameter INTERNAL_RESET = 0,
     // Data Width of Input Data (L-AXIS)
-    parameter DATA_WIDTH_OP0 = 16,
+    parameter OP0_WIDTH = 16,
     // Fractional Bits of Input Data (L-AXIS)
-    parameter FRACTIONAL_BITS_OP0 = 12,
+    parameter OP0_FRACTIONAL_BITS = 12,
     // Treat operand 0 as unsigned
     parameter IS_UNSIGNED_OP0 = 0,
     // Data Width of Input Weights (U-AXIS)
-    parameter DATA_WIDTH_OP1 = 16,
+    parameter OP1_WIDTH = 16,
     // Fractional Bits of Input Weights (U-AXIS)
-    parameter FRACTIONAL_BITS_OP1 = 12,
+    parameter OP1_FRACTIONAL_BITS = 12,
     // Treat operand 1 as unsigned
     parameter IS_UNSIGNED_OP1 = 0,
     // Data Width of Output Data (D-AXIS)
-    parameter DATA_WIDTH_RSLT = 16,
+    parameter RSLT_WIDTH = 16,
     // Fractional Bits of Output Data (D-AXIS)
-    parameter FRACTIONAL_BITS_RSLT = 12,
+    parameter RSLT_FRACTIONAL_BITS = 12,
     // Propagate tid signal
     parameter ID_ENABLE = 0,
     // tid signal width
@@ -62,7 +62,7 @@ module LinearProcessingArray #(
   /*
    * AXI Stream Up input
    */
-  input  wire [PE_NUMBER_I*DATA_WIDTH_OP1-1:0]    s_axis_up_tdata,
+  input  wire [PE_NUMBER_I*OP1_WIDTH-1:0]    s_axis_up_tdata,
   input  wire [PE_NUMBER_I-1:0]                   s_axis_up_tvalid,
   output wire [PE_NUMBER_I-1:0]                   s_axis_up_tready,
   input  wire [PE_NUMBER_I-1:0]                   s_axis_up_tlast,
@@ -73,7 +73,7 @@ module LinearProcessingArray #(
   /*
    * AXI Stream Left input
    */
-  input  wire [PE_NUMBER_J*DATA_WIDTH_OP0-1:0]    s_axis_left_tdata,
+  input  wire [PE_NUMBER_J*OP0_WIDTH-1:0]    s_axis_left_tdata,
   input  wire [PE_NUMBER_J-1:0]                   s_axis_left_tvalid,
   output wire [PE_NUMBER_J-1:0]                   s_axis_left_tready,
   input  wire [PE_NUMBER_J-1:0]                   s_axis_left_tlast,
@@ -84,7 +84,7 @@ module LinearProcessingArray #(
   /*
    * AXI Stream Down Output
    */
-  output wire [PE_NUMBER_I*DATA_WIDTH_RSLT-1:0]   m_axis_down_tdata,
+  output wire [PE_NUMBER_I*RSLT_WIDTH-1:0]   m_axis_down_tdata,
   output wire [PE_NUMBER_I-1:0]                   m_axis_down_tvalid,
   input  wire [PE_NUMBER_I-1:0]                   m_axis_down_tready,
   output wire [PE_NUMBER_I-1:0]                   m_axis_down_tlast,
@@ -115,27 +115,27 @@ module LinearProcessingArray #(
   // Result User Mask
   localparam RSLT_USER_MASK   = {RSLT_USER_MASK_R, {USER_WIDTH_INT-2{1'b0}}};
   // Resolve Up/Down Bit Width
-  localparam DATA_WIDTH_U_D   = (DATA_WIDTH_OP1 > DATA_WIDTH_RSLT) ? DATA_WIDTH_OP1 : DATA_WIDTH_RSLT;
+  localparam U_D_WIDTH   = (OP1_WIDTH > RSLT_WIDTH) ? OP1_WIDTH : RSLT_WIDTH;
 
   // Internal AXI-Stream Signals
-  wire [DATA_WIDTH_U_D-1:0]          int_axis_up_tdata      [0:PE_NUMBER_I*PE_NUMBER_J-1];
+  wire [U_D_WIDTH-1:0]          int_axis_up_tdata      [0:PE_NUMBER_I*PE_NUMBER_J-1];
   wire [USER_WIDTH_INT-1:0]          int_axis_up_tuser      [0:PE_NUMBER_I*PE_NUMBER_J-1];
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_up_tvalid;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_up_tready;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_up_tlast;
 
-  wire [DATA_WIDTH_OP0-1:0]          int_axis_left_tdata    [0:PE_NUMBER_I*PE_NUMBER_J-1];
+  wire [OP0_WIDTH-1:0]          int_axis_left_tdata    [0:PE_NUMBER_I*PE_NUMBER_J-1];
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_left_tvalid;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_left_tready;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_left_tlast;
 
-  wire [DATA_WIDTH_U_D-1:0]          int_axis_down_tdata    [0:PE_NUMBER_I*PE_NUMBER_J-1];
+  wire [U_D_WIDTH-1:0]          int_axis_down_tdata    [0:PE_NUMBER_I*PE_NUMBER_J-1];
   wire [USER_WIDTH_INT-1:0]          int_axis_down_tuser    [0:PE_NUMBER_I*PE_NUMBER_J-1];
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_down_tvalid;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_down_tready;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_down_tlast;
 
-  wire [DATA_WIDTH_OP0-1:0]          int_axis_right_tdata   [0:PE_NUMBER_I*PE_NUMBER_J-1];
+  wire [OP0_WIDTH-1:0]          int_axis_right_tdata   [0:PE_NUMBER_I*PE_NUMBER_J-1];
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_right_tvalid;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_right_tready;
   wire [0:PE_NUMBER_I*PE_NUMBER_J-1] int_axis_right_tlast;
@@ -198,21 +198,21 @@ module LinearProcessingArray #(
           // Position of current PE in the j axis
           .PE_POSITION_J(PE_POSITION_J),
           // Data Width of Input Data (L-AXIS)
-          .DATA_WIDTH_OP0(DATA_WIDTH_OP0),
+          .OP0_WIDTH(OP0_WIDTH),
           // Fractional Bits of Input Data (L-AXIS)
-          .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_OP0),
+          .OP0_FRACTIONAL_BITS(OP0_FRACTIONAL_BITS),
           // Treat operand 0 as unsigned
           .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
           // Data Width of Input Weights (U-AXIS)
-          .DATA_WIDTH_OP1(DATA_WIDTH_OP1),
+          .OP1_WIDTH(OP1_WIDTH),
           // Treat operand 1 as unsigned
           .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
           // Fractional Bits of Input Weights (U-AXIS)
-          .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
+          .OP1_FRACTIONAL_BITS(OP1_FRACTIONAL_BITS),
           // Data Width of Output Data (D-AXIS)
-          .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
+          .RSLT_WIDTH(RSLT_WIDTH),
           // Fractional Bits of Output Data (D-AXIS)
-          .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+          .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
           // tuser signal width
           .USER_WIDTH(USER_WIDTH_INT)
         ) LPE_ij (
@@ -241,8 +241,8 @@ module LinearProcessingArray #(
         );
 
         if (PE_POSITION_I == 0) begin
-          localparam LSB = PE_POSITION_J*DATA_WIDTH_OP0;
-          localparam MSB = LSB + DATA_WIDTH_OP0 -1;
+          localparam LSB = PE_POSITION_J*OP0_WIDTH;
+          localparam MSB = LSB + OP0_WIDTH -1;
 
           // Connect Input to Left Border
           assign int_axis_left_tdata  [NODE]          = s_axis_left_tdata    [MSB:LSB];
@@ -264,11 +264,11 @@ module LinearProcessingArray #(
         end 
 
         if (PE_POSITION_J == 0) begin
-          localparam LSB = PE_POSITION_I*DATA_WIDTH_OP1;
-          localparam MSB = LSB + DATA_WIDTH_OP1 -1;
+          localparam LSB = PE_POSITION_I*OP1_WIDTH;
+          localparam MSB = LSB + OP1_WIDTH -1;
 
           // Connect Input to Up Border
-          assign int_axis_up_tdata  [NODE]          = {{DATA_WIDTH_U_D-DATA_WIDTH_OP1{1'b0}}, s_axis_up_tdata [MSB:LSB]};
+          assign int_axis_up_tdata  [NODE]          = {{U_D_WIDTH-OP1_WIDTH{1'b0}}, s_axis_up_tdata [MSB:LSB]};
           assign int_axis_up_tvalid [NODE]          = s_axis_up_tvalid   [PE_POSITION_I];
           assign s_axis_up_tready   [PE_POSITION_I] = int_axis_up_tready [NODE];
           assign int_axis_up_tlast  [NODE]          = s_axis_up_tlast    [PE_POSITION_I];
@@ -286,14 +286,14 @@ module LinearProcessingArray #(
         end
         
           if (PE_POSITION_J == PE_NUMBER_J-1) begin
-            localparam LSB = PE_POSITION_I*DATA_WIDTH_U_D;
-            localparam MSB = LSB + DATA_WIDTH_RSLT -1;
+            localparam LSB = PE_POSITION_I*U_D_WIDTH;
+            localparam MSB = LSB + RSLT_WIDTH -1;
 
             // Drop Output from Down Border if OP!_USER_MASK
             // wire [USER_WIDTH_INT-1:0] temp = int_axis_down_tuser[NODE];
             wire   op1_flag_match = |(int_axis_down_tuser[NODE] & OP1_USER_MASK);
 
-            assign m_axis_down_tdata    [MSB:LSB]                                                 = int_axis_down_tdata  [NODE][DATA_WIDTH_RSLT-1];
+            assign m_axis_down_tdata    [MSB:LSB]                                                 = int_axis_down_tdata  [NODE][RSLT_WIDTH-1];
             assign m_axis_down_tvalid   [PE_POSITION_I]                                           = int_axis_down_tvalid [NODE] & !op1_flag_match;
             assign int_axis_down_tready [NODE]                                                    = (int_axis_down_tvalid[NODE] &  op1_flag_match) ? 1'b1 : m_axis_down_tready [PE_POSITION_I];
             assign m_axis_down_tlast    [PE_POSITION_I]                                           = int_axis_down_tlast  [NODE];

@@ -28,23 +28,23 @@ def tb_SubMultAbs():
     params = module.copy_params_as_localparams(subMultAbs)
     ports  = module.copy_ports_as_vars(subMultAbs)
 
-    DATA_WIDTH            : Localparam = params['DATA_WIDTH_DATA']
-    FRACTIONAL_BITS_DATA  : Localparam = params['FRACTIONAL_BITS_DATA']
-    FRACTIONAL_BITS_SCALE : Localparam = params['FRACTIONAL_BITS_SCALE']
-    FRACTIONAL_BITS_RSLT  : Localparam = params['FRACTIONAL_BITS_RSLT']
+    DATA_WIDTH            : Localparam = params['DATA_WIDTH']
+    DATA_FRACTIONAL_BITS  : Localparam = params['DATA_FRACTIONAL_BITS']
+    SCALE_FRACTIONAL_BITS : Localparam = params['SCALE_FRACTIONAL_BITS']
+    RSLT_FRACTIONAL_BITS  : Localparam = params['RSLT_FRACTIONAL_BITS']
 
     DATA_WIDTH.value = 16
-    FRACTIONAL_BITS_DATA.value  = 12
-    FRACTIONAL_BITS_SCALE.value = 12
-    FRACTIONAL_BITS_RSLT.value  = 13 
+    DATA_FRACTIONAL_BITS.value  = 12
+    SCALE_FRACTIONAL_BITS.value = 12
+    RSLT_FRACTIONAL_BITS.value  = 13 
 
     reset_done = module.Reg('reset_done', initval=0)
     
     # with open(os.path.join(TOP_DIR,'rtl/SubMultAbs.v'),'r') as f:
     #     subMult_str = ''.join(f.readlines())
     
-    params['DATA_WIDTH_SCALE'].value = DATA_WIDTH
-    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
+    params['SCALE_WIDTH'].value = DATA_WIDTH
+    params['RSLT_WIDTH'].value = DATA_WIDTH
 
     uut = module.Instance(
         subMultAbs,
@@ -102,11 +102,11 @@ def tb_SubMultAbs():
     nclk = simulation.next_clock
 
     values = [
-        -4 << FRACTIONAL_BITS_DATA, 
-        -1 << FRACTIONAL_BITS_DATA-1, 
+        -4 << DATA_FRACTIONAL_BITS, 
+        -1 << DATA_FRACTIONAL_BITS-1, 
          0,
-         1 << FRACTIONAL_BITS_DATA-1, 
-         4 << FRACTIONAL_BITS_DATA 
+         1 << DATA_FRACTIONAL_BITS-1, 
+         4 << DATA_FRACTIONAL_BITS 
     ]
 
     count_data  = module.Integer('count_data')
@@ -152,7 +152,7 @@ def tb_SubMultAbs():
             If(Ands(
                 count_data == 0,
             ))(
-                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tdata(1 << SCALE_FRACTIONAL_BITS),
                 s_axis_scle_tlast(1),
                 s_axis_scle_tvalid(1),
             ),
@@ -160,12 +160,12 @@ def tb_SubMultAbs():
                 count_data != 0,
                 count_data < 25,
             ))(
-                s_axis_scle_tdata(5 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tdata(5 << SCALE_FRACTIONAL_BITS),
             ),
             If(Ands(
                 count_data == 25,
             ))(
-                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE-1),
+                s_axis_scle_tdata(1 << SCALE_FRACTIONAL_BITS-1),
                 s_axis_scle_tlast(0),
                 s_axis_scle_tvalid(0),
             ),

@@ -52,13 +52,13 @@ module CentralControlUnit #(
   // Number of Independent AXI-Stream Result Channels per Batch
   parameter RSLT_CHANNELS = 1,
   // Data Width of address bus in bits
-  parameter ADDR_WIDTH_DATA = 32,
+  parameter DATA_ADDR = 32,
   // Grid Width of address bus in bits
-  parameter ADDR_WIDTH_GRID = 32,
+  parameter GRID_ADDR = 32,
   // Scale Width of address bus in bits
-  parameter ADDR_WIDTH_SCALE = 32,
+  parameter SCALE_ADDR = 32,
   // Width of Packet size bus in bits
-  parameter PCKT_SIZE_WIDTH = ADDR_WIDTH_DATA + ADDR_WIDTH_GRID -1
+  parameter PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR -1
 ) (
   input  wire                                                       fsm_clk,
   input  wire                                                       rst,
@@ -67,9 +67,9 @@ module CentralControlUnit #(
    * Control signals -- Corresponding clock : fsm_clk
    */
   output reg                                                        operation_start,
-  output reg  [ADDR_WIDTH_DATA:0]                                   data_size,
-  output reg  [ADDR_WIDTH_GRID:0]                                   grid_size,
-  output reg  [ADDR_WIDTH_SCALE:0]                                  scle_size,
+  output reg  [DATA_ADDR:0]                                   data_size,
+  output reg  [GRID_ADDR:0]                                   grid_size,
+  output reg  [SCALE_ADDR:0]                                  scle_size,
   output reg  [PCKT_SIZE_WIDTH-1:0]                                 pckt_size,
   output reg  [RSLT_CHANNELS-1:0]                                   use_channels,
   output reg  [BATCH_SIZE-1:0]                                      use_batch,
@@ -137,9 +137,9 @@ module CentralControlUnit #(
   input  wire                   s_axil_rready
 );
   // Local Parameters
-  localparam MAX_DATA_SIZE = 2 ** ADDR_WIDTH_DATA;
-  localparam MAX_GRID_SIZE = 2 ** ADDR_WIDTH_GRID;
-  localparam MAX_SCLE_SIZE = 2 ** ADDR_WIDTH_SCALE;
+  localparam MAX_DATA_SIZE = 2 ** DATA_ADDR;
+  localparam MAX_GRID_SIZE = 2 ** GRID_ADDR;
+  localparam MAX_SCLE_SIZE = 2 ** SCALE_ADDR;
   localparam MAX_PCKT_SIZE = 2 ** PCKT_SIZE_WIDTH;
 
   // FSM States
@@ -351,9 +351,9 @@ module CentralControlUnit #(
     if (rst) begin
       fsm_state <= FSM_ST0;
 
-      data_size <= {ADDR_WIDTH_DATA{1'b0}};
-      grid_size <= {ADDR_WIDTH_GRID{1'b0}};
-      scle_size <= {ADDR_WIDTH_SCALE{1'b0}};
+      data_size <= {DATA_ADDR{1'b0}};
+      grid_size <= {GRID_ADDR{1'b0}};
+      scle_size <= {SCALE_ADDR{1'b0}};
       pckt_size  <= {PCKT_SIZE_WIDTH{1'b0}};
 
       operation_start       <= 1'b0;
@@ -371,9 +371,9 @@ module CentralControlUnit #(
     end else begin
       fsm_state <= fsm_state_next;
 
-      data_size <= {ADDR_WIDTH_DATA{1'b0}};
-      grid_size <= {ADDR_WIDTH_GRID{1'b0}};
-      scle_size <= {ADDR_WIDTH_SCALE{1'b0}};
+      data_size <= {DATA_ADDR{1'b0}};
+      grid_size <= {GRID_ADDR{1'b0}};
+      scle_size <= {SCALE_ADDR{1'b0}};
       pckt_size  <= {PCKT_SIZE_WIDTH{1'b0}};
 
       results_left_reg      <= results_left_reg;
@@ -401,9 +401,9 @@ module CentralControlUnit #(
           interrupt_soft_reg_early  <= 1'b0;
         end
         FSM_STR: begin
-          data_size <= data_size_rd[ADDR_WIDTH_DATA :0];
-          grid_size <= grid_size_rd[ADDR_WIDTH_GRID :0];
-          scle_size <= scle_size_rd[ADDR_WIDTH_SCALE:0];
+          data_size <= data_size_rd[DATA_ADDR :0];
+          grid_size <= grid_size_rd[GRID_ADDR :0];
+          scle_size <= scle_size_rd[SCALE_ADDR:0];
           pckt_size <= pckt_size_rd[PCKT_SIZE_WIDTH :0];
 
           results_left_reg      <= rslt_size_rd;

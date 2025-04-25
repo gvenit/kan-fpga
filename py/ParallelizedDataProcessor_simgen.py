@@ -33,29 +33,29 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     DATA_CHANNELS               : Localparam = params['DATA_CHANNELS']
     RSLT_CHANNELS               : Localparam = params['RSLT_CHANNELS']
     BATCH_SIZE                  : Localparam = params['BATCH_SIZE']
-    SHARE_SCALE                 : Localparam = params['SHARE_SCALE']
-    DATA_WIDTH                  : Localparam = params['DATA_WIDTH_DATA']
-    FRACTIONAL_BITS_DATA        : Localparam = params['FRACTIONAL_BITS_DATA']
-    FRACTIONAL_BITS_SCALE       : Localparam = params['FRACTIONAL_BITS_SCALE']
-    FRACTIONAL_BITS_WEIGHT      : Localparam = params['FRACTIONAL_BITS_WEIGHT']
-    FRACTIONAL_BITS_SCALED_DIFF : Localparam = params['FRACTIONAL_BITS_SCALED_DIFF']
-    FRACTIONAL_BITS_ACT         : Localparam = params['FRACTIONAL_BITS_ACT']
-    FRACTIONAL_BITS_RSLT        : Localparam = params['FRACTIONAL_BITS_RSLT']
+    SCALE_SHARE                 : Localparam = params['SCALE_SHARE']
+    DATA_WIDTH                  : Localparam = params['DATA_WIDTH']
+    DATA_FRACTIONAL_BITS        : Localparam = params['DATA_FRACTIONAL_BITS']
+    SCALE_FRACTIONAL_BITS       : Localparam = params['SCALE_FRACTIONAL_BITS']
+    WEIGHT_FRACTIONAL_BITS      : Localparam = params['WEIGHT_FRACTIONAL_BITS']
+    SCALED_DIFF_FRACTIONAL_BITS : Localparam = params['SCALED_DIFF_FRACTIONAL_BITS']
+    ACT_FRACTIONAL_BITS         : Localparam = params['ACT_FRACTIONAL_BITS']
+    RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
     ROM_DATA_PATH               : Localparam = params['ROM_DATA_PATH']
 
     RSLT_CHANNELS.value = I
     DATA_CHANNELS.value = J
     BATCH_SIZE.value  = K
 
-    SHARE_SCALE.value = 1
+    SCALE_SHARE.value = 1
     DATA_WIDTH.value = 16
-    FRACTIONAL_BITS_DATA.value = 12
-    FRACTIONAL_BITS_SCALE.value = 12
-    FRACTIONAL_BITS_WEIGHT.value = 12
-    FRACTIONAL_BITS_SCALED_DIFF.value = 13
-    FRACTIONAL_BITS_ACT.value = 16
-    FRACTIONAL_BITS_RSLT.value = 12
-    ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{FRACTIONAL_BITS_SCALED_DIFF.value}_{DATA_WIDTH.value}.{FRACTIONAL_BITS_ACT.value}.txt"
+    DATA_FRACTIONAL_BITS.value = 12
+    SCALE_FRACTIONAL_BITS.value = 12
+    WEIGHT_FRACTIONAL_BITS.value = 12
+    SCALED_DIFF_FRACTIONAL_BITS.value = 13
+    ACT_FRACTIONAL_BITS.value = 16
+    RSLT_FRACTIONAL_BITS.value = 12
+    ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
     
     os.system(' '.join([
         'python',
@@ -63,19 +63,19 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
         '-N',
         f'-I int{DATA_WIDTH.value}',
         f'-O uint{DATA_WIDTH.value}',
-        f'-i {FRACTIONAL_BITS_SCALED_DIFF.value}',
-        f'-o {FRACTIONAL_BITS_ACT.value}',
+        f'-i {SCALED_DIFF_FRACTIONAL_BITS.value}',
+        f'-o {ACT_FRACTIONAL_BITS.value}',
     ])
     )
     
     # print(params.keys())
     # print(ports.keys())
     
-    params['DATA_WIDTH_SCALE'].value = DATA_WIDTH
-    params['DATA_WIDTH_WEIGHT'].value = DATA_WIDTH
-    params['DATA_WIDTH_SCALED_DIFF'].value = DATA_WIDTH
-    params['DATA_WIDTH_ACT'].value = DATA_WIDTH
-    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
+    params['SCALE_WIDTH'].value = DATA_WIDTH
+    params['WEIGHT_WIDTH'].value = DATA_WIDTH
+    params['SCALED_DIFF_WIDTH'].value = DATA_WIDTH
+    params['ACT_WIDTH'].value = DATA_WIDTH
+    params['RSLT_WIDTH'].value = DATA_WIDTH
     
     reset_done = module.Reg('reset_done', initval=0)
 
@@ -202,7 +202,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_len = DATA_CHANNELS.value * (N_in // DATA_CHANNELS.value)
     grid_len = 8
-    scale_len = (1,1,1) if SHARE_SCALE.value else (1,grid_len,data_len)
+    scale_len = (1,1,1) if SCALE_SHARE.value else (1,grid_len,data_len)
     rslt_len = RSLT_CHANNELS.value * (N_out // RSLT_CHANNELS.value)
     weight_len = data_len*grid_len
     # print(data_len,grid_len,scale_len,rslt_len,weight_len)
@@ -210,40 +210,40 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # Create data - size = [BATCH X DATA]
     layer_data = torch.randn(K, 1, data_len, device=device)
     # Quantize data
-    layer_data_q = torch.tensor((layer_data * 2 ** FRACTIONAL_BITS_DATA.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'),device=device)
+    layer_data_q = torch.tensor((layer_data * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'),device=device)
     # Dequantize data
-    layer_data = layer_data_qd = layer_data_q.to(torch.float32) / 2 ** FRACTIONAL_BITS_DATA.value
+    layer_data = layer_data_qd = layer_data_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
     # Create grid - size = [GRID]
     layer_grid = torch.randn(1, grid_len, 1, device=device)
     # Quantize grid
-    layer_grid_q = torch.tensor((layer_grid * 2 ** FRACTIONAL_BITS_DATA.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_grid_q = torch.tensor((layer_grid * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize grid
-    layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** FRACTIONAL_BITS_DATA.value
+    layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
     # Create scale - size = [GRID X DATA] or [1] 
     layer_scle = torch.rand(*scale_len, device=device)
     # Quantize scale
-    layer_scle_q = torch.tensor((layer_scle * 2 ** FRACTIONAL_BITS_SCALE.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_scle_q = torch.tensor((layer_scle * 2 ** SCALE_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize scale
-    layer_scle = layer_scle_qd = layer_scle_q.to(torch.float32) / 2 ** FRACTIONAL_BITS_SCALE.value
+    layer_scle = layer_scle_qd = layer_scle_q.to(torch.float32) / 2 ** SCALE_FRACTIONAL_BITS.value
     
     
     # Create weight - size = [WEIGHT x RESULT] or [1] 
     layer_wght = (torch.rand(weight_len, rslt_len, device=device) * 2 - 1) / weight_len * 10
     # Quantize scale
-    layer_wght_q = torch.tensor((layer_wght * 2 ** FRACTIONAL_BITS_WEIGHT.value).cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
+    layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Dequantize scale
-    layer_wght = layer_wght_qd = layer_wght_q.to(torch.float32) / 2 ** FRACTIONAL_BITS_WEIGHT.value
+    layer_wght = layer_wght_qd = layer_wght_q.to(torch.float32) / 2 ** WEIGHT_FRACTIONAL_BITS.value
     
     # Create expected scaled difference - size = [BATCH X GRID X DATA]
     layer_exp_diff = (layer_scle * (layer_data - layer_grid)).abs()
     # Create scaled difference - size = [BATCH X GRID X DATA]
     layer_diff = layer_scle_qd * (layer_data_qd - layer_grid_qd)
     # Quantize scaled difference
-    layer_diff_q = torch.tensor((layer_diff * 2 ** FRACTIONAL_BITS_SCALED_DIFF.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device).abs()
+    layer_diff_q = torch.tensor((layer_diff * 2 ** SCALED_DIFF_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device).abs()
     # Dequantize scaled difference
-    layer_diff_qd = layer_diff_q.to(torch.float32) / 2 ** FRACTIONAL_BITS_SCALED_DIFF.value
+    layer_diff_qd = layer_diff_q.to(torch.float32) / 2 ** SCALED_DIFF_FRACTIONAL_BITS.value
     
     # Create expected activation data - size = [BATCH X GRID X DATA]
     layer_exp_actd = (1 - torch.tanh(layer_exp_diff)**2)
@@ -255,33 +255,33 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # Reshape activation data - size = [BATCH X WEIGHT]
     layer_actd = layer_actd.reshape(-1, weight_len)
     # Quantize activation data
-    layer_actd_q = torch.tensor((layer_actd * 2 ** FRACTIONAL_BITS_ACT.value).round().cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
+    layer_actd_q = torch.tensor((layer_actd * 2 ** ACT_FRACTIONAL_BITS.value).round().cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Unit correction
-    if (DATA_WIDTH.value == FRACTIONAL_BITS_ACT.value):
+    if (DATA_WIDTH.value == ACT_FRACTIONAL_BITS.value):
         layer_actd_q = torch.where(
             (layer_actd_q >> DATA_WIDTH.value) > 0,
             layer_actd_q-1,
             layer_actd_q
         )
     # Dequantize activation data
-    layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** FRACTIONAL_BITS_ACT.value
+    layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACT_FRACTIONAL_BITS.value
     
     # Perform expected Linear Layer / Matrix-Matrix Multiplication
     layer_exp_rslt = layer_exp_actd @ layer_wght
     # Quantize expected result
-    layer_exp_rslt_q = torch.tensor((layer_exp_rslt * 2 ** FRACTIONAL_BITS_RSLT.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_exp_rslt_q = torch.tensor((layer_exp_rslt * 2 ** RSLT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     
     # Perform Linear Layer / Matrix-Matrix Multiplication
     layer_rslt = layer_actd_qd @ layer_wght_qd
     # Quantize result
-    layer_rslt_q = torch.tensor((layer_rslt * 2 ** FRACTIONAL_BITS_RSLT.value).round().cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_rslt_q = torch.tensor((layer_rslt * 2 ** RSLT_FRACTIONAL_BITS.value).round().cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # # Dequantize result
-    # layer_rslt_qd = layer_rslt_q.to('float32') / 2 ** FRACTIONAL_BITS_RSLT.value
+    # layer_rslt_qd = layer_rslt_q.to('float32') / 2 ** RSLT_FRACTIONAL_BITS.value
     
     # Perform Linear Layer / Matrix-Matrix Multiplication -- with integers
-    layer_rslt_int = torch.tensor(((layer_actd_q.cpu() @ layer_wght_q.cpu()) * 2 ** (FRACTIONAL_BITS_RSLT.value - (FRACTIONAL_BITS_WEIGHT.value + FRACTIONAL_BITS_ACT.value))).numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_rslt_int = torch.tensor(((layer_actd_q.cpu() @ layer_wght_q.cpu()) * 2 ** (RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize result -- with integers
-    layer_rslt_intd = layer_rslt_int.to(torch.float32) / 2 ** FRACTIONAL_BITS_RSLT.value
+    layer_rslt_intd = layer_rslt_int.to(torch.float32) / 2 ** RSLT_FRACTIONAL_BITS.value
     
     layer_rslt      = layer_rslt.to(device=device, dtype=torch.float64)
     layer_rslt_intd = layer_rslt_intd.to(device=device, dtype=torch.float64)
@@ -313,7 +313,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     
     test_data = layer_data_q.reshape(-1, BATCH_SIZE.value, DATA_CHANNELS.value).cpu().tolist()
     test_grid = layer_grid_q.squeeze().cpu().tolist()
-    test_scle = layer_scle_q.squeeze(0).cpu().tolist() if SHARE_SCALE.value else layer_scle_q.reshape(-1, DATA_CHANNELS.value).cpu().tolist()
+    test_scle = layer_scle_q.squeeze(0).cpu().tolist() if SCALE_SHARE.value else layer_scle_q.reshape(-1, DATA_CHANNELS.value).cpu().tolist()
     
     # print(test_data)
     # print(layer_data_qd)
@@ -457,7 +457,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     iteration = per_channel_jk.Integer('iteration_scale')
     
     per_channel_jk.GenerateIf(Ors(
-        SHARE_SCALE == 0,
+        SCALE_SHARE == 0,
         LFT_POS == 0
     )).Initial(
         Wait(reset_done),
@@ -626,8 +626,8 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # x = (layer_actd_q * layer_wght_q.T).cpu().numpy().astype('int64')
     # print(hex_list([np.sum(x[:,:_iter+1],axis=-1).astype('uint32').tolist() for _iter in range(x.shape[-1])]))
     # print([hex(np.sum(x[:_iter+1]).astype('uint32')) for _iter in range(len(x))])
-    # print(hex_list( (np.sum(x,axis=1).astype('int32') * 2** (FRACTIONAL_BITS_RSLT.value - (FRACTIONAL_BITS_WEIGHT.value + FRACTIONAL_BITS_ACT.value))).astype('int16').tolist() ))
-    # print(hex( (np.sum(x).astype('int32') * 2** (FRACTIONAL_BITS_RSLT.value - (FRACTIONAL_BITS_WEIGHT.value + FRACTIONAL_BITS_ACT.value))).astype('int16') ))
+    # print(hex_list( (np.sum(x,axis=1).astype('int32') * 2** (RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('int16').tolist() ))
+    # print(hex( (np.sum(x).astype('int32') * 2** (RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('int16') ))
     
     ## Result driver
     per_channel_ik.Initial(

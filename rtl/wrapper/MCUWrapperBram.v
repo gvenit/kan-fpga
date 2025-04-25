@@ -23,9 +23,9 @@ module MCUWrapperBram #(
   // Number of batches per run
   parameter BATCH_SIZE = 1,
   // Width of AXI stream Input Data & Grid interfaces in bits
-  parameter DATA_WIDTH_DATA = 16,
+  parameter DATA_WIDTH = 16,
   // Width of AXI stream Scale interface in bits
-  parameter DATA_WIDTH_SCALE = 16,
+  parameter SCALE_WIDTH = 16,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -41,29 +41,29 @@ module MCUWrapperBram #(
   // Number of Independent AXI-Stream Data Channels per Batch
   parameter DATA_CHANNELS = 1,
   // Use Common Share Channel 
-  parameter SHARE_SCALE = 1,
+  parameter SCALE_SHARE = 1,
   // Input Scale Channels
-  parameter SCALE_CHANNELS_IN = (SHARE_SCALE)? 1 : DATA_CHANNELS,
+  parameter SCALE_CHANNELS_IN = (SCALE_SHARE)? 1 : DATA_CHANNELS,
   // Output Scale Channels
-  parameter SCALE_CHANNELS_OUT = (SHARE_SCALE)? 1 : DATA_CHANNELS*BATCH_SIZE,
+  parameter SCALE_CHANNELS_OUT = (SCALE_SHARE)? 1 : DATA_CHANNELS*BATCH_SIZE,
   // Use Common Grid Channel 
-  parameter SHARE_GRID = 0,
+  parameter GRID_SHARE = 0,
   // Input Grid Channels
-  parameter GRID_CHANNELS_IN = (SHARE_GRID)? 1 : DATA_CHANNELS,
+  parameter GRID_CHANNELS_IN = (GRID_SHARE)? 1 : DATA_CHANNELS,
   // Output Grid Channels
-  parameter GRID_CHANNELS_OUT = (SHARE_GRID)? 1 : DATA_CHANNELS*BATCH_SIZE,
+  parameter GRID_CHANNELS_OUT = (GRID_SHARE)? 1 : DATA_CHANNELS*BATCH_SIZE,
   // Data Width of address bus in bits
-  parameter ADDR_WIDTH_DATA = 32,
+  parameter DATA_ADDR = 32,
   // Grid Width of address bus in bits
-  parameter ADDR_WIDTH_GRID = 32,
+  parameter GRID_ADDR = 32,
   // Scale Width of address bus in bits
-  parameter ADDR_WIDTH_SCALE = 32,
+  parameter SCALE_ADDR = 32,
   // Data FIFO size per stream
-  parameter FIFO_DEPTH_DATA = (BATCH_SIZE + DATA_CHANNELS),
+  parameter DATA_FIFO_DEPTH = (BATCH_SIZE + DATA_CHANNELS),
   // Grid FIFO size per stream
-  parameter FIFO_DEPTH_GRID = (BATCH_SIZE + DATA_CHANNELS),
+  parameter GRID_FIFO_DEPTH = (BATCH_SIZE + DATA_CHANNELS),
   // Scale FIFO size per stream
-  parameter FIFO_DEPTH_SCALE = (SHARE_SCALE) ? 0 : (BATCH_SIZE + DATA_CHANNELS)
+  parameter SCALE_FIFO_DEPTH = (SCALE_SHARE) ? 0 : (BATCH_SIZE + DATA_CHANNELS)
 ) (
   input  wire                                                     fsm_clk,
   input  wire                                                     rst,
@@ -72,9 +72,9 @@ module MCUWrapperBram #(
    * Control signals -- Corresponding clock : fsm_clk
    */
   input  wire operation_start,
-  input  wire [ADDR_WIDTH_DATA:0]                                 data_size,
-  input  wire [ADDR_WIDTH_GRID:0]                                 grid_size,
-  input  wire [ADDR_WIDTH_SCALE:0]                                scle_size,
+  input  wire [DATA_ADDR:0]                                 data_size,
+  input  wire [GRID_ADDR:0]                                 grid_size,
+  input  wire [SCALE_ADDR:0]                                scle_size,
   
   /*
    * Interrupt signals -- Corresponding clock : fsm_clk
@@ -89,16 +89,16 @@ module MCUWrapperBram #(
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_clk,
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_en,
   // output wire [BATCH_SIZE*DATA_CHANNELS*WE-1:0]                   data_bram_we,  // Read Only Operations allowed
-  output wire [BATCH_SIZE*DATA_CHANNELS*ADDR_WIDTH_DATA-1:0]      data_bram_addr,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_ADDR-1:0]      data_bram_addr,
   // input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_wrdata,
-  input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      data_bram_rddata,
+  input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]      data_bram_rddata,
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
 
   /*
    * AXI Stream Data Output -- Corresponding clock : m_axis_data_aclk
    */
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_aclk,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      m_axis_data_tdata,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]      m_axis_data_tdata,
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tvalid,
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tready,
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tlast,
@@ -112,16 +112,16 @@ module MCUWrapperBram #(
   input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_clk,
   output wire [GRID_CHANNELS_IN-1:0]                              grid_bram_en,
   // output wire [GRID_CHANNELS_IN*WE-1:0]                           grid_bram_we,  // Read Only Operations allowed
-  output wire [GRID_CHANNELS_IN*ADDR_WIDTH_DATA-1:0]              grid_bram_addr,
+  output wire [GRID_CHANNELS_IN*DATA_ADDR-1:0]              grid_bram_addr,
   // input  wire [GRID_CHANNELS_IN*WIDTH-1:0]                        grid_bram_wrdata,
-  input  wire [GRID_CHANNELS_IN*DATA_WIDTH_DATA-1:0]              grid_bram_rddata,
+  input  wire [GRID_CHANNELS_IN*DATA_WIDTH-1:0]              grid_bram_rddata,
   input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0                                     
 
   /*
    * AXI Stream Grid Output -- Corresponding clock : m_axis_grid_aclk
    */
   output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_aclk,
-  output wire [GRID_CHANNELS_OUT*DATA_WIDTH_DATA-1:0]             m_axis_grid_tdata,
+  output wire [GRID_CHANNELS_OUT*DATA_WIDTH-1:0]             m_axis_grid_tdata,
   output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tvalid,
   input  wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tready,
   output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tlast,
@@ -135,16 +135,16 @@ module MCUWrapperBram #(
   input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_clk,
   output wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_en,
   // output wire [SCALE_CHANNELS_IN*WE-1:0]                          scle_bram_we,  // Read Only Operations allowed
-  output wire [SCALE_CHANNELS_IN*ADDR_WIDTH_SCALE-1:0]            scle_bram_addr,
+  output wire [SCALE_CHANNELS_IN*SCALE_ADDR-1:0]            scle_bram_addr,
   // input  wire [SCALE_CHANNELS_IN*WIDTH-1:0]                       scle_bram_wrdata,
-  input  wire [SCALE_CHANNELS_IN*DATA_WIDTH_SCALE-1:0]            scle_bram_rddata,
+  input  wire [SCALE_CHANNELS_IN*SCALE_WIDTH-1:0]            scle_bram_rddata,
   input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
 
   /*
    * AXI Stream Scale Output -- Corresponding clock : m_axis_scle_aclk
    */
   output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_aclk,
-  output wire [SCALE_CHANNELS_OUT*DATA_WIDTH_SCALE-1:0]           m_axis_scle_tdata,
+  output wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]           m_axis_scle_tdata,
   output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tvalid,
   input  wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tready,
   output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tlast,
@@ -160,9 +160,9 @@ module MCUWrapperBram #(
   // Number of batches per run
   .BATCH_SIZE(BATCH_SIZE),
   // Width of AXI stream Input Data & Grid interfaces in bits
-  .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
+  .DATA_WIDTH(DATA_WIDTH),
   // Width of AXI stream Scale interface in bits
-  .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
+  .SCALE_WIDTH(SCALE_WIDTH),
   // Propagate tid signal
   .ID_ENABLE(ID_ENABLE),
   // tid signal width
@@ -178,29 +178,29 @@ module MCUWrapperBram #(
   // Number of Independent AXI-Stream Data Channels per Batch
   .DATA_CHANNELS(DATA_CHANNELS),
   // Use Common Share Channel 
-  .SHARE_SCALE(SHARE_SCALE),
+  .SCALE_SHARE(SCALE_SHARE),
   // Input Scale Channels
   .SCALE_CHANNELS_IN(SCALE_CHANNELS_IN),
   // Output Scale Channels
   .SCALE_CHANNELS_OUT(SCALE_CHANNELS_OUT),
   // Use Common Grid Channel 
-  .SHARE_GRID(SHARE_GRID),
+  .GRID_SHARE(GRID_SHARE),
   // Input Grid Channels
   .GRID_CHANNELS_IN(GRID_CHANNELS_IN),
   // Output Grid Channels
   .GRID_CHANNELS_OUT(GRID_CHANNELS_OUT),
   // Data Width of address bus in bits
-  .ADDR_WIDTH_DATA(ADDR_WIDTH_DATA),
+  .DATA_ADDR(DATA_ADDR),
   // Grid Width of address bus in bits
-  .ADDR_WIDTH_GRID(ADDR_WIDTH_GRID),
+  .GRID_ADDR(GRID_ADDR),
   // Scale Width of address bus in bits
-  .ADDR_WIDTH_SCALE(ADDR_WIDTH_SCALE),
+  .SCALE_ADDR(SCALE_ADDR),
   // Data FIFO size per stream
-  .FIFO_DEPTH_DATA(FIFO_DEPTH_DATA),
+  .DATA_FIFO_DEPTH(DATA_FIFO_DEPTH),
   // Grid FIFO size per stream
-  .FIFO_DEPTH_GRID(FIFO_DEPTH_GRID),
+  .GRID_FIFO_DEPTH(GRID_FIFO_DEPTH),
   // Scale FIFO size per stream
-  .FIFO_DEPTH_SCALE(FIFO_DEPTH_SCALE)
+  .SCALE_FIFO_DEPTH(SCALE_FIFO_DEPTH)
  ) mcu_inst (
   .fsm_clk(fsm_clk),
   .rst(rst),

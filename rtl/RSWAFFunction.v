@@ -13,21 +13,21 @@
 module RSWAFFunction #
 (
   // Width of AXI stream Input Data & Grid interfaces in bits
-  parameter DATA_WIDTH_DATA = 16,
+  parameter DATA_WIDTH = 16,
   // Fractional bits of input data & grid
-  parameter FRACTIONAL_BITS_DATA = 12,
+  parameter DATA_FRACTIONAL_BITS = 12,
   // Width of AXI stream Scale interface in bits
-  parameter DATA_WIDTH_SCALE = 16,
+  parameter SCALE_WIDTH = 16,
   // Fractional bits of input scale
-  parameter FRACTIONAL_BITS_SCALE = 12,
+  parameter SCALE_FRACTIONAL_BITS = 12,
   // Width of AXI stream Output Data interface in bits
-  parameter DATA_WIDTH_SCALED_DIFF = 16,
+  parameter SCALED_DIFF_WIDTH = 16,
   // Fractional bits of output data
-  parameter FRACTIONAL_BITS_SCALED_DIFF = 12,
+  parameter SCALED_DIFF_FRACTIONAL_BITS = 12,
   // Width of AXI stream Output Data interface in bits
-  parameter DATA_WIDTH_RSLT = 16,
+  parameter RSLT_WIDTH = 16,
   // Fractional bits of output data
-  parameter FRACTIONAL_BITS_RSLT = 12,
+  parameter RSLT_FRACTIONAL_BITS = 12,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -43,13 +43,13 @@ module RSWAFFunction #
   // Number of Independent AXI-Stream Channels
   parameter CHANNELS = 1,
   // Use Common Share Channel 
-  parameter SHARE_SCALE = 1,
+  parameter SCALE_SHARE = 1,
   // Scale Channels
-  parameter SCALE_CHANNELS = (SHARE_SCALE) ? 1 : CHANNELS,
+  parameter SCALE_CHANNELS = (SCALE_SHARE) ? 1 : CHANNELS,
   // Use Common Grid Channel 
-  parameter SHARE_GRID = 1,
+  parameter GRID_SHARE = 1,
   // Grid Channels
-  parameter GRID_CHANNELS = (SHARE_GRID)? 1 : CHANNELS,
+  parameter GRID_CHANNELS = (GRID_SHARE)? 1 : CHANNELS,
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt"
 )
@@ -60,7 +60,7 @@ module RSWAFFunction #
   /*
     * AXI Stream Data input
     */
-  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0]          s_axis_data_tdata,
+  input  wire [CHANNELS*DATA_WIDTH-1:0]          s_axis_data_tdata,
   input  wire [CHANNELS-1:0]                          s_axis_data_tvalid,
   output wire [CHANNELS-1:0]                          s_axis_data_tready,
   input  wire [CHANNELS-1:0]                          s_axis_data_tlast,
@@ -71,7 +71,7 @@ module RSWAFFunction #
   /*
     * AXI Stream Grid input
     */
-  input  wire [GRID_CHANNELS*DATA_WIDTH_DATA-1:0]     s_axis_grid_tdata,
+  input  wire [GRID_CHANNELS*DATA_WIDTH-1:0]     s_axis_grid_tdata,
   input  wire [GRID_CHANNELS-1:0]                     s_axis_grid_tvalid,
   output wire [GRID_CHANNELS-1:0]                     s_axis_grid_tready,
   input  wire [GRID_CHANNELS-1:0]                     s_axis_grid_tlast,
@@ -82,7 +82,7 @@ module RSWAFFunction #
   /*
     * AXI Stream Scale input
     */
-  input  wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]   s_axis_scle_tdata,
+  input  wire [SCALE_CHANNELS*SCALE_WIDTH-1:0]   s_axis_scle_tdata,
   input  wire [SCALE_CHANNELS-1:0]                    s_axis_scle_tvalid,
   output wire [SCALE_CHANNELS-1:0]                    s_axis_scle_tready,
   input  wire [SCALE_CHANNELS-1:0]                    s_axis_scle_tlast,
@@ -93,7 +93,7 @@ module RSWAFFunction #
   /*
     * AXI Stream output
     */
-  output wire [CHANNELS*DATA_WIDTH_RSLT-1:0]          m_axis_data_tdata,
+  output wire [CHANNELS*RSLT_WIDTH-1:0]          m_axis_data_tdata,
   // output wire [CHANNELS*KEEP_WIDTH-1:0]               m_axis_data_tkeep,
   output wire [CHANNELS-1:0]                          m_axis_data_tvalid,
   input  wire [CHANNELS-1:0]                          m_axis_data_tready,
@@ -104,7 +104,7 @@ module RSWAFFunction #
 );
 
   // Internal Registers & Wires
-  wire [CHANNELS*DATA_WIDTH_DATA-1:0]         s_axis_grid_tdata_int;
+  wire [CHANNELS*DATA_WIDTH-1:0]         s_axis_grid_tdata_int;
   wire [CHANNELS-1:0]                         s_axis_grid_tvalid_int;
   wire [CHANNELS-1:0]                         s_axis_grid_tready_int;
   wire [CHANNELS-1:0]                         s_axis_grid_tlast_int;
@@ -112,7 +112,7 @@ module RSWAFFunction #
   wire [CHANNELS*DEST_WIDTH-1:0]              s_axis_grid_tdest_int;
   wire [CHANNELS*USER_WIDTH-1:0]              s_axis_grid_tuser_int;
   
-  wire [CHANNELS*DATA_WIDTH_SCALE-1:0]        s_axis_scle_tdata_int;
+  wire [CHANNELS*SCALE_WIDTH-1:0]        s_axis_scle_tdata_int;
   wire [CHANNELS-1:0]                         s_axis_scle_tvalid_int;
   wire [CHANNELS-1:0]                         s_axis_scle_tready_int;
   wire [CHANNELS-1:0]                         s_axis_scle_tlast_int;
@@ -120,7 +120,7 @@ module RSWAFFunction #
   wire [CHANNELS*DEST_WIDTH-1:0]              s_axis_scle_tdest_int;
   wire [CHANNELS*USER_WIDTH-1:0]              s_axis_scle_tuser_int;
   
-  wire [CHANNELS*DATA_WIDTH_SCALED_DIFF-1:0]  scaled_diff_axis_data_tdata;
+  wire [CHANNELS*SCALED_DIFF_WIDTH-1:0]  scaled_diff_axis_data_tdata;
   wire [CHANNELS-1:0]                         scaled_diff_axis_data_tvalid;
   wire [CHANNELS-1:0]                         scaled_diff_axis_data_tready;
   wire [CHANNELS-1:0]                         scaled_diff_axis_data_tlast;
@@ -131,10 +131,10 @@ module RSWAFFunction #
   genvar CHN;
   generate 
 
-  if (SHARE_GRID && CHANNELS > 1) begin
+  if (GRID_SHARE && CHANNELS > 1) begin
     axis_broadcast #(
       .M_COUNT            (CHANNELS),
-      .DATA_WIDTH         (DATA_WIDTH_DATA),
+      .DATA_WIDTH         (DATA_WIDTH),
       .KEEP_ENABLE        (0),
       .KEEP_WIDTH         (1),
       .LAST_ENABLE        (1),
@@ -173,10 +173,10 @@ module RSWAFFunction #
     assign s_axis_grid_tuser_int   = s_axis_grid_tuser;
   end
 
-  if (SHARE_SCALE && CHANNELS > 1) begin
+  if (SCALE_SHARE && CHANNELS > 1) begin
     axis_broadcast #(
       .M_COUNT          (CHANNELS),
-      .DATA_WIDTH       (DATA_WIDTH_SCALE),
+      .DATA_WIDTH       (SCALE_WIDTH),
       .KEEP_ENABLE      (0),
       .KEEP_WIDTH       (1),
       .LAST_ENABLE      (1),
@@ -218,7 +218,7 @@ module RSWAFFunction #
   for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1 ) begin
     // Internal Registers & Wires
     // Data wires
-    wire [DATA_WIDTH_DATA-1:0]  s_in_axis_data_tdata_slice, s_fifo_axis_data_tdata_slice; 
+    wire [DATA_WIDTH-1:0]  s_in_axis_data_tdata_slice, s_fifo_axis_data_tdata_slice; 
     // wire [KEEP_WIDTH-1:0]       s_in_axis_data_tkeep_slice, s_fifo_axis_data_tkeep_slice; 
     wire                        s_in_axis_data_tvalid_slice, s_fifo_axis_data_tvalid_slice; 
     wire                        s_in_axis_data_tready_slice, s_fifo_axis_data_tready_slice; 
@@ -228,7 +228,7 @@ module RSWAFFunction #
     wire [USER_WIDTH-1:0]       s_in_axis_data_tuser_slice, s_fifo_axis_data_tuser_slice; 
 
     // Grid Wires
-    wire [DATA_WIDTH_DATA-1:0]  s_in_axis_grid_tdata_slice, s_fifo_axis_grid_tdata_slice;
+    wire [DATA_WIDTH-1:0]  s_in_axis_grid_tdata_slice, s_fifo_axis_grid_tdata_slice;
     // wire [KEEP_WIDTH-1:0]       s_in_axis_grid_tkeep_slice, s_fifo_axis_grid_tkeep_slice;
     wire                        s_in_axis_grid_tvalid_slice, s_fifo_axis_grid_tvalid_slice;
     wire                        s_in_axis_grid_tready_slice, s_fifo_axis_grid_tready_slice;
@@ -238,7 +238,7 @@ module RSWAFFunction #
     wire [USER_WIDTH-1:0]       s_in_axis_grid_tuser_slice, s_fifo_axis_grid_tuser_slice;
 
     // Scale Wires
-    wire [DATA_WIDTH_SCALE-1:0] s_in_axis_scale_tdata_slice, s_fifo_axis_scale_tdata_slice;
+    wire [SCALE_WIDTH-1:0] s_in_axis_scale_tdata_slice, s_fifo_axis_scale_tdata_slice;
     // wire [KEEP_WIDTH-1:0]       s_in_axis_scale_tkeep_slice, s_fifo_axis_scale_tkeep_slice;
     wire                        s_in_axis_scale_tvalid_slice, s_fifo_axis_scale_tvalid_slice;
     wire                        s_in_axis_scale_tready_slice, s_fifo_axis_scale_tready_slice;
@@ -247,7 +247,7 @@ module RSWAFFunction #
     wire [DEST_WIDTH-1:0]       s_in_axis_scale_tdest_slice, s_fifo_axis_scale_tdest_slice;
     wire [USER_WIDTH-1:0]       s_in_axis_scale_tuser_slice, s_fifo_axis_scale_tuser_slice;
   
-    wire [DATA_WIDTH_RSLT-1:0]  scaled_diff_axis_data_tdata_slice;
+    wire [RSLT_WIDTH-1:0]  scaled_diff_axis_data_tdata_slice;
     // wire [KEEP_WIDTH-1:0]       scaled_diff_axis_data_tkeep_slice;
     wire                        scaled_diff_axis_data_tvalid_slice;
     wire                        scaled_diff_axis_data_tready_slice;
@@ -256,8 +256,8 @@ module RSWAFFunction #
     wire [DEST_WIDTH-1:0]       scaled_diff_axis_data_tdest_slice;
     wire [USER_WIDTH-1:0]       scaled_diff_axis_data_tuser_slice;
     
-    assign s_in_axis_data_tdata_slice  = s_axis_data_tdata[(CHN+1)*DATA_WIDTH_DATA -1: CHN*DATA_WIDTH_DATA];
-    // assign s_in_axis_data_tkeep_slice  = s_axis_data_tkeep[CHN*KEEP_WIDTH_DATA +: KEEP_WIDTH_DATA];
+    assign s_in_axis_data_tdata_slice  = s_axis_data_tdata[(CHN+1)*DATA_WIDTH -1: CHN*DATA_WIDTH];
+    // assign s_in_axis_data_tkeep_slice  = s_axis_data_tkeep[CHN*DATA_KEEP_WIDTH +: DATA_KEEP_WIDTH];
     assign s_in_axis_data_tvalid_slice = s_axis_data_tvalid[CHN];
     assign s_axis_data_tready[CHN]     = s_in_axis_data_tready_slice;
     assign s_in_axis_data_tlast_slice  = s_axis_data_tlast[CHN];
@@ -265,8 +265,8 @@ module RSWAFFunction #
     assign s_in_axis_data_tdest_slice  = s_axis_data_tdest[(CHN+1)*DEST_WIDTH -1: CHN*DEST_WIDTH];
     assign s_in_axis_data_tuser_slice  = s_axis_data_tuser[(CHN+1)*USER_WIDTH -1: CHN*USER_WIDTH];
   
-    assign s_in_axis_grid_tdata_slice  = s_axis_grid_tdata_int[CHN*DATA_WIDTH_DATA +: DATA_WIDTH_DATA];
-    // assign s_in_axis_grid_tkeep_slice  = s_axis_grid_tkeep_int[CHN*KEEP_WIDTH_DATA +: KEEP_WIDTH_DATA];
+    assign s_in_axis_grid_tdata_slice  = s_axis_grid_tdata_int[CHN*DATA_WIDTH +: DATA_WIDTH];
+    // assign s_in_axis_grid_tkeep_slice  = s_axis_grid_tkeep_int[CHN*DATA_KEEP_WIDTH +: DATA_KEEP_WIDTH];
     assign s_in_axis_grid_tvalid_slice = s_axis_grid_tvalid_int[CHN];
     assign s_axis_grid_tready_int[CHN] = s_in_axis_grid_tready_slice;
     assign s_in_axis_grid_tlast_slice  = s_axis_grid_tlast_int[CHN];
@@ -274,8 +274,8 @@ module RSWAFFunction #
     assign s_in_axis_grid_tdest_slice  = s_axis_grid_tdest_int[CHN*DEST_WIDTH +: DEST_WIDTH];
     assign s_in_axis_grid_tuser_slice  = s_axis_grid_tuser_int[CHN*USER_WIDTH +: USER_WIDTH];
   
-    assign s_in_axis_scale_tdata_slice  = s_axis_scle_tdata_int[CHN*DATA_WIDTH_DATA +: DATA_WIDTH_DATA];
-    // assign s_in_axis_scale_tkeep_slice  = s_axis_scle_tkeep_int[CHN*KEEP_WIDTH_DATA +: KEEP_WIDTH_DATA];
+    assign s_in_axis_scale_tdata_slice  = s_axis_scle_tdata_int[CHN*DATA_WIDTH +: DATA_WIDTH];
+    // assign s_in_axis_scale_tkeep_slice  = s_axis_scle_tkeep_int[CHN*DATA_KEEP_WIDTH +: DATA_KEEP_WIDTH];
     assign s_in_axis_scale_tvalid_slice = s_axis_scle_tvalid_int[CHN];
     assign s_axis_scle_tready_int[CHN] = s_in_axis_scale_tready_slice;
     assign s_in_axis_scale_tlast_slice  = s_axis_scle_tlast_int[CHN];
@@ -285,7 +285,7 @@ module RSWAFFunction #
 
     axis_srl_fifo #(
       // Width of AXI stream interfaces in bits
-      .DATA_WIDTH(DATA_WIDTH_DATA),
+      .DATA_WIDTH(DATA_WIDTH),
       // Propagate tkeep signal
       .KEEP_ENABLE(0),
       // tkeep signal width (words per cycle)
@@ -328,7 +328,7 @@ module RSWAFFunction #
     
     axis_srl_fifo #(
       // Width of AXI stream interfaces in bits
-      .DATA_WIDTH(DATA_WIDTH_DATA),
+      .DATA_WIDTH(DATA_WIDTH),
       // Propagate tkeep signal
       .KEEP_ENABLE(0),
       // tkeep signal width (words per cycle)
@@ -372,7 +372,7 @@ module RSWAFFunction #
     
     axis_srl_fifo #(
       // Width of AXI stream interfaces in bits
-      .DATA_WIDTH(DATA_WIDTH_DATA),
+      .DATA_WIDTH(DATA_WIDTH),
       // Propagate tkeep signal
       .KEEP_ENABLE(0),
       // tkeep signal width (words per cycle)
@@ -414,12 +414,12 @@ module RSWAFFunction #
     );
     
     SubMultAbs #(
-      .DATA_WIDTH_DATA        (DATA_WIDTH_DATA),
-      .FRACTIONAL_BITS_DATA   (FRACTIONAL_BITS_DATA),
-      .DATA_WIDTH_SCALE       (DATA_WIDTH_SCALE),
-      .FRACTIONAL_BITS_SCALE  (FRACTIONAL_BITS_SCALE),
-      .DATA_WIDTH_RSLT        (DATA_WIDTH_SCALED_DIFF),
-      .FRACTIONAL_BITS_RSLT   (FRACTIONAL_BITS_SCALED_DIFF),
+      .DATA_WIDTH        (DATA_WIDTH),
+      .DATA_FRACTIONAL_BITS   (DATA_FRACTIONAL_BITS),
+      .SCALE_WIDTH       (SCALE_WIDTH),
+      .SCALE_FRACTIONAL_BITS  (SCALE_FRACTIONAL_BITS),
+      .RSLT_WIDTH        (SCALED_DIFF_WIDTH),
+      .RSLT_FRACTIONAL_BITS   (SCALED_DIFF_FRACTIONAL_BITS),
       .ID_ENABLE              (ID_ENABLE),
       .ID_WIDTH               (ID_WIDTH),
       .DEST_ENABLE            (DEST_ENABLE),
@@ -459,7 +459,7 @@ module RSWAFFunction #
       .m_axis_data_tuser      (scaled_diff_axis_data_tuser_slice)
     );
 
-    assign scaled_diff_axis_data_tdata [CHN*DATA_WIDTH_SCALED_DIFF +: DATA_WIDTH_SCALED_DIFF]  = scaled_diff_axis_data_tdata_slice;
+    assign scaled_diff_axis_data_tdata [CHN*SCALED_DIFF_WIDTH +: SCALED_DIFF_WIDTH]  = scaled_diff_axis_data_tdata_slice;
     assign scaled_diff_axis_data_tlast [CHN] = scaled_diff_axis_data_tlast_slice;
     assign scaled_diff_axis_data_tvalid[CHN] = scaled_diff_axis_data_tvalid_slice;
     assign scaled_diff_axis_data_tready_slice= scaled_diff_axis_data_tready[CHN];
@@ -472,12 +472,12 @@ module RSWAFFunction #
   endgenerate
 
   Sech2Lutram #(
-    .DATA_WIDTH_DATA      (DATA_WIDTH_SCALED_DIFF),
-    .FRACTIONAL_BITS_DATA (FRACTIONAL_BITS_SCALED_DIFF),
-    .DATA_WIDTH_RSLT      (DATA_WIDTH_RSLT),
-    .FRACTIONAL_BITS_RSLT (FRACTIONAL_BITS_RSLT),
-    .KEEP_ENABLE_DATA     (0),
-    .KEEP_WIDTH_DATA      (1),
+    .DATA_WIDTH      (SCALED_DIFF_WIDTH),
+    .DATA_FRACTIONAL_BITS (SCALED_DIFF_FRACTIONAL_BITS),
+    .RSLT_WIDTH      (RSLT_WIDTH),
+    .RSLT_FRACTIONAL_BITS (RSLT_FRACTIONAL_BITS),
+    .DATA_KEEP_ENABLE     (0),
+    .DATA_KEEP_WIDTH      (1),
     .ID_ENABLE            (ID_ENABLE),
     .ID_WIDTH             (ID_WIDTH),
     .DEST_ENABLE          (DEST_ENABLE),

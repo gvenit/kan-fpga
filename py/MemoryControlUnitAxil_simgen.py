@@ -66,24 +66,24 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
     params = module.copy_params_as_localparams(mcu)
     ports  = module.copy_ports_as_vars(mcu)
 
-    DATA_WIDTH      : Localparam = params['DATA_WIDTH_DATA']
+    DATA_WIDTH      : Localparam = params['DATA_WIDTH']
     DATA_CHANNELS   : Localparam = params['DATA_CHANNELS']
     BATCH_SIZE      : Localparam = params['BATCH_SIZE']
-    SHARE_GRID      : Localparam = params['SHARE_GRID']
-    SHARE_SCALE     : Localparam = params['SHARE_SCALE']
+    GRID_SHARE      : Localparam = params['GRID_SHARE']
+    SCALE_SHARE     : Localparam = params['SCALE_SHARE']
     ADDR_WIDTH      : Localparam = DATA_WIDTH
 
     DATA_CHANNELS.value = J
     BATCH_SIZE.value  = K
 
-    SHARE_SCALE.value = 1
-    SHARE_GRID.value  = 1
+    SCALE_SHARE.value = 1
+    GRID_SHARE.value  = 1
     DATA_WIDTH.value  = 8
     
-    params['DATA_WIDTH_SCALE'].value = DATA_WIDTH
-    params['ADDR_WIDTH_DATA'].value  = DATA_WIDTH
-    params['ADDR_WIDTH_GRID'].value  = DATA_WIDTH
-    params['ADDR_WIDTH_SCALE'].value = DATA_WIDTH
+    params['SCALE_WIDTH'].value = DATA_WIDTH
+    params['DATA_ADDR'].value  = DATA_WIDTH
+    params['GRID_ADDR'].value  = DATA_WIDTH
+    params['SCALE_ADDR'].value = DATA_WIDTH
     WIDTH = module.LocalparamLike(DATA_WIDTH, 'WIDTH')
     
     CONGESTION_LEVEL = module.Localparam('CONGESTION_LEVEL', 5)
@@ -682,7 +682,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
     )
     
     # Grid Bram instances
-    if_grid = per_chn_data.GenerateIf(Ors(~SHARE_GRID, chn_data == 0))
+    if_grid = per_chn_data.GenerateIf(Ors(~GRID_SHARE, chn_data == 0))
     LFT_POS = if_grid.Localparam('LFT_POS',chn_data)
     
     cong_counter = if_grid.Integer('cong_counter')
@@ -876,7 +876,7 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
     )
     
     # Scale Bram instances
-    if_scle = per_chn_data.GenerateIf(Ors(~SHARE_SCALE, chn_data == 0))
+    if_scle = per_chn_data.GenerateIf(Ors(~SCALE_SHARE, chn_data == 0))
     LFT_POS = if_scle.Localparam('LFT_POS',chn_data)
     
     cong_counter = if_scle.Integer('cong_counter')

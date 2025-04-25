@@ -32,10 +32,10 @@ def tb_LinearProcessingElement():
     PE_NUMBER_J          : Localparam = params['PE_NUMBER_J']
     PE_POSITION_I        : Localparam = params['PE_POSITION_I']
     PE_POSITION_J        : Localparam = params['PE_POSITION_J']
-    DATA_WIDTH           : Localparam = params['DATA_WIDTH_OP0']
-    FRACTIONAL_BITS_OP0  : Localparam = params['FRACTIONAL_BITS_OP0']
-    FRACTIONAL_BITS_OP1  : Localparam = params['FRACTIONAL_BITS_OP1']
-    FRACTIONAL_BITS_RSLT : Localparam = params['FRACTIONAL_BITS_RSLT']
+    DATA_WIDTH           : Localparam = params['OP0_WIDTH']
+    OP0_FRACTIONAL_BITS  : Localparam = params['OP0_FRACTIONAL_BITS']
+    OP1_FRACTIONAL_BITS  : Localparam = params['OP1_FRACTIONAL_BITS']
+    RSLT_FRACTIONAL_BITS : Localparam = params['RSLT_FRACTIONAL_BITS']
     IS_UNSIGNED_OP0      : Localparam = params['IS_UNSIGNED_OP0']
     OP1_USER_MASK        : Localparam = params['OP1_USER_MASK']
     RSLT_USER_MASK       : Localparam = params['RSLT_USER_MASK']
@@ -46,16 +46,16 @@ def tb_LinearProcessingElement():
     PE_POSITION_J.value = 1
 
     DATA_WIDTH.value = 16
-    FRACTIONAL_BITS_OP0.value = 13
-    FRACTIONAL_BITS_OP1.value = 15
-    FRACTIONAL_BITS_RSLT.value = 15
+    OP0_FRACTIONAL_BITS.value = 13
+    OP1_FRACTIONAL_BITS.value = 15
+    RSLT_FRACTIONAL_BITS.value = 15
     IS_UNSIGNED_OP0.value = 0
     
     # print(params.keys())
     # print(ports.keys())
     
-    params['DATA_WIDTH_OP1'].value = DATA_WIDTH
-    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
+    params['OP1_WIDTH'].value = DATA_WIDTH
+    params['RSLT_WIDTH'].value = DATA_WIDTH
     
     reset_done = module.Reg('reset_done', initval=0)
 
@@ -331,10 +331,10 @@ def tbv2_LinearProcessingElement():
     PE_NUMBER_J          : Localparam = params['PE_NUMBER_J']
     PE_POSITION_I        : Localparam = params['PE_POSITION_I']
     PE_POSITION_J        : Localparam = params['PE_POSITION_J']
-    DATA_WIDTH           : Localparam = params['DATA_WIDTH_OP0']
-    FRACTIONAL_BITS_OP0  : Localparam = params['FRACTIONAL_BITS_OP0']
-    FRACTIONAL_BITS_OP1  : Localparam = params['FRACTIONAL_BITS_OP1']
-    FRACTIONAL_BITS_RSLT : Localparam = params['FRACTIONAL_BITS_RSLT']
+    DATA_WIDTH           : Localparam = params['OP0_WIDTH']
+    OP0_FRACTIONAL_BITS  : Localparam = params['OP0_FRACTIONAL_BITS']
+    OP1_FRACTIONAL_BITS  : Localparam = params['OP1_FRACTIONAL_BITS']
+    RSLT_FRACTIONAL_BITS : Localparam = params['RSLT_FRACTIONAL_BITS']
     IS_UNSIGNED_OP0      : Localparam = params['IS_UNSIGNED_OP0']
     OP1_USER_MASK        : Localparam = params['OP1_USER_MASK']
     RSLT_USER_MASK       : Localparam = params['RSLT_USER_MASK']
@@ -345,16 +345,16 @@ def tbv2_LinearProcessingElement():
     PE_POSITION_J.value = 0
 
     DATA_WIDTH.value = 16
-    FRACTIONAL_BITS_OP0.value = 12
-    FRACTIONAL_BITS_OP1.value = 12
-    FRACTIONAL_BITS_RSLT.value = 12
+    OP0_FRACTIONAL_BITS.value = 12
+    OP1_FRACTIONAL_BITS.value = 12
+    RSLT_FRACTIONAL_BITS.value = 12
     IS_UNSIGNED_OP0.value = 0
     
     # print(params.keys())
     # print(ports.keys())
     
-    params['DATA_WIDTH_OP1'].value = DATA_WIDTH
-    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
+    params['OP1_WIDTH'].value = DATA_WIDTH
+    params['RSLT_WIDTH'].value = DATA_WIDTH
     
     reset_done = module.Reg('reset_done', initval=0)
 

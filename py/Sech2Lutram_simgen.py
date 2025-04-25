@@ -33,16 +33,16 @@ def tb_Sech2Lutram():
     
     print(params.keys())
 
-    DATA_WIDTH            : Localparam = params['DATA_WIDTH_DATA']
-    FRACTIONAL_BITS_DATA  : Localparam = params['FRACTIONAL_BITS_DATA']
-    FRACTIONAL_BITS_RSLT  : Localparam = params['FRACTIONAL_BITS_RSLT']
+    DATA_WIDTH            : Localparam = params['DATA_WIDTH']
+    DATA_FRACTIONAL_BITS  : Localparam = params['DATA_FRACTIONAL_BITS']
+    RSLT_FRACTIONAL_BITS  : Localparam = params['RSLT_FRACTIONAL_BITS']
     CHANNELS              : Localparam = params['CHANNELS']
     ROM_DATA_PATH         : Localparam = params['ROM_DATA_PATH']
 
     DATA_WIDTH.value = 16
-    FRACTIONAL_BITS_DATA.value = 13
-    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
-    FRACTIONAL_BITS_RSLT.value = 16
+    DATA_FRACTIONAL_BITS.value = 13
+    params['RSLT_WIDTH'].value = DATA_WIDTH
+    RSLT_FRACTIONAL_BITS.value = 16
     CHANNELS.value = 4
     ROM_DATA_PATH.value = "../data/Sech2Lutram_n_16.13_16.16.txt"
 

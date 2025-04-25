@@ -11,21 +11,21 @@
 
 module SubMultAbs #(
   // Width of AXI stream Input Data & Grid interfaces in bits
-  parameter DATA_WIDTH_DATA = 16,
+  parameter DATA_WIDTH = 16,
   // Fractional bits of input data & grid
-  parameter FRACTIONAL_BITS_DATA = 12,
+  parameter DATA_FRACTIONAL_BITS = 12,
   // Width of AXI stream Scale interface in bits
-  parameter DATA_WIDTH_SCALE = 16,
+  parameter SCALE_WIDTH = 16,
   // Fractional bits of input scale
-  parameter FRACTIONAL_BITS_SCALE = 12,
+  parameter SCALE_FRACTIONAL_BITS = 12,
   // Width of AXI stream Output Data interface in bits
-  parameter DATA_WIDTH_RSLT = 16,
+  parameter RSLT_WIDTH = 16,
   // Fractional bits of output data
-  parameter FRACTIONAL_BITS_RSLT = 12,
+  parameter RSLT_FRACTIONAL_BITS = 12,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT > 8),
+  parameter KEEP_ENABLE = (RSLT_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT + 7) / 8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((RSLT_WIDTH + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -45,7 +45,7 @@ module SubMultAbs #(
   /*
     * AXI Stream Data input
     */
-  input  wire [DATA_WIDTH_DATA-1:0] s_axis_data_tdata,
+  input  wire [DATA_WIDTH-1:0] s_axis_data_tdata,
   input  wire                       s_axis_data_tvalid,
   output wire                       s_axis_data_tready,
   input  wire                       s_axis_data_tlast,
@@ -56,7 +56,7 @@ module SubMultAbs #(
   /*
     * AXI Stream Grid input
     */
-  input  wire [DATA_WIDTH_DATA-1:0] s_axis_grid_tdata,
+  input  wire [DATA_WIDTH-1:0] s_axis_grid_tdata,
   input  wire                       s_axis_grid_tvalid,
   output wire                       s_axis_grid_tready,
   input  wire                       s_axis_grid_tlast,
@@ -67,7 +67,7 @@ module SubMultAbs #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [DATA_WIDTH_SCALE-1:0]  s_axis_scle_tdata,
+  input  wire [SCALE_WIDTH-1:0]  s_axis_scle_tdata,
   input  wire                         s_axis_scle_tvalid,
   output wire                         s_axis_scle_tready,
   input  wire                         s_axis_scle_tlast,
@@ -78,7 +78,7 @@ module SubMultAbs #(
   /*
     * AXI Stream output
     */
-  output wire [DATA_WIDTH_RSLT-1:0] m_axis_data_tdata,
+  output wire [RSLT_WIDTH-1:0] m_axis_data_tdata,
   output wire [KEEP_WIDTH-1:0]      m_axis_data_tkeep,
   output wire                       m_axis_data_tvalid,
   input  wire                       m_axis_data_tready,
@@ -93,18 +93,18 @@ module SubMultAbs #(
 );
   `define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
 
-  wire signed [DATA_WIDTH_RSLT:0] signed_rslt;
+  wire signed [RSLT_WIDTH:0] signed_rslt;
 
-  assign m_axis_data_tdata = `abs(signed_rslt)[DATA_WIDTH_RSLT-1:0];
+  assign m_axis_data_tdata = `abs(signed_rslt)[RSLT_WIDTH-1:0];
 
   SubMult
   #(
-    .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
-    .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
-    .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
-    .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
-    .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT+1),
-    .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+    .DATA_WIDTH(DATA_WIDTH),
+    .DATA_FRACTIONAL_BITS(DATA_FRACTIONAL_BITS),
+    .SCALE_WIDTH(SCALE_WIDTH),
+    .SCALE_FRACTIONAL_BITS(SCALE_FRACTIONAL_BITS),
+    .RSLT_WIDTH(RSLT_WIDTH+1),
+    .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
     .KEEP_ENABLE(KEEP_ENABLE),
     .KEEP_WIDTH(KEEP_WIDTH),
     .ID_ENABLE(ID_ENABLE),

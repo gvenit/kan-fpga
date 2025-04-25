@@ -30,21 +30,21 @@ module LinearProcessingElement #(
     // Position of current PE in the j axis
     parameter PE_POSITION_J = 0,
     // Data Width of Input Data (L-AXIS)
-    parameter DATA_WIDTH_OP0 = 16,
+    parameter OP0_WIDTH = 16,
     // Fractional Bits of Input Data (L-AXIS)
-    parameter FRACTIONAL_BITS_OP0 = 12,
+    parameter OP0_FRACTIONAL_BITS = 12,
     // Treat operand 0 as unsigned
     parameter IS_UNSIGNED_OP0 = 0,
     // Data Width of Input Weights (U-AXIS)
-    parameter DATA_WIDTH_OP1 = 16,
+    parameter OP1_WIDTH = 16,
     // Treat operand 1 as unsigned
     parameter IS_UNSIGNED_OP1 = 0,
     // Fractional Bits of Input Weights (U-AXIS)
-    parameter FRACTIONAL_BITS_OP1 = 12,
+    parameter OP1_FRACTIONAL_BITS = 12,
     // Data Width of Output Data (D-AXIS)
-    parameter DATA_WIDTH_RSLT = 16,
+    parameter RSLT_WIDTH = 16,
     // Fractional Bits of Output Data (D-AXIS)
-    parameter FRACTIONAL_BITS_RSLT = 12,
+    parameter RSLT_FRACTIONAL_BITS = 12,
     // tuser signal width
     parameter USER_WIDTH = 8 , // 2 + `LOG2(PE_NUMBER_J),
     // Output Destination 
@@ -52,9 +52,9 @@ module LinearProcessingElement #(
     // Output Destination 
     parameter OUTPUT_ID = 1,
     // Resolve Up/Down Bit Width
-    parameter DATA_WIDTH_U_D = (DATA_WIDTH_OP1 > DATA_WIDTH_RSLT) ? DATA_WIDTH_OP1 : DATA_WIDTH_RSLT,
+    parameter U_D_WIDTH = (OP1_WIDTH > RSLT_WIDTH) ? OP1_WIDTH : RSLT_WIDTH,
     // Resolve Left/Right Bit Width
-    parameter DATA_WIDTH_L_R = DATA_WIDTH_OP0,
+    parameter L_R_WIDTH = OP0_WIDTH,
     // Operator 1 User Mask
     parameter OP1_USER_MASK = 1 << USER_WIDTH-2,
     // Result User Mask
@@ -66,7 +66,7 @@ module LinearProcessingElement #(
   /*
    * AXI Stream Up input
    */
-  input  wire [DATA_WIDTH_U_D-1:0]    s_axis_up_tdata,
+  input  wire [U_D_WIDTH-1:0]    s_axis_up_tdata,
   input  wire                         s_axis_up_tvalid,
   output wire                         s_axis_up_tready,
   input  wire                         s_axis_up_tlast,
@@ -75,7 +75,7 @@ module LinearProcessingElement #(
   /*
    * AXI Stream Left input
    */
-  input  wire [DATA_WIDTH_L_R-1:0]    s_axis_left_tdata,
+  input  wire [L_R_WIDTH-1:0]    s_axis_left_tdata,
   input  wire                         s_axis_left_tvalid,
   output wire                         s_axis_left_tready,
   input  wire                         s_axis_left_tlast,
@@ -83,7 +83,7 @@ module LinearProcessingElement #(
   /*
    * AXI Stream Down Output
    */
-  output wire [DATA_WIDTH_U_D-1:0]    m_axis_down_tdata,
+  output wire [U_D_WIDTH-1:0]    m_axis_down_tdata,
   output wire                         m_axis_down_tvalid,
   input  wire                         m_axis_down_tready,
   output wire                         m_axis_down_tlast,
@@ -92,7 +92,7 @@ module LinearProcessingElement #(
   /*
    * AXI Stream Right Output
    */
-  output wire [DATA_WIDTH_L_R-1:0]    m_axis_right_tdata,
+  output wire [L_R_WIDTH-1:0]    m_axis_right_tdata,
   output wire                         m_axis_right_tvalid,
   input  wire                         m_axis_right_tready,
   output wire                         m_axis_right_tlast,
@@ -104,33 +104,33 @@ module LinearProcessingElement #(
   output wire err_user_flag
 );
   // DataFlow Local Parameters
-  localparam MLT_OP_SIZE  = DATA_WIDTH_OP0 + DATA_WIDTH_OP1 + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
-  localparam MAC_OP_SIZE  = (DATA_WIDTH_RSLT > MLT_OP_SIZE) ? DATA_WIDTH_RSLT : MLT_OP_SIZE;
-  localparam MAC_RSLT_LSB = FRACTIONAL_BITS_OP0 + FRACTIONAL_BITS_OP1 - FRACTIONAL_BITS_RSLT;
-  localparam MAC_RSLT_MSB = MAC_RSLT_LSB + DATA_WIDTH_RSLT - 1;
+  localparam MLT_OP_SIZE  = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
+  localparam MAC_OP_SIZE  = (RSLT_WIDTH > MLT_OP_SIZE) ? RSLT_WIDTH : MLT_OP_SIZE;
+  localparam MAC_RSLT_LSB = OP0_FRACTIONAL_BITS + OP1_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
+  localparam MAC_RSLT_MSB = MAC_RSLT_LSB + RSLT_WIDTH - 1;
 
   // Up AXI-Stream internal signals
-  wire [DATA_WIDTH_U_D-1:0] int_axis_up_tdata;
+  wire [U_D_WIDTH-1:0] int_axis_up_tdata;
   wire                      int_axis_up_tvalid;
   wire                      int_axis_up_tready;
   wire                      int_axis_up_tlast;
   wire [USER_WIDTH-1:0]     int_axis_up_tuser;
 
   // Left AXI-Stream internal signals
-  wire [DATA_WIDTH_L_R-1:0] int_axis_left_tdata;
+  wire [L_R_WIDTH-1:0] int_axis_left_tdata;
   wire                      int_axis_left_tvalid;
   wire                      int_axis_left_tready;
   wire                      int_axis_left_tlast;
 
   // Down AXI-Stream internal signals
-  wire [DATA_WIDTH_U_D-1:0] int_axis_down_tdata;
+  wire [U_D_WIDTH-1:0] int_axis_down_tdata;
   wire                      int_axis_down_tvalid;
   wire                      int_axis_down_tready;
   wire                      int_axis_down_tlast;
   wire [USER_WIDTH-1:0]     int_axis_down_tuser;
 
   // Right AXI-Stream internal signals
-  wire [DATA_WIDTH_L_R-1:0] int_axis_right_tdata;
+  wire [L_R_WIDTH-1:0] int_axis_right_tdata;
   wire                      int_axis_right_tvalid;
   wire                      int_axis_right_tready;
   wire                      int_axis_right_tlast;
@@ -148,14 +148,14 @@ module LinearProcessingElement #(
   // DataFlow Registers & Wires
   reg  [MAC_OP_SIZE-1:0]     partial_sum_reg = 0;
 
-  wire [DATA_WIDTH_OP0-1:0]  mult_op0 = { {IS_UNSIGNED_OP0{1'b0}}, int_axis_left_tdata};
-  wire [DATA_WIDTH_OP1-1:0]  mult_op1 = { {IS_UNSIGNED_OP1{1'b0}}, int_axis_up_tdata[DATA_WIDTH_OP1-1:0]};
+  wire [OP0_WIDTH-1:0]  mult_op0 = { {IS_UNSIGNED_OP0{1'b0}}, int_axis_left_tdata};
+  wire [OP1_WIDTH-1:0]  mult_op1 = { {IS_UNSIGNED_OP1{1'b0}}, int_axis_up_tdata[OP1_WIDTH-1:0]};
   wire [MLT_OP_SIZE-1:0]     mult_res = mult_op0 * mult_op1;
   wire [MAC_OP_SIZE-1:0]     partial_sum_fb = (op_start) ? 0 : partial_sum_reg;
   wire [MAC_OP_SIZE-1:0]     partial_sum_rslt = partial_sum_fb + mult_res;
   wire [MAC_OP_SIZE-1:0]     partial_sum_reg_next = (bypass_adder) ? partial_sum_fb : partial_sum_rslt;
 
-  wire [DATA_WIDTH_RSLT-1:0] rslt = partial_sum_reg[MAC_RSLT_MSB:MAC_RSLT_LSB];
+  wire [RSLT_WIDTH-1:0] rslt = partial_sum_reg[MAC_RSLT_MSB:MAC_RSLT_LSB];
 
   // Control Logic
   LPEControlUnit #(
@@ -205,7 +205,7 @@ module LinearProcessingElement #(
   assign s_axis_up_tready = s_axis_up_tready_int & store_u;
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_U_D),
+    .DATA_WIDTH(U_D_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -250,7 +250,7 @@ module LinearProcessingElement #(
   assign s_axis_left_tready = s_axis_left_tready_int & store_l;
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_L_R),
+    .DATA_WIDTH(L_R_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -292,7 +292,7 @@ module LinearProcessingElement #(
   // Down AXI-Stream Skid Buffer
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_U_D),
+    .DATA_WIDTH(U_D_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -335,7 +335,7 @@ module LinearProcessingElement #(
   // Right AXI-Stream Skid Buffer
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_L_R),
+    .DATA_WIDTH(L_R_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -385,7 +385,7 @@ module LinearProcessingElement #(
   assign int_axis_right_tlast   = int_axis_left_tlast;
 
   // Output Down AXI-Stream Drivers
-  assign int_axis_down_tdata   = (export_rslt) ? {{(DATA_WIDTH_U_D-DATA_WIDTH_RSLT){1'b0}}, rslt} : int_axis_up_tdata;
+  assign int_axis_down_tdata   = (export_rslt) ? {{(U_D_WIDTH-RSLT_WIDTH){1'b0}}, rslt} : int_axis_up_tdata;
   assign int_axis_down_tvalid  = (export_rslt) ? 1'b1                           : int_axis_up_tvalid   & forward_u & !drop_u;
   assign int_axis_up_tready    = (export_rslt) ? 1'b0                           : int_axis_down_tready & forward_u |  drop_u;
   assign int_axis_down_tlast   = (export_rslt) ? PE_NUMBER_J == PE_POSITION_J+1 : int_axis_up_tlast;

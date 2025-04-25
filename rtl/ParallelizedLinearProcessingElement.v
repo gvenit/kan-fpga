@@ -28,19 +28,19 @@ module ParallelizedLinearProcessingElement #(
   // Position of current PE in the j axis
   parameter PE_POSITION_J = 0,
   // Data Width of Input Data (L-AXIS)
-  parameter DATA_WIDTH_OP0 = 16,
+  parameter OP0_WIDTH = 16,
   // Fractional Bits of Input Data (L-AXIS)
-  parameter FRACTIONAL_BITS_OP0 = 12,
+  parameter OP0_FRACTIONAL_BITS = 12,
   // Treat operand 0 as unsigned
   parameter IS_UNSIGNED_OP0 = 0,
   // Data Width of Input Weights (T-AXIS)
-  parameter DATA_WIDTH_OP1 = 16,
+  parameter OP1_WIDTH = 16,
   // Fractional Bits of Input Weights (T-AXIS)
-  parameter FRACTIONAL_BITS_OP1 = 12,
+  parameter OP1_FRACTIONAL_BITS = 12,
   // Treat operand 1 as unsigned
   parameter IS_UNSIGNED_OP1 = 0,
   // Data Width of Output Data (D-AXIS)
-  parameter DATA_WIDTH_PSUM = DATA_WIDTH_OP0 + DATA_WIDTH_OP1
+  parameter PSUM_WIDTH = OP0_WIDTH + OP1_WIDTH
 ) (
   input  wire                            clk,
   input  wire                            rst,
@@ -48,7 +48,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Left Input
    */
-  input  wire [DATA_WIDTH_OP0-1:0]    s_axis_l_tdata,
+  input  wire [OP0_WIDTH-1:0]    s_axis_l_tdata,
   input  wire                         s_axis_l_tvalid,
   output wire                         s_axis_l_tready,
   input  wire                         s_axis_l_tlast,
@@ -56,7 +56,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Right Output
    */
-  output wire [DATA_WIDTH_OP0-1:0]    m_axis_r_tdata,
+  output wire [OP0_WIDTH-1:0]    m_axis_r_tdata,
   output wire                         m_axis_r_tvalid,
   input  wire                         m_axis_r_tready,
   output wire                         m_axis_r_tlast,
@@ -64,7 +64,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Top Input
    */
-  input  wire [DATA_WIDTH_OP1-1:0]    s_axis_t_tdata,
+  input  wire [OP1_WIDTH-1:0]    s_axis_t_tdata,
   input  wire                         s_axis_t_tvalid,
   output wire                         s_axis_t_tready,
   input  wire                         s_axis_t_tlast,
@@ -72,7 +72,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Bottom Output
    */
-  output wire [DATA_WIDTH_OP1-1:0]    m_axis_b_tdata,
+  output wire [OP1_WIDTH-1:0]    m_axis_b_tdata,
   output wire                         m_axis_b_tvalid,
   input  wire                         m_axis_b_tready,
   output wire                         m_axis_b_tlast,
@@ -80,7 +80,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Up Input
    */
-  input  wire [DATA_WIDTH_PSUM-1:0]   s_axis_u_tdata,
+  input  wire [PSUM_WIDTH-1:0]   s_axis_u_tdata,
   input  wire                         s_axis_u_tvalid,
   output wire                         s_axis_u_tready,
   input  wire                         s_axis_u_tlast,
@@ -88,7 +88,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Down Output
    */
-  output wire [DATA_WIDTH_PSUM-1:0]   m_axis_d_tdata,
+  output wire [PSUM_WIDTH-1:0]   m_axis_d_tdata,
   output wire                         m_axis_d_tvalid,
   input  wire                         m_axis_d_tready,
   output wire                         m_axis_d_tlast,
@@ -99,40 +99,40 @@ module ParallelizedLinearProcessingElement #(
   output wire err_unalligned_data
 );
   // DataFlow Local Parameters
-  localparam MLT_OP_SIZE  = DATA_WIDTH_OP0 + DATA_WIDTH_OP1 + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
+  localparam MLT_OP_SIZE  = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
 
   // Left AXI-Stream internal signals
-  wire [DATA_WIDTH_OP0-1:0]  int_axis_l_tdata;
+  wire [OP0_WIDTH-1:0]  int_axis_l_tdata;
   wire                       int_axis_l_tvalid;
   wire                       int_axis_l_tready;
   wire                       int_axis_l_tlast;
 
   // Right AXI-Stream internal signals
-  wire [DATA_WIDTH_OP0-1:0]  int_axis_r_tdata;
+  wire [OP0_WIDTH-1:0]  int_axis_r_tdata;
   wire                       int_axis_r_tvalid;
   wire                       int_axis_r_tready;
   wire                       int_axis_r_tlast;
 
   // Top AXI-Stream internal signals
-  wire [DATA_WIDTH_OP1-1:0]  int_axis_t_tdata;
+  wire [OP1_WIDTH-1:0]  int_axis_t_tdata;
   wire                       int_axis_t_tvalid;
   wire                       int_axis_t_tready;
   wire                       int_axis_t_tlast;
 
   // Bottom AXI-Stream internal signals
-  wire [DATA_WIDTH_OP1-1:0]  int_axis_b_tdata;
+  wire [OP1_WIDTH-1:0]  int_axis_b_tdata;
   wire                       int_axis_b_tvalid;
   wire                       int_axis_b_tready;
   wire                       int_axis_b_tlast;
 
   // Up AXI-Stream internal signals
-  wire [DATA_WIDTH_PSUM-1:0] int_axis_u_tdata;
+  wire [PSUM_WIDTH-1:0] int_axis_u_tdata;
   wire                       int_axis_u_tvalid;
   wire                       int_axis_u_tready;
   wire                       int_axis_u_tlast;
 
   // Down AXI-Stream internal signals
-  wire [DATA_WIDTH_PSUM-1:0] int_axis_d_tdata;
+  wire [PSUM_WIDTH-1:0] int_axis_d_tdata;
   wire                       int_axis_d_tvalid;
   wire                       int_axis_d_tready;
   wire                       int_axis_d_tlast;
@@ -149,16 +149,16 @@ module ParallelizedLinearProcessingElement #(
   wire export_rslt_last;
 
   // DataFlow Registers & Wires
-  reg  [DATA_WIDTH_PSUM-1:0]     partial_sum_reg = 0;
+  reg  [PSUM_WIDTH-1:0]     partial_sum_reg = 0;
 
-  wire signed [DATA_WIDTH_OP0 + IS_UNSIGNED_OP0 -1:0]  mult_op0 = { {IS_UNSIGNED_OP0{1'b0}}, int_axis_l_tdata};
-  wire signed [DATA_WIDTH_OP1 + IS_UNSIGNED_OP1 -1:0]  mult_op1 = { {IS_UNSIGNED_OP1{1'b0}}, int_axis_t_tdata};
+  wire signed [OP0_WIDTH + IS_UNSIGNED_OP0 -1:0]  mult_op0 = { {IS_UNSIGNED_OP0{1'b0}}, int_axis_l_tdata};
+  wire signed [OP1_WIDTH + IS_UNSIGNED_OP1 -1:0]  mult_op1 = { {IS_UNSIGNED_OP1{1'b0}}, int_axis_t_tdata};
   wire signed [MLT_OP_SIZE-1:0]                        mult_res = mult_op0 * mult_op1;
 
-  wire signed [DATA_WIDTH_PSUM-1:0] partial_sum_acc      = (acc_res) ? int_axis_u_tdata : mult_res;
-  wire signed [DATA_WIDTH_PSUM-1:0] partial_sum_fb       = (op_start) ? 0 : partial_sum_reg;
-  wire signed [DATA_WIDTH_PSUM-1:0] partial_sum_rslt     = partial_sum_fb + partial_sum_acc;
-  wire signed [DATA_WIDTH_PSUM-1:0] partial_sum_reg_next = (bypass_adder) ? partial_sum_fb : partial_sum_rslt;
+  wire signed [PSUM_WIDTH-1:0] partial_sum_acc      = (acc_res) ? int_axis_u_tdata : mult_res;
+  wire signed [PSUM_WIDTH-1:0] partial_sum_fb       = (op_start) ? 0 : partial_sum_reg;
+  wire signed [PSUM_WIDTH-1:0] partial_sum_rslt     = partial_sum_fb + partial_sum_acc;
+  wire signed [PSUM_WIDTH-1:0] partial_sum_reg_next = (bypass_adder) ? partial_sum_fb : partial_sum_rslt;
 
   // Control Logic
   ParallelizedLPEControlUnit #(
@@ -205,7 +205,7 @@ module ParallelizedLinearProcessingElement #(
     if (PE_POSITION_J == 0) begin
       // Processing Element never accepts data from Up AxiS
       assign s_axis_u_tready   = 1'b0;
-      assign int_axis_u_tdata  = {DATA_WIDTH_PSUM{1'bZ}};
+      assign int_axis_u_tdata  = {PSUM_WIDTH{1'bZ}};
       assign int_axis_u_tvalid = 1'b0;
       assign int_axis_u_tlast  = 1'bZ;
     end else begin      
@@ -214,7 +214,7 @@ module ParallelizedLinearProcessingElement #(
       assign s_axis_u_tready = s_axis_u_tready_int & store_u;
       axis_register #(
         // Width of AXI stream interfaces in bits
-        .DATA_WIDTH(DATA_WIDTH_PSUM),
+        .DATA_WIDTH(PSUM_WIDTH),
         // Propagate tkeep signal
         .KEEP_ENABLE(0),
         // tkeep signal width (words per cycle)
@@ -259,7 +259,7 @@ module ParallelizedLinearProcessingElement #(
   // Down AXI-Stream Skid Buffer
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_PSUM),
+    .DATA_WIDTH(PSUM_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -303,7 +303,7 @@ module ParallelizedLinearProcessingElement #(
   assign s_axis_l_tready = s_axis_l_tready_int & store_l;
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_OP0),
+    .DATA_WIDTH(OP0_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -345,7 +345,7 @@ module ParallelizedLinearProcessingElement #(
   // Right AXI-Stream Skid Buffer
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_OP0),
+    .DATA_WIDTH(OP0_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -389,7 +389,7 @@ module ParallelizedLinearProcessingElement #(
   assign s_axis_t_tready = s_axis_t_tready_int & store_t;
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_OP1),
+    .DATA_WIDTH(OP1_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -431,7 +431,7 @@ module ParallelizedLinearProcessingElement #(
   // Bottom AXI-Stream Skid Buffer
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_OP1),
+    .DATA_WIDTH(OP1_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)

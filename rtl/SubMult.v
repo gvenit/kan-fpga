@@ -11,21 +11,21 @@
 
 module SubMult #(
   // Width of AXI stream Input Data & Grid interfaces in bits
-  parameter DATA_WIDTH_DATA = 16,
+  parameter DATA_WIDTH = 16,
   // Fractional bits of input data & grid
-  parameter FRACTIONAL_BITS_DATA = 12,
+  parameter DATA_FRACTIONAL_BITS = 12,
   // Width of AXI stream Scale interface in bits
-  parameter DATA_WIDTH_SCALE = 16,
+  parameter SCALE_WIDTH = 16,
   // Fractional bits of input scale
-  parameter FRACTIONAL_BITS_SCALE = 12,
+  parameter SCALE_FRACTIONAL_BITS = 12,
   // Width of AXI stream Output Data interface in bits
-  parameter DATA_WIDTH_RSLT = 16,
+  parameter RSLT_WIDTH = 16,
   // Fractional bits of output data
-  parameter FRACTIONAL_BITS_RSLT = 12,
+  parameter RSLT_FRACTIONAL_BITS = 12,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT > 8),
+  parameter KEEP_ENABLE = (RSLT_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT + 7) / 8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((RSLT_WIDTH + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -45,7 +45,7 @@ module SubMult #(
   /*
     * AXI Stream Data input
     */
-  input  wire [DATA_WIDTH_DATA-1:0]  s_axis_data_tdata,
+  input  wire [DATA_WIDTH-1:0]  s_axis_data_tdata,
   input  wire                   s_axis_data_tvalid,
   output wire                   s_axis_data_tready,
   input  wire                   s_axis_data_tlast,
@@ -56,7 +56,7 @@ module SubMult #(
   /*
     * AXI Stream Grid input
     */
-  input  wire [DATA_WIDTH_DATA-1:0] s_axis_grid_tdata,
+  input  wire [DATA_WIDTH-1:0] s_axis_grid_tdata,
   input  wire                       s_axis_grid_tvalid,
   output wire                       s_axis_grid_tready,
   input  wire                       s_axis_grid_tlast,
@@ -67,7 +67,7 @@ module SubMult #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [DATA_WIDTH_SCALE-1:0]  s_axis_scle_tdata,
+  input  wire [SCALE_WIDTH-1:0]  s_axis_scle_tdata,
   input  wire                         s_axis_scle_tvalid,
   output wire                         s_axis_scle_tready,
   input  wire                         s_axis_scle_tlast,
@@ -78,7 +78,7 @@ module SubMult #(
   /*
     * AXI Stream output
     */
-  output wire [DATA_WIDTH_RSLT-1:0] m_axis_data_tdata,
+  output wire [RSLT_WIDTH-1:0] m_axis_data_tdata,
   output wire [KEEP_WIDTH-1:0]      m_axis_data_tkeep,
   output wire                       m_axis_data_tvalid,
   input  wire                       m_axis_data_tready,
@@ -92,13 +92,13 @@ module SubMult #(
   // output                  err_unalligned_scale
 );
   // Local Parameters
-  localparam OP_SIZE  = (DATA_WIDTH_RSLT > DATA_WIDTH_DATA + DATA_WIDTH_SCALE) ? DATA_WIDTH_RSLT : DATA_WIDTH_DATA + DATA_WIDTH_SCALE;
-  localparam RSLT_LSB = FRACTIONAL_BITS_DATA + FRACTIONAL_BITS_SCALE - FRACTIONAL_BITS_RSLT;
-  localparam RSLT_MSB = RSLT_LSB + DATA_WIDTH_RSLT - 1;
+  localparam OP_SIZE  = (RSLT_WIDTH > DATA_WIDTH + SCALE_WIDTH) ? RSLT_WIDTH : DATA_WIDTH + SCALE_WIDTH;
+  localparam RSLT_LSB = DATA_FRACTIONAL_BITS + SCALE_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
+  localparam RSLT_MSB = RSLT_LSB + RSLT_WIDTH - 1;
 
   // Internal Registers & Wires
   // Data wires
-  wire [DATA_WIDTH_DATA-1:0]  stage_1_in_axis_data_tdata, stage_1_out_axis_data_tdata, stage_1_fb_axis_data_tdata;
+  wire [DATA_WIDTH-1:0]  stage_1_in_axis_data_tdata, stage_1_out_axis_data_tdata, stage_1_fb_axis_data_tdata;
   // wire [KEEP_WIDTH-1:0]       stage_1_in_axis_data_tkeep, stage_1_out_axis_data_tkeep, stage_1_fb_axis_data_tkeep;
   wire                        stage_1_in_axis_data_tvalid, stage_1_out_axis_data_tvalid, stage_1_fb_axis_data_tvalid;
   wire                        stage_1_in_axis_data_tready, stage_1_out_axis_data_tready, stage_1_fb_axis_data_tready;
@@ -107,7 +107,7 @@ module SubMult #(
   wire [DEST_WIDTH-1:0]       stage_1_in_axis_data_tdest, stage_1_out_axis_data_tdest, stage_1_fb_axis_data_tdest;
   wire [USER_WIDTH-1:0]       stage_1_in_axis_data_tuser, stage_1_out_axis_data_tuser, stage_1_fb_axis_data_tuser;
 
-  wire [DATA_WIDTH_RSLT-1:0]  stage_2_in_axis_data_tdata, stage_2_out_axis_data_tdata;
+  wire [RSLT_WIDTH-1:0]  stage_2_in_axis_data_tdata, stage_2_out_axis_data_tdata;
   wire [KEEP_WIDTH-1:0]       stage_2_in_axis_data_tkeep, stage_2_out_axis_data_tkeep;
   wire                        stage_2_in_axis_data_tvalid, stage_2_out_axis_data_tvalid;
   wire                        stage_2_in_axis_data_tready, stage_2_out_axis_data_tready;
@@ -117,7 +117,7 @@ module SubMult #(
   wire [USER_WIDTH-1:0]       stage_2_in_axis_data_tuser, stage_2_out_axis_data_tuser;
   
   // Grid Wires
-  wire [DATA_WIDTH_DATA-1:0]  stage_1_in_axis_grid_tdata, stage_1_out_axis_grid_tdata, stage_1_fb_axis_grid_tdata;
+  wire [DATA_WIDTH-1:0]  stage_1_in_axis_grid_tdata, stage_1_out_axis_grid_tdata, stage_1_fb_axis_grid_tdata;
   // wire [KEEP_WIDTH-1:0]       stage_1_in_axis_grid_tkeep, stage_1_out_axis_grid_tkeep, stage_1_fb_axis_grid_tkeep;
   wire                        stage_1_in_axis_grid_tvalid, stage_1_out_axis_grid_tvalid, stage_1_fb_axis_grid_tvalid;
   wire                        stage_1_in_axis_grid_tready, stage_1_out_axis_grid_tready, stage_1_fb_axis_grid_tready;
@@ -127,7 +127,7 @@ module SubMult #(
   wire [USER_WIDTH-1:0]       stage_1_in_axis_grid_tuser, stage_1_out_axis_grid_tuser, stage_1_fb_axis_grid_tuser;
 
   // Scale Wires
-  wire [DATA_WIDTH_SCALE-1:0] stage_1_in_axis_scale_tdata, stage_1_out_axis_scale_tdata, stage_1_fb_axis_scale_tdata;
+  wire [SCALE_WIDTH-1:0] stage_1_in_axis_scale_tdata, stage_1_out_axis_scale_tdata, stage_1_fb_axis_scale_tdata;
   // wire [KEEP_WIDTH-1:0]       stage_1_in_axis_scale_tkeep, stage_1_out_axis_scale_tkeep, stage_1_fb_axis_scale_tkeep;
   wire                        stage_1_in_axis_scale_tvalid, stage_1_out_axis_scale_tvalid, stage_1_fb_axis_scale_tvalid;
   wire                        stage_1_in_axis_scale_tready, stage_1_out_axis_scale_tready, stage_1_fb_axis_scale_tready;
@@ -143,8 +143,8 @@ module SubMult #(
   wire                  unlock_int;
 
   // Operation Data Wires
-  wire signed [DATA_WIDTH_DATA-1:0] diff; 
-  wire signed [DATA_WIDTH_RSLT-1:0] res; 
+  wire signed [DATA_WIDTH-1:0] diff; 
+  wire signed [RSLT_WIDTH-1:0] res; 
   wire signed [OP_SIZE-1:0] diff_ext, scale_ext, res_ext;
 
   assign stage_2_in_handshake = stage_2_in_axis_data_tready & stage_1_out_axis_data_tvalid & stage_1_out_axis_grid_tvalid & stage_1_out_axis_scale_tvalid;
@@ -220,7 +220,7 @@ module SubMult #(
   // Stage 1 Skid Data Register
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_DATA),
+    .DATA_WIDTH(DATA_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -266,7 +266,7 @@ module SubMult #(
   // Stage 1 Skid Grid Register
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_DATA),
+    .DATA_WIDTH(DATA_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -312,7 +312,7 @@ module SubMult #(
   // Stage 1 Skid Scale Register
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_DATA),
+    .DATA_WIDTH(DATA_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(0),
     // tkeep signal width (words per cycle)
@@ -357,8 +357,8 @@ module SubMult #(
 
   // DSP Flow
   assign diff      = stage_1_out_axis_data_tdata - stage_1_out_axis_grid_tdata;
-  assign diff_ext  = {{(OP_SIZE-DATA_WIDTH_DATA){diff[DATA_WIDTH_DATA-1]}}, diff};
-  assign scale_ext = {{(OP_SIZE-DATA_WIDTH_SCALE){stage_1_out_axis_scale_tdata[DATA_WIDTH_SCALE-1]}}, stage_1_out_axis_scale_tdata};
+  assign diff_ext  = {{(OP_SIZE-DATA_WIDTH){diff[DATA_WIDTH-1]}}, diff};
+  assign scale_ext = {{(OP_SIZE-SCALE_WIDTH){stage_1_out_axis_scale_tdata[SCALE_WIDTH-1]}}, stage_1_out_axis_scale_tdata};
   assign res_ext   = diff_ext * scale_ext;
   assign res       = res_ext[RSLT_MSB:RSLT_LSB];
   
@@ -377,7 +377,7 @@ module SubMult #(
   // Stage 2 Skid Register
   axis_register #(
     // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH_RSLT),
+    .DATA_WIDTH(RSLT_WIDTH),
     // Propagate tkeep signal
     .KEEP_ENABLE(KEEP_ENABLE),
     // tkeep signal width (words per cycle)

@@ -31,9 +31,9 @@ def tb_LinearProcessingArray():
     PE_NUMBER_I          = module.Localparam('PE_NUMBER_I', 1)
     PE_NUMBER_J          = module.Localparam('PE_NUMBER_J', 1)
     DATA_WIDTH           = module.Localparam('DATA_WIDTH', 16)
-    FRACTIONAL_BITS_OP0  = module.Localparam('FRACTIONAL_BITS_OP0', 13)
-    FRACTIONAL_BITS_OP1  = module.Localparam('FRACTIONAL_BITS_OP1', 15)
-    FRACTIONAL_BITS_RSLT = module.Localparam('FRACTIONAL_BITS_RSLT', 13)
+    OP0_FRACTIONAL_BITS  = module.Localparam('OP0_FRACTIONAL_BITS', 13)
+    OP1_FRACTIONAL_BITS  = module.Localparam('OP1_FRACTIONAL_BITS', 15)
+    RSLT_FRACTIONAL_BITS = module.Localparam('RSLT_FRACTIONAL_BITS', 13)
     IS_UNSIGNED_OP0      = module.Localparam('IS_UNSIGNED_OP0', 1)
     INTERNAL_RESET       = module.Localparam('INTERNAL_RESET', 0)
     USER_WIDTH           = module.Localparam('USER_WIDTH', 1)
@@ -80,14 +80,14 @@ def tb_LinearProcessingArray():
   .PE_NUMBER_I(PE_NUMBER_I),
   .PE_NUMBER_J(PE_NUMBER_J),
   .INTERNAL_RESET(INTERNAL_RESET),
-  .DATA_WIDTH_OP0(DATA_WIDTH),
-  .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_OP0),
+  .OP0_WIDTH(DATA_WIDTH),
+  .OP0_FRACTIONAL_BITS(OP0_FRACTIONAL_BITS),
   .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
-  .DATA_WIDTH_OP1(DATA_WIDTH),
+  .OP1_WIDTH(DATA_WIDTH),
   // .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
-  .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
-  .DATA_WIDTH_RSLT(DATA_WIDTH),
-  .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+  .OP1_FRACTIONAL_BITS(OP1_FRACTIONAL_BITS),
+  .RSLT_WIDTH(DATA_WIDTH),
+  .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
   .ID_ENABLE(0),
   // .ID_WIDTH(ID_WIDTH),
   .DEST_ENABLE(0),
@@ -96,8 +96,8 @@ def tb_LinearProcessingArray():
   .USER_WIDTH(USER_WIDTH)
   // .OUTPUT_DEST(OUTPUT_DEST),
   // .OUTPUT_ID(OUTPUT_ID),
-  // .DATA_WIDTH_U_D(DATA_WIDTH_U_D),
-  // .DATA_WIDTH_L_R(DATA_WIDTH_L_R)  
+  // .U_D_WIDTH(U_D_WIDTH),
+  // .L_R_WIDTH(L_R_WIDTH)  
 ) ''')
     uut = module.EmbeddedCode('uut')
     module.EmbeddedCode(''' (
@@ -366,7 +366,7 @@ def tb_LinearProcessingArray():
                 s_axis_left_tdata.slice(
                     msb=(chn+1)*DATA_WIDTH-1,
                     lsb=chn*DATA_WIDTH
-                )( (i_op0 ** (chn+1)) << FRACTIONAL_BITS_OP0-3 ),
+                )( (i_op0 ** (chn+1)) << OP0_FRACTIONAL_BITS-3 ),
             ),
             If(chn < PE_NUMBER_I)(
                 If(i_op1 > chn + 10) (
@@ -383,7 +383,7 @@ def tb_LinearProcessingArray():
                 s_axis_up_tdata.slice(
                     msb=(chn+1)*DATA_WIDTH-1,
                     lsb=chn*DATA_WIDTH
-                )( ((i_op1-5) ** (chn+1)) << FRACTIONAL_BITS_OP1-4 ),
+                )( ((i_op1-5) ** (chn+1)) << OP1_FRACTIONAL_BITS-4 ),
                 m_axis_down_tready[chn](Not(m_axis_down_tready[chn])),
                 # m_axis_down_tready[chn](1),
             ),

@@ -28,21 +28,21 @@ module ParallelizedLinearProcessingArray #(
   // Enable module to do internal resets
   parameter INTERNAL_RESET = 0,
   // Data Width of Input Data (L-AXIS)
-  parameter DATA_WIDTH_OP0 = 16,
+  parameter OP0_WIDTH = 16,
   // Fractional Bits of Input Data (L-AXIS)
-  parameter FRACTIONAL_BITS_OP0 = 12,
+  parameter OP0_FRACTIONAL_BITS = 12,
   // Treat operand 0 as unsigned
   parameter IS_UNSIGNED_OP0 = 0,
   // Data Width of Input Weights (U-AXIS)
-  parameter DATA_WIDTH_OP1 = 16,
+  parameter OP1_WIDTH = 16,
   // Fractional Bits of Input Weights (U-AXIS)
-  parameter FRACTIONAL_BITS_OP1 = 12,
+  parameter OP1_FRACTIONAL_BITS = 12,
   // Treat operand 1 as unsigned
   parameter IS_UNSIGNED_OP1 = 0,
   // Data Width of Output Data (D-AXIS)
-  parameter DATA_WIDTH_RSLT = 16,
+  parameter RSLT_WIDTH = 16,
   // Fractional Bits of Output Data (D-AXIS)
-  parameter FRACTIONAL_BITS_RSLT = 12,
+  parameter RSLT_FRACTIONAL_BITS = 12,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -68,7 +68,7 @@ module ParallelizedLinearProcessingArray #(
   /*
    * AXI Stream Top Input -- Weight Input
    */
-  input  wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_OP1-1:0]    s_axis_t_tdata,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J*OP1_WIDTH-1:0]    s_axis_t_tdata,
   input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tvalid,
   output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tready,
   input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tlast,
@@ -79,7 +79,7 @@ module ParallelizedLinearProcessingArray #(
   // /*
   //  * AXI Stream Bottom Output -- Weights are dropped
   //  */
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_RSLT-1:0]   m_axis_b_tdata,
+  // output wire [PE_NUMBER_I*PE_NUMBER_J*RSLT_WIDTH-1:0]   m_axis_b_tdata,
   // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tvalid,
   // input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tready,
   // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tlast,
@@ -90,7 +90,7 @@ module ParallelizedLinearProcessingArray #(
   /*
    * AXI Stream Left Input -- Data Input
    */
-  input  wire [PE_NUMBER_J*BATCH_SIZE*DATA_WIDTH_OP0-1:0]    s_axis_l_tdata,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*OP0_WIDTH-1:0]    s_axis_l_tdata,
   input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tvalid,
   output wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tready,
   input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tlast,
@@ -101,7 +101,7 @@ module ParallelizedLinearProcessingArray #(
   /*
    * AXI Stream Down Output -- Partial Sum Output
    */
-  output wire [PE_NUMBER_I*BATCH_SIZE*DATA_WIDTH_RSLT-1:0]   m_axis_d_tdata,
+  output wire [PE_NUMBER_I*BATCH_SIZE*RSLT_WIDTH-1:0]   m_axis_d_tdata,
   output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tvalid,
   input  wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tready,
   output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tlast,
@@ -120,26 +120,26 @@ module ParallelizedLinearProcessingArray #(
   output wire core_rst
 );
   // Global Local Parameters
-  localparam MLT_OP_SIZE     = DATA_WIDTH_OP0 + DATA_WIDTH_OP1 + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
-  localparam DATA_WIDTH_PSUM = (DATA_WIDTH_RSLT > MLT_OP_SIZE) ? DATA_WIDTH_RSLT : MLT_OP_SIZE;
-  localparam MAC_RSLT_LSB    = FRACTIONAL_BITS_OP0 + FRACTIONAL_BITS_OP1 - FRACTIONAL_BITS_RSLT;
-  localparam MAC_RSLT_MSB    = MAC_RSLT_LSB + DATA_WIDTH_RSLT - 1;
+  localparam MLT_OP_SIZE     = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
+  localparam PSUM_WIDTH = (RSLT_WIDTH > MLT_OP_SIZE) ? RSLT_WIDTH : MLT_OP_SIZE;
+  localparam MAC_RSLT_LSB    = OP0_FRACTIONAL_BITS + OP1_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
+  localparam MAC_RSLT_MSB    = MAC_RSLT_LSB + RSLT_WIDTH - 1;
 
   // Internal AXI-Stream Signals
   // Output Partial Sums (Up->Down)
-  wire [DATA_WIDTH_PSUM-1:0]                        int_axis_ud_tdata    [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1];
+  wire [PSUM_WIDTH-1:0]                        int_axis_ud_tdata    [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1];
   wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tvalid;
   wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tready;
   wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tlast;
 
   // Input Data (Left->Right)
-  wire [DATA_WIDTH_OP0-1:0]                         int_axis_lr_tdata    [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1];
+  wire [OP0_WIDTH-1:0]                         int_axis_lr_tdata    [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1];
   wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tvalid;
   wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tready;
   wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tlast;
 
   // Input Weights (Top->Bottom)
-  wire [DATA_WIDTH_OP1-1:0]                         int_axis_tb_tdata    [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1];
+  wire [OP1_WIDTH-1:0]                         int_axis_tb_tdata    [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1];
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tvalid;
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tready;
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tlast;
@@ -203,19 +203,19 @@ module ParallelizedLinearProcessingArray #(
             // Position of current PE in the j axis
             .PE_POSITION_J(PE_POSITION_J),
             // Data Width of Input Data (L-AXIS)
-            .DATA_WIDTH_OP0(DATA_WIDTH_OP0),
+            .OP0_WIDTH(OP0_WIDTH),
             // Fractional Bits of Input Data (L-AXIS)
-            .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_OP0),
+            .OP0_FRACTIONAL_BITS(OP0_FRACTIONAL_BITS),
             // Treat operand 0 as unsigned
             .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
             // Data Width of Input Weights (T-AXIS)
-            .DATA_WIDTH_OP1(DATA_WIDTH_OP1),
+            .OP1_WIDTH(OP1_WIDTH),
             // Fractional Bits of Input Weights (T-AXIS)
-            .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
+            .OP1_FRACTIONAL_BITS(OP1_FRACTIONAL_BITS),
             // Treat operand 1 as unsigned
             .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
             // Data Width of Output Data (D-AXIS)
-            .DATA_WIDTH_PSUM(DATA_WIDTH_PSUM)
+            .PSUM_WIDTH(PSUM_WIDTH)
           ) parallelized_lpe_ijk (
             .clk(clk),
             .rst(rst_int),
@@ -248,8 +248,8 @@ module ParallelizedLinearProcessingArray #(
 
           if (PE_POSITION_I == 0) begin
             localparam LFT_POS = batch * PE_NUMBER_J + PE_POSITION_J;
-            localparam LSB = LFT_POS*DATA_WIDTH_OP0;
-            localparam MSB = LSB + DATA_WIDTH_OP0 -1;
+            localparam LSB = LFT_POS*OP0_WIDTH;
+            localparam MSB = LSB + OP0_WIDTH -1;
 
             // Connect Input to Left Border
             assign int_axis_lr_tdata   [NODE_L]    = s_axis_l_tdata  [MSB:LSB];
@@ -265,8 +265,8 @@ module ParallelizedLinearProcessingArray #(
 
           if (batch == 0) begin
             localparam TOP_POS = PE_POSITION_J * PE_NUMBER_I + PE_POSITION_I;
-            localparam LSB = TOP_POS*DATA_WIDTH_OP1;
-            localparam MSB = LSB + DATA_WIDTH_OP1 -1;
+            localparam LSB = TOP_POS*OP1_WIDTH;
+            localparam MSB = LSB + OP1_WIDTH -1;
 
             // Connect Input to Top Border
             assign int_axis_tb_tdata  [NODE_T]    = s_axis_t_tdata  [MSB:LSB];
@@ -282,15 +282,15 @@ module ParallelizedLinearProcessingArray #(
           
           if (PE_POSITION_J == 0) begin
             // Close Input from Up Border -- Disconnect Up Border
-            assign int_axis_ud_tdata  [NODE_U] = {DATA_WIDTH_PSUM{1'bZ}};
+            assign int_axis_ud_tdata  [NODE_U] = {PSUM_WIDTH{1'bZ}};
             assign int_axis_ud_tvalid [NODE_U] = 1'bZ;
             assign int_axis_ud_tlast  [NODE_U] = 1'bZ;
           end 
           
           if (PE_POSITION_J == PE_NUMBER_J-1) begin
             localparam DWN_POS = batch * PE_NUMBER_I + PE_POSITION_I;
-            localparam LSB = DWN_POS*DATA_WIDTH_RSLT;
-            localparam MSB = LSB + DATA_WIDTH_RSLT -1;
+            localparam LSB = DWN_POS*RSLT_WIDTH;
+            localparam MSB = LSB + RSLT_WIDTH -1;
 
             assign m_axis_d_tdata     [MSB:LSB]  = int_axis_ud_tdata  [NODE_D][MAC_RSLT_MSB:MAC_RSLT_LSB];
             assign m_axis_d_tvalid    [DWN_POS]  = int_axis_ud_tvalid [NODE_D];

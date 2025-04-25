@@ -26,20 +26,20 @@ def tb_DataProcessor():
     module = Module('tb_DataProcessor')
     
     DATA_WIDTH                  = module.Localparam('DATA_WIDTH', 16)
-    FRACTIONAL_BITS_DATA        = module.Localparam('FRACTIONAL_BITS_DATA', 12)
-    FRACTIONAL_BITS_SCALE       = module.Localparam('FRACTIONAL_BITS_SCALE', 15)
-    FRACTIONAL_BITS_SCALED_DIFF = module.Localparam('FRACTIONAL_BITS_SCALED_DIFF', 13)
-    FRACTIONAL_BITS_ACT         = module.Localparam('FRACTIONAL_BITS_ACT', 16)
-    FRACTIONAL_BITS_WEIGHT      = module.Localparam('FRACTIONAL_BITS_WEIGHT', 16)
-    FRACTIONAL_BITS_RSLT        = module.Localparam('FRACTIONAL_BITS_RSLT', 12)
+    DATA_FRACTIONAL_BITS        = module.Localparam('DATA_FRACTIONAL_BITS', 12)
+    SCALE_FRACTIONAL_BITS       = module.Localparam('SCALE_FRACTIONAL_BITS', 15)
+    SCALED_DIFF_FRACTIONAL_BITS = module.Localparam('SCALED_DIFF_FRACTIONAL_BITS', 13)
+    ACT_FRACTIONAL_BITS         = module.Localparam('ACT_FRACTIONAL_BITS', 16)
+    WEIGHT_FRACTIONAL_BITS      = module.Localparam('WEIGHT_FRACTIONAL_BITS', 16)
+    RSLT_FRACTIONAL_BITS        = module.Localparam('RSLT_FRACTIONAL_BITS', 12)
     IS_UNSIGNED_OP0             = module.Localparam('IS_UNSIGNED_OP0', 1)
     INTERNAL_RESET              = module.Localparam('INTERNAL_RESET', 0)
     USER_WIDTH                  = module.Localparam('USER_WIDTH', 1)
 
     DATA_CHANNELS               = module.Localparam('DATA_CHANNELS', 1)
     WEIGHT_CHANNELS             = module.Localparam('WEIGHT_CHANNELS', 1)
-    SHARE_SCALE                 = module.Localparam('SHARE_SCALE', 1)
-    ROM_DATA_PATH               = module.Localparam('ROM_DATA_PATH', f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{FRACTIONAL_BITS_SCALED_DIFF.value}_{DATA_WIDTH.value}.{FRACTIONAL_BITS_ACT.value}.txt")
+    SCALE_SHARE                 = module.Localparam('SCALE_SHARE', 1)
+    ROM_DATA_PATH               = module.Localparam('ROM_DATA_PATH', f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt")
     
     clk = module.Reg('clk')
     rst = module.Reg('rst')
@@ -84,29 +84,29 @@ def tb_DataProcessor():
     
     module.EmbeddedCode('''DataProcessor #(
   // Width of AXI stream Input Data & Grid interfaces in bits
-  .DATA_WIDTH_DATA(DATA_WIDTH),
+  .DATA_WIDTH(DATA_WIDTH),
   // Fractional bits of input data & grid
-  .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
+  .DATA_FRACTIONAL_BITS(DATA_FRACTIONAL_BITS),
   // Width of AXI stream Scale interface in bits
-  .DATA_WIDTH_SCALE(DATA_WIDTH),
+  .SCALE_WIDTH(DATA_WIDTH),
   // Fractional bits of input scale
-  .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
+  .SCALE_FRACTIONAL_BITS(SCALE_FRACTIONAL_BITS),
   // Width of AXI stream Input Weight interface in bits
-  .DATA_WIDTH_WEIGHT(DATA_WIDTH),
+  .WEIGHT_WIDTH(DATA_WIDTH),
   // Fractional bits of output data
-  .FRACTIONAL_BITS_WEIGHT(FRACTIONAL_BITS_WEIGHT),
+  .WEIGHT_FRACTIONAL_BITS(WEIGHT_FRACTIONAL_BITS),
   // Width of Scaled Data in bits
-  .DATA_WIDTH_SCALED_DIFF(DATA_WIDTH),
+  .SCALED_DIFF_WIDTH(DATA_WIDTH),
   // Fractional bits of Scaled Data
-  .FRACTIONAL_BITS_SCALED_DIFF(FRACTIONAL_BITS_SCALED_DIFF),
+  .SCALED_DIFF_FRACTIONAL_BITS(SCALED_DIFF_FRACTIONAL_BITS),
   // Width of AXI stream Activation Function Data interface in bits
-  .DATA_WIDTH_ACT(DATA_WIDTH),
+  .ACT_WIDTH(DATA_WIDTH),
   // Fractional bits of Activation Function Data
-  .FRACTIONAL_BITS_ACT(FRACTIONAL_BITS_ACT),
+  .ACT_FRACTIONAL_BITS(ACT_FRACTIONAL_BITS),
   // Width of AXI stream Output Data interface in bits
-  .DATA_WIDTH_RSLT(DATA_WIDTH),
+  .RSLT_WIDTH(DATA_WIDTH),
   // Fractional bits of output data
-  .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+  .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
   // Propagate tkeep signal
   .KEEP_ENABLE(0),
   // tkeep signal width (words per cycle)
@@ -128,7 +128,7 @@ def tb_DataProcessor():
   // Number of Independent AXI-Stream Weight Channels
   .WEIGHT_CHANNELS(WEIGHT_CHANNELS),
   // Use Common Share Channel 
-  .SHARE_SCALE(SHARE_SCALE),
+  .SCALE_SHARE(SCALE_SHARE),
   // Path to ROM Data
   .ROM_DATA_PATH(ROM_DATA_PATH),
   // Output Destination 
@@ -230,11 +230,11 @@ def tb_DataProcessor():
     act_func_data   = 1-np.tanh(scaled_diff)**2
     y               = act_func_data@weights
     
-    x_int           = (x       * 2 ** FRACTIONAL_BITS_DATA.value).astype('int16').astype('uint16').T.reshape(-1)
-    grid_int        = (grid    * 2 ** FRACTIONAL_BITS_DATA.value).astype('int16').astype('uint16').reshape(-1)
-    scale_int       = (scale   * 2 ** FRACTIONAL_BITS_SCALE.value).astype('int16').astype('uint16')
-    weights_int     = (weights * 2 ** FRACTIONAL_BITS_WEIGHT.value).astype('int16').astype('uint16').T.reshape(-1)
-    y_int           = (y       * 2 ** FRACTIONAL_BITS_RSLT.value).astype('int16').astype('uint16').reshape(-1)
+    x_int           = (x       * 2 ** DATA_FRACTIONAL_BITS.value).astype('int16').astype('uint16').T.reshape(-1)
+    grid_int        = (grid    * 2 ** DATA_FRACTIONAL_BITS.value).astype('int16').astype('uint16').reshape(-1)
+    scale_int       = (scale   * 2 ** SCALE_FRACTIONAL_BITS.value).astype('int16').astype('uint16')
+    weights_int     = (weights * 2 ** WEIGHT_FRACTIONAL_BITS.value).astype('int16').astype('uint16').T.reshape(-1)
+    y_int           = (y       * 2 ** RSLT_FRACTIONAL_BITS.value).astype('int16').astype('uint16').reshape(-1)
     
     x_int = [hex(x_i)[2:] for x_i in x_int]
     grid_int = [hex(x_i)[2:] for x_i in grid_int]

@@ -24,21 +24,21 @@ module ParallelizedLPAWrapper #(
   // Enable module to do internal resets
   parameter INTERNAL_RESET = 0,
   // Data Width of Input Data (L-AXIS)
-  parameter DATA_WIDTH_OP0 = 16,
+  parameter OP0_WIDTH = 16,
   // Fractional Bits of Input Data (L-AXIS)
-  parameter FRACTIONAL_BITS_OP0 = 12,
+  parameter OP0_FRACTIONAL_BITS = 12,
   // Treat operand 0 as unsigned
   parameter IS_UNSIGNED_OP0 = 0,
   // Data Width of Input Weights (U-AXIS)
-  parameter DATA_WIDTH_OP1 = 16,
+  parameter OP1_WIDTH = 16,
   // Fractional Bits of Input Weights (U-AXIS)
-  parameter FRACTIONAL_BITS_OP1 = 12,
+  parameter OP1_FRACTIONAL_BITS = 12,
   // Treat operand 1 as unsigned
   parameter IS_UNSIGNED_OP1 = 0,
   // Data Width of Output Data (D-AXIS)
-  parameter DATA_WIDTH_RSLT = 16,
+  parameter RSLT_WIDTH = 16,
   // Fractional Bits of Output Data (D-AXIS)
-  parameter FRACTIONAL_BITS_RSLT = 12,
+  parameter RSLT_FRACTIONAL_BITS = 12,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -64,7 +64,7 @@ module ParallelizedLPAWrapper #(
   /*
    * AXI Stream Top Input -- Weight Input
    */
-  input  wire [PE_NUMBER_I*PE_NUMBER_J*DATA_WIDTH_OP1-1:0]    s_axis_t_tdata,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J*OP1_WIDTH-1:0]    s_axis_t_tdata,
   input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tvalid,
   output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tready,
   input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tlast,
@@ -75,7 +75,7 @@ module ParallelizedLPAWrapper #(
   /*
    * AXI Stream Left Input -- Data Input
    */
-  input  wire [PE_NUMBER_J*BATCH_SIZE*DATA_WIDTH_OP0-1:0]    s_axis_l_tdata,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*OP0_WIDTH-1:0]    s_axis_l_tdata,
   input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tvalid,
   output wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tready,
   input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tlast,
@@ -86,7 +86,7 @@ module ParallelizedLPAWrapper #(
   /*
    * AXI Stream Down Output -- Partial Sum Output
    */
-  output wire [PE_NUMBER_I*BATCH_SIZE*DATA_WIDTH_RSLT-1:0]   m_axis_d_tdata,
+  output wire [PE_NUMBER_I*BATCH_SIZE*RSLT_WIDTH-1:0]   m_axis_d_tdata,
   output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tvalid,
   input  wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tready,
   output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tlast,
@@ -110,14 +110,14 @@ ParallelizedLinearProcessingArray #(
   .PE_NUMBER_J(PE_NUMBER_J),
   .BATCH_SIZE(BATCH_SIZE),
   .INTERNAL_RESET(INTERNAL_RESET),
-  .DATA_WIDTH_OP0(DATA_WIDTH_OP0),
-  .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_OP0),
+  .OP0_WIDTH(OP0_WIDTH),
+  .OP0_FRACTIONAL_BITS(OP0_FRACTIONAL_BITS),
   .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
-  .DATA_WIDTH_OP1(DATA_WIDTH_OP1),
-  .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
+  .OP1_WIDTH(OP1_WIDTH),
+  .OP1_FRACTIONAL_BITS(OP1_FRACTIONAL_BITS),
   .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
-  .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
-  .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+  .RSLT_WIDTH(RSLT_WIDTH),
+  .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
   .ID_ENABLE(ID_ENABLE),
   .ID_WIDTH(ID_WIDTH),
   .DEST_ENABLE(DEST_ENABLE),

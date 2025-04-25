@@ -10,21 +10,21 @@
 
 module Sech2Lutram #(
   // Width of AXI stream Input Data & Grid interfaces in bits
-  parameter DATA_WIDTH_DATA = 16,
+  parameter DATA_WIDTH = 16,
   // Fractional bits of input data & grid
-  parameter FRACTIONAL_BITS_DATA = 12,
+  parameter DATA_FRACTIONAL_BITS = 12,
   // Width of AXI stream Output Data interface in bits
-  parameter DATA_WIDTH_RSLT = 16,
+  parameter RSLT_WIDTH = 16,
   // Fractional bits of output wire data
-  parameter FRACTIONAL_BITS_RSLT = 16,
+  parameter RSLT_FRACTIONAL_BITS = 16,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE_DATA = (DATA_WIDTH_DATA > 8),
+  parameter DATA_KEEP_ENABLE = (DATA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_DATA = ((DATA_WIDTH_DATA + 7) / 8),
+  parameter DATA_KEEP_WIDTH = ((DATA_WIDTH + 7) / 8),
   // Propagate tkeep signal
-  parameter KEEP_ENABLE_RSLT = (DATA_WIDTH_RSLT > 8),
+  parameter RSLT_KEEP_ENABLE = (RSLT_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH_RSLT = ((DATA_WIDTH_RSLT + 7) / 8),
+  parameter RSLT_KEEP_WIDTH = ((RSLT_WIDTH + 7) / 8),
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -48,8 +48,8 @@ module Sech2Lutram #(
   /*
    * AXI Stream Data input
    */
-  input  wire [CHANNELS*DATA_WIDTH_DATA-1:0] s_axis_0_tdata,
-  output wire [CHANNELS*KEEP_WIDTH_DATA-1:0] s_axis_0_tkeep,
+  input  wire [CHANNELS*DATA_WIDTH-1:0] s_axis_0_tdata,
+  output wire [CHANNELS*DATA_KEEP_WIDTH-1:0] s_axis_0_tkeep,
   input  wire [CHANNELS-1:0]                 s_axis_0_tlast,
   input  wire [CHANNELS-1:0]                 s_axis_0_tvalid,
   output wire [CHANNELS-1:0]                 s_axis_0_tready,
@@ -60,8 +60,8 @@ module Sech2Lutram #(
   /*
    * AXI Stream output
    */
-  output wire [CHANNELS*DATA_WIDTH_RSLT-1:0] m_axis_0_tdata,
-  output wire [CHANNELS*KEEP_WIDTH_RSLT-1:0] m_axis_0_tkeep,
+  output wire [CHANNELS*RSLT_WIDTH-1:0] m_axis_0_tdata,
+  output wire [CHANNELS*RSLT_KEEP_WIDTH-1:0] m_axis_0_tkeep,
   output wire [CHANNELS-1:0]                 m_axis_0_tlast,
   output wire [CHANNELS-1:0]                 m_axis_0_tvalid,
   input  wire [CHANNELS-1:0]                 m_axis_0_tready,
@@ -74,7 +74,7 @@ module Sech2Lutram #(
   // output wire                  err_unalligned_scale
 );
   // LUTRAM Configuration    
-  reg [DATA_WIDTH_RSLT-1:0] LUTRAM_ARRAY [0:2**DATA_WIDTH_DATA-1];
+  reg [RSLT_WIDTH-1:0] LUTRAM_ARRAY [0:2**DATA_WIDTH-1];
 
   // LUTRAM Instantiation
   initial begin
@@ -87,8 +87,8 @@ module Sech2Lutram #(
   generate for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin      
     // Internal Registers & Wires
     // Data wires
-    wire [DATA_WIDTH_DATA-1:0]  stage_1_in_axis_0_tdata, stage_1_out_axis_0_tdata;
-    wire [KEEP_WIDTH_DATA-1:0]  stage_1_in_axis_0_tkeep, stage_1_out_axis_0_tkeep;
+    wire [DATA_WIDTH-1:0]  stage_1_in_axis_0_tdata, stage_1_out_axis_0_tdata;
+    wire [DATA_KEEP_WIDTH-1:0]  stage_1_in_axis_0_tkeep, stage_1_out_axis_0_tkeep;
     wire                        stage_1_in_axis_0_tvalid, stage_1_out_axis_0_tvalid;
     wire                        stage_1_in_axis_0_tready, stage_1_out_axis_0_tready;
     wire                        stage_1_in_axis_0_tlast, stage_1_out_axis_0_tlast;
@@ -96,8 +96,8 @@ module Sech2Lutram #(
     wire [DEST_WIDTH-1:0]       stage_1_in_axis_0_tdest, stage_1_out_axis_0_tdest;
     wire [USER_WIDTH-1:0]       stage_1_in_axis_0_tuser, stage_1_out_axis_0_tuser;
 
-    wire [DATA_WIDTH_RSLT-1:0]  stage_2_in_axis_0_tdata, stage_2_out_axis_0_tdata;
-    wire [KEEP_WIDTH_RSLT-1:0]  stage_2_in_axis_0_tkeep, stage_2_out_axis_0_tkeep;
+    wire [RSLT_WIDTH-1:0]  stage_2_in_axis_0_tdata, stage_2_out_axis_0_tdata;
+    wire [RSLT_KEEP_WIDTH-1:0]  stage_2_in_axis_0_tkeep, stage_2_out_axis_0_tkeep;
     wire                        stage_2_in_axis_0_tvalid, stage_2_out_axis_0_tvalid;
     wire                        stage_2_in_axis_0_tready, stage_2_out_axis_0_tready;
     wire                        stage_2_in_axis_0_tlast, stage_2_out_axis_0_tlast;
@@ -106,8 +106,8 @@ module Sech2Lutram #(
     wire [USER_WIDTH-1:0]       stage_2_in_axis_0_tuser, stage_2_out_axis_0_tuser;
 
     // Stage 1 Data Input
-    assign stage_1_in_axis_0_tdata   = s_axis_0_tdata[(CHN+1)*DATA_WIDTH_DATA -1: CHN*DATA_WIDTH_DATA];
-    assign stage_1_in_axis_0_tkeep   = s_axis_0_tkeep[(CHN+1)*KEEP_WIDTH_DATA -1: CHN*KEEP_WIDTH_DATA];
+    assign stage_1_in_axis_0_tdata   = s_axis_0_tdata[(CHN+1)*DATA_WIDTH -1: CHN*DATA_WIDTH];
+    assign stage_1_in_axis_0_tkeep   = s_axis_0_tkeep[(CHN+1)*DATA_KEEP_WIDTH -1: CHN*DATA_KEEP_WIDTH];
     assign stage_1_in_axis_0_tvalid  = s_axis_0_tvalid[CHN];
     assign s_axis_0_tready[CHN]      = stage_1_in_axis_0_tready;
     assign stage_1_in_axis_0_tlast   = s_axis_0_tlast[CHN];
@@ -118,11 +118,11 @@ module Sech2Lutram #(
     // Stage 1 Skid Data Register
     axis_register #(
       // Width of AXI stream interfaces in bits
-      .DATA_WIDTH(DATA_WIDTH_DATA),
+      .DATA_WIDTH(DATA_WIDTH),
       // Propagate tkeep signal
-      .KEEP_ENABLE(KEEP_ENABLE_DATA),
+      .KEEP_ENABLE(DATA_KEEP_ENABLE),
       // tkeep signal width (words per cycle)
-      .KEEP_WIDTH(KEEP_WIDTH_DATA),
+      .KEEP_WIDTH(DATA_KEEP_WIDTH),
       // Propagate tlast signal
       .LAST_ENABLE(1),
       // Propagate tid signal
@@ -160,7 +160,7 @@ module Sech2Lutram #(
 
     // Stage 2 Input
     assign stage_2_in_axis_0_tdata    = LUTRAM_ARRAY[stage_1_out_axis_0_tdata];
-    assign stage_2_in_axis_0_tkeep    = {KEEP_WIDTH_RSLT{1'b1}};
+    assign stage_2_in_axis_0_tkeep    = {RSLT_KEEP_WIDTH{1'b1}};
     assign stage_2_in_axis_0_tvalid   = stage_1_out_axis_0_tvalid;
     assign stage_1_out_axis_0_tready  = stage_2_in_axis_0_tready;
     assign stage_2_in_axis_0_tlast    = stage_1_out_axis_0_tlast ;
@@ -171,11 +171,11 @@ module Sech2Lutram #(
     // Stage 2 Skid Register
     axis_register #(
       // Width of AXI stream interfaces in bits
-      .DATA_WIDTH(DATA_WIDTH_RSLT),
+      .DATA_WIDTH(RSLT_WIDTH),
       // Propagate tkeep signal
-      .KEEP_ENABLE(KEEP_ENABLE_RSLT),
+      .KEEP_ENABLE(RSLT_KEEP_ENABLE),
       // tkeep signal width (words per cycle)
-      .KEEP_WIDTH(KEEP_WIDTH_RSLT),
+      .KEEP_WIDTH(RSLT_KEEP_WIDTH),
       // Propagate tlast signal
       .LAST_ENABLE(1),
       // Propagate tid signal
@@ -215,8 +215,8 @@ module Sech2Lutram #(
     );
 
     // Output Control Logic
-    assign m_axis_0_tdata[(CHN+1)*DATA_WIDTH_DATA -1: CHN*DATA_WIDTH_DATA] = stage_2_out_axis_0_tdata ;
-    assign m_axis_0_tkeep[(CHN+1)*KEEP_WIDTH_DATA -1: CHN*KEEP_WIDTH_DATA] = stage_2_out_axis_0_tkeep ;
+    assign m_axis_0_tdata[(CHN+1)*DATA_WIDTH -1: CHN*DATA_WIDTH] = stage_2_out_axis_0_tdata ;
+    assign m_axis_0_tkeep[(CHN+1)*DATA_KEEP_WIDTH -1: CHN*DATA_KEEP_WIDTH] = stage_2_out_axis_0_tkeep ;
     assign m_axis_0_tvalid[CHN]                                            = stage_2_out_axis_0_tvalid;
     assign stage_2_out_axis_0_tready                                       = m_axis_0_tready[CHN]     ;
     assign m_axis_0_tlast[CHN]                                             = stage_2_out_axis_0_tlast ;

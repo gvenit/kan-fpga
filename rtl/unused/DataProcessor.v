@@ -4,33 +4,33 @@
 
 module DataProcessor #(
   // Width of AXI stream Input Data & Grid interfaces in bits
-  parameter DATA_WIDTH_DATA = 16,
+  parameter DATA_WIDTH = 16,
   // Fractional bits of input data & grid
-  parameter FRACTIONAL_BITS_DATA = 12,
+  parameter DATA_FRACTIONAL_BITS = 12,
   // Width of AXI stream Scale interface in bits
-  parameter DATA_WIDTH_SCALE = 16,
+  parameter SCALE_WIDTH = 16,
   // Fractional bits of input scale
-  parameter FRACTIONAL_BITS_SCALE = 12,
+  parameter SCALE_FRACTIONAL_BITS = 12,
   // Width of AXI stream Input Weight interface in bits
-  parameter DATA_WIDTH_WEIGHT = 16,
+  parameter WEIGHT_WIDTH = 16,
   // Fractional bits of output data
-  parameter FRACTIONAL_BITS_WEIGHT = 12,
+  parameter WEIGHT_FRACTIONAL_BITS = 12,
   // Width of Scaled Data in bits
-  parameter DATA_WIDTH_SCALED_DIFF = 16,
+  parameter SCALED_DIFF_WIDTH = 16,
   // Fractional bits of Scaled Data
-  parameter FRACTIONAL_BITS_SCALED_DIFF = 12,
+  parameter SCALED_DIFF_FRACTIONAL_BITS = 12,
   // Width of Activation Function Data in bits
-  parameter DATA_WIDTH_ACT = 16,
+  parameter ACT_WIDTH = 16,
   // Fractional bits of Activation Function Data
-  parameter FRACTIONAL_BITS_ACT = 12,
+  parameter ACT_FRACTIONAL_BITS = 12,
   // Width of AXI stream Output Data interface in bits
-  parameter DATA_WIDTH_RSLT = 16,
+  parameter RSLT_WIDTH = 16,
   // Fractional bits of output data
-  parameter FRACTIONAL_BITS_RSLT = 12,
+  parameter RSLT_FRACTIONAL_BITS = 12,
   // Propagate tkeep signal
-  parameter KEEP_ENABLE = (DATA_WIDTH_RSLT > 8),
+  parameter KEEP_ENABLE = (RSLT_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((DATA_WIDTH_RSLT + 7) / 8) : 1,
+  parameter KEEP_WIDTH = (KEEP_ENABLE) ? ((RSLT_WIDTH + 7) / 8) : 1,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -48,9 +48,9 @@ module DataProcessor #(
   // Number of Independent AXI-Stream Weight Channels
   parameter WEIGHT_CHANNELS = 1,
   // Use Common Share Channel 
-  parameter SHARE_SCALE = 1,
+  parameter SCALE_SHARE = 1,
   // Scale Channels
-  parameter SCALE_CHANNELS = (SHARE_SCALE)? 1 : DATA_CHANNELS,
+  parameter SCALE_CHANNELS = (SCALE_SHARE)? 1 : DATA_CHANNELS,
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt",
   // Output Destination 
@@ -64,7 +64,7 @@ module DataProcessor #(
   /*
     * AXI Stream Data input
     */
-  input  wire [DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      s_axis_data_tdata,
+  input  wire [DATA_CHANNELS*DATA_WIDTH-1:0]      s_axis_data_tdata,
   input  wire [DATA_CHANNELS-1:0]                      s_axis_data_tvalid,
   output wire [DATA_CHANNELS-1:0]                      s_axis_data_tready,
   input  wire [DATA_CHANNELS-1:0]                      s_axis_data_tlast,
@@ -75,7 +75,7 @@ module DataProcessor #(
   /*      
     * AXI Stream Grid input  wire    
     */      
-  input  wire [DATA_CHANNELS*DATA_WIDTH_DATA-1:0]      s_axis_grid_tdata,
+  input  wire [DATA_CHANNELS*DATA_WIDTH-1:0]      s_axis_grid_tdata,
   input  wire [DATA_CHANNELS-1:0]                      s_axis_grid_tvalid,
   output wire [DATA_CHANNELS-1:0]                      s_axis_grid_tready,
   input  wire [DATA_CHANNELS-1:0]                      s_axis_grid_tlast,
@@ -86,7 +86,7 @@ module DataProcessor #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [SCALE_CHANNELS*DATA_WIDTH_SCALE-1:0]    s_axis_scle_tdata,
+  input  wire [SCALE_CHANNELS*SCALE_WIDTH-1:0]    s_axis_scle_tdata,
   input  wire [SCALE_CHANNELS-1:0]                     s_axis_scle_tvalid,
   output wire [SCALE_CHANNELS-1:0]                     s_axis_scle_tready,
   input  wire [SCALE_CHANNELS-1:0]                     s_axis_scle_tlast,
@@ -97,7 +97,7 @@ module DataProcessor #(
   /*
     * AXI Stream Weight input
     */
-  input  wire [WEIGHT_CHANNELS*DATA_WIDTH_SCALE-1:0]   s_axis_wght_tdata,
+  input  wire [WEIGHT_CHANNELS*SCALE_WIDTH-1:0]   s_axis_wght_tdata,
   input  wire [WEIGHT_CHANNELS-1:0]                    s_axis_wght_tvalid,
   output wire [WEIGHT_CHANNELS-1:0]                    s_axis_wght_tready,
   input  wire [WEIGHT_CHANNELS-1:0]                    s_axis_wght_tlast,
@@ -108,7 +108,7 @@ module DataProcessor #(
   /*
     * AXI Stream output
     */
-  output wire [WEIGHT_CHANNELS*DATA_WIDTH_RSLT-1:0]    m_axis_data_tdata,
+  output wire [WEIGHT_CHANNELS*RSLT_WIDTH-1:0]    m_axis_data_tdata,
   output wire [WEIGHT_CHANNELS*KEEP_WIDTH-1:0]         m_axis_data_tkeep,
   output wire [WEIGHT_CHANNELS-1:0]                    m_axis_data_tvalid,
   input  wire [WEIGHT_CHANNELS-1:0]                    m_axis_data_tready,
@@ -129,7 +129,7 @@ module DataProcessor #(
   output wire                                          core_rst
 );
   // Internal Activation Function Output AXI-Stream Wires
-  wire [DATA_CHANNELS*DATA_WIDTH_ACT-1:0]             int_axis_act_func_tdata;
+  wire [DATA_CHANNELS*ACT_WIDTH-1:0]             int_axis_act_func_tdata;
   wire [DATA_CHANNELS*KEEP_WIDTH-1:0]                 int_axis_act_func_tkeep;
   wire [DATA_CHANNELS-1:0]                            int_axis_act_func_tvalid;
   wire [DATA_CHANNELS-1:0]                            int_axis_act_func_tready;
@@ -140,21 +140,21 @@ module DataProcessor #(
   
   RSWAFFunction #(
     // Width of AXI stream Input Data & Grid interfaces in bits
-    .DATA_WIDTH_DATA(DATA_WIDTH_DATA),
+    .DATA_WIDTH(DATA_WIDTH),
     // Fractional bits of input data & grid
-    .FRACTIONAL_BITS_DATA(FRACTIONAL_BITS_DATA),
+    .DATA_FRACTIONAL_BITS(DATA_FRACTIONAL_BITS),
     // Width of AXI stream Scale interface in bits
-    .DATA_WIDTH_SCALE(DATA_WIDTH_SCALE),
+    .SCALE_WIDTH(SCALE_WIDTH),
     // Fractional bits of input scale
-    .FRACTIONAL_BITS_SCALE(FRACTIONAL_BITS_SCALE),
+    .SCALE_FRACTIONAL_BITS(SCALE_FRACTIONAL_BITS),
     // Width of AXI stream Output Data interface in bits
-    .DATA_WIDTH_SCALED_DIFF(DATA_WIDTH_SCALED_DIFF),
+    .SCALED_DIFF_WIDTH(SCALED_DIFF_WIDTH),
     // Fractional bits of output data
-    .FRACTIONAL_BITS_SCALED_DIFF(FRACTIONAL_BITS_SCALED_DIFF),
+    .SCALED_DIFF_FRACTIONAL_BITS(SCALED_DIFF_FRACTIONAL_BITS),
     // Width of AXI stream Output Data interface in bits
-    .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
+    .RSLT_WIDTH(RSLT_WIDTH),
     // Fractional bits of output data
-    .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+    .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
     // Propagate tkeep signal
     .KEEP_ENABLE(KEEP_ENABLE),
     // tkeep signal width (words per cycle)
@@ -174,7 +174,7 @@ module DataProcessor #(
     // Number of Independent AXI-Stream Channels
     .CHANNELS(DATA_CHANNELS),
     // Use Common Share Channel 
-    .SHARE_SCALE(SHARE_SCALE),
+    .SCALE_SHARE(SCALE_SHARE),
     // Scale Channels
     .SCALE_CHANNELS(SCALE_CHANNELS),
     // Path to ROM Data
@@ -221,21 +221,21 @@ module DataProcessor #(
     // Enable module to do internal resets
     .INTERNAL_RESET(1'b1),
     // Data Width of Input Data (L-AXIS)
-    .DATA_WIDTH_OP0(DATA_WIDTH_SCALED_DIFF),
+    .OP0_WIDTH(SCALED_DIFF_WIDTH),
     // Fractional Bits of Input Data (L-AXIS)
-    .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_SCALED_DIFF),
+    .OP0_FRACTIONAL_BITS(SCALED_DIFF_FRACTIONAL_BITS),
     // Treat operand 0 as unsigned
     .IS_UNSIGNED_OP0(1),
     // Data Width of Input Weights (U-AXIS)
-    .DATA_WIDTH_OP1(DATA_WIDTH_WEIGHT),
+    .OP1_WIDTH(WEIGHT_WIDTH),
     // Fractional Bits of Input Weights (U-AXIS)
-    .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_WEIGHT),
+    .OP1_FRACTIONAL_BITS(WEIGHT_FRACTIONAL_BITS),
     // Treat operand 1 as unsigned
     .IS_UNSIGNED_OP1(0),
     // Data Width of Output Data (D-AXIS)
-    .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
+    .RSLT_WIDTH(RSLT_WIDTH),
     // Fractional Bits of Output Data (D-AXIS)
-    .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+    .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
     // Propagate tid signal
     .ID_ENABLE(ID_ENABLE),
     // tid signal width

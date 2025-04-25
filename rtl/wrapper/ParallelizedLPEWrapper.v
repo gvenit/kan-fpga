@@ -28,19 +28,19 @@ module ParallelizedLPEWrapper #(
   // Position of current PE in the j axis
   parameter PE_POSITION_J = 0,
   // Data Width of Input Data (L-AXIS)
-  parameter DATA_WIDTH_OP0 = 16,
+  parameter OP0_WIDTH = 16,
   // Fractional Bits of Input Data (L-AXIS)
-  parameter FRACTIONAL_BITS_OP0 = 12,
+  parameter OP0_FRACTIONAL_BITS = 12,
   // Treat operand 0 as unsigned
   parameter IS_UNSIGNED_OP0 = 0,
   // Data Width of Input Weights (T-AXIS)
-  parameter DATA_WIDTH_OP1 = 16,
+  parameter OP1_WIDTH = 16,
   // Fractional Bits of Input Weights (T-AXIS)
-  parameter FRACTIONAL_BITS_OP1 = 12,
+  parameter OP1_FRACTIONAL_BITS = 12,
   // Treat operand 1 as unsigned
   parameter IS_UNSIGNED_OP1 = 0,
   // Data Width of Output Data (D-AXIS)
-  parameter DATA_WIDTH_PSUM = DATA_WIDTH_OP0 + DATA_WIDTH_OP1
+  parameter PSUM_WIDTH = OP0_WIDTH + OP1_WIDTH
 ) (
   input  wire                         clk,
   input  wire                         rst,
@@ -48,7 +48,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Left Input
    */
-  input  wire [DATA_WIDTH_OP0-1:0]    s_axis_l_tdata,
+  input  wire [OP0_WIDTH-1:0]    s_axis_l_tdata,
   input  wire                         s_axis_l_tvalid,
   output wire                         s_axis_l_tready,
   input  wire                         s_axis_l_tlast,
@@ -56,7 +56,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Right Output
    */
-  output wire [DATA_WIDTH_OP0-1:0]    m_axis_r_tdata,
+  output wire [OP0_WIDTH-1:0]    m_axis_r_tdata,
   output wire                         m_axis_r_tvalid,
   input  wire                         m_axis_r_tready,
   output wire                         m_axis_r_tlast,
@@ -64,7 +64,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Top Input
    */
-  input  wire [DATA_WIDTH_OP1-1:0]    s_axis_t_tdata,
+  input  wire [OP1_WIDTH-1:0]    s_axis_t_tdata,
   input  wire                         s_axis_t_tvalid,
   output wire                         s_axis_t_tready,
   input  wire                         s_axis_t_tlast,
@@ -72,7 +72,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Bottom Output
    */
-  output wire [DATA_WIDTH_OP1-1:0]    m_axis_b_tdata,
+  output wire [OP1_WIDTH-1:0]    m_axis_b_tdata,
   output wire                         m_axis_b_tvalid,
   input  wire                         m_axis_b_tready,
   output wire                         m_axis_b_tlast,
@@ -80,7 +80,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Up Input
    */
-  input  wire [DATA_WIDTH_PSUM-1:0]   s_axis_u_tdata,
+  input  wire [PSUM_WIDTH-1:0]   s_axis_u_tdata,
   input  wire                         s_axis_u_tvalid,
   output wire                         s_axis_u_tready,
   input  wire                         s_axis_u_tlast,
@@ -88,7 +88,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Down Output
    */
-  output wire [DATA_WIDTH_PSUM-1:0]   m_axis_d_tdata,
+  output wire [PSUM_WIDTH-1:0]   m_axis_d_tdata,
   output wire                         m_axis_d_tvalid,
   input  wire                         m_axis_d_tready,
   output wire                         m_axis_d_tlast,
@@ -108,19 +108,19 @@ module ParallelizedLPEWrapper #(
     // Position of current PE in the j axis
     .PE_POSITION_J(PE_POSITION_J),
     // Data Width of Input Data (L-AXIS)
-    .DATA_WIDTH_OP0(DATA_WIDTH_OP0),
+    .OP0_WIDTH(OP0_WIDTH),
     // Fractional Bits of Input Data (L-AXIS)
-    .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_OP0),
+    .OP0_FRACTIONAL_BITS(OP0_FRACTIONAL_BITS),
     // Treat operand 0 as unsigned
     .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
     // Data Width of Input Weights (T-AXIS)
-    .DATA_WIDTH_OP1(DATA_WIDTH_OP1),
+    .OP1_WIDTH(OP1_WIDTH),
     // Fractional Bits of Input Weights (T-AXIS)
-    .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
+    .OP1_FRACTIONAL_BITS(OP1_FRACTIONAL_BITS),
     // Treat operand 1 as unsigned
     .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
     // Data Width of Output Data (D-AXIS)
-    .DATA_WIDTH_PSUM(DATA_WIDTH_PSUM)
+    .PSUM_WIDTH(PSUM_WIDTH)
   ) parallelized_lpe_inst (
     .clk(clk),
     .rst(rst),

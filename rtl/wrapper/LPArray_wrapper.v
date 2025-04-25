@@ -22,21 +22,21 @@ module LPArray_wrapper #(
     // Enable module to do internal resets
     parameter INTERNAL_RESET = 0,
     // Data Width of Input Data (L-AXIS)
-    parameter DATA_WIDTH_OP0 = 16,
+    parameter OP0_WIDTH = 16,
     // Fractional Bits of Input Data (L-AXIS)
-    parameter FRACTIONAL_BITS_OP0 = 12,
+    parameter OP0_FRACTIONAL_BITS = 12,
     // Treat operand 0 as unsigned
     parameter IS_UNSIGNED_OP0 = 0,
     // Data Width of Input Weights (U-AXIS)
-    parameter DATA_WIDTH_OP1 = 16,
+    parameter OP1_WIDTH = 16,
     // Treat operand 1 as unsigned
     parameter IS_UNSIGNED_OP1 = 0,
     // Fractional Bits of Input Weights (U-AXIS)
-    parameter FRACTIONAL_BITS_OP1 = 12,
+    parameter OP1_FRACTIONAL_BITS = 12,
     // Data Width of Output Data (D-AXIS)
-    parameter DATA_WIDTH_RSLT = 16,
+    parameter RSLT_WIDTH = 16,
     // Fractional Bits of Output Data (D-AXIS)
-    parameter FRACTIONAL_BITS_RSLT = 12,
+    parameter RSLT_FRACTIONAL_BITS = 12,
     // Propagate tid signal
     parameter ID_ENABLE = 0,
     // tid signal width
@@ -54,9 +54,9 @@ module LPArray_wrapper #(
     // Output Thread ID 
     parameter OUTPUT_ID = 1,
     // Resolve Up/Down Bit Width
-    parameter DATA_WIDTH_U_D = (DATA_WIDTH_OP1 > DATA_WIDTH_RSLT) ? DATA_WIDTH_OP1 : DATA_WIDTH_RSLT,
+    parameter U_D_WIDTH = (OP1_WIDTH > RSLT_WIDTH) ? OP1_WIDTH : RSLT_WIDTH,
     // Resolve Left/Right Bit Width
-    parameter DATA_WIDTH_L_R = DATA_WIDTH_OP0
+    parameter L_R_WIDTH = OP0_WIDTH
 ) (
   input  wire                                     clk,
   input  wire                                     rst,
@@ -64,7 +64,7 @@ module LPArray_wrapper #(
   /*
    * AXI Stream Up input
    */
-  input  wire [PE_NUMBER_I*DATA_WIDTH_U_D-1:0]    s_axis_up_tdata,
+  input  wire [PE_NUMBER_I*U_D_WIDTH-1:0]    s_axis_up_tdata,
   input  wire [PE_NUMBER_I-1:0]                   s_axis_up_tvalid,
   output wire [PE_NUMBER_I-1:0]                   s_axis_up_tready,
   input  wire [PE_NUMBER_I-1:0]                   s_axis_up_tlast,
@@ -75,7 +75,7 @@ module LPArray_wrapper #(
   /*
    * AXI Stream Left input
    */
-  input  wire [PE_NUMBER_J*DATA_WIDTH_L_R-1:0]    s_axis_left_tdata,
+  input  wire [PE_NUMBER_J*L_R_WIDTH-1:0]    s_axis_left_tdata,
   input  wire [PE_NUMBER_J-1:0]                   s_axis_left_tvalid,
   output wire [PE_NUMBER_J-1:0]                   s_axis_left_tready,
   input  wire [PE_NUMBER_J-1:0]                   s_axis_left_tlast,
@@ -86,7 +86,7 @@ module LPArray_wrapper #(
   /*
    * AXI Stream Down Output
    */
-  output wire [PE_NUMBER_I*DATA_WIDTH_U_D-1:0]    m_axis_down_tdata,
+  output wire [PE_NUMBER_I*U_D_WIDTH-1:0]    m_axis_down_tdata,
   output wire [PE_NUMBER_I-1:0]                   m_axis_down_tvalid,
   input  wire [PE_NUMBER_I-1:0]                   m_axis_down_tready,
   output wire [PE_NUMBER_I-1:0]                   m_axis_down_tlast,
@@ -105,14 +105,14 @@ LinearProcessingArray #(
   .PE_NUMBER_I(PE_NUMBER_I),
   .PE_NUMBER_J(PE_NUMBER_J),
   .INTERNAL_RESET(INTERNAL_RESET),
-  .DATA_WIDTH_OP0(DATA_WIDTH_OP0),
-  .FRACTIONAL_BITS_OP0(FRACTIONAL_BITS_OP0),
+  .OP0_WIDTH(OP0_WIDTH),
+  .OP0_FRACTIONAL_BITS(OP0_FRACTIONAL_BITS),
   .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
-  .DATA_WIDTH_OP1(DATA_WIDTH_OP1),
+  .OP1_WIDTH(OP1_WIDTH),
   .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
-  .FRACTIONAL_BITS_OP1(FRACTIONAL_BITS_OP1),
-  .DATA_WIDTH_RSLT(DATA_WIDTH_RSLT),
-  .FRACTIONAL_BITS_RSLT(FRACTIONAL_BITS_RSLT),
+  .OP1_FRACTIONAL_BITS(OP1_FRACTIONAL_BITS),
+  .RSLT_WIDTH(RSLT_WIDTH),
+  .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
   .ID_ENABLE(ID_ENABLE),
   .ID_WIDTH(ID_WIDTH),
   .DEST_ENABLE(DEST_ENABLE),
@@ -121,8 +121,8 @@ LinearProcessingArray #(
   .USER_WIDTH(USER_WIDTH),
   .OUTPUT_DEST(OUTPUT_DEST),
   .OUTPUT_ID(OUTPUT_ID),
-  .DATA_WIDTH_U_D(DATA_WIDTH_U_D),
-  .DATA_WIDTH_L_R(DATA_WIDTH_L_R)  
+  .U_D_WIDTH(U_D_WIDTH),
+  .L_R_WIDTH(L_R_WIDTH)  
 ) wrapper (
   .clk(clk),
   .rst(rst),

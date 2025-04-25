@@ -31,27 +31,27 @@ def tb_RSWAFFunction():
     params = module.copy_params_as_localparams(RSWAFF)
     ports  = module.copy_ports_as_vars(RSWAFF)
 
-    DATA_WIDTH                  : Localparam = params['DATA_WIDTH_DATA']
-    FRACTIONAL_BITS_DATA        : Localparam = params['FRACTIONAL_BITS_DATA']
-    FRACTIONAL_BITS_SCALE       : Localparam = params['FRACTIONAL_BITS_SCALE']
-    FRACTIONAL_BITS_SCALED_DIFF : Localparam = params['FRACTIONAL_BITS_SCALED_DIFF']
-    FRACTIONAL_BITS_RSLT        : Localparam = params['FRACTIONAL_BITS_RSLT']
+    DATA_WIDTH                  : Localparam = params['DATA_WIDTH']
+    DATA_FRACTIONAL_BITS        : Localparam = params['DATA_FRACTIONAL_BITS']
+    SCALE_FRACTIONAL_BITS       : Localparam = params['SCALE_FRACTIONAL_BITS']
+    SCALED_DIFF_FRACTIONAL_BITS : Localparam = params['SCALED_DIFF_FRACTIONAL_BITS']
+    RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
     CHANNELS                    : Localparam = params['CHANNELS']
-    SHARE_SCALE                 : Localparam = params['SHARE_SCALE']
+    SCALE_SHARE                 : Localparam = params['SCALE_SHARE']
     ROM_DATA_PATH               : Localparam = params['ROM_DATA_PATH']
 
     DATA_WIDTH.value = 16
-    FRACTIONAL_BITS_DATA.value = 12
-    FRACTIONAL_BITS_SCALE.value = 12
-    FRACTIONAL_BITS_SCALED_DIFF.value = 13
-    FRACTIONAL_BITS_RSLT.value = 16
+    DATA_FRACTIONAL_BITS.value = 12
+    SCALE_FRACTIONAL_BITS.value = 12
+    SCALED_DIFF_FRACTIONAL_BITS.value = 13
+    RSLT_FRACTIONAL_BITS.value = 16
     CHANNELS.value = 1
-    SHARE_SCALE.value = 1
+    SCALE_SHARE.value = 1
     ROM_DATA_PATH.value = "../data/Sech2Lutram_n_16.13_16.16.txt"
 
-    params['DATA_WIDTH_SCALE'].value = DATA_WIDTH
-    params['DATA_WIDTH_SCALED_DIFF'].value = DATA_WIDTH
-    params['DATA_WIDTH_RSLT'].value = DATA_WIDTH
+    params['SCALE_WIDTH'].value = DATA_WIDTH
+    params['SCALED_DIFF_WIDTH'].value = DATA_WIDTH
+    params['RSLT_WIDTH'].value = DATA_WIDTH
     
     clk = ports['clk']
     rst = ports['rst']
@@ -123,11 +123,11 @@ def tb_RSWAFFunction():
     )
 
     values = [
-        -4 << FRACTIONAL_BITS_DATA, 
-        -1 << FRACTIONAL_BITS_DATA-1, 
+        -4 << DATA_FRACTIONAL_BITS, 
+        -1 << DATA_FRACTIONAL_BITS-1, 
          0,
-         1 << FRACTIONAL_BITS_DATA-1, 
-         4 << FRACTIONAL_BITS_DATA 
+         1 << DATA_FRACTIONAL_BITS-1, 
+         4 << DATA_FRACTIONAL_BITS 
     ]
     
     chn = module.Genvar('CHN')
@@ -173,14 +173,14 @@ def tb_RSWAFFunction():
             ),
             If(Ands(chn == 0, Not(is_Ready) == 0))(
                 is_Ready(0),
-                s_axis_scle_tdata(-5 << (FRACTIONAL_BITS_SCALE-2)),
+                s_axis_scle_tdata(-5 << (SCALE_FRACTIONAL_BITS-2)),
                 s_axis_scle_tlast[chn](1),
                 s_axis_scle_tvalid[chn](1),
             ),
             If(Ands(
                 count_data == 0,
             ))(
-                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tdata(1 << SCALE_FRACTIONAL_BITS),
                 s_axis_scle_tlast[chn](1),
                 s_axis_scle_tvalid[chn](1),
             ),
@@ -188,12 +188,12 @@ def tb_RSWAFFunction():
                 count_data != 0,
                 count_data < 25,
             ))(
-                s_axis_scle_tdata(5 << FRACTIONAL_BITS_SCALE),
+                s_axis_scle_tdata(5 << SCALE_FRACTIONAL_BITS),
             ),
             If(Ands(
                 count_data == 25,
             ))(
-                s_axis_scle_tdata(1 << FRACTIONAL_BITS_SCALE-1),
+                s_axis_scle_tdata(1 << SCALE_FRACTIONAL_BITS-1),
                 s_axis_scle_tlast[chn](0),
                 s_axis_scle_tvalid[chn](0),
             ),
