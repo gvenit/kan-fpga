@@ -2,7 +2,7 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-`include "headers/utils.vh"
+`include "header_utils.vh"
 
 /* 
  * LinearProcessingArray : Accepts N+M and returns N AXI-Streams. Input

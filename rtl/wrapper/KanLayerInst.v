@@ -1,6 +1,6 @@
 
-`include "headers/utils.vh"
-`include "headers/IFOptions.vh"
+`include "header_utils.vh"
+`include "header_IFOptions.vh"
 
 module KanLayerInst #(
   /*------------------------------------------------------------------

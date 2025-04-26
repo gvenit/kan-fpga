@@ -14,10 +14,10 @@
  * 
  */
 
-`include "headers/IFOptions.vh"
+`include "header_IFOptions.vh"
 
 module MemoryControlUnit #(
-  `include "headers/MCUGlobalFSMParameters.vh"
+  `include "header_MCUGlobalFSMParameters.vh"
  `ifdef BRAM_ACK_SIG_OPTION
   // BRAM control has ack signal
   parameter BRAM_ACK_SIG = 1,
@@ -384,7 +384,7 @@ module MemoryControlUnit #(
       MCULocalBramFSM
       `endif 
       #(
-        `include "headers/instantiations/MCUGlobalFSMParametersInst.vh"
+        `include "header_MCUGlobalFSMParametersInst.vh"
         `ifdef SCALE_IF_IS_BRAM
           // BRAM control has valid signal
           .BRAM_ACK_SIG(BRAM_ACK_SIG),
@@ -603,7 +603,7 @@ module MemoryControlUnit #(
     MCULocalBramFSM
     `endif 
     #(
-      `include "headers/instantiations/MCUGlobalFSMParametersInst.vh"
+      `include "header_MCUGlobalFSMParametersInst.vh"
       `ifdef SCALE_IF_IS_BRAM
         // BRAM control has valid signal
         .BRAM_ACK_SIG(BRAM_ACK_SIG),
@@ -738,7 +738,7 @@ module MemoryControlUnit #(
       MCULocalBramFSM
       `endif 
       #(
-        `include "headers/instantiations/MCUGlobalFSMParametersInst.vh"
+        `include "header_MCUGlobalFSMParametersInst.vh"
         `ifdef GRID_IF_IS_BRAM
           // BRAM control has valid signal
           .BRAM_ACK_SIG(BRAM_ACK_SIG),
@@ -957,7 +957,7 @@ module MemoryControlUnit #(
     MCULocalBramFSM
     `endif 
     #(
-      `include "headers/instantiations/MCUGlobalFSMParametersInst.vh"
+      `include "header_MCUGlobalFSMParametersInst.vh"
       `ifdef GRID_IF_IS_BRAM
         // BRAM control has valid signal
         .BRAM_ACK_SIG(BRAM_ACK_SIG),
@@ -1080,7 +1080,7 @@ module MemoryControlUnit #(
     MCULocalBramFSM
     `endif 
     #(
-      `include "headers/instantiations/MCUGlobalFSMParametersInst.vh"
+      `include "header_MCUGlobalFSMParametersInst.vh"
      `ifdef DATA_IF_IS_BRAM
       // BRAM control has valid signal
       .BRAM_ACK_SIG(BRAM_ACK_SIG),

@@ -2,7 +2,7 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-`include "headers/utils.vh"
+`include "header_utils.vh"
 
 /* 
  * LPEControlUnit : Control Unit for LinearProcessingElement

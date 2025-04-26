@@ -1,4 +1,4 @@
-`include "headers/utils.vh"
+`include "header_utils.vh"
 
 module MultiBankBram #(
   parameter BANKS = 4,

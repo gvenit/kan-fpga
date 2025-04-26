@@ -2,7 +2,7 @@
 `timescale 1ns/1ps
 `default_nettype none
 
-`include "headers/utils.vh"
+`include "header_utils.vh"
 
 /* 
  * LinearProcessingElement : Accepts and returns two AXI-Streams

@@ -40,11 +40,11 @@
  *        s_axil -- AXI-Lite interface for PS-PL communication
  * 
  */
-`include "headers/utils.vh"
+`include "header_utils.vh"
 
 module CentralControlUnit #(
-  `include "headers/ControlRegisters.vh"
-  `include "headers/Peripherals.vh"
+  `include "header_ControlRegisters.vh"
+  `include "header_Peripherals.vh"
   // Number of PEs in Processing Array k axis -- Number of batches per run
   parameter BATCH_SIZE = 1,
   // Number of Independent AXI-Stream Data Channels

@@ -9,8 +9,8 @@
  *   be drag-and-dropped in the Vivado Block Design.
  */
 
-`include "headers/utils.vh"
-`include "headers/IFOptions.vh"
+`include "header_utils.vh"
+`include "header_IFOptions.vh"
 
 module KanLayer #(
   /*------------------------------------------------------------------
@@ -612,6 +612,7 @@ module KanLayer #(
 
   localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total data ram length
   localparam DATA_ITRL_ADDR = `LOG2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
+
  `endif
 
  `ifdef GRID_IF_IS_BRAM
@@ -652,7 +653,7 @@ module KanLayer #(
   // Number of Independent AXI-Stream Weight Channels
   localparam WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS;
 
- `include "headers/PeripheralsLocal.vh"
+ `include "header_PeripheralsLocal.vh"
 
   genvar BATCH, CHN;
 
@@ -1492,7 +1493,7 @@ module KanLayer #(
   wire [SCALE_CHANNELS_OUT-1:0]                   int_mcu_scle_m_axis_tlast;
 
   MemoryControlUnit #(
-    // `include "headers/MCUGlobalFSMParametersInst.vh"
+    // `include "header_MCUGlobalFSMParametersInst.vh"
    `ifdef BRAM_ACK_SIG_OPTION
     .BRAM_ACK_SIG               (1),
    `endif
@@ -1956,14 +1957,14 @@ module KanLayer #(
   *********************************************/
   
   wire [BATCH_SIZE*RSLT_CHANNELS*RSLT_WIDTH-1:0]  int_buf_rslt_s_axis_tdata;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_s_axis_tvalid;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_s_axis_tready;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_s_axis_tlast;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_s_axis_tvalid;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_s_axis_tready;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_s_axis_tlast;
 
   wire [BATCH_SIZE*RSLT_CHANNELS*RSLT_WIDTH-1:0]  int_buf_rslt_m_axis_tdata;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_m_axis_tvalid;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_m_axis_tready;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_m_axis_tlast;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_m_axis_tvalid;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_m_axis_tready;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_m_axis_tlast;
 
   generate
     for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin
@@ -2019,15 +2020,15 @@ module KanLayer #(
   wire jnr_interrupt = 1'b0;      // To-Do
 
   wire [BATCH_SIZE*RSLT_CHANNELS*RSLT_WIDTH-1:0]  int_jnr_rslt_s_axis_tdata;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_jnr_rslt_s_axis_tvalid;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_jnr_rslt_s_axis_tready;
-  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_jnr_rslt_s_axis_tlast;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_jnr_rslt_s_axis_tvalid;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_jnr_rslt_s_axis_tready;
+  wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_jnr_rslt_s_axis_tlast;
 
   wire [RSLT_WIDTH-1:0]                           int_jnr_rslt_m_axis_tdata;
-  wire                                                 int_jnr_rslt_m_axis_tvalid;
-  wire                                                 int_jnr_rslt_m_axis_tready;
-  wire                                                 int_jnr_rslt_m_axis_tlast;
-  wire [RSLT_ID_WIDTH-1:0]                             int_jnr_rslt_m_axis_tid;
+  wire                                            int_jnr_rslt_m_axis_tvalid;
+  wire                                            int_jnr_rslt_m_axis_tready;
+  wire                                            int_jnr_rslt_m_axis_tlast;
+  wire [RSLT_ID_WIDTH-1:0]                        int_jnr_rslt_m_axis_tid;
 
   BatchedAxisPacketJoiner #(
     .CHANNELS           (RSLT_CHANNELS),
@@ -2080,13 +2081,13 @@ module KanLayer #(
     - _m_ : otuput / master interface
   *********************************************/
 
-  wire [RSLT_WIDTH-1:0]  int_adp_rslt_s_axis_tdata;
+  wire [RSLT_WIDTH-1:0]       int_adp_rslt_s_axis_tdata;
   wire                        int_adp_rslt_s_axis_tvalid;
   wire                        int_adp_rslt_s_axis_tready;
   wire                        int_adp_rslt_s_axis_tlast;
   wire [RSLT_ID_WIDTH-1:0]    int_adp_rslt_s_axis_tid;
 
-  wire [DMA_WIDTH-1:0]   int_adp_rslt_m_axis_tdata;
+  wire [DMA_WIDTH-1:0]        int_adp_rslt_m_axis_tdata;
   wire [DMA_KEEP_WIDTH-1:0]   int_adp_rslt_m_axis_tkeep;
   wire                        int_adp_rslt_m_axis_tvalid;
   wire                        int_adp_rslt_m_axis_tready;
@@ -2238,12 +2239,12 @@ module KanLayer #(
   **********************************************/
 
   CentralControlUnit #(
-    `include "headers/instantiations/SystemSizesInst.vh"
+    `include "header_SystemSizesInst.vh"
     .DATA_CHANNELS                  (DATA_CHANNELS),
     .RSLT_CHANNELS                  (RSLT_CHANNELS),
-    .DATA_ADDR                (DATA_ADDR),
-    .GRID_ADDR                (GRID_ADDR),
-    .SCALE_ADDR               (SCALE_ADDR),
+    .DATA_ADDR                      (DATA_ADDR),
+    .GRID_ADDR                      (GRID_ADDR),
+    .SCALE_ADDR                     (SCALE_ADDR),
     .PCKT_SIZE_WIDTH                (PCKT_SIZE_WIDTH)
   ) ccu (
     .fsm_clk                        (fsm_clk),

@@ -1,4 +1,4 @@
-  `include "headers/SystemSizes.vh"
+  `include "header_SystemSizes.vh"
   parameter NUM_PERIPHERALS = 4,
 
   // Memory Control Unit
