@@ -1,4 +1,4 @@
-`include "utils.vh"
+`include "headers/utils.vh"
 
 module MultiWidthDualPortBram #(
   /*-----------------------------------------

@@ -9,7 +9,7 @@
  *    data from the specified channels, starting from the first
  *    channel.
  */
-`include "utils.vh"
+`include "headers/utils.vh"
 
 module AxisPacketJoiner #(
   // Number of Channels

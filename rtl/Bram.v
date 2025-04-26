@@ -13,7 +13,7 @@
  *    This might have timing implications.
  */
 
-`include "utils.vh"
+`include "headers/utils.vh"
 
 module Bram #(
   parameter WIDTH = 32,

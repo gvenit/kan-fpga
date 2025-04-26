@@ -9,8 +9,8 @@
  *   be drag-and-dropped in the Vivado Block Design.
  */
 
-`include "utils.vh"
-`include "IFOptions.vh"
+`include "headers/utils.vh"
+`include "headers/IFOptions.vh"
 
 module KanLayer #(
   /*------------------------------------------------------------------
@@ -620,13 +620,13 @@ module KanLayer #(
   localparam GRID_ITRL_DEPTH = GRID_BANKS * GRID_BANK_DEPTH; // simulated total data ram length
   localparam GRID_ITRL_ADDR = `LOG2(GRID_ITRL_DEPTH);        // number of input address bits of total data memory
 
-  // localparam GRID_DEPTH = GRID_ITRL_DEPTH;
+  localparam GRID_DEPTH_RESOLVED = GRID_ITRL_DEPTH;
 
-  localparam GRID_EXTRL_DEPTH = GRID_DEPTH / IN_WORD_GRID;  // grid depth as seen from external ram control interface
+  localparam GRID_EXTRL_DEPTH = GRID_DEPTH_RESOLVED / IN_WORD_GRID;  // grid depth as seen from external ram control interface
   localparam GRID_EXTRL_ADDR = `LOG2(GRID_EXTRL_DEPTH);     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
 
-  // localparam GRID_ADDR = `LOG2(GRID_DEPTH);  // number of input address bits of total grid memory
-  localparam GRID_PHYS_DEPTH = GRID_DEPTH / IN_WORD_GRID;  // effective - physical depth of grid ram
+  // localparam GRID_ADDR = `LOG2(GRID_DEPTH_RESOLVED);  // number of input address bits of total grid memory
+  localparam GRID_PHYS_DEPTH = GRID_DEPTH_RESOLVED / IN_WORD_GRID;  // effective - physical depth of grid ram
   localparam GRID_PHYS_ADDR = `LOG2(GRID_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
  `endif
 
@@ -636,13 +636,13 @@ module KanLayer #(
   localparam SCALE_ITRL_DEPTH = SCALE_BANKS * SCALE_BANK_DEPTH; // simulated total data ram length
   localparam SCALE_ITRL_ADDR = `LOG2(SCALE_ITRL_DEPTH);        // number of input address bits of total data memory
 
-  // localparam SCALE_DEPTH = SCALE_ITRL_DEPTH;
+  localparam SCALE_DEPTH_RESOLVED = SCALE_ITRL_DEPTH;
 
-  localparam SCALE_EXTRL_DEPTH = SCALE_DEPTH / IN_WORD_SCALE;  // grid depth as seen from external ram control interface
+  localparam SCALE_EXTRL_DEPTH = SCALE_DEPTH_RESOLVED / IN_WORD_SCALE;  // grid depth as seen from external ram control interface
   localparam SCALE_EXTRL_ADDR = `LOG2(SCALE_EXTRL_DEPTH);     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
 
-  // localparam SCALE_ADDR = `LOG2(SCALE_DEPTH);  // number of input address bits of total grid memory
-  localparam SCALE_PHYS_DEPTH = SCALE_DEPTH / IN_WORD_SCALE;  // effective - physical depth of grid ram
+  // localparam SCALE_ADDR = `LOG2(SCALE_DEPTH_RESOLVED);  // number of input address bits of total grid memory
+  localparam SCALE_PHYS_DEPTH = SCALE_DEPTH_RESOLVED / IN_WORD_SCALE;  // effective - physical depth of grid ram
   localparam SCALE_PHYS_ADDR = `LOG2(SCALE_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
  `endif
   // localparam DATA_WIDTH_GRID = DATA_WIDTH_DATA;
@@ -652,7 +652,7 @@ module KanLayer #(
   // Number of Independent AXI-Stream Weight Channels
   localparam WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS;
 
- `include "PeripheralsLocal.vh"
+ `include "headers/PeripheralsLocal.vh"
 
   genvar BATCH, CHN;
 
@@ -1492,7 +1492,7 @@ module KanLayer #(
   wire [SCALE_CHANNELS_OUT-1:0]                   int_mcu_scle_m_axis_tlast;
 
   MemoryControlUnit #(
-    // `include "MCUGlobalFSMParametersInst.vh"
+    // `include "headers/MCUGlobalFSMParametersInst.vh"
    `ifdef BRAM_ACK_SIG_OPTION
     .BRAM_ACK_SIG               (1),
    `endif
@@ -2238,7 +2238,7 @@ module KanLayer #(
   **********************************************/
 
   CentralControlUnit #(
-    `include "SystemSizesInst.vh"
+    `include "headers/instantiations/SystemSizesInst.vh"
     .DATA_CHANNELS                  (DATA_CHANNELS),
     .RSLT_CHANNELS                  (RSLT_CHANNELS),
     .DATA_ADDR                (DATA_ADDR),
@@ -2319,11 +2319,11 @@ module KanLayer #(
   assign int_ctr_data_bram_rddata_o  = int_ram_data_bram_rddata_a;
 
   // data bram port b to memory control unit
-  assign int_mcu_data_bram_clk       = int_bram_data_bram_clk_a;
-  assign int_bram_data_bram_en_b     = int_mcu_data_bram_en;
-  assign int_bram_data_bram_addr_b   = int_mcu_data_bram_addr;
-  assign int_mcu_data_bram_rddata    = int_bram_data_bram_rddata_b;
-  assign int_mcu_data_bram_rdack     = int_bram_data_bram_rdack_b;
+  assign int_mcu_data_bram_clk       = int_ram_data_bram_clk_a;
+  assign int_ram_data_bram_en_b      = int_mcu_data_bram_en;
+  assign int_ram_data_bram_addr_b    = int_mcu_data_bram_addr;
+  assign int_mcu_data_bram_rddata    = int_ram_data_bram_rddata_b;
+  assign int_mcu_data_bram_rdack     = int_ram_data_bram_rdack_b;
  `endif
  
  `ifdef GRID_IF_IS_AXIL
@@ -2347,28 +2347,28 @@ module KanLayer #(
   assign bram_ctrl_grid_dout         = int_ram_grid_bram_rddata_a;
 
   // grid bram port b to memory control unit
-  assign int_mcu_grid_bram_clk       = int_bram_grid_bram_clk_a;
-  assign int_bram_grid_bram_en_b     = int_mcu_grid_bram_en;
-  assign int_bram_grid_bram_addr_b   = int_mcu_grid_bram_addr;
-  assign int_mcu_grid_bram_rddata    = int_bram_grid_bram_rddata_b;
-  assign int_mcu_grid_bram_rdack     = int_bram_grid_bram_rdack_b;
+  assign int_mcu_grid_bram_clk       = int_ram_grid_bram_clk_a;
+  assign int_ram_grid_bram_en_b     = int_mcu_grid_bram_en;
+  assign int_ram_grid_bram_addr_b   = int_mcu_grid_bram_addr;
+  assign int_mcu_grid_bram_rddata    = int_ram_grid_bram_rddata_b;
+  assign int_mcu_grid_bram_rdack     = int_ram_grid_bram_rdack_b;
  `endif
  
  `ifdef SCALE_IF_IS_BRAM
   // bram control interface to the scle bram port a
-  assign int_bram_scle_bram_clk_a    = bram_ctrl_scle_clk;
-  assign int_bram_scle_bram_en_a     = bram_ctrl_scle_en;
-  assign int_bram_scle_bram_we_a     = bram_ctrl_scle_we;
-  assign int_bram_scle_bram_addr_a   = bram_ctrl_scle_addr[2 +: SCALE_EXTRL_ADDR];
-  assign int_bram_scle_bram_wrdata_a = bram_ctrl_scle_din;
-  assign bram_ctrl_scle_dout         = int_bram_scle_bram_rddata_a;
+  assign int_ram_scle_bram_clk_a    = bram_ctrl_scle_clk;
+  assign int_ram_scle_bram_en_a     = bram_ctrl_scle_en;
+  assign int_ram_scle_bram_we_a     = bram_ctrl_scle_we;
+  assign int_ram_scle_bram_addr_a   = bram_ctrl_scle_addr[2 +: SCALE_EXTRL_ADDR];
+  assign int_ram_scle_bram_wrdata_a = bram_ctrl_scle_din;
+  assign bram_ctrl_scle_dout         = int_ram_scle_bram_rddata_a;
 
   // scle bram port b to memory control unit
-  assign int_mcu_scle_bram_clk       = int_bram_scle_bram_clk_a;
-  assign int_bram_scle_bram_en_b     = int_mcu_scle_bram_en;
-  assign int_bram_scle_bram_addr_b   = int_mcu_scle_bram_addr;
-  assign int_mcu_scle_bram_rddata    = int_bram_scle_bram_rddata_b;
-  assign int_mcu_scle_bram_rdack     = int_bram_scle_bram_rdack_b;
+  assign int_mcu_scle_bram_clk       = int_ram_scle_bram_clk_a;
+  assign int_ram_scle_bram_en_b     = int_mcu_scle_bram_en;
+  assign int_ram_scle_bram_addr_b   = int_mcu_scle_bram_addr;
+  assign int_mcu_scle_bram_rddata    = int_ram_scle_bram_rddata_b;
+  assign int_mcu_scle_bram_rdack     = int_ram_scle_bram_rdack_b;
  `endif
 
   // connect dma slave to slave axi adp

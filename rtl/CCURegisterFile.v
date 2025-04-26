@@ -5,7 +5,7 @@
  */
 
 module CCURegisterFile #(
-  `include "ControlRegisters.vh"
+  `include "headers/ControlRegisters.vh"
   parameter ADDR_WIDTH = CTLR_ADDR,
   parameter PIPELINE_OUTPUT = 0
 ) (

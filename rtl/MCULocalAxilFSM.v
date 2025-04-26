@@ -3,7 +3,7 @@
 `default_nettype none
 
 module MCULocalAxilFSM #(
-  `include "MCUGlobalFSMParameters.vh"
+  `include "headers/MCUGlobalFSMParameters.vh"
   // Width of AXI stream Output interfaces in bits
   parameter DATA_WIDTH = 16,
   // Width of address bus in bits

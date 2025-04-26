@@ -9,7 +9,7 @@
  *    The module awaits data from the specified channels, starting 
  *    from the first channel.
  */
-`include "utils.vh"
+`include "headers/utils.vh"
 
 module BatchedAxisPacketJoiner #(
   // Number of Channels

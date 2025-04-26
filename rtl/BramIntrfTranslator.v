@@ -28,7 +28,7 @@
  *  THIS MIGHT CHANGE IN FUTURE TESTS.
  */
 
-`include "utils.vh"
+`include "headers/utils.vh"
 
 module BramIntrfTranslator #(
   parameter IN_WIDTH = 32,    // width of input data
