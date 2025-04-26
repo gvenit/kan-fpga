@@ -193,8 +193,8 @@ module CentralControlUnit #(
   end
 
   // Input PL control signals
-  wire        rw_ps2pl_reg_en;
-  wire        rw_pl2ps_reg_en;
+  wire        rw_ps2pl_reg_en = 1'b0;     // To-Do
+  wire        rw_pl2ps_reg_en = 1'b0;     // To-Do
   wire        wo_reg_en  = rslt_tlast; 
   wire        wo_reg_rst = (fsm_state == FSM_STR);
 

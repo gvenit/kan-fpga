@@ -35,15 +35,8 @@ module BramIntrfTranslator #(
   parameter OUT_WIDTH = 16,   // width of output data
   /*-------------------------------------------------------------------------------------*/
   parameter BANKS = 4,                            // number of BRAM banks
-  parameter IN_WORD_DATA = IN_WIDTH / OUT_WIDTH,  // number of data packed in an input word
   /*-------------------------------------------------------------------------------------*/
-  parameter OUT_DEPTH = 256,              // the depth of each BRAM bank
-  parameter OUT_ADDR = `LOG2(OUT_DEPTH), // number of output address bits
-  parameter OUT_WE = OUT_WIDTH / 8,       // number of output write-enable bits
-  /*-------------------------------------------------------------------------------------*/
-  parameter IN_DEPTH = BANKS * OUT_DEPTH, // number of total input data
-  parameter IN_ADDR = `LOG2(IN_DEPTH),   // number of input address bits
-  parameter IN_WE = IN_WIDTH / 8          // number of input write-enable bits
+  parameter OUT_DEPTH = 256              // the depth of each BRAM bank
 ) (
   /*-----------------------------------------------
       Input BRAM interface
@@ -65,6 +58,13 @@ module BramIntrfTranslator #(
   output wire [(BANKS*OUT_WIDTH)-1:0]   wrdata_o,
   input  wire [(BANKS*OUT_WIDTH)-1:0]   rddata_o
 );
+  localparam  IN_WORD_DATA = IN_WIDTH / OUT_WIDTH;  // number of data packed in an input word
+  localparam  OUT_ADDR = `LOG2( OUT_DEPTH); // number of output address bits
+  localparam  OUT_WE = OUT_WIDTH / 8;       // number of output write-enable bits
+  /*-------------------------------------------------------------------------------------*/
+  localparam  IN_DEPTH = BANKS * OUT_DEPTH; // number of total input data
+  localparam  IN_ADDR = `LOG2( IN_DEPTH);   // number of input address bits
+  localparam  IN_WE = IN_WIDTH / 8;          // number of input write-enable bits
 
   /********************************
     Internal signals / local params

@@ -1,3 +1,6 @@
+`resetall
+`timescale 1ns/1ps
+`default_nettype none
 
 `include "header_utils.vh"
 `include "header_IFOptions.vh"
@@ -745,3 +748,5 @@ module KanLayerInst #(
   );
 
 endmodule
+
+`resetall

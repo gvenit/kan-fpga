@@ -569,7 +569,7 @@ module KanLayer #(
   // number of elements on a single bram bank
   localparam GRID_BANK_DEPTH = GRID_DEPTH / GRID_BANKS;
   // number of address bits needed for each bank
-  localparam GRID_ADDR = `LOG2(GRID_BANK_DEPTH);
+  // localparam GRID_ADDR = `LOG2(GRID_BANK_DEPTH);
   // number of GRID_WE bits needed for each bank
   localparam GRID_WE = GRID_WIDTH / 8;
  `endif 
@@ -598,7 +598,7 @@ module KanLayer #(
   // number of elements on a single bram bank
   localparam SCALE_BANK_DEPTH = SCALE_DEPTH / SCALE_BANKS;
   // number of address bits needed for each bank
-  localparam SCALE_ADDR = `MAX(`LOG2(SCALE_BANK_DEPTH),2);
+  // localparam SCALE_ADDR = `MAX(`LOG2(SCALE_BANK_DEPTH),2);
   // number of SCALE_WE bits needed for each bank
   localparam SCALE_WE = SCALE_WIDTH / 8;
  `endif 
@@ -626,7 +626,7 @@ module KanLayer #(
   localparam GRID_EXTRL_DEPTH = GRID_DEPTH_RESOLVED / IN_WORD_GRID;  // grid depth as seen from external ram control interface
   localparam GRID_EXTRL_ADDR = `LOG2(GRID_EXTRL_DEPTH);     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
 
-  // localparam GRID_ADDR = `LOG2(GRID_DEPTH_RESOLVED);  // number of input address bits of total grid memory
+  localparam GRID_ADDR = `LOG2(GRID_DEPTH_RESOLVED);  // number of input address bits of total grid memory
   localparam GRID_PHYS_DEPTH = GRID_DEPTH_RESOLVED / IN_WORD_GRID;  // effective - physical depth of grid ram
   localparam GRID_PHYS_ADDR = `LOG2(GRID_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
  `endif
@@ -642,7 +642,7 @@ module KanLayer #(
   localparam SCALE_EXTRL_DEPTH = SCALE_DEPTH_RESOLVED / IN_WORD_SCALE;  // grid depth as seen from external ram control interface
   localparam SCALE_EXTRL_ADDR = `LOG2(SCALE_EXTRL_DEPTH);     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
 
-  // localparam SCALE_ADDR = `LOG2(SCALE_DEPTH_RESOLVED);  // number of input address bits of total grid memory
+  localparam SCALE_ADDR = `LOG2(SCALE_DEPTH_RESOLVED);  // number of input address bits of total grid memory
   localparam SCALE_PHYS_DEPTH = SCALE_DEPTH_RESOLVED / IN_WORD_SCALE;  // effective - physical depth of grid ram
   localparam SCALE_PHYS_ADDR = `LOG2(SCALE_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
  `endif
@@ -892,8 +892,7 @@ module KanLayer #(
     .IN_WIDTH  (BRAM_CTRL_WIDTH),
     .OUT_WIDTH (DATA_WIDTH),
     .BANKS     (DATA_BANKS),
-    .OUT_DEPTH (DATA_BANK_DEPTH),
-    .OUT_ADDR  (DATA_ADDR)
+    .OUT_DEPTH (DATA_BANK_DEPTH)
   ) data_bram_interface_translator_inst (
     .en_i      (int_ctr_data_bram_en_i),
     .we_i      (int_ctr_data_bram_we_i),
@@ -1115,11 +1114,10 @@ module KanLayer #(
   wire [(GRID_BANKS*GRID_WIDTH)-1:0]      int_ctr_grid_bram_rddata_o;
 
   BramIntrfTranslator # (
-    .IN_WIDTH  (BRAM_CTRL_WIDTH),
-    .OUT_WIDTH (GRID_WIDTH),
-    .BANKS     (GRID_BANKS),
-    .OUT_DEPTH (GRID_BANK_DEPTH),
-    .OUT_ADDR  (GRID_ADDR)
+    .IN_WIDTH     (BRAM_CTRL_WIDTH),
+    .OUT_WIDTH    (GRID_WIDTH),
+    .BANKS        (GRID_BANKS),
+    .OUT_DEPTH    (GRID_BANK_DEPTH)
   ) grid_bram_interface_translator_inst (
     .en_i      (int_ctr_grid_bram_en_i),
     .we_i      (int_ctr_grid_bram_we_i),
@@ -1344,8 +1342,7 @@ module KanLayer #(
       .IN_WIDTH   (BRAM_CTRL_WIDTH),
       .OUT_WIDTH  (SCALE_WIDTH),
       .BANKS      (SCALE_BANKS),
-      .OUT_DEPTH  (SCALE_BANK_DEPTH),
-      .OUT_ADDR   (SCALE_ADDR)
+      .OUT_DEPTH  (SCALE_BANK_DEPTH)
     ) scle_bram_interface_translator_inst (
       .en_i       (int_ctr_scle_bram_en_i),
       .we_i       (int_ctr_scle_bram_we_i),

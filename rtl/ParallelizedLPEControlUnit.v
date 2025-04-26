@@ -163,11 +163,6 @@ module ParallelizedLPEControlUnit #(
       drop_t_reg       <= 1'b1;
       drop_u_reg       <= 1'b1;
       
-      // Freeze all data flows
-      forward_l_reg    <= 1'b0;
-      forward_t_reg    <= 1'b0;
-      forward_u_reg    <= 1'b0;
-
       // Reset Partial Sum
       op_start_reg     <= 1'b1;
       // partial_sum_last_reg <= 1'b0; 
@@ -345,64 +340,64 @@ module ParallelizedLPEControlUnit #(
 
   // FSM Next Stage Early Logic
   always @(*) begin
-      case (fsm_state_next)
-        FSM_ST0, FSM_MAC : begin
-          // Forward Left, Top and Up
-          forward_l_reg    <= 1'b1;
-          forward_t_reg    <= 1'b1;
-          forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
+    case (fsm_state_next)
+      FSM_ST0, FSM_MAC : begin
+        // Forward Left, Top and Up
+        forward_l_reg    <= 1'b1;
+        forward_t_reg    <= 1'b1;
+        forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
 
-          // Reset/Update Partial Sum
-          bypass_adder_reg <= !op_valid;
-        end
-        FSM_STRL : begin
-          // Freeze Forwarding Left
-          forward_l_reg    <= 1'b0;
-          forward_t_reg    <= 1'b1;
-          forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
+        // Reset/Update Partial Sum
+        bypass_adder_reg <= !op_valid;
+      end
+      FSM_STRL : begin
+        // Freeze Forwarding Left
+        forward_l_reg    <= 1'b0;
+        forward_t_reg    <= 1'b1;
+        forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
 
-          // Lock Partial Sum
-          bypass_adder_reg <= 1'b1;
-        end
-        FSM_STRT : begin
-          // Freeze Forwarding Top
-          forward_l_reg    <= 1'b1;
-          forward_t_reg    <= 1'b0;
-          forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
+        // Lock Partial Sum
+        bypass_adder_reg <= 1'b1;
+      end
+      FSM_STRT : begin
+        // Freeze Forwarding Top
+        forward_l_reg    <= 1'b1;
+        forward_t_reg    <= 1'b0;
+        forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
 
-          // Lock Partial Sum
-          bypass_adder_reg <= 1'b1;
-        end
-        FSM_END : begin
-          // Add or Forward Up
-          forward_l_reg    <= (fsm_state == FSM_END) ? export_rslt_int && op_valid : 1'b1;
-          forward_t_reg    <= (fsm_state == FSM_END) ? export_rslt_int && op_valid : 1'b1;
-          forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
+        // Lock Partial Sum
+        bypass_adder_reg <= 1'b1;
+      end
+      FSM_END : begin
+        // Add or Forward Up
+        forward_l_reg    <= (fsm_state == FSM_END) ? export_rslt_int && op_valid : 1'b1;
+        forward_t_reg    <= (fsm_state == FSM_END) ? export_rslt_int && op_valid : 1'b1;
+        forward_u_reg    <= (PE_POSITION_J != PE_NUMBER_J-1);
 
-          // Lock Partial Sum
-          bypass_adder_reg <= (fsm_state == FSM_END) ? 
-            (PE_POSITION_J ? export_rslt_reg_next || !rslt_flag : !int_axis_d_tready) : 
-            !op_valid;
-        end
-        FSM_ERR : begin
-          // Flush Top, Left and Up
-          forward_l_reg    <= 1'b0;
-          forward_t_reg    <= 1'b0;
-          forward_u_reg    <= 1'b0;
+        // Lock Partial Sum
+        bypass_adder_reg <= (fsm_state == FSM_END) ? 
+          (PE_POSITION_J ? export_rslt_reg_next || !rslt_flag : !int_axis_d_tready) : 
+          !op_valid;
+      end
+      FSM_ERR : begin
+        // Flush Top, Left and Up
+        forward_l_reg    <= 1'b0;
+        forward_t_reg    <= 1'b0;
+        forward_u_reg    <= 1'b0;
 
-          // Lock Partial Sum
-          bypass_adder_reg <= 1'b1;
-        end
-        default: begin
-          // Freeze all data flows
-          forward_l_reg    <= 1'b0;
-          forward_t_reg    <= 1'b0;
-          forward_u_reg    <= 1'b0;
+        // Lock Partial Sum
+        bypass_adder_reg <= 1'b1;
+      end
+      default: begin
+        // Freeze all data flows
+        forward_l_reg    <= 1'b0;
+        forward_t_reg    <= 1'b0;
+        forward_u_reg    <= 1'b0;
 
-          // Lock Partial Sum
-          bypass_adder_reg <= 1'b1;
-        end
-      endcase
+        // Lock Partial Sum
+        bypass_adder_reg <= 1'b1;
+      end
+    endcase
   end
 
   `define CHECK_OP_LAST \

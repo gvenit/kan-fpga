@@ -180,74 +180,6 @@ module CCURegisterFile #(
       end
   end
 
-  always @* begin
-      mem_wr_en = 1'b0;
-
-      s_axil_awready_next = 1'b0;
-      s_axil_wready_next = 1'b0;
-      s_axil_bvalid_next = s_axil_bvalid_reg && !s_axil_bready;
-
-      if (s_axil_awvalid && s_axil_wvalid && (!s_axil_bvalid || s_axil_bready) && (!s_axil_awready && !s_axil_wready)) begin
-          s_axil_awready_next = 1'b1;
-          s_axil_wready_next = 1'b1;
-          s_axil_bvalid_next = 1'b1;
-
-          mem_wr_en = 1'b1;
-      end
-  end
-
-  always @(posedge clk) begin
-      s_axil_awready_reg <= s_axil_awready_next;
-      s_axil_wready_reg <= s_axil_wready_next;
-      s_axil_bvalid_reg <= s_axil_bvalid_next;
-
-      for (i = 0; i < WORD_WIDTH; i = i + 1) begin
-          if (mem_wr_en && s_axil_wstrb[i]) begin
-              mem[s_axil_awaddr_valid][WORD_SIZE*i +: WORD_SIZE] <= s_axil_wdata[WORD_SIZE*i +: WORD_SIZE];
-          end
-      end
-
-      if (rst) begin
-          s_axil_awready_reg <= 1'b0;
-          s_axil_wready_reg <= 1'b0;
-          s_axil_bvalid_reg <= 1'b0;
-      end
-  end
-
-  always @* begin
-      mem_rd_en = 1'b0;
-
-      s_axil_arready_next = 1'b0;
-      s_axil_rvalid_next = s_axil_rvalid_reg && !(s_axil_rready || (PIPELINE_OUTPUT && !s_axil_rvalid_pipe_reg));
-
-      if (s_axil_arvalid && (!s_axil_rvalid || s_axil_rready || (PIPELINE_OUTPUT && !s_axil_rvalid_pipe_reg)) && (!s_axil_arready)) begin
-          s_axil_arready_next = 1'b1;
-          s_axil_rvalid_next = 1'b1;
-
-          mem_rd_en = 1'b1;
-      end
-  end
-
-  always @(posedge clk) begin
-      s_axil_arready_reg <= s_axil_arready_next;
-      s_axil_rvalid_reg <= s_axil_rvalid_next;
-
-      if (mem_rd_en) begin
-          s_axil_rdata_reg <= mem[s_axil_araddr_valid];
-      end
-
-      if (!s_axil_rvalid_pipe_reg || s_axil_rready) begin
-          s_axil_rdata_pipe_reg <= s_axil_rdata_reg;
-          s_axil_rvalid_pipe_reg <= s_axil_rvalid_reg;
-      end
-
-      if (rst) begin
-          s_axil_arready_reg <= 1'b0;
-          s_axil_rvalid_reg <= 1'b0;
-          s_axil_rvalid_pipe_reg <= 1'b0;
-      end
-  end
-
   // Write-Protection Macro
   `define PL_WRITE_MEM(mem,REG,value,VALUE_WIDTH) \
     if (s_axil_awaddr_valid != (REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH))) begin \
@@ -268,34 +200,18 @@ module CCURegisterFile #(
 
   assign operation_start_rd = mem[CTRL_REG_OPER_STR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_STR % WORD_WIDTH)];
 
-  always @(posedge clk ) begin
-    if (rw_ps2pl_reg_en) begin 
-      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LEN,data_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LEN,grid_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LEN,scle_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LEN,rslt_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_PCKT_LEN,pckt_size_wr,DATA_WIDTH);
-    end
-  end
-
   // Read-Only Registers (PS -> PL)
   wire [WORD_SIZE-1:0]  interrupt_register = mem[CTRL_REG_INTR_REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_INTR_REG % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE];
   
-  // assign interrupt_soft  = (interrupt_register & CTRL_REG_INTR_MASK_SFT)[`LOG2(CTRL_REG_INTR_MASK_SFT)];
-  // assign interrupt_abort = (interrupt_register & CTRL_REG_INTR_MASK_ABT)[`LOG2(CTRL_REG_INTR_MASK_ABT)];
-  // assign interrupt_error = (interrupt_register & CTRL_REG_INTR_MASK_ERR)[`LOG2(CTRL_REG_INTR_MASK_ERR)];
+  assign interrupt_soft  = |(interrupt_register & CTRL_REG_INTR_MASK_SFT);
+  assign interrupt_abort = |(interrupt_register & CTRL_REG_INTR_MASK_ABT);
+  assign interrupt_error = |(interrupt_register & CTRL_REG_INTR_MASK_ERR);
 
   // Read-Write Registers (PL -> PS)
   assign rslt_loaded_rd = mem[CTRL_REG_RSLT_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_RSLT_LDR % WORD_WIDTH) * WORD_SIZE];
 
   assign operation_done_rd = mem[CTRL_REG_OPER_DNE >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_DNE % WORD_WIDTH)];
 
-  always @(posedge clk ) begin
-    if (rw_pl2ps_reg_en) begin 
-      `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LDR,rslt_loaded_wr,1);
-      `PL_WRITE_MEM(mem,CTRL_REG_OPER_DNE,operation_done_wr,1);
-    end
-  end
   // Write-Only Registers (PL -> PS)
   wire [WORD_SIZE-1:0]  operation_status_wr;
 
@@ -306,11 +222,34 @@ module CCURegisterFile #(
   assign operation_status_wr[`LOG2(CTRL_REG_OPER_STS_MASK_VLD)] = operation_status_valid_wr;
   assign operation_status_wr[WORD_SIZE-1:`LOG2(CTRL_REG_OPER_STS_MASK_VLD)+1] = {WORD_SIZE-`LOG2(CTRL_REG_OPER_STS_MASK_VLD){1'b0}};
 
-  always @(*) begin
-    mem[CTRL_REG_OPER_STS >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_DNE % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE] = operation_status_wr;
+  always @* begin
+      mem_wr_en = 1'b0;
+
+      s_axil_awready_next = 1'b0;
+      s_axil_wready_next = 1'b0;
+      s_axil_bvalid_next = s_axil_bvalid_reg && !s_axil_bready;
+
+      if (s_axil_awvalid && s_axil_wvalid && (!s_axil_bvalid || s_axil_bready) && (!s_axil_awready && !s_axil_wready)) begin
+          s_axil_awready_next = 1'b1;
+          s_axil_wready_next = 1'b1;
+          s_axil_bvalid_next = 1'b1;
+
+          mem_wr_en = 1'b1;
+      end
   end
 
-  always @(clk) begin
+  always @(posedge clk) begin
+    if (rw_ps2pl_reg_en) begin 
+      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LEN,data_size_wr,DATA_WIDTH);
+      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LEN,grid_size_wr,DATA_WIDTH);
+      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LEN,scle_size_wr,DATA_WIDTH);
+      `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LEN,rslt_size_wr,DATA_WIDTH);
+      `PL_WRITE_MEM(mem,CTRL_REG_PCKT_LEN,pckt_size_wr,DATA_WIDTH);
+    end
+    if (rw_pl2ps_reg_en) begin 
+      `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LDR,rslt_loaded_wr,1);
+      `PL_WRITE_MEM(mem,CTRL_REG_OPER_DNE,operation_done_wr,1);
+    end
     if (rst || wo_reg_rst) begin
       mem[CTRL_REG_RSLT_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
       mem[CTRL_REG_ITER_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
@@ -325,6 +264,58 @@ module CCURegisterFile #(
       mem[CTRL_REG_ITER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = iteration_latency_wr;
       mem[CTRL_REG_OPER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_timer_wr;
       mem[CTRL_REG_OPER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_latency_wr;
+    end
+
+    s_axil_awready_reg <= s_axil_awready_next;
+    s_axil_wready_reg <= s_axil_wready_next;
+    s_axil_bvalid_reg <= s_axil_bvalid_next;
+
+    for (i = 0; i < WORD_WIDTH; i = i + 1) begin
+      if (mem_wr_en && s_axil_wstrb[i]) begin
+        mem[s_axil_awaddr_valid][WORD_SIZE*i +: WORD_SIZE] <= s_axil_wdata[WORD_SIZE*i +: WORD_SIZE];
+      end
+    end
+
+    if (rst) begin
+      s_axil_awready_reg <= 1'b0;
+      s_axil_wready_reg <= 1'b0;
+      s_axil_bvalid_reg <= 1'b0;
+    end
+
+    mem[CTRL_REG_OPER_STS >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_DNE % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE] = operation_status_wr;
+  end
+
+  always @* begin
+    mem_rd_en = 1'b0;
+
+    s_axil_arready_next = 1'b0;
+    s_axil_rvalid_next = s_axil_rvalid_reg && !(s_axil_rready || (PIPELINE_OUTPUT && !s_axil_rvalid_pipe_reg));
+
+    if (s_axil_arvalid && (!s_axil_rvalid || s_axil_rready || (PIPELINE_OUTPUT && !s_axil_rvalid_pipe_reg)) && (!s_axil_arready)) begin
+      s_axil_arready_next = 1'b1;
+      s_axil_rvalid_next = 1'b1;
+
+      mem_rd_en = 1'b1;
+    end
+  end
+
+  always @(posedge clk) begin
+    s_axil_arready_reg <= s_axil_arready_next;
+    s_axil_rvalid_reg <= s_axil_rvalid_next;
+
+    if (mem_rd_en) begin
+      s_axil_rdata_reg <= mem[s_axil_araddr_valid];
+    end
+
+    if (!s_axil_rvalid_pipe_reg || s_axil_rready) begin
+      s_axil_rdata_pipe_reg <= s_axil_rdata_reg;
+      s_axil_rvalid_pipe_reg <= s_axil_rvalid_reg;
+    end
+
+    if (rst) begin
+      s_axil_arready_reg <= 1'b0;
+      s_axil_rvalid_reg <= 1'b0;
+      s_axil_rvalid_pipe_reg <= 1'b0;
     end
   end
 
