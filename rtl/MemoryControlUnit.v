@@ -217,6 +217,12 @@ module MemoryControlUnit #(
   wire [GRID_CHANNELS_IN-1:0]         grid_error;
   wire [SCALE_CHANNELS_IN-1:0]        scle_error;
 
+  // Global FSM output signals
+  reg  [GLO_FSM_WIDTH-1:0] glo_fsm_state, glo_fsm_state_next;
+  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg;
+  reg  [GRID_CHANNELS_IN-1:0]         grid_op_done_reg;
+  reg  [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg;
+
   // Global FSM input signals
   wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg_next = data_op_done_reg | data_tlast_transmitted;
   wire [GRID_CHANNELS_IN-1:0]         grid_op_done_reg_next = grid_op_done_reg | grid_tlast_transmitted;
@@ -229,12 +235,6 @@ module MemoryControlUnit #(
   // wire scle_error_reduced   = |scle_error;
   // wire internal_error       = data_error_reduced || grid_error_reduced || scle_error_reduced;
   wire internal_error       = |{data_error, grid_error, scle_error};
-
-  // Global FSM output signals
-  reg  [GLO_FSM_WIDTH-1:0] glo_fsm_state, glo_fsm_state_next;
-  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg;
-  reg  [GRID_CHANNELS_IN-1:0]         grid_op_done_reg;
-  reg  [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg;
 
   // Global FSM state logic
   always @(posedge fsm_clk ) begin
