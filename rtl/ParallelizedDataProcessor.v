@@ -74,7 +74,7 @@ module ParallelizedDataProcessor #(
   /*
     * AXI Stream Data input
     */
-  input  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH-1:0]  s_axis_data_tdata,
+  input  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH-1:0]       s_axis_data_tdata,
   input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tvalid,
   output wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tready,
   input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tlast,
@@ -85,7 +85,7 @@ module ParallelizedDataProcessor #(
   /*      
     * AXI Stream Grid input  wire    
     */      
-  input  wire [GRID_CHANNELS*DATA_WIDTH-1:0]             s_axis_grid_tdata,
+  input  wire [GRID_CHANNELS*DATA_WIDTH-1:0]                  s_axis_grid_tdata,
   input  wire [GRID_CHANNELS-1:0]                             s_axis_grid_tvalid,
   output wire [GRID_CHANNELS-1:0]                             s_axis_grid_tready,
   input  wire [GRID_CHANNELS-1:0]                             s_axis_grid_tlast,
@@ -96,7 +96,7 @@ module ParallelizedDataProcessor #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [SCALE_CHANNELS*SCALE_WIDTH-1:0]           s_axis_scle_tdata,
+  input  wire [SCALE_CHANNELS*SCALE_WIDTH-1:0]                s_axis_scle_tdata,
   input  wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tvalid,
   output wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tready,
   input  wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tlast,
@@ -107,7 +107,7 @@ module ParallelizedDataProcessor #(
   /*
     * AXI Stream Weight input
     */
-  input  wire [WEIGHT_CHANNELS*SCALE_WIDTH-1:0]          s_axis_wght_tdata,
+  input  wire [WEIGHT_CHANNELS*SCALE_WIDTH-1:0]               s_axis_wght_tdata,
   input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tvalid,
   output wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tready,
   input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tlast,
@@ -118,7 +118,7 @@ module ParallelizedDataProcessor #(
   /*
     * AXI Stream output
     */
-  output wire [RSLT_CHANNELS*BATCH_SIZE*RSLT_WIDTH-1:0]  m_axis_data_tdata,
+  output wire [RSLT_CHANNELS*BATCH_SIZE*RSLT_WIDTH-1:0]       m_axis_data_tdata,
   output wire [RSLT_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]       m_axis_data_tkeep,
   output wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                  m_axis_data_tvalid,
   input  wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                  m_axis_data_tready,
@@ -138,7 +138,7 @@ module ParallelizedDataProcessor #(
   output wire                                                 core_rst
 );
   // Internal Activation Function Output AXI-Stream Wires
-  wire [DATA_CHANNELS*BATCH_SIZE*ACT_WIDTH-1:0]  int_axis_act_func_tdata;
+  wire [DATA_CHANNELS*BATCH_SIZE*ACT_WIDTH-1:0]       int_axis_act_func_tdata;
   wire [DATA_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]      int_axis_act_func_tkeep;
   wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tvalid;
   wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tready;
@@ -189,37 +189,36 @@ module ParallelizedDataProcessor #(
     // Path to ROM Data
     .ROM_DATA_PATH(ROM_DATA_PATH)
   ) act_func_inst (
-    .clk(clk),
-    .rst(core_rst),
-    .s_axis_data_tdata(s_axis_data_tdata),
-    .s_axis_data_tvalid(s_axis_data_tvalid),
-    .s_axis_data_tready(s_axis_data_tready),
-    .s_axis_data_tlast(s_axis_data_tlast),
-    .s_axis_data_tid(s_axis_data_tid),
-    .s_axis_data_tdest(s_axis_data_tdest),
-    .s_axis_data_tuser(s_axis_data_tuser),
-    .s_axis_grid_tdata(s_axis_grid_tdata),
-    .s_axis_grid_tvalid(s_axis_grid_tvalid),
-    .s_axis_grid_tready(s_axis_grid_tready),
-    .s_axis_grid_tlast(s_axis_grid_tlast),
-    .s_axis_grid_tid(s_axis_grid_tid),
-    .s_axis_grid_tdest(s_axis_grid_tdest),
-    .s_axis_grid_tuser(s_axis_grid_tuser),
-    .s_axis_scle_tdata(s_axis_scle_tdata),
-    .s_axis_scle_tvalid(s_axis_scle_tvalid),
-    .s_axis_scle_tready(s_axis_scle_tready),
-    .s_axis_scle_tlast(s_axis_scle_tlast),
-    .s_axis_scle_tid(s_axis_scle_tid),
-    .s_axis_scle_tdest(s_axis_scle_tdest),
-    .s_axis_scle_tuser(s_axis_scle_tuser),
-    .m_axis_data_tdata(int_axis_act_func_tdata),
-    // .m_axis_data_tkeep(int_axis_act_func_tkeep),
-    .m_axis_data_tvalid(int_axis_act_func_tvalid),
-    .m_axis_data_tready(int_axis_act_func_tready),
-    .m_axis_data_tlast(int_axis_act_func_tlast),
-    .m_axis_data_tid(int_axis_act_func_tid),
-    .m_axis_data_tdest(int_axis_act_func_tdest),
-    .m_axis_data_tuser(int_axis_act_func_tuser)
+    .clk                  (clk),
+    .rst                  (core_rst),
+    .s_axis_data_tdata    (s_axis_data_tdata),
+    .s_axis_data_tvalid   (s_axis_data_tvalid),
+    .s_axis_data_tready   (s_axis_data_tready),
+    .s_axis_data_tlast    (s_axis_data_tlast),
+    .s_axis_data_tid      (s_axis_data_tid),
+    .s_axis_data_tdest    (s_axis_data_tdest),
+    .s_axis_data_tuser    (s_axis_data_tuser),
+    .s_axis_grid_tdata    (s_axis_grid_tdata),
+    .s_axis_grid_tvalid   (s_axis_grid_tvalid),
+    .s_axis_grid_tready   (s_axis_grid_tready),
+    .s_axis_grid_tlast    (s_axis_grid_tlast),
+    .s_axis_grid_tid      (s_axis_grid_tid),
+    .s_axis_grid_tdest    (s_axis_grid_tdest),
+    .s_axis_grid_tuser    (s_axis_grid_tuser),
+    .s_axis_scle_tdata    (s_axis_scle_tdata),
+    .s_axis_scle_tvalid   (s_axis_scle_tvalid),
+    .s_axis_scle_tready   (s_axis_scle_tready),
+    .s_axis_scle_tlast    (s_axis_scle_tlast),
+    .s_axis_scle_tid      (s_axis_scle_tid),
+    .s_axis_scle_tdest    (s_axis_scle_tdest),
+    .s_axis_scle_tuser    (s_axis_scle_tuser),
+    .m_axis_data_tdata    (int_axis_act_func_tdata),
+    .m_axis_data_tvalid   (int_axis_act_func_tvalid),
+    .m_axis_data_tready   (int_axis_act_func_tready),
+    .m_axis_data_tlast    (int_axis_act_func_tlast),
+    .m_axis_data_tid      (int_axis_act_func_tid),
+    .m_axis_data_tdest    (int_axis_act_func_tdest),
+    .m_axis_data_tuser    (int_axis_act_func_tuser)
   );
 
   ParallelizedLinearProcessingArray #(
@@ -266,31 +265,31 @@ module ParallelizedDataProcessor #(
     // Output Thread ID 
     .OUTPUT_ID(OUTPUT_ID)
   ) parallelized_lpa_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_t_tdata(s_axis_wght_tdata),
-    .s_axis_t_tvalid(s_axis_wght_tvalid),
-    .s_axis_t_tready(s_axis_wght_tready),
-    .s_axis_t_tlast(s_axis_wght_tlast),
-    .s_axis_t_tid(s_axis_wght_tid),
-    .s_axis_t_tdest(s_axis_wght_tdest),
-    .s_axis_t_tuser(s_axis_wght_tuser),
-    .s_axis_l_tdata(int_axis_act_func_tdata),
-    .s_axis_l_tvalid(int_axis_act_func_tvalid),
-    .s_axis_l_tready(int_axis_act_func_tready),
-    .s_axis_l_tlast(int_axis_act_func_tlast),
-    .s_axis_l_tid(int_axis_act_func_tid),
-    .s_axis_l_tdest(int_axis_act_func_tdest),
-    .s_axis_l_tuser(int_axis_act_func_tuser),
-    .m_axis_d_tdata(m_axis_data_tdata),
-    .m_axis_d_tvalid(m_axis_data_tvalid),
-    .m_axis_d_tready(m_axis_data_tready),
-    .m_axis_d_tlast(m_axis_data_tlast),
-    .m_axis_d_tid(m_axis_data_tid),
-    .m_axis_d_tdest(m_axis_data_tdest),
-    .m_axis_d_tuser(m_axis_data_tuser),
-    .err_unalligned_data(err_unalligned_data),
-    .core_rst(core_rst)
+    .clk                    (clk),
+    .rst                    (rst),
+    .s_axis_t_tdata         (s_axis_wght_tdata),
+    .s_axis_t_tvalid        (s_axis_wght_tvalid),
+    .s_axis_t_tready        (s_axis_wght_tready),
+    .s_axis_t_tlast         (s_axis_wght_tlast),
+    .s_axis_t_tid           (s_axis_wght_tid),
+    .s_axis_t_tdest         (s_axis_wght_tdest),
+    .s_axis_t_tuser         (s_axis_wght_tuser),
+    .s_axis_l_tdata         (int_axis_act_func_tdata),
+    .s_axis_l_tvalid        (int_axis_act_func_tvalid),
+    .s_axis_l_tready        (int_axis_act_func_tready),
+    .s_axis_l_tlast         (int_axis_act_func_tlast),
+    .s_axis_l_tid           (int_axis_act_func_tid),
+    .s_axis_l_tdest         (int_axis_act_func_tdest),
+    .s_axis_l_tuser         (int_axis_act_func_tuser),
+    .m_axis_d_tdata         (m_axis_data_tdata),
+    .m_axis_d_tvalid        (m_axis_data_tvalid),
+    .m_axis_d_tready        (m_axis_data_tready),
+    .m_axis_d_tlast         (m_axis_data_tlast),
+    .m_axis_d_tid           (m_axis_data_tid),
+    .m_axis_d_tdest         (m_axis_data_tdest),
+    .m_axis_d_tuser         (m_axis_data_tuser),
+    .err_unalligned_data    (err_unalligned_data),
+    .core_rst               (core_rst)
   );
 
 endmodule

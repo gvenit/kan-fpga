@@ -309,7 +309,7 @@ module KanLayer #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWREADY" *)
   output wire                         s_axil_grid_awready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WDATA" *)
-  input  wire [GRID_WIDTH-1:0]   s_axil_grid_wdata,
+  input  wire [GRID_WIDTH-1:0]        s_axil_grid_wdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WSTRB" *)
   input  wire [GRID_STRB_WIDTH-1:0]   s_axil_grid_wstrb,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WVALID" *)
@@ -331,7 +331,7 @@ module KanLayer #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARREADY" *)
   output wire                         s_axil_grid_arready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RDATA" *)
-  output wire [GRID_WIDTH-1:0]   s_axil_grid_rdata,
+  output wire [GRID_WIDTH-1:0]        s_axil_grid_rdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RRESP" *)
   output wire [1:0]                   s_axil_grid_rresp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RVALID" *)
@@ -370,7 +370,7 @@ module KanLayer #(
   input  wire                         s_axil_scle_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWADDR" *)
     (* X_INTERFACE_PARAMETER = "CLK_DOMAIN s_axil_scle_aclk,READ_WRITE_MODE READ_WRITE,PROTOCOL AXI4LITE" *)
-  input  wire [SCALE_ADDR-1:0]         s_axil_scle_awaddr,
+  input  wire [SCALE_ADDR-1:0]        s_axil_scle_awaddr,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWPROT" *)
   input  wire [2:0]                   s_axil_scle_awprot,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWVALID" *)
@@ -378,9 +378,9 @@ module KanLayer #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWREADY" *)
   output wire                         s_axil_scle_awready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WDATA" *)
-  input  wire [SCALE_WIDTH-1:0]   s_axil_scle_wdata,
+  input  wire [SCALE_WIDTH-1:0]       s_axil_scle_wdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WSTRB" *)
-  input  wire [SCALE_STRB_WIDTH-1:0]   s_axil_scle_wstrb,
+  input  wire [SCALE_STRB_WIDTH-1:0]  s_axil_scle_wstrb,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WVALID" *)
   input  wire                         s_axil_scle_wvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WREADY" *)
@@ -400,7 +400,7 @@ module KanLayer #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARREADY" *)
   output wire                         s_axil_scle_arready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RDATA" *)
-  output wire [SCALE_WIDTH-1:0]   s_axil_scle_rdata,
+  output wire [SCALE_WIDTH-1:0]       s_axil_scle_rdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RRESP" *)
   output wire [1:0]                   s_axil_scle_rresp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RVALID" *)
@@ -653,6 +653,8 @@ module KanLayer #(
 
  `include "PeripheralsLocal.vh"
 
+  genvar BATCH, CHN;
+
   /*************************************************************************************
    Check Configuration
   *************************************************************************************/
@@ -881,8 +883,8 @@ module KanLayer #(
   wire [DATA_BANKS-1:0]                   int_bram_ctrl_data_en_o;
   wire [(DATA_BANKS*DATA_WE)-1:0]         int_bram_ctrl_data_we_o;
   wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_bram_ctrl_data_addr_o;
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0] int_bram_ctrl_data_wrdata_o;
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0] int_bram_ctrl_data_rddata_o;
+  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_bram_ctrl_data_wrdata_o;
+  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_bram_ctrl_data_rddata_o;
 
   BramIntrfTranslator # (
     .IN_WIDTH  (BRAM_CTRL_WIDTH),
@@ -1428,7 +1430,7 @@ module KanLayer #(
   wire                                            int_mcu_data_m_axil_rvalid;
   wire                                            int_mcu_data_m_axil_rready;
  `elsif DATA_IF_IS_BRAM
-  wire [GRID_BANKS-1:0]                           int_mcu_data_bram_clk;
+  wire [DATA_BANKS-1:0]                           int_mcu_data_bram_clk;
   wire [DATA_BANKS-1:0]                           int_mcu_data_bram_en;
   wire [(DATA_BANKS*DATA_ADDR)-1:0]               int_mcu_data_bram_addr;
   wire [(DATA_BANKS*DATA_WIDTH)-1:0]              int_mcu_data_bram_rddata;
@@ -1469,19 +1471,19 @@ module KanLayer #(
   wire [SCALE_BANKS-1:0]                          int_mcu_scle_bram_rdack;
  `endif
 
-  wire                                            int_mcu_data_m_axis_aclk;
+  wire [DATA_CHANNELS-1:0]                        int_mcu_data_m_axis_aclk;
   wire [DATA_CHANNELS*DATA_WIDTH-1:0]             int_mcu_data_m_axis_tdata;
   wire [DATA_CHANNELS-1:0]                        int_mcu_data_m_axis_tvalid;
   wire [DATA_CHANNELS-1:0]                        int_mcu_data_m_axis_tready;
   wire [DATA_CHANNELS-1:0]                        int_mcu_data_m_axis_tlast;
 
-  wire                                            int_mcu_grid_m_axis_aclk;
-  wire [DATA_CHANNELS*DATA_WIDTH-1:0]             int_mcu_grid_m_axis_tdata;
-  wire [DATA_CHANNELS-1:0]                        int_mcu_grid_m_axis_tvalid;
-  wire [DATA_CHANNELS-1:0]                        int_mcu_grid_m_axis_tready;
-  wire [DATA_CHANNELS-1:0]                        int_mcu_grid_m_axis_tlast;
+  wire [GRID_CHANNELS_OUT-1:0]                    int_mcu_grid_m_axis_aclk;
+  wire [GRID_CHANNELS_OUT*GRID_WIDTH-1:0]         int_mcu_grid_m_axis_tdata;
+  wire [GRID_CHANNELS_OUT-1:0]                    int_mcu_grid_m_axis_tvalid;
+  wire [GRID_CHANNELS_OUT-1:0]                    int_mcu_grid_m_axis_tready;
+  wire [GRID_CHANNELS_OUT-1:0]                    int_mcu_grid_m_axis_tlast;
 
-  wire                                            int_mcu_scle_m_axis_aclk;
+  wire [SCALE_CHANNELS_OUT-1:0]                   int_mcu_scle_m_axis_aclk;
   wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]       int_mcu_scle_m_axis_tdata;
   wire [SCALE_CHANNELS_OUT-1:0]                   int_mcu_scle_m_axis_tvalid;
   wire [SCALE_CHANNELS_OUT-1:0]                   int_mcu_scle_m_axis_tready;
@@ -1602,7 +1604,7 @@ module KanLayer #(
     - _m_ : otuput / master interface
   *********************************************/
 
-  wire                                          int_adp_data_s_axis_aclk;
+  wire [DATA_CHANNELS-1:0]                      int_adp_data_s_axis_aclk;
   wire [DATA_CHANNELS*DATA_WIDTH-1:0]           int_adp_data_s_axis_tdata;
   wire [DATA_CHANNELS-1:0]                      int_adp_data_s_axis_tvalid;
   wire [DATA_CHANNELS-1:0]                      int_adp_data_s_axis_tready;
@@ -1613,37 +1615,41 @@ module KanLayer #(
   wire [DATA_CHANNELS-1:0]                      int_adp_data_m_axis_tready;
   wire [DATA_CHANNELS-1:0]                      int_adp_data_m_axis_tlast;
 
-  axis_async_fifo #(
-    .DEPTH          (DATA_FIFO_DEPTH),
-    .DATA_WIDTH     (DATA_WIDTH),
-    .KEEP_ENABLE    (0),
-    .KEEP_WIDTH     (1),
-    .ID_ENABLE      (0),
-    .ID_WIDTH       (1),
-    .DEST_ENABLE    (0),
-    .DEST_WIDTH     (1),
-    .USER_ENABLE    (0),
-    .USER_WIDTH     (1)
-  ) axis_adp_data_inst (
-    .s_clk          (int_adp_data_s_axis_aclk),
-    .s_rst          (1'b0),
-    .s_axis_tdata   (int_adp_data_s_axis_tdata),
-    .s_axis_tkeep   (1'b1),
-    .s_axis_tvalid  (int_adp_data_s_axis_tvalid),
-    .s_axis_tready  (int_adp_data_s_axis_tready),
-    .s_axis_tlast   (int_adp_data_s_axis_tlast),
-    .s_axis_tid     (1'b0),
-    .s_axis_tdest   (1'b0),
-    .s_axis_tuser   (1'b0),
-    .m_clk          (core_clk),
-    .m_rst          (core_rst),
-    .m_axis_tdata   (int_adp_data_m_axis_tdata),
-    .m_axis_tvalid  (int_adp_data_m_axis_tvalid),
-    .m_axis_tready  (int_adp_data_m_axis_tready),
-    .m_axis_tlast   (int_adp_data_m_axis_tlast),
-    .s_pause_req    (1'b0),
-    .m_pause_req    (1'b0)
-  );
+ generate
+  for (CHN=0; CHN < DATA_CHANNELS; CHN = CHN + 1) begin
+    axis_async_fifo #(
+      .DEPTH          (DATA_FIFO_DEPTH),
+      .DATA_WIDTH     (DATA_WIDTH),
+      .KEEP_ENABLE    (0),
+      .KEEP_WIDTH     (1),
+      .ID_ENABLE      (0),
+      .ID_WIDTH       (1),
+      .DEST_ENABLE    (0),
+      .DEST_WIDTH     (1),
+      .USER_ENABLE    (0),
+      .USER_WIDTH     (1)
+    ) axis_adp_data_inst (
+      .s_clk          (int_adp_data_s_axis_aclk   [CHN]),
+      .s_rst          (1'b0),
+      .s_axis_tdata   (int_adp_data_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
+      .s_axis_tkeep   (1'b1),
+      .s_axis_tvalid  (int_adp_data_s_axis_tvalid [CHN]),
+      .s_axis_tready  (int_adp_data_s_axis_tready [CHN]),
+      .s_axis_tlast   (int_adp_data_s_axis_tlast  [CHN]),
+      .s_axis_tid     (1'b0),
+      .s_axis_tdest   (1'b0),
+      .s_axis_tuser   (1'b0),
+      .m_clk          (core_clk),
+      .m_rst          (core_rst),
+      .m_axis_tdata   (int_adp_data_m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
+      .m_axis_tvalid  (int_adp_data_m_axis_tvalid [CHN]),
+      .m_axis_tready  (int_adp_data_m_axis_tready [CHN]),
+      .m_axis_tlast   (int_adp_data_m_axis_tlast  [CHN]),
+      .s_pause_req    (1'b0),
+      .m_pause_req    (1'b0)
+    );
+  end 
+ endgenerate
 
   /**********************************************
     Slave AXI Async FIFO
@@ -1657,17 +1663,19 @@ module KanLayer #(
     - _m_ : otuput / master interface
   *********************************************/
 
-  wire                                          int_adp_grid_s_axis_aclk;
-  wire [DATA_CHANNELS*GRID_WIDTH-1:0]           int_adp_grid_s_axis_tdata;
-  wire [DATA_CHANNELS-1:0]                      int_adp_grid_s_axis_tvalid;
-  wire [DATA_CHANNELS-1:0]                      int_adp_grid_s_axis_tready;
-  wire [DATA_CHANNELS-1:0]                      int_adp_grid_s_axis_tlast;
+  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_aclk;
+  wire [GRID_CHANNELS_OUT*GRID_WIDTH-1:0]       int_adp_grid_s_axis_tdata;
+  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_tvalid;
+  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_tready;
+  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_tlast;
 
-  wire [DATA_CHANNELS*GRID_WIDTH-1:0]           int_adp_grid_m_axis_tdata;
-  wire [DATA_CHANNELS-1:0]                      int_adp_grid_m_axis_tvalid;
-  wire [DATA_CHANNELS-1:0]                      int_adp_grid_m_axis_tready;
-  wire [DATA_CHANNELS-1:0]                      int_adp_grid_m_axis_tlast;
+  wire [GRID_CHANNELS_OUT*GRID_WIDTH-1:0]       int_adp_grid_m_axis_tdata;
+  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_m_axis_tvalid;
+  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_m_axis_tready;
+  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_m_axis_tlast;
 
+ generate
+  for (CHN=0; CHN < GRID_CHANNELS_OUT; CHN = CHN + 1) begin
   axis_async_fifo #(
     .DEPTH          (GRID_FIFO_DEPTH),
     .DATA_WIDTH     (GRID_WIDTH),
@@ -1680,25 +1688,27 @@ module KanLayer #(
     .USER_ENABLE    (0),
     .USER_WIDTH     (1)
   ) axis_adp_grid_inst (
-    .s_clk          (int_adp_grid_s_axis_aclk),
+    .s_clk          (int_adp_grid_s_axis_aclk   [CHN]),
     .s_rst          (1'b0),
-    .s_axis_tdata   (int_adp_grid_s_axis_tdata),
+    .s_axis_tdata   (int_adp_grid_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
     .s_axis_tkeep   (1'b1),
-    .s_axis_tvalid  (int_adp_grid_s_axis_tvalid),
-    .s_axis_tready  (int_adp_grid_s_axis_tready),
-    .s_axis_tlast   (int_adp_grid_s_axis_tlast),
+    .s_axis_tvalid  (int_adp_grid_s_axis_tvalid [CHN]),
+    .s_axis_tready  (int_adp_grid_s_axis_tready [CHN]),
+    .s_axis_tlast   (int_adp_grid_s_axis_tlast  [CHN]),
     .s_axis_tid     (1'b0),
     .s_axis_tdest   (1'b0),
     .s_axis_tuser   (1'b0),
     .m_clk          (core_clk),
     .m_rst          (core_rst),
-    .m_axis_tdata   (int_adp_grid_m_axis_tdata),
-    .m_axis_tvalid  (int_adp_grid_m_axis_tvalid),
-    .m_axis_tready  (int_adp_grid_m_axis_tready),
-    .m_axis_tlast   (int_adp_grid_m_axis_tlast),
+    .m_axis_tdata   (int_adp_grid_m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
+    .m_axis_tvalid  (int_adp_grid_m_axis_tvalid [CHN]),
+    .m_axis_tready  (int_adp_grid_m_axis_tready [CHN]),
+    .m_axis_tlast   (int_adp_grid_m_axis_tlast  [CHN]),
     .s_pause_req    (1'b0),
     .m_pause_req    (1'b0)
   );
+  end 
+ endgenerate
 
   /**********************************************
     Slave AXI Async FIFO
@@ -1712,48 +1722,53 @@ module KanLayer #(
     - _m_ : otuput / master interface
   *********************************************/
 
-  wire                                        int_adp_scle_s_axis_aclk;
-  wire [DATA_CHANNELS*SCALE_WIDTH-1:0]        int_adp_scle_s_axis_tdata;
-  wire [DATA_CHANNELS-1:0]                    int_adp_scle_s_axis_tvalid;
-  wire [DATA_CHANNELS-1:0]                    int_adp_scle_s_axis_tready;
-  wire [DATA_CHANNELS-1:0]                    int_adp_scle_s_axis_tlast;
+  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_aclk;
+  wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]     int_adp_scle_s_axis_tdata;
+  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_tvalid;
+  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_tready;
+  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_tlast;
 
-  wire [DATA_CHANNELS*SCALE_WIDTH-1:0]        int_adp_scle_m_axis_tdata;
-  wire [DATA_CHANNELS-1:0]                    int_adp_scle_m_axis_tvalid;
-  wire [DATA_CHANNELS-1:0]                    int_adp_scle_m_axis_tready;
-  wire [DATA_CHANNELS-1:0]                    int_adp_scle_m_axis_tlast;
+  wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]     int_adp_scle_m_axis_tdata;
+  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_m_axis_tvalid;
+  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_m_axis_tready;
+  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_m_axis_tlast;
 
-  axis_async_fifo #(
-    .DEPTH          (SCALE_FIFO_DEPTH),
-    .DATA_WIDTH     (SCALE_WIDTH),
-    .KEEP_ENABLE    (0),
-    .KEEP_WIDTH     (1),
-    .ID_ENABLE      (0),
-    .ID_WIDTH       (1),
-    .DEST_ENABLE    (0),
-    .DEST_WIDTH     (1),
-    .USER_ENABLE    (0),
-    .USER_WIDTH     (1)
-  ) axis_adp_scle_inst (
-    .s_clk          (int_adp_scle_s_axis_aclk),
-    .s_rst          (1'b0),
-    .s_axis_tdata   (int_adp_scle_s_axis_tdata),
-    .s_axis_tkeep   (1'b1),
-    .s_axis_tvalid  (int_adp_scle_s_axis_tvalid),
-    .s_axis_tready  (int_adp_scle_s_axis_tready),
-    .s_axis_tlast   (int_adp_scle_s_axis_tlast),
-    .s_axis_tid     (1'b0),
-    .s_axis_tdest   (1'b0),
-    .s_axis_tuser   (1'b0),
-    .m_clk          (core_clk),
-    .m_rst          (core_rst),
-    .m_axis_tdata   (int_adp_scle_m_axis_tdata),
-    .m_axis_tvalid  (int_adp_scle_m_axis_tvalid),
-    .m_axis_tready  (int_adp_scle_m_axis_tready),
-    .m_axis_tlast   (int_adp_scle_m_axis_tlast),
-    .s_pause_req    (1'b0),
-    .m_pause_req    (1'b0)
-  );
+
+ generate
+  for (CHN=0; CHN < SCALE_CHANNELS_OUT; CHN = CHN + 1) begin
+    axis_async_fifo #(
+      .DEPTH          (SCALE_FIFO_DEPTH),
+      .DATA_WIDTH     (SCALE_WIDTH),
+      .KEEP_ENABLE    (0),
+      .KEEP_WIDTH     (1),
+      .ID_ENABLE      (0),
+      .ID_WIDTH       (1),
+      .DEST_ENABLE    (0),
+      .DEST_WIDTH     (1),
+      .USER_ENABLE    (0),
+      .USER_WIDTH     (1)
+    ) axis_adp_scle_inst (
+      .s_clk          (int_adp_scle_s_axis_aclk   [CHN]),
+      .s_rst          (1'b0),
+      .s_axis_tdata   (int_adp_scle_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
+      .s_axis_tkeep   (1'b1),
+      .s_axis_tvalid  (int_adp_scle_s_axis_tvalid [CHN]),
+      .s_axis_tready  (int_adp_scle_s_axis_tready [CHN]),
+      .s_axis_tlast   (int_adp_scle_s_axis_tlast  [CHN]),
+      .s_axis_tid     (1'b0),
+      .s_axis_tdest   (1'b0),
+      .s_axis_tuser   (1'b0),
+      .m_clk          (core_clk),
+      .m_rst          (core_rst),
+      .m_axis_tdata   (int_adp_scle_m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
+      .m_axis_tvalid  (int_adp_scle_m_axis_tvalid [CHN]),
+      .m_axis_tready  (int_adp_scle_m_axis_tready [CHN]),
+      .m_axis_tlast   (int_adp_scle_m_axis_tlast  [CHN]),
+      .s_pause_req    (1'b0),
+      .m_pause_req    (1'b0)
+    );
+  end 
+ endgenerate
 
   /**********************************************
     Slave AXI Adapter
@@ -1882,11 +1897,11 @@ module KanLayer #(
   wire                                         aps_external_error = 1'b0;  // To-Do
   wire [WEIGHT_CHANNELS-1:0]                   aps_transmission;
 
-  wire [WEIGHT_CHANNELS*WEIGHT_WIDTH-1:0] int_aps_wght_s_axis_tdata , int_aps_wght_m_axis_tdata;
+  wire [WEIGHT_CHANNELS*WEIGHT_WIDTH-1:0]      int_aps_wght_s_axis_tdata , int_aps_wght_m_axis_tdata;
   wire [WEIGHT_CHANNELS-1:0]                   int_aps_wght_s_axis_tvalid, int_aps_wght_m_axis_tvalid;
   wire [WEIGHT_CHANNELS-1:0]                   int_aps_wght_s_axis_tready, int_aps_wght_m_axis_tready;
   wire [WEIGHT_CHANNELS-1:0]                   int_aps_wght_s_axis_tlast , int_aps_wght_m_axis_tlast;
-  wire [WEIGHT_CHANNELS*WEIGHT_ID_WIDTH-1:0]     int_aps_wght_s_axis_tid   , int_aps_wght_m_axis_tid;
+  wire [WEIGHT_CHANNELS*WEIGHT_ID_WIDTH-1:0]   int_aps_wght_s_axis_tid   , int_aps_wght_m_axis_tid;
   wire [WEIGHT_CHANNELS*DEST_WIDTH-1:0]        int_aps_wght_s_axis_tdest , int_aps_wght_m_axis_tdest;
   wire [WEIGHT_CHANNELS*USER_WIDTH-1:0]        int_aps_wght_s_axis_tuser , int_aps_wght_m_axis_tuser;
 
@@ -1918,9 +1933,9 @@ module KanLayer #(
     .s_axis_tvalid      (int_aps_wght_s_axis_tvalid),  
     .s_axis_tready      (int_aps_wght_s_axis_tready),
     .s_axis_tlast       (int_aps_wght_s_axis_tlast),
-    .s_axis_tid         (1'b0),
-    .s_axis_tdest       (1'b0),
-    .s_axis_tuser       (1'b0),
+    .s_axis_tid         ({WEIGHT_CHANNELS*WEIGHT_ID_WIDTH{1'b0}}),
+    .s_axis_tdest       ({WEIGHT_CHANNELS{1'b0}}),
+    .s_axis_tuser       ({WEIGHT_CHANNELS{1'b0}}),
     .m_axis_tdata       (int_aps_wght_m_axis_tdata),
     .m_axis_tvalid      (int_aps_wght_m_axis_tvalid),
     .m_axis_tready      (int_aps_wght_m_axis_tready),
@@ -1948,7 +1963,6 @@ module KanLayer #(
   wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_m_axis_tready;
   wire [BATCH_SIZE*RSLT_CHANNELS-1:0]                  int_buf_rslt_m_axis_tlast;
 
-  genvar BATCH, CHN;
   generate
     for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin
       for (CHN = 0; CHN < RSLT_CHANNELS; CHN = CHN + 1) begin
@@ -2026,7 +2040,7 @@ module KanLayer #(
     .DEST_WIDTH         (1),
     .USER_ENABLE        (0),
     .USER_WIDTH         (1)
-  ) wrapper (
+  ) batched_axis_packet_joiner_inst (
     .clk                (core_clk),
     .rst                (core_rst),
     .operation_start    (operation_start),
@@ -2038,7 +2052,7 @@ module KanLayer #(
     .operation_error    (jnr_operation_error),
     .transmission       (jnr_transmission),       // Active high if bus transmitted data in the current cycle
     .s_axis_tdata       (int_jnr_rslt_s_axis_tdata),
-    .s_axis_tkeep       (1'b1),
+    .s_axis_tkeep       ({BATCH_SIZE*RSLT_CHANNELS{1'b1}}),
     .s_axis_tvalid      (int_jnr_rslt_s_axis_tvalid),  
     .s_axis_tready      (int_jnr_rslt_s_axis_tready),
     .s_axis_tlast       (int_jnr_rslt_s_axis_tlast),
@@ -2123,52 +2137,57 @@ module KanLayer #(
     - _m_ : master interface
   *********************************************/
 
-  wire [DATA_CHANNELS*DATA_WIDTH-1:0]        int_dpu_data_s_axis_tdata;
+  wire [DATA_CHANNELS*DATA_WIDTH-1:0]             int_dpu_data_s_axis_tdata;
   wire [DATA_CHANNELS-1:0]                        int_dpu_data_s_axis_tvalid;
   wire [DATA_CHANNELS-1:0]                        int_dpu_data_s_axis_tready;
   wire [DATA_CHANNELS-1:0]                        int_dpu_data_s_axis_tlast;
 
-  wire [DATA_CHANNELS*DATA_WIDTH-1:0]        int_dpu_grid_s_axis_tdata;
-  wire [DATA_CHANNELS-1:0]                        int_dpu_grid_s_axis_tvalid;
-  wire [DATA_CHANNELS-1:0]                        int_dpu_grid_s_axis_tready;
-  wire [DATA_CHANNELS-1:0]                        int_dpu_grid_s_axis_tlast;
-                                                                  
-  wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]  int_dpu_scle_s_axis_tdata;
+  wire [GRID_CHANNELS_OUT*DATA_WIDTH-1:0]         int_dpu_grid_s_axis_tdata;
+  wire [GRID_CHANNELS_OUT-1:0]                    int_dpu_grid_s_axis_tvalid;
+  wire [GRID_CHANNELS_OUT-1:0]                    int_dpu_grid_s_axis_tready;
+  wire [GRID_CHANNELS_OUT-1:0]                    int_dpu_grid_s_axis_tlast;
+
+  wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]       int_dpu_scle_s_axis_tdata;
   wire [SCALE_CHANNELS_OUT-1:0]                   int_dpu_scle_s_axis_tvalid;
   wire [SCALE_CHANNELS_OUT-1:0]                   int_dpu_scle_s_axis_tready;
   wire [SCALE_CHANNELS_OUT-1:0]                   int_dpu_scle_s_axis_tlast;
-                                                                  
-  wire [WEIGHT_CHANNELS*WEIGHT_WIDTH-1:0]    int_dpu_wght_s_axis_tdata;
+
+  wire [WEIGHT_CHANNELS*WEIGHT_WIDTH-1:0]         int_dpu_wght_s_axis_tdata;
   wire [WEIGHT_CHANNELS-1:0]                      int_dpu_wght_s_axis_tvalid;
   wire [WEIGHT_CHANNELS-1:0]                      int_dpu_wght_s_axis_tready;
   wire [WEIGHT_CHANNELS-1:0]                      int_dpu_wght_s_axis_tlast;
 
-  wire [RSLT_CHANNELS*RSLT_WIDTH-1:0]        int_dpu_rslt_m_axis_tdata;
+  wire [RSLT_CHANNELS*RSLT_WIDTH-1:0]             int_dpu_rslt_m_axis_tdata;
   wire [RSLT_CHANNELS-1:0]                        int_dpu_rslt_m_axis_tvalid;
   wire [RSLT_CHANNELS-1:0]                        int_dpu_rslt_m_axis_tready;
   wire [RSLT_CHANNELS-1:0]                        int_dpu_rslt_m_axis_tlast;
 
   ParallelizedDataProcessor #(
     .BATCH_SIZE                   (BATCH_SIZE),
-    .DATA_WIDTH              (DATA_WIDTH),
+    .DATA_WIDTH                   (DATA_WIDTH),
     .DATA_FRACTIONAL_BITS         (DATA_FRACTIONAL_BITS),
-    .SCALE_WIDTH             (SCALE_WIDTH),
+    .SCALE_WIDTH                  (SCALE_WIDTH),
     .SCALE_FRACTIONAL_BITS        (SCALE_FRACTIONAL_BITS),
-    .WEIGHT_WIDTH            (WEIGHT_WIDTH),
+    .WEIGHT_WIDTH                 (WEIGHT_WIDTH),
     .WEIGHT_FRACTIONAL_BITS       (WEIGHT_FRACTIONAL_BITS),
-    .SCALED_DIFF_WIDTH       (SCALED_DIFF_WIDTH),
+    .SCALED_DIFF_WIDTH            (SCALED_DIFF_WIDTH),
     .SCALED_DIFF_FRACTIONAL_BITS  (SCALED_DIFF_FRACTIONAL_BITS),
-    .ACT_WIDTH               (ACT_WIDTH),
+    .ACT_WIDTH                    (ACT_WIDTH),
     .ACT_FRACTIONAL_BITS          (ACT_FRACTIONAL_BITS),
-    .RSLT_WIDTH              (RSLT_WIDTH),
+    .RSLT_WIDTH                   (RSLT_WIDTH),
     .RSLT_FRACTIONAL_BITS         (RSLT_FRACTIONAL_BITS),
     .KEEP_ENABLE                  (0),
+    .KEEP_WIDTH                   (1),
     .ID_ENABLE                    (0),
+    .ID_WIDTH                     (1),
     .DEST_ENABLE                  (0),
+    .DEST_WIDTH                   (1),
     .USER_ENABLE                  (0),
+    .USER_WIDTH                   (1),
     .DATA_CHANNELS                (DATA_CHANNELS),
     .RSLT_CHANNELS                (RSLT_CHANNELS),
     .SCALE_SHARE                  (SCALE_SHARE),
+    .GRID_SHARE                   (GRID_SHARE),
     .ROM_DATA_PATH                (ROM_DATA_PATH),
     .OUTPUT_DEST                  (0),
     .OUTPUT_ID                    (0)
@@ -2179,30 +2198,30 @@ module KanLayer #(
     .s_axis_data_tvalid           (int_dpu_data_s_axis_tvalid),
     .s_axis_data_tready           (int_dpu_data_s_axis_tready),
     .s_axis_data_tlast            (int_dpu_data_s_axis_tlast),
-    .s_axis_data_tid              (1'b0),
-    .s_axis_data_tdest            (1'b0),
-    .s_axis_data_tuser            (1'b0),
+    .s_axis_data_tid              ({DATA_CHANNELS{1'b0}}),
+    .s_axis_data_tdest            ({DATA_CHANNELS{1'b0}}),
+    .s_axis_data_tuser            ({DATA_CHANNELS{1'b0}}),
     .s_axis_grid_tdata            (int_dpu_grid_s_axis_tdata),
     .s_axis_grid_tvalid           (int_dpu_grid_s_axis_tvalid),
     .s_axis_grid_tready           (int_dpu_grid_s_axis_tready),
     .s_axis_grid_tlast            (int_dpu_grid_s_axis_tlast),
-    .s_axis_grid_tid              (1'b0),
-    .s_axis_grid_tdest            (1'b0),
-    .s_axis_grid_tuser            (1'b0),
+    .s_axis_grid_tid              ({GRID_CHANNELS_OUT{1'b0}}),
+    .s_axis_grid_tdest            ({GRID_CHANNELS_OUT{1'b0}}),
+    .s_axis_grid_tuser            ({GRID_CHANNELS_OUT{1'b0}}),
     .s_axis_scle_tdata            (int_dpu_scle_s_axis_tdata),
     .s_axis_scle_tvalid           (int_dpu_scle_s_axis_tvalid),
     .s_axis_scle_tready           (int_dpu_scle_s_axis_tready),
     .s_axis_scle_tlast            (int_dpu_scle_s_axis_tlast),
-    .s_axis_scle_tid              (1'b0),
-    .s_axis_scle_tdest            (1'b0),
-    .s_axis_scle_tuser            (1'b0),
+    .s_axis_scle_tid              ({SCALE_CHANNELS_OUT{1'b0}}),
+    .s_axis_scle_tdest            ({SCALE_CHANNELS_OUT{1'b0}}),
+    .s_axis_scle_tuser            ({SCALE_CHANNELS_OUT{1'b0}}),
     .s_axis_wght_tdata            (int_dpu_wght_s_axis_tdata),
     .s_axis_wght_tvalid           (int_dpu_wght_s_axis_tvalid),
     .s_axis_wght_tready           (int_dpu_wght_s_axis_tready),
     .s_axis_wght_tlast            (int_dpu_wght_s_axis_tlast),
-    .s_axis_wght_tid              (1'b0),
-    .s_axis_wght_tdest            (1'b0),
-    .s_axis_wght_tuser            (1'b0),
+    .s_axis_wght_tid              ({WEIGHT_CHANNELS{1'b0}}),
+    .s_axis_wght_tdest            ({WEIGHT_CHANNELS{1'b0}}),
+    .s_axis_wght_tuser            ({WEIGHT_CHANNELS{1'b0}}),
     .m_axis_data_tdata            (int_dpu_rslt_m_axis_tdata),
     .m_axis_data_tvalid           (int_dpu_rslt_m_axis_tvalid),
     .m_axis_data_tready           (int_dpu_rslt_m_axis_tready),

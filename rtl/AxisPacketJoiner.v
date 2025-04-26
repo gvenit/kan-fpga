@@ -107,7 +107,7 @@ generate
 
  end else begin
   // Local Parameters
-  localparam CLOG2_CHANNELS = `LOG2(CHANNELS);
+  localparam CLOG2_CHANNELS = `LOG2( CHANNELS );
 
   // Global FSM states
   localparam FSM_WIDTH = 2;

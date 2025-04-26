@@ -121,13 +121,13 @@ module BramIntrfTranslator #(
   generate
     // transforming read and write data into internal representation
     for (i = 0; i < IN_WORD_DATA; i = i + 1) begin
-      assign wrdata_itrl[i] = wrdata_i[(i+1)*OUT_WIDTH-1 : i*OUT_WIDTH];
-      assign rddata_i[(i+1)*OUT_WIDTH-1 : i*OUT_WIDTH] = rddata_itrl[i];
+      assign wrdata_itrl[i] = wrdata_i[i*OUT_WIDTH +: OUT_WIDTH];
+      assign rddata_i[i*OUT_WIDTH +: OUT_WIDTH] = rddata_itrl[i];
     end
 
     // transforming write enable into internal representation
     for (i = 0; i < IN_WORD_DATA; i = i + 1) begin
-      assign we_itrl[i] = we_i[(i+1)*OUT_WE-1 : i*OUT_WE];
+      assign we_itrl[i] = we_i[i*OUT_WE +: OUT_WE];
     end
 
     // transforming enable into internal representation
@@ -145,12 +145,12 @@ module BramIntrfTranslator #(
 
     // assigning output interface addr
     for (i = 0; i < BANKS; i = i + 1) begin
-      assign addr_o[(i+1)*OUT_ADDR-1 : i*OUT_ADDR] = addr_itrl[i%IN_WORD_DATA][BANK_BITS +: OUT_ADDR];  // !!! Worried about the second indexing
+      assign addr_o[i*OUT_ADDR +: OUT_ADDR] = addr_itrl[i%IN_WORD_DATA][BANK_BITS +: OUT_ADDR];  // !!! Worried about the second indexing
     end
 
     // assigning output interface write data 
     for (i = 0; i < BANKS; i = i + 1) begin
-      assign wrdata_o[(i+1)*OUT_WIDTH-1 : i*OUT_WIDTH] = wrdata_itrl[i%IN_WORD_DATA];
+      assign wrdata_o[i*OUT_WIDTH +: OUT_WIDTH] = wrdata_itrl[i%IN_WORD_DATA];
     end
 
     // assigning output interface read data 
@@ -160,7 +160,7 @@ module BramIntrfTranslator #(
 
     // assigning output interface write-enable
     for (i = 0; i < BANKS; i = i + 1) begin
-      assign we_o[(i+1)*OUT_WE-1 : i*OUT_WE] = we_itrl[i%IN_WORD_DATA];
+      assign we_o[i*OUT_WE +: OUT_WE] = we_itrl[i%IN_WORD_DATA];
     end
   endgenerate
 
