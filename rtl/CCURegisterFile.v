@@ -9,72 +9,71 @@ module CCURegisterFile #(
   parameter ADDR_WIDTH = CTLR_ADDR,
   parameter PIPELINE_OUTPUT = 0
 ) (
-  input  wire        clk,
-  input  wire        rst,
+  input  wire                   clk,
+  input  wire                   rst,
 
   // Input PL control signals
-  input  wire        rw_ps2pl_reg_en,
-  input  wire        rw_pl2ps_reg_en,
-  input  wire        wo_reg_en, // tlast_transmitted
-  input  wire        wo_reg_rst, // fsm_state == FSM_STR
+  input  wire                   rw_op_str_reg_en,
+  input  wire                   rw_op_dne_reg_en,
+  input  wire                   wo_reg_en, // tlast_transmitted
+  input  wire                   wo_reg_rst, // fsm_state == FSM_STR
 
   // Read-Write Registers (PS -> PL) 
-  output wire [31:0] data_size_rd,
-  output wire [31:0] grid_size_rd,
-  output wire [31:0] scle_size_rd,
-  output wire [31:0] rslt_size_rd,
-  output wire [31:0] pckt_size_rd,
-  
-  input  wire [31:0] data_size_wr,
-  input  wire [31:0] grid_size_wr,
-  input  wire [31:0] scle_size_wr,
-  input  wire [31:0] rslt_size_wr,
-  input  wire [31:0] pckt_size_wr,
-  
-  output wire        data_loaded_rd,
-  output wire        grid_loaded_rd,
-  output wire        scle_loaded_rd,
-  output wire        wght_loaded_rd,
-  
-  input  wire        data_loaded_wr,
-  input  wire        grid_loaded_wr,
-  input  wire        scle_loaded_wr,
-  input  wire        wght_loaded_wr,
+  output wire [31:0]            data_size_rd,
+  output wire [31:0]            grid_size_rd,
+  output wire [31:0]            scle_size_rd,
+  output wire [31:0]            rslt_size_rd,
+  output wire [31:0]            pckt_size_rd,
+  output wire [ 7:0]            btch_size_rd,
 
-  output wire        operation_start_rd,
-  input  wire        operation_start_wr,
+  input  wire [31:0]            data_size_wr,
+  input  wire [31:0]            grid_size_wr,
+  input  wire [31:0]            scle_size_wr,
+  input  wire [31:0]            rslt_size_wr,
+  input  wire [31:0]            pckt_size_wr,
+  input  wire [ 7:0]            btch_size_wr,
+
+  output wire                   data_loaded_rd,
+  output wire                   grid_loaded_rd,
+  output wire                   scle_loaded_rd,
+  output wire                   wght_loaded_rd,
+
+  input  wire                   data_loaded_wr,
+  input  wire                   grid_loaded_wr,
+  input  wire                   scle_loaded_wr,
+  input  wire                   wght_loaded_wr,
+
+  output wire                   operation_start_rd,
+  input  wire                   operation_start_wr,
 
   // Read-Only Registers (PS -> PL)
-  output wire        interrupt_soft,
-  output wire        interrupt_abort,
-  output wire        interrupt_error,
+  output wire                   interrupt_soft,
+  output wire                   interrupt_abort,
+  output wire                   interrupt_error,
 
   // Read-Write Registers (PL -> PS)
-  output wire        rslt_loaded_rd,
-  input  wire        rslt_loaded_wr,
-
-  output wire        operation_done_rd,
-  input  wire        operation_done_wr,
+  output wire                   operation_done_rd,
+  input  wire                   operation_done_wr,
   
   // Write-Only Registers (PL -> PS)
-  input  wire        operation_status_idle_wr,
-  input  wire        operation_status_busy_wr,
-  input  wire        operation_status_error_wr,
-  input  wire        operation_status_locked_wr,
-  input  wire        operation_status_valid_wr,
+  input  wire                   operation_status_idle_wr,
+  input  wire                   operation_status_busy_wr,
+  input  wire                   operation_status_error_wr,
+  input  wire                   operation_status_locked_wr,
+  input  wire                   operation_status_valid_wr,
 
-  input  wire [31:0] operation_progress_rslt_wr,
-  input  wire [31:0] operation_progress_iter_wr,
-  input  wire [31:0] iteration_timer_wr,
-  input  wire [31:0] iteration_latency_wr,
-  input  wire [31:0] operation_timer_wr,
-  input  wire [31:0] operation_latency_wr,
+  input  wire [31:0]            operation_progress_rslt_wr,
+  input  wire [31:0]            operation_progress_iter_wr,
+  input  wire [31:0]            iteration_timer_wr,
+  input  wire [31:0]            iteration_latency_wr,
+  input  wire [31:0]            operation_timer_wr,
+  input  wire [31:0]            operation_latency_wr,
 
   /*
    * AXI-Lite Control
    */
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil AWADDR" *)
-  (* X_INTERFACE_PARAMETER = "CLK_DOMAIN clk,READ_WRITE_MODE READ_WRITE,ADDR_WIDTH CTLR_ADDR,PROTOCOL AXI4LITE,DATA_WIDTH 32" *)
+  (* X_INTERFACE_PARAMETER = "READ_WRITE_MODE READ_WRITE,ADDR_WIDTH CTLR_ADDR,PROTOCOL AXI4LITE,DATA_WIDTH 32" *)
   input  wire [CTLR_ADDR-1:0]   s_axil_awaddr,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil AWPROT" *)
   input  wire [2:0]             s_axil_awprot,
@@ -171,13 +170,13 @@ module CCURegisterFile #(
   integer i, j;
 
   initial begin
-      // two nested loops for smaller number of iterations per loop
-      // workaround for synthesizer complaints about large loop counts
-      for (i = 0; i < 2**VALID_ADDR_WIDTH; i = i + 2**(VALID_ADDR_WIDTH/2)) begin
-          for (j = i; j < i + 2**(VALID_ADDR_WIDTH/2); j = j + 1) begin
-              mem[j] = 0;
-          end
+    // two nested loops for smaller number of iterations per loop
+    // workaround for synthesizer complaints about large loop counts
+    for (i = 0; i < 2**VALID_ADDR_WIDTH; i = i + 2**(VALID_ADDR_WIDTH/2)) begin
+      for (j = i; j < i + 2**(VALID_ADDR_WIDTH/2); j = j + 1) begin
+        mem[j] = 0;
       end
+    end
   end
 
   // Write-Protection Macro
@@ -187,11 +186,12 @@ module CCURegisterFile #(
     end
 
   // Read-Write Registers (PS -> PL) 
-  assign data_size_rd = mem[CTRL_REG_DATA_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign grid_size_rd = mem[CTRL_REG_GRID_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign scle_size_rd = mem[CTRL_REG_SCLE_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign rslt_size_rd = mem[CTRL_REG_RSLT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign pckt_size_rd = mem[CTRL_REG_PCKT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign data_size_rd   = mem[CTRL_REG_DATA_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign grid_size_rd   = mem[CTRL_REG_GRID_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign scle_size_rd   = mem[CTRL_REG_SCLE_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign rslt_size_rd   = mem[CTRL_REG_RSLT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign pckt_size_rd   = mem[CTRL_REG_PCKT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign btch_size_rd   = mem[CTRL_REG_BTCH_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_BTCH_LEN % WORD_WIDTH) * WORD_SIZE];
 
   assign data_loaded_rd = mem[CTRL_REG_DATA_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_DATA_LDR % WORD_WIDTH) * WORD_SIZE];
   assign grid_loaded_rd = mem[CTRL_REG_GRID_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_GRID_LDR % WORD_WIDTH) * WORD_SIZE];
@@ -208,9 +208,7 @@ module CCURegisterFile #(
   assign interrupt_error = |(interrupt_register & CTRL_REG_INTR_MASK_ERR);
 
   // Read-Write Registers (PL -> PS)
-  assign rslt_loaded_rd = mem[CTRL_REG_RSLT_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_RSLT_LDR % WORD_WIDTH) * WORD_SIZE];
-
-  assign operation_done_rd = mem[CTRL_REG_OPER_DNE >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_DNE % WORD_WIDTH)];
+  assign operation_done_rd = mem[CTRL_REG_OPER_DNE >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_DNE % WORD_WIDTH) * WORD_SIZE];
 
   // Write-Only Registers (PL -> PS)
   wire [WORD_SIZE-1:0]  operation_status_wr;
@@ -223,47 +221,35 @@ module CCURegisterFile #(
   assign operation_status_wr[WORD_SIZE-1:`LOG2(CTRL_REG_OPER_STS_MASK_VLD)+1] = {WORD_SIZE-`LOG2(CTRL_REG_OPER_STS_MASK_VLD){1'b0}};
 
   always @* begin
-      mem_wr_en = 1'b0;
+    mem_wr_en = 1'b0;
 
-      s_axil_awready_next = 1'b0;
-      s_axil_wready_next = 1'b0;
-      s_axil_bvalid_next = s_axil_bvalid_reg && !s_axil_bready;
+    s_axil_awready_next = 1'b0;
+    s_axil_wready_next = 1'b0;
+    s_axil_bvalid_next = s_axil_bvalid_reg && !s_axil_bready;
 
-      if (s_axil_awvalid && s_axil_wvalid && (!s_axil_bvalid || s_axil_bready) && (!s_axil_awready && !s_axil_wready)) begin
-          s_axil_awready_next = 1'b1;
-          s_axil_wready_next = 1'b1;
-          s_axil_bvalid_next = 1'b1;
+    if (s_axil_awvalid && s_axil_wvalid && (!s_axil_bvalid || s_axil_bready) && (!s_axil_awready && !s_axil_wready)) begin
+      s_axil_awready_next = 1'b1;
+      s_axil_wready_next = 1'b1;
+      s_axil_bvalid_next = 1'b1;
 
-          mem_wr_en = 1'b1;
-      end
+      mem_wr_en = 1'b1;
+    end
   end
 
   always @(posedge clk) begin
-    if (rw_ps2pl_reg_en) begin 
+    if (rw_op_str_reg_en) begin 
+      `PL_WRITE_MEM(mem,CTRL_REG_OPER_STR,operation_start_wr,1);
+    end
+    if (rw_op_dne_reg_en) begin 
+      // Read-Write Registers (PS->PL)
       `PL_WRITE_MEM(mem,CTRL_REG_DATA_LEN,data_size_wr,DATA_WIDTH);
       `PL_WRITE_MEM(mem,CTRL_REG_GRID_LEN,grid_size_wr,DATA_WIDTH);
       `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LEN,scle_size_wr,DATA_WIDTH);
       `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LEN,rslt_size_wr,DATA_WIDTH);
       `PL_WRITE_MEM(mem,CTRL_REG_PCKT_LEN,pckt_size_wr,DATA_WIDTH);
-    end
-    if (rw_pl2ps_reg_en) begin 
-      `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LDR,rslt_loaded_wr,1);
+      `PL_WRITE_MEM(mem,CTRL_REG_BTCH_LEN,btch_size_wr,WORD_SIZE);
+      // Read-Write Registers (PL->PS)
       `PL_WRITE_MEM(mem,CTRL_REG_OPER_DNE,operation_done_wr,1);
-    end
-    if (rst || wo_reg_rst) begin
-      mem[CTRL_REG_RSLT_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
-      mem[CTRL_REG_ITER_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
-      mem[CTRL_REG_ITER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
-      mem[CTRL_REG_ITER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
-      mem[CTRL_REG_OPER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
-      mem[CTRL_REG_OPER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
-    end else if (wo_reg_en) begin
-      mem[CTRL_REG_RSLT_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_progress_rslt_wr;
-      mem[CTRL_REG_ITER_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_progress_iter_wr;
-      mem[CTRL_REG_ITER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = iteration_timer_wr;
-      mem[CTRL_REG_ITER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = iteration_latency_wr;
-      mem[CTRL_REG_OPER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_timer_wr;
-      mem[CTRL_REG_OPER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_latency_wr;
     end
 
     s_axil_awready_reg <= s_axil_awready_next;
@@ -282,6 +268,22 @@ module CCURegisterFile #(
       s_axil_bvalid_reg <= 1'b0;
     end
 
+    // Write Only Registers
+    if (rst || wo_reg_rst) begin
+      mem[CTRL_REG_RSLT_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
+      mem[CTRL_REG_ITER_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
+      mem[CTRL_REG_ITER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
+      mem[CTRL_REG_ITER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
+      mem[CTRL_REG_OPER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
+      mem[CTRL_REG_OPER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = {DATA_WIDTH{1'b0}};
+    end else if (wo_reg_en) begin
+      mem[CTRL_REG_RSLT_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_progress_rslt_wr;
+      mem[CTRL_REG_ITER_PRG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_progress_iter_wr;
+      mem[CTRL_REG_ITER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = iteration_timer_wr;
+      mem[CTRL_REG_ITER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = iteration_latency_wr;
+      mem[CTRL_REG_OPER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_timer_wr;
+      mem[CTRL_REG_OPER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_latency_wr;
+    end
     mem[CTRL_REG_OPER_STS >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_DNE % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE] = operation_status_wr;
   end
 

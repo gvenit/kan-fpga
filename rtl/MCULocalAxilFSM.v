@@ -254,20 +254,20 @@ module MCULocalAxilFSM #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(2)
   ) loc_axis_register_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(loc_in_axis_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(loc_in_axis_tvalid),
-    .s_axis_tready(loc_in_axis_tready),
-    .s_axis_tlast(loc_in_axis_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(loc_out_axis_tdata),
-    .m_axis_tvalid(loc_out_axis_tvalid),
-    .m_axis_tready(loc_out_axis_tready),
-    .m_axis_tlast(loc_out_axis_tlast)
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (loc_in_axis_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (loc_in_axis_tvalid),
+    .s_axis_tready    (loc_in_axis_tready),
+    .s_axis_tlast     (loc_in_axis_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (loc_out_axis_tdata),
+    .m_axis_tvalid    (loc_out_axis_tvalid),
+    .m_axis_tready    (loc_out_axis_tready),
+    .m_axis_tlast     (loc_out_axis_tlast)
   );
 
   // Intra-Iteration Counter
@@ -299,16 +299,16 @@ axil_fifo_rd # (
   // Hold read address until space available in FIFO for data, if possible
   .FIFO_DELAY(0)
 ) axil_fifo_rd_inst (
-  .clk            (clk),
-  .rst            (rst),
-  .s_axil_araddr  (int_axil_araddr),
-  .s_axil_arprot  (int_axil_arprot),
-  .s_axil_arvalid (int_axil_arvalid),
-  .s_axil_arready (int_axil_arready),
-  .s_axil_rdata   (int_axil_rdata),
-  .s_axil_rresp   (int_axil_rresp),
-  .s_axil_rvalid  (int_axil_rvalid),
-  .s_axil_rready  (int_axil_rready),
+  .clk             (clk),
+  .rst             (rst),
+  .s_axil_araddr   (int_axil_araddr),
+  .s_axil_arprot   (int_axil_arprot),
+  .s_axil_arvalid  (int_axil_arvalid),
+  .s_axil_arready  (int_axil_arready),
+  .s_axil_rdata    (int_axil_rdata),
+  .s_axil_rresp    (int_axil_rresp),
+  .s_axil_rvalid   (int_axil_rvalid),
+  .s_axil_rready   (int_axil_rready),
   .m_axil_araddr   (m_axil_araddr),
   .m_axil_arprot   (m_axil_arprot),
   .m_axil_arvalid  (m_axil_arvalid),

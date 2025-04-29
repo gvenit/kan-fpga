@@ -39,35 +39,35 @@ module SubMultAbs #(
   // tuser signal width
   parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                         clk,
+  input  wire                         rst,
 
   /*
     * AXI Stream Data input
     */
-  input  wire [DATA_WIDTH-1:0] s_axis_data_tdata,
-  input  wire                       s_axis_data_tvalid,
-  output wire                       s_axis_data_tready,
-  input  wire                       s_axis_data_tlast,
-  input  wire [ID_WIDTH-1:0]        s_axis_data_tid,
-  input  wire [DEST_WIDTH-1:0]      s_axis_data_tdest,
-  input  wire [USER_WIDTH-1:0]      s_axis_data_tuser,
+  input  wire [DATA_WIDTH-1:0]        s_axis_data_tdata,
+  input  wire                         s_axis_data_tvalid,
+  output wire                         s_axis_data_tready,
+  input  wire                         s_axis_data_tlast,
+  input  wire [ID_WIDTH-1:0]          s_axis_data_tid,
+  input  wire [DEST_WIDTH-1:0]        s_axis_data_tdest,
+  input  wire [USER_WIDTH-1:0]        s_axis_data_tuser,
 
   /*
     * AXI Stream Grid input
     */
-  input  wire [DATA_WIDTH-1:0] s_axis_grid_tdata,
-  input  wire                       s_axis_grid_tvalid,
-  output wire                       s_axis_grid_tready,
-  input  wire                       s_axis_grid_tlast,
-  input  wire [ID_WIDTH-1:0]        s_axis_grid_tid,
-  input  wire [DEST_WIDTH-1:0]      s_axis_grid_tdest,
-  input  wire [USER_WIDTH-1:0]      s_axis_grid_tuser,
+  input  wire [DATA_WIDTH-1:0]        s_axis_grid_tdata,
+  input  wire                         s_axis_grid_tvalid,
+  output wire                         s_axis_grid_tready,
+  input  wire                         s_axis_grid_tlast,
+  input  wire [ID_WIDTH-1:0]          s_axis_grid_tid,
+  input  wire [DEST_WIDTH-1:0]        s_axis_grid_tdest,
+  input  wire [USER_WIDTH-1:0]        s_axis_grid_tuser,
 
   /*
     * AXI Stream Scale input
     */
-  input  wire [SCALE_WIDTH-1:0]  s_axis_scle_tdata,
+  input  wire [SCALE_WIDTH-1:0]       s_axis_scle_tdata,
   input  wire                         s_axis_scle_tvalid,
   output wire                         s_axis_scle_tready,
   input  wire                         s_axis_scle_tlast,
@@ -78,18 +78,14 @@ module SubMultAbs #(
   /*
     * AXI Stream output
     */
-  output wire [RSLT_WIDTH-1:0] m_axis_data_tdata,
-  output wire [KEEP_WIDTH-1:0]      m_axis_data_tkeep,
-  output wire                       m_axis_data_tvalid,
-  input  wire                       m_axis_data_tready,
-  output wire                       m_axis_data_tlast,
-  output wire [ID_WIDTH-1:0]        m_axis_data_tid,
-  output wire [DEST_WIDTH-1:0]      m_axis_data_tdest,
-  output wire [USER_WIDTH-1:0]      m_axis_data_tuser
-
-  // // Error Signals
-  // output                  err_unalligned_data,
-  // output                  err_unalligned_scale
+  output wire [RSLT_WIDTH-1:0]        m_axis_data_tdata,
+  output wire [KEEP_WIDTH-1:0]        m_axis_data_tkeep,
+  output wire                         m_axis_data_tvalid,
+  input  wire                         m_axis_data_tready,
+  output wire                         m_axis_data_tlast,
+  output wire [ID_WIDTH-1:0]          m_axis_data_tid,
+  output wire [DEST_WIDTH-1:0]        m_axis_data_tdest,
+  output wire [USER_WIDTH-1:0]        m_axis_data_tuser
 );
   `define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
 
@@ -97,56 +93,53 @@ module SubMultAbs #(
 
   assign m_axis_data_tdata = `abs(signed_rslt)[RSLT_WIDTH-1:0];
 
-  SubMult
-  #(
-    .DATA_WIDTH(DATA_WIDTH),
-    .DATA_FRACTIONAL_BITS(DATA_FRACTIONAL_BITS),
-    .SCALE_WIDTH(SCALE_WIDTH),
-    .SCALE_FRACTIONAL_BITS(SCALE_FRACTIONAL_BITS),
-    .RSLT_WIDTH(RSLT_WIDTH+1),
-    .RSLT_FRACTIONAL_BITS(RSLT_FRACTIONAL_BITS),
-    .KEEP_ENABLE(KEEP_ENABLE),
-    .KEEP_WIDTH(KEEP_WIDTH),
-    .ID_ENABLE(ID_ENABLE),
-    .ID_WIDTH(ID_WIDTH),
-    .DEST_ENABLE(DEST_ENABLE),
-    .DEST_WIDTH(DEST_WIDTH),
-    .USER_ENABLE(USER_ENABLE),
-    .USER_WIDTH(USER_WIDTH)
-  )
-  SubMult_inst
-  (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_data_tdata(s_axis_data_tdata),
-    .s_axis_data_tvalid(s_axis_data_tvalid),
-    .s_axis_data_tready(s_axis_data_tready),
-    .s_axis_data_tlast(s_axis_data_tlast),
-    .s_axis_data_tid(s_axis_data_tid),
-    .s_axis_data_tdest(s_axis_data_tdest),
-    .s_axis_data_tuser(s_axis_data_tuser),
-    .s_axis_grid_tdata(s_axis_grid_tdata),
-    .s_axis_grid_tvalid(s_axis_grid_tvalid),
-    .s_axis_grid_tready(s_axis_grid_tready),
-    .s_axis_grid_tlast(s_axis_grid_tlast),
-    .s_axis_grid_tid(s_axis_grid_tid),
-    .s_axis_grid_tdest(s_axis_grid_tdest),
-    .s_axis_grid_tuser(s_axis_grid_tuser),
-    .s_axis_scle_tdata(s_axis_scle_tdata),
-    .s_axis_scle_tvalid(s_axis_scle_tvalid),
-    .s_axis_scle_tready(s_axis_scle_tready),
-    .s_axis_scle_tlast(s_axis_scle_tlast),
-    .s_axis_scle_tid(s_axis_scle_tid),
-    .s_axis_scle_tdest(s_axis_scle_tdest),
-    .s_axis_scle_tuser(s_axis_scle_tuser),
-    .m_axis_data_tdata(signed_rslt),
-    .m_axis_data_tkeep(m_axis_data_tkeep),
-    .m_axis_data_tvalid(m_axis_data_tvalid),
-    .m_axis_data_tready(m_axis_data_tready),
-    .m_axis_data_tlast(m_axis_data_tlast),
-    .m_axis_data_tid(m_axis_data_tid),
-    .m_axis_data_tdest(m_axis_data_tdest),
-    .m_axis_data_tuser(m_axis_data_tuser)
+  SubMult #(
+    .DATA_WIDTH               (DATA_WIDTH),
+    .DATA_FRACTIONAL_BITS     (DATA_FRACTIONAL_BITS),
+    .SCALE_WIDTH              (SCALE_WIDTH),
+    .SCALE_FRACTIONAL_BITS    (SCALE_FRACTIONAL_BITS),
+    .RSLT_WIDTH               (RSLT_WIDTH+1),
+    .RSLT_FRACTIONAL_BITS     (RSLT_FRACTIONAL_BITS),
+    .KEEP_ENABLE              (KEEP_ENABLE),
+    .KEEP_WIDTH               (KEEP_WIDTH),
+    .ID_ENABLE                (ID_ENABLE),
+    .ID_WIDTH                 (ID_WIDTH),
+    .DEST_ENABLE              (DEST_ENABLE),
+    .DEST_WIDTH               (DEST_WIDTH),
+    .USER_ENABLE              (USER_ENABLE),
+    .USER_WIDTH               (USER_WIDTH)
+  ) SubMult_inst (
+    .clk                      (clk),
+    .rst                      (rst),
+    .s_axis_data_tdata        (s_axis_data_tdata),
+    .s_axis_data_tvalid       (s_axis_data_tvalid),
+    .s_axis_data_tready       (s_axis_data_tready),
+    .s_axis_data_tlast        (s_axis_data_tlast),
+    .s_axis_data_tid          (s_axis_data_tid),
+    .s_axis_data_tdest        (s_axis_data_tdest),
+    .s_axis_data_tuser        (s_axis_data_tuser),
+    .s_axis_grid_tdata        (s_axis_grid_tdata),
+    .s_axis_grid_tvalid       (s_axis_grid_tvalid),
+    .s_axis_grid_tready       (s_axis_grid_tready),
+    .s_axis_grid_tlast        (s_axis_grid_tlast),
+    .s_axis_grid_tid          (s_axis_grid_tid),
+    .s_axis_grid_tdest        (s_axis_grid_tdest),
+    .s_axis_grid_tuser        (s_axis_grid_tuser),
+    .s_axis_scle_tdata        (s_axis_scle_tdata),
+    .s_axis_scle_tvalid       (s_axis_scle_tvalid),
+    .s_axis_scle_tready       (s_axis_scle_tready),
+    .s_axis_scle_tlast        (s_axis_scle_tlast),
+    .s_axis_scle_tid          (s_axis_scle_tid),
+    .s_axis_scle_tdest        (s_axis_scle_tdest),
+    .s_axis_scle_tuser        (s_axis_scle_tuser),
+    .m_axis_data_tdata        (signed_rslt),
+    .m_axis_data_tkeep        (m_axis_data_tkeep),
+    .m_axis_data_tvalid       (m_axis_data_tvalid),
+    .m_axis_data_tready       (m_axis_data_tready),
+    .m_axis_data_tlast        (m_axis_data_tlast),
+    .m_axis_data_tid          (m_axis_data_tid),
+    .m_axis_data_tdest        (m_axis_data_tdest),
+    .m_axis_data_tuser        (m_axis_data_tuser)
   );
 
 endmodule

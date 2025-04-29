@@ -42,13 +42,13 @@ module ParallelizedLinearProcessingElement #(
   // Data Width of Output Data (D-AXIS)
   parameter PSUM_WIDTH = OP0_WIDTH + OP1_WIDTH
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                         clk,
+  input  wire                         rst,
 
   /*
    * AXI Stream Left Input
    */
-  input  wire [OP0_WIDTH-1:0]    s_axis_l_tdata,
+  input  wire [OP0_WIDTH-1:0]         s_axis_l_tdata,
   input  wire                         s_axis_l_tvalid,
   output wire                         s_axis_l_tready,
   input  wire                         s_axis_l_tlast,
@@ -56,7 +56,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Right Output
    */
-  output wire [OP0_WIDTH-1:0]    m_axis_r_tdata,
+  output wire [OP0_WIDTH-1:0]         m_axis_r_tdata,
   output wire                         m_axis_r_tvalid,
   input  wire                         m_axis_r_tready,
   output wire                         m_axis_r_tlast,
@@ -64,7 +64,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Top Input
    */
-  input  wire [OP1_WIDTH-1:0]    s_axis_t_tdata,
+  input  wire [OP1_WIDTH-1:0]         s_axis_t_tdata,
   input  wire                         s_axis_t_tvalid,
   output wire                         s_axis_t_tready,
   input  wire                         s_axis_t_tlast,
@@ -72,7 +72,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Bottom Output
    */
-  output wire [OP1_WIDTH-1:0]    m_axis_b_tdata,
+  output wire [OP1_WIDTH-1:0]         m_axis_b_tdata,
   output wire                         m_axis_b_tvalid,
   input  wire                         m_axis_b_tready,
   output wire                         m_axis_b_tlast,
@@ -80,7 +80,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Up Input
    */
-  input  wire [PSUM_WIDTH-1:0]   s_axis_u_tdata,
+  input  wire [PSUM_WIDTH-1:0]        s_axis_u_tdata,
   input  wire                         s_axis_u_tvalid,
   output wire                         s_axis_u_tready,
   input  wire                         s_axis_u_tlast,
@@ -88,7 +88,7 @@ module ParallelizedLinearProcessingElement #(
   /*
    * AXI Stream Down Output
    */
-  output wire [PSUM_WIDTH-1:0]   m_axis_d_tdata,
+  output wire [PSUM_WIDTH-1:0]        m_axis_d_tdata,
   output wire                         m_axis_d_tvalid,
   input  wire                         m_axis_d_tready,
   output wire                         m_axis_d_tlast,
@@ -96,46 +96,46 @@ module ParallelizedLinearProcessingElement #(
   /*
    * Error Outputs
    */
-  output wire err_unalligned_data
+  output wire                         err_unalligned_data
 );
   // DataFlow Local Parameters
   localparam MLT_OP_SIZE  = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
 
   // Left AXI-Stream internal signals
   wire [OP0_WIDTH-1:0]  int_axis_l_tdata;
-  wire                       int_axis_l_tvalid;
-  wire                       int_axis_l_tready;
-  wire                       int_axis_l_tlast;
+  wire                  int_axis_l_tvalid;
+  wire                  int_axis_l_tready;
+  wire                  int_axis_l_tlast;
 
   // Right AXI-Stream internal signals
   wire [OP0_WIDTH-1:0]  int_axis_r_tdata;
-  wire                       int_axis_r_tvalid;
-  wire                       int_axis_r_tready;
-  wire                       int_axis_r_tlast;
+  wire                  int_axis_r_tvalid;
+  wire                  int_axis_r_tready;
+  wire                  int_axis_r_tlast;
 
   // Top AXI-Stream internal signals
   wire [OP1_WIDTH-1:0]  int_axis_t_tdata;
-  wire                       int_axis_t_tvalid;
-  wire                       int_axis_t_tready;
-  wire                       int_axis_t_tlast;
+  wire                  int_axis_t_tvalid;
+  wire                  int_axis_t_tready;
+  wire                  int_axis_t_tlast;
 
   // Bottom AXI-Stream internal signals
   wire [OP1_WIDTH-1:0]  int_axis_b_tdata;
-  wire                       int_axis_b_tvalid;
-  wire                       int_axis_b_tready;
-  wire                       int_axis_b_tlast;
+  wire                  int_axis_b_tvalid;
+  wire                  int_axis_b_tready;
+  wire                  int_axis_b_tlast;
 
   // Up AXI-Stream internal signals
   wire [PSUM_WIDTH-1:0] int_axis_u_tdata;
-  wire                       int_axis_u_tvalid;
-  wire                       int_axis_u_tready;
-  wire                       int_axis_u_tlast;
+  wire                  int_axis_u_tvalid;
+  wire                  int_axis_u_tready;
+  wire                  int_axis_u_tlast;
 
   // Down AXI-Stream internal signals
   wire [PSUM_WIDTH-1:0] int_axis_d_tdata;
-  wire                       int_axis_d_tvalid;
-  wire                       int_axis_d_tready;
-  wire                       int_axis_d_tlast;
+  wire                  int_axis_d_tvalid;
+  wire                  int_axis_d_tready;
+  wire                  int_axis_d_tlast;
 
   // Control Unit Output Signals
   wire store_l, store_t, store_u;
@@ -167,38 +167,32 @@ module ParallelizedLinearProcessingElement #(
     // Position of current PE in the j axis
     .PE_POSITION_J(PE_POSITION_J)
   ) control_unit (
-    .clk(clk),
-    .rst(rst),
-    .int_axis_u_tvalid(int_axis_u_tvalid),
-    // .int_axis_u_tready(int_axis_u_tready),
-    .int_axis_u_tlast(int_axis_u_tlast),
-    .int_axis_l_tvalid(int_axis_l_tvalid),
-    // .int_axis_l_tready(int_axis_l_tready),
-    .int_axis_l_tlast(int_axis_l_tlast),
-    .int_axis_t_tvalid(int_axis_t_tvalid),
-    // .int_axis_t_tready(int_axis_t_tready),
-    .int_axis_t_tlast(int_axis_t_tlast),
-    // .int_axis_d_tvalid(int_axis_d_tvalid),
-    .int_axis_d_tready(int_axis_d_tready),
-    // .int_axis_r_tvalid(int_axis_r_tvalid),
-    .int_axis_r_tready(int_axis_r_tready),
-    // .int_axis_b_tvalid(int_axis_b_tvalid),
-    .int_axis_b_tready(int_axis_b_tready),
-    .store_l(store_l),
-    .store_t(store_t),
-    .store_u(store_u),
-    .forward_l(forward_l),
-    .forward_t(forward_t),
-    .forward_u(forward_u),
-    .drop_l(drop_l), 
-    .drop_t(drop_t),
-    .drop_u(drop_u),
-    .export_rslt(export_rslt),
-    .export_rslt_last(export_rslt_last),
-    .op_start(op_start),
-    .bypass_adder(bypass_adder),
-    .acc_res(acc_res),
-    .err_unalligned_data(err_unalligned_data)
+    .clk                    (clk),
+    .rst                    (rst),
+    .int_axis_u_tvalid      (int_axis_u_tvalid),
+    .int_axis_u_tlast       (int_axis_u_tlast),
+    .int_axis_l_tvalid      (int_axis_l_tvalid),
+    .int_axis_l_tlast       (int_axis_l_tlast),
+    .int_axis_t_tvalid      (int_axis_t_tvalid),
+    .int_axis_t_tlast       (int_axis_t_tlast),
+    .int_axis_d_tready      (int_axis_d_tready),
+    .int_axis_r_tready      (int_axis_r_tready),
+    .int_axis_b_tready      (int_axis_b_tready),
+    .store_l                (store_l),
+    .store_t                (store_t),
+    .store_u                (store_u),
+    .forward_l              (forward_l),
+    .forward_t              (forward_t),
+    .forward_u              (forward_u),
+    .drop_l                 (drop_l), 
+    .drop_t                 (drop_t),
+    .drop_u                 (drop_u),
+    .export_rslt            (export_rslt),
+    .export_rslt_last       (export_rslt_last),
+    .op_start               (op_start),
+    .bypass_adder           (bypass_adder),
+    .acc_res                (acc_res),
+    .err_unalligned_data    (err_unalligned_data)
   );
 
   generate
@@ -237,21 +231,20 @@ module ParallelizedLinearProcessingElement #(
         // 0 to bypass, 1 for simple buffer, 2 for skid buffer
         .REG_TYPE(2)
       ) axis_register_u_inst (
-        .clk(clk),
-        .rst(rst),
-        .s_axis_tdata(s_axis_u_tdata),
-        .s_axis_tkeep(1'b1),
-        .s_axis_tvalid(s_axis_u_tvalid & store_u),
-        .s_axis_tready(s_axis_u_tready_int),
-        // .s_axis_tready(s_axis_u_tready),
-        .s_axis_tlast(s_axis_u_tlast),
-        .s_axis_tid(1'b0),
-        .s_axis_tdest(1'b0),
-        .s_axis_tuser(1'b0),
-        .m_axis_tdata(int_axis_u_tdata),
-        .m_axis_tvalid(int_axis_u_tvalid),
-        .m_axis_tready(int_axis_u_tready),
-        .m_axis_tlast(int_axis_u_tlast)
+        .clk              (clk),
+        .rst              (rst),
+        .s_axis_tdata     (s_axis_u_tdata),
+        .s_axis_tkeep     (1'b1),
+        .s_axis_tvalid    (s_axis_u_tvalid & store_u),
+        .s_axis_tready    (s_axis_u_tready_int),
+        .s_axis_tlast     (s_axis_u_tlast),
+        .s_axis_tid       (1'b0),
+        .s_axis_tdest     (1'b0),
+        .s_axis_tuser     (1'b0),
+        .m_axis_tdata     (int_axis_u_tdata),
+        .m_axis_tvalid    (int_axis_u_tvalid),
+        .m_axis_tready    (int_axis_u_tready),
+        .m_axis_tlast     (int_axis_u_tlast)
       );
     end
   endgenerate
@@ -282,20 +275,20 @@ module ParallelizedLinearProcessingElement #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(0)
   ) axis_register_d_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(int_axis_d_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(int_axis_d_tvalid),
-    .s_axis_tready(int_axis_d_tready),
-    .s_axis_tlast(int_axis_d_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(m_axis_d_tdata),
-    .m_axis_tvalid(m_axis_d_tvalid),
-    .m_axis_tready(m_axis_d_tready),
-    .m_axis_tlast(m_axis_d_tlast)
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (int_axis_d_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (int_axis_d_tvalid),
+    .s_axis_tready    (int_axis_d_tready),
+    .s_axis_tlast     (int_axis_d_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (m_axis_d_tdata),
+    .m_axis_tvalid    (m_axis_d_tvalid),
+    .m_axis_tready    (m_axis_d_tready),
+    .m_axis_tlast     (m_axis_d_tlast)
   );
 
   // Left AXI-Stream Skid Buffer
@@ -326,20 +319,20 @@ module ParallelizedLinearProcessingElement #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(2)
   ) axis_register_l_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(s_axis_l_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(s_axis_l_tvalid & store_l),
-    .s_axis_tready(s_axis_l_tready_int),
-    .s_axis_tlast(s_axis_l_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(int_axis_l_tdata),
-    .m_axis_tvalid(int_axis_l_tvalid),
-    .m_axis_tready(int_axis_l_tready),
-    .m_axis_tlast(int_axis_l_tlast)
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (s_axis_l_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (s_axis_l_tvalid & store_l),
+    .s_axis_tready    (s_axis_l_tready_int),
+    .s_axis_tlast     (s_axis_l_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (int_axis_l_tdata),
+    .m_axis_tvalid    (int_axis_l_tvalid),
+    .m_axis_tready    (int_axis_l_tready),
+    .m_axis_tlast     (int_axis_l_tlast)
   );
 
   // Right AXI-Stream Skid Buffer
@@ -368,20 +361,20 @@ module ParallelizedLinearProcessingElement #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(0)
   ) axis_register_r_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(int_axis_r_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(int_axis_r_tvalid),
-    .s_axis_tready(int_axis_r_tready),
-    .s_axis_tlast(int_axis_r_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(m_axis_r_tdata),
-    .m_axis_tvalid(m_axis_r_tvalid),
-    .m_axis_tready(m_axis_r_tready),
-    .m_axis_tlast(m_axis_r_tlast)
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (int_axis_r_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (int_axis_r_tvalid),
+    .s_axis_tready    (int_axis_r_tready),
+    .s_axis_tlast     (int_axis_r_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (m_axis_r_tdata),
+    .m_axis_tvalid    (m_axis_r_tvalid),
+    .m_axis_tready    (m_axis_r_tready),
+    .m_axis_tlast     (m_axis_r_tlast)
   );
 
   // Top AXI-Stream Skid Buffer
@@ -412,20 +405,20 @@ module ParallelizedLinearProcessingElement #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(2)
   ) axis_register_t_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(s_axis_t_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(s_axis_t_tvalid & store_t),
-    .s_axis_tready(s_axis_t_tready_int),
-    .s_axis_tlast(s_axis_t_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(int_axis_t_tdata),
-    .m_axis_tvalid(int_axis_t_tvalid),
-    .m_axis_tready(int_axis_t_tready),
-    .m_axis_tlast(int_axis_t_tlast)
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (s_axis_t_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (s_axis_t_tvalid & store_t),
+    .s_axis_tready    (s_axis_t_tready_int),
+    .s_axis_tlast     (s_axis_t_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (int_axis_t_tdata),
+    .m_axis_tvalid    (int_axis_t_tvalid),
+    .m_axis_tready    (int_axis_t_tready),
+    .m_axis_tlast     (int_axis_t_tlast)
   );
 
   // Bottom AXI-Stream Skid Buffer
@@ -454,20 +447,20 @@ module ParallelizedLinearProcessingElement #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(0)
   ) axis_register_b_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(int_axis_b_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(int_axis_b_tvalid),
-    .s_axis_tready(int_axis_b_tready),
-    .s_axis_tlast(int_axis_b_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(m_axis_b_tdata),
-    .m_axis_tvalid(m_axis_b_tvalid),
-    .m_axis_tready(m_axis_b_tready),
-    .m_axis_tlast(m_axis_b_tlast)
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (int_axis_b_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (int_axis_b_tvalid),
+    .s_axis_tready    (int_axis_b_tready),
+    .s_axis_tlast     (int_axis_b_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (m_axis_b_tdata),
+    .m_axis_tvalid    (m_axis_b_tvalid),
+    .m_axis_tready    (m_axis_b_tready),
+    .m_axis_tlast     (m_axis_b_tlast)
   );
 
   always @(posedge clk ) begin

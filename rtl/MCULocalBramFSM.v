@@ -229,20 +229,20 @@ module MCULocalBramFSM #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(2)
   ) out_axis_register_inst (
-    .clk(clk),
-    .rst(rst || (loc_fsm_state == LOC_FSM_ERR)),
-    .s_axis_tdata(loc_in_axis_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(loc_in_axis_tvalid),
-    .s_axis_tready(loc_in_axis_tready),
-    .s_axis_tlast(loc_in_axis_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(loc_out_axis_tdata),
-    .m_axis_tvalid(loc_out_axis_tvalid),
-    .m_axis_tready(loc_out_axis_tready),
-    .m_axis_tlast(loc_out_axis_tlast)
+    .clk              (clk),
+    .rst              (rst || (loc_fsm_state == LOC_FSM_ERR)),
+    .s_axis_tdata     (loc_in_axis_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (loc_in_axis_tvalid),
+    .s_axis_tready    (loc_in_axis_tready),
+    .s_axis_tlast     (loc_in_axis_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (loc_out_axis_tdata),
+    .m_axis_tvalid    (loc_out_axis_tvalid),
+    .m_axis_tready    (loc_out_axis_tready),
+    .m_axis_tlast     (loc_out_axis_tlast)
   );
 
   // Intra-Iteration Counter

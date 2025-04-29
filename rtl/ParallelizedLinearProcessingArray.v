@@ -62,13 +62,13 @@ module ParallelizedLinearProcessingArray #(
   // Output Thread ID 
   parameter OUTPUT_ID = 0
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                                                 clk,
+  input  wire                                                 rst,
 
   /*
    * AXI Stream Top Input -- Weight Input
    */
-  input  wire [PE_NUMBER_I*PE_NUMBER_J*OP1_WIDTH-1:0]    s_axis_t_tdata,
+  input  wire [PE_NUMBER_I*PE_NUMBER_J*OP1_WIDTH-1:0]         s_axis_t_tdata,
   input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tvalid,
   output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tready,
   input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   s_axis_t_tlast,
@@ -76,48 +76,37 @@ module ParallelizedLinearProcessingArray #(
   input  wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        s_axis_t_tdest,
   input  wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        s_axis_t_tuser,
 
-  // /*
-  //  * AXI Stream Bottom Output -- Weights are dropped
-  //  */
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*RSLT_WIDTH-1:0]   m_axis_b_tdata,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tvalid,
-  // input  wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tready,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J-1:0]                   m_axis_b_tlast,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*ID_WIDTH-1:0]          m_axis_b_tid,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*DEST_WIDTH-1:0]        m_axis_b_tdest,
-  // output wire [PE_NUMBER_I*PE_NUMBER_J*USER_WIDTH-1:0]        m_axis_b_tuser,
-
   /*
    * AXI Stream Left Input -- Data Input
    */
-  input  wire [PE_NUMBER_J*BATCH_SIZE*OP0_WIDTH-1:0]    s_axis_l_tdata,
-  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tvalid,
-  output wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tready,
-  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                   s_axis_l_tlast,
-  input  wire [PE_NUMBER_J*BATCH_SIZE*ID_WIDTH-1:0]          s_axis_l_tid,
-  input  wire [PE_NUMBER_J*BATCH_SIZE*DEST_WIDTH-1:0]        s_axis_l_tdest,
-  input  wire [PE_NUMBER_J*BATCH_SIZE*USER_WIDTH-1:0]        s_axis_l_tuser,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*OP0_WIDTH-1:0]          s_axis_l_tdata,
+  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                    s_axis_l_tvalid,
+  output wire [PE_NUMBER_J*BATCH_SIZE-1:0]                    s_axis_l_tready,
+  input  wire [PE_NUMBER_J*BATCH_SIZE-1:0]                    s_axis_l_tlast,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*ID_WIDTH-1:0]           s_axis_l_tid,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*DEST_WIDTH-1:0]         s_axis_l_tdest,
+  input  wire [PE_NUMBER_J*BATCH_SIZE*USER_WIDTH-1:0]         s_axis_l_tuser,
 
   /*
    * AXI Stream Down Output -- Partial Sum Output
    */
-  output wire [PE_NUMBER_I*BATCH_SIZE*RSLT_WIDTH-1:0]   m_axis_d_tdata,
-  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tvalid,
-  input  wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tready,
-  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                   m_axis_d_tlast,
-  output wire [PE_NUMBER_I*BATCH_SIZE*ID_WIDTH-1:0]          m_axis_d_tid,
-  output wire [PE_NUMBER_I*BATCH_SIZE*DEST_WIDTH-1:0]        m_axis_d_tdest,
-  output wire [PE_NUMBER_I*BATCH_SIZE*USER_WIDTH-1:0]        m_axis_d_tuser,
+  output wire [PE_NUMBER_I*BATCH_SIZE*RSLT_WIDTH-1:0]         m_axis_d_tdata,
+  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                    m_axis_d_tvalid,
+  input  wire [PE_NUMBER_I*BATCH_SIZE-1:0]                    m_axis_d_tready,
+  output wire [PE_NUMBER_I*BATCH_SIZE-1:0]                    m_axis_d_tlast,
+  output wire [PE_NUMBER_I*BATCH_SIZE*ID_WIDTH-1:0]           m_axis_d_tid,
+  output wire [PE_NUMBER_I*BATCH_SIZE*DEST_WIDTH-1:0]         m_axis_d_tdest,
+  output wire [PE_NUMBER_I*BATCH_SIZE*USER_WIDTH-1:0]         m_axis_d_tuser,
 
   /*
    * Error Outputs
    */
-  output wire err_unalligned_data,
+  output wire                                                 err_unalligned_data,
 
   /*
    * Interrupts
    */
-  output wire core_rst
+  output wire                                                 core_rst
 );
   // Global Local Parameters
   localparam MLT_OP_SIZE     = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;

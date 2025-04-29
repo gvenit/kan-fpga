@@ -39,24 +39,24 @@ module SubMult #(
   // tuser signal width
   parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1
 ) (
-  input wire clk,
-  input wire rst,
+  input wire                        clk,
+  input wire                        rst,
 
   /*
     * AXI Stream Data input
     */
-  input  wire [DATA_WIDTH-1:0]  s_axis_data_tdata,
-  input  wire                   s_axis_data_tvalid,
-  output wire                   s_axis_data_tready,
-  input  wire                   s_axis_data_tlast,
-  input  wire [ID_WIDTH-1:0]    s_axis_data_tid,
-  input  wire [DEST_WIDTH-1:0]  s_axis_data_tdest,
-  input  wire [USER_WIDTH-1:0]  s_axis_data_tuser,
+  input  wire [DATA_WIDTH-1:0]      s_axis_data_tdata,
+  input  wire                       s_axis_data_tvalid,
+  output wire                       s_axis_data_tready,
+  input  wire                       s_axis_data_tlast,
+  input  wire [ID_WIDTH-1:0]        s_axis_data_tid,
+  input  wire [DEST_WIDTH-1:0]      s_axis_data_tdest,
+  input  wire [USER_WIDTH-1:0]      s_axis_data_tuser,
 
   /*
     * AXI Stream Grid input
     */
-  input  wire [DATA_WIDTH-1:0] s_axis_grid_tdata,
+  input  wire [DATA_WIDTH-1:0]      s_axis_grid_tdata,
   input  wire                       s_axis_grid_tvalid,
   output wire                       s_axis_grid_tready,
   input  wire                       s_axis_grid_tlast,
@@ -67,18 +67,18 @@ module SubMult #(
   /*
     * AXI Stream Scale input
     */
-  input  wire [SCALE_WIDTH-1:0]  s_axis_scle_tdata,
-  input  wire                         s_axis_scle_tvalid,
-  output wire                         s_axis_scle_tready,
-  input  wire                         s_axis_scle_tlast,
-  input  wire [ID_WIDTH-1:0]          s_axis_scle_tid,
-  input  wire [DEST_WIDTH-1:0]        s_axis_scle_tdest,
-  input  wire [USER_WIDTH-1:0]        s_axis_scle_tuser,
+  input  wire [SCALE_WIDTH-1:0]     s_axis_scle_tdata,
+  input  wire                       s_axis_scle_tvalid,
+  output wire                       s_axis_scle_tready,
+  input  wire                       s_axis_scle_tlast,
+  input  wire [ID_WIDTH-1:0]        s_axis_scle_tid,
+  input  wire [DEST_WIDTH-1:0]      s_axis_scle_tdest,
+  input  wire [USER_WIDTH-1:0]      s_axis_scle_tuser,
 
   /*
     * AXI Stream output
     */
-  output wire [RSLT_WIDTH-1:0] m_axis_data_tdata,
+  output wire [RSLT_WIDTH-1:0]      m_axis_data_tdata,
   output wire [KEEP_WIDTH-1:0]      m_axis_data_tkeep,
   output wire                       m_axis_data_tvalid,
   input  wire                       m_axis_data_tready,
@@ -86,10 +86,6 @@ module SubMult #(
   output wire [ID_WIDTH-1:0]        m_axis_data_tid,
   output wire [DEST_WIDTH-1:0]      m_axis_data_tdest,
   output wire [USER_WIDTH-1:0]      m_axis_data_tuser
-
-  // // Error Signals
-  // output                  err_unalligned_data,
-  // output                  err_unalligned_scale
 );
   // Local Parameters
   localparam OP_SIZE  = (RSLT_WIDTH > DATA_WIDTH + SCALE_WIDTH) ? RSLT_WIDTH : DATA_WIDTH + SCALE_WIDTH;

@@ -19,30 +19,28 @@
   parameter CTRL_REG_RSLT_LEN = 12,
   // Control Register : packet length -- 4B -- Equals (data_len / data_banks) * (grid_len / grid_banks)
   parameter CTRL_REG_PCKT_LEN = 16,
+  // Control Register : batch length -- 1B
+  parameter CTRL_REG_BTCH_LEN = 20,
 
   // Control Data Transfer signals -- Nulled from PL at the end of the operation -- READ-WRITE
   // Control Register : data loaded -- 1B
-  parameter CTRL_REG_DATA_LDR = 20,
+  parameter CTRL_REG_DATA_LDR = 21,
   // Control Register : grid loaded -- 1B
-  parameter CTRL_REG_GRID_LDR = 21,
+  parameter CTRL_REG_GRID_LDR = 22,
   // Control Register : scale loaded -- 1B
-  parameter CTRL_REG_SCLE_LDR = 22,
+  parameter CTRL_REG_SCLE_LDR = 23,
   // Control Register : weights loaded -- 1B
-  parameter CTRL_REG_WGHT_LDR = 23,
+  parameter CTRL_REG_WGHT_LDR = 24,
   
   // Control Operation signals -- Nulled from PL at the start of the operation -- READ-WRITE
   // Control Register : operation start -- 1B
-  parameter CTRL_REG_OPER_STR = 24,
+  parameter CTRL_REG_OPER_STR = 25,
 
   // Interrupt signals  -- Updated from PS when the status changes -- WRITE-ONLY
   // Control Register : interrupt register -- 1B
-  parameter CTRL_REG_INTR_REG = 25,
+  parameter CTRL_REG_INTR_REG = 26,
 
   // PL to PS
-  // Control Data Transfer signals -- Nulled from PS at the end of the transaction -- READ-WRITE 
-  // Control Register : results loaded -- 1B -- locked core until last result is transmitted and flag is nulled from PS
-  parameter CTRL_REG_RSLT_LDR = 26,
-
   // Control Operation Status signals -- Updated from PL when the status changes-- READ-ONLY
   // Control Register : operation status -- 1B
   parameter CTRL_REG_OPER_STS = 27,
@@ -59,7 +57,7 @@
   // Control Register : iteration latency -- 4B
   parameter CTRL_REG_OPER_LAT = 48,
 
-  // Control Operation Status signals -- Nulled from PS at the end of the transaction-- READ-WRITE
+  // Control Data Transfer/Operation Status signals -- Nulled from PS at the end of the transaction -- READ-WRITE
   // Control Register : operation done -- 1B -- locked core in idle state awaiting nulling or soft/hard reset
   parameter CTRL_REG_OPER_DNE = 52,
 

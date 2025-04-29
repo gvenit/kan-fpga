@@ -26,20 +26,20 @@ genvar i;
 generate
   for (i = 0; i < BANKS; i = i + 1) begin
     Bram #(
-      .WIDTH(WIDTH),
-      .DEPTH(DEPTH),
-      .ADDR(ADDR)
+      .WIDTH    (WIDTH),
+      .DEPTH    (DEPTH),
+      .ADDR     (ADDR)
     ) bram_inst (
-      .clk(clk),
-      .ena(ena[i]),
-      .wea(wea[i*WE +: WE]),
-      .addra(addra[i*ADDR +: ADDR]),
-      .dina(dina[i*WIDTH +: WIDTH]),
-      .douta(douta[i*WIDTH +: WIDTH]),
-      .enb(enb[i]),
-      .addrb(addrb[i*ADDR +: ADDR]),
-      .doutb(doutb[i*WIDTH +: WIDTH]),
-      .validb(validb[i])
+      .clk      (clk),
+      .ena      (ena[i]),
+      .wea      (wea[i*WE +: WE]),
+      .addra    (addra[i*ADDR +: ADDR]),
+      .dina     (dina[i*WIDTH +: WIDTH]),
+      .douta    (douta[i*WIDTH +: WIDTH]),
+      .enb      (enb[i]),
+      .addrb    (addrb[i*ADDR +: ADDR]),
+      .doutb    (doutb[i*WIDTH +: WIDTH]),
+      .validb   (validb[i])
     );
   end
 endgenerate

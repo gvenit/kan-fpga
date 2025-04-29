@@ -29,62 +29,62 @@ module ParallelizedLPEControlUnit #(
     // Position of current PE in the j axis
     parameter PE_POSITION_J = 0
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                       clk,
+  input  wire                       rst,
 
   /*
    * AXI Stream Up input
    */
-  input  wire                         int_axis_u_tvalid,
-  input  wire                         int_axis_u_tlast,
+  input  wire                       int_axis_u_tvalid,
+  input  wire                       int_axis_u_tlast,
 
   /*
    * AXI Stream Down Output
    */
-  input  wire                         int_axis_d_tready,
+  input  wire                       int_axis_d_tready,
 
   /*
    * AXI Stream Left input
    */
-  input  wire                         int_axis_l_tvalid,
-  input  wire                         int_axis_l_tlast,
+  input  wire                       int_axis_l_tvalid,
+  input  wire                       int_axis_l_tlast,
 
   /*
    * AXI Stream Right Output
    */
-  input  wire                         int_axis_r_tready,
+  input  wire                       int_axis_r_tready,
   
   /*
    * AXI Stream Top Output
    */
-  input  wire                         int_axis_t_tvalid,
-  input  wire                         int_axis_t_tlast,
+  input  wire                       int_axis_t_tvalid,
+  input  wire                       int_axis_t_tlast,
 
   /*
    * AXI Stream Bottom Output
    */
-  input  wire                         int_axis_b_tready,
+  input  wire                       int_axis_b_tready,
 
-  output wire                         store_l,
-  output wire                         store_t,
-  output wire                         store_u,
-  output wire                         forward_l,
-  output wire                         forward_t,
-  output wire                         forward_u,
-  output wire                         drop_l,
-  output wire                         drop_t,
-  output wire                         drop_u,
-  output wire                         export_rslt,
-  output wire                         export_rslt_last,
+  output wire                       store_l,
+  output wire                       store_t,
+  output wire                       store_u,
+  output wire                       forward_l,
+  output wire                       forward_t,
+  output wire                       forward_u,
+  output wire                       drop_l,
+  output wire                       drop_t,
+  output wire                       drop_u,
+  output wire                       export_rslt,
+  output wire                       export_rslt_last,
 
-  output wire                         op_start,
-  output wire                         bypass_adder,
-  output wire                         acc_res,
+  output wire                       op_start,
+  output wire                       bypass_adder,
+  output wire                       acc_res,
 
   /*
    * Error Outputs
    */
-  output wire err_unalligned_data
+  output wire                       err_unalligned_data
 );
   // FSM States
   localparam FSM_STATE_WIDTH = 3;

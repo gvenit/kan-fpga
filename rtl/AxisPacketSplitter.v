@@ -224,24 +224,24 @@ module AxisPacketSplitter #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(2)
   ) in_axis_register_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(s_axis_tdata),
-    .s_axis_tkeep(s_axis_tkeep),
-    .s_axis_tvalid(s_axis_tvalid_int),
-    .s_axis_tready(s_axis_tready_int),
-    .s_axis_tlast(s_axis_tlast_int),
-    .s_axis_tid(s_axis_tid),
-    .s_axis_tdest(s_axis_tdest),
-    .s_axis_tuser(s_axis_tuser),
-    .m_axis_tdata(m_axis_tdata),
-    .m_axis_tkeep(m_axis_tkeep),
-    .m_axis_tvalid(m_axis_tvalid),
-    .m_axis_tready(m_axis_tready),
-    .m_axis_tlast(m_axis_tlast),
-    .m_axis_tid(m_axis_tid),
-    .m_axis_tdest(m_axis_tdest),
-    .m_axis_tuser(m_axis_tuser)
+    .clk                  (clk),
+    .rst                  (rst),
+    .s_axis_tdata         (s_axis_tdata),
+    .s_axis_tkeep         (s_axis_tkeep),
+    .s_axis_tvalid        (s_axis_tvalid_int),
+    .s_axis_tready        (s_axis_tready_int),
+    .s_axis_tlast         (s_axis_tlast_int),
+    .s_axis_tid           (s_axis_tid),
+    .s_axis_tdest         (s_axis_tdest),
+    .s_axis_tuser         (s_axis_tuser),
+    .m_axis_tdata         (m_axis_tdata),
+    .m_axis_tkeep         (m_axis_tkeep),
+    .m_axis_tvalid        (m_axis_tvalid),
+    .m_axis_tready        (m_axis_tready),
+    .m_axis_tlast         (m_axis_tlast),
+    .m_axis_tid           (m_axis_tid),
+    .m_axis_tdest         (m_axis_tdest),
+    .m_axis_tuser         (m_axis_tuser)
   );
 
   // Transmission flag

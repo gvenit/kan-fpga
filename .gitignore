@@ -9,6 +9,8 @@ data/
 vcd/
 
 rtl/DummyBRAM.v
+rtl/wrapper/KanLayerInstWrapper*.v
+rtl/*tmp*
 
 py/*
 !py/*_simgen.py

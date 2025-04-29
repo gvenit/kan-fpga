@@ -48,7 +48,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Left Input
    */
-  input  wire [OP0_WIDTH-1:0]    s_axis_l_tdata,
+  input  wire [OP0_WIDTH-1:0]         s_axis_l_tdata,
   input  wire                         s_axis_l_tvalid,
   output wire                         s_axis_l_tready,
   input  wire                         s_axis_l_tlast,
@@ -56,7 +56,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Right Output
    */
-  output wire [OP0_WIDTH-1:0]    m_axis_r_tdata,
+  output wire [OP0_WIDTH-1:0]         m_axis_r_tdata,
   output wire                         m_axis_r_tvalid,
   input  wire                         m_axis_r_tready,
   output wire                         m_axis_r_tlast,
@@ -64,7 +64,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Top Input
    */
-  input  wire [OP1_WIDTH-1:0]    s_axis_t_tdata,
+  input  wire [OP1_WIDTH-1:0]         s_axis_t_tdata,
   input  wire                         s_axis_t_tvalid,
   output wire                         s_axis_t_tready,
   input  wire                         s_axis_t_tlast,
@@ -72,7 +72,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Bottom Output
    */
-  output wire [OP1_WIDTH-1:0]    m_axis_b_tdata,
+  output wire [OP1_WIDTH-1:0]         m_axis_b_tdata,
   output wire                         m_axis_b_tvalid,
   input  wire                         m_axis_b_tready,
   output wire                         m_axis_b_tlast,
@@ -80,7 +80,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Up Input
    */
-  input  wire [PSUM_WIDTH-1:0]   s_axis_u_tdata,
+  input  wire [PSUM_WIDTH-1:0]        s_axis_u_tdata,
   input  wire                         s_axis_u_tvalid,
   output wire                         s_axis_u_tready,
   input  wire                         s_axis_u_tlast,
@@ -88,7 +88,7 @@ module ParallelizedLPEWrapper #(
   /*
    * AXI Stream Down Output
    */
-  output wire [PSUM_WIDTH-1:0]   m_axis_d_tdata,
+  output wire [PSUM_WIDTH-1:0]        m_axis_d_tdata,
   output wire                         m_axis_d_tvalid,
   input  wire                         m_axis_d_tready,
   output wire                         m_axis_d_tlast,
@@ -122,33 +122,33 @@ module ParallelizedLPEWrapper #(
     // Data Width of Output Data (D-AXIS)
     .PSUM_WIDTH(PSUM_WIDTH)
   ) parallelized_lpe_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_u_tdata(s_axis_u_tdata),
-    .s_axis_u_tvalid(s_axis_u_tvalid),
-    .s_axis_u_tready(s_axis_u_tready),
-    .s_axis_u_tlast(s_axis_u_tlast),
-    .m_axis_d_tdata(m_axis_d_tdata),
-    .m_axis_d_tvalid(m_axis_d_tvalid),
-    .m_axis_d_tready(m_axis_d_tready),
-    .m_axis_d_tlast(m_axis_d_tlast),
-    .s_axis_l_tdata(s_axis_l_tdata),
-    .s_axis_l_tvalid(s_axis_l_tvalid),
-    .s_axis_l_tready(s_axis_l_tready),
-    .s_axis_l_tlast(s_axis_l_tlast),
-    .m_axis_r_tdata(m_axis_r_tdata),
-    .m_axis_r_tvalid(m_axis_r_tvalid),
-    .m_axis_r_tready(m_axis_r_tready),
-    .m_axis_r_tlast(m_axis_r_tlast),
-    .s_axis_t_tdata(s_axis_t_tdata),
-    .s_axis_t_tvalid(s_axis_t_tvalid),
-    .s_axis_t_tready(s_axis_t_tready),
-    .s_axis_t_tlast(s_axis_t_tlast),
-    .m_axis_b_tdata(m_axis_b_tdata),
-    .m_axis_b_tvalid(m_axis_b_tvalid),
-    .m_axis_b_tready(m_axis_b_tready),
-    .m_axis_b_tlast(m_axis_b_tlast),
-    .err_unalligned_data(err_unalligned_data)
+    .clk                    (clk),
+    .rst                    (rst),
+    .s_axis_u_tdata         (s_axis_u_tdata),
+    .s_axis_u_tvalid        (s_axis_u_tvalid),
+    .s_axis_u_tready        (s_axis_u_tready),
+    .s_axis_u_tlast         (s_axis_u_tlast),
+    .m_axis_d_tdata         (m_axis_d_tdata),
+    .m_axis_d_tvalid        (m_axis_d_tvalid),
+    .m_axis_d_tready        (m_axis_d_tready),
+    .m_axis_d_tlast         (m_axis_d_tlast),
+    .s_axis_l_tdata         (s_axis_l_tdata),
+    .s_axis_l_tvalid        (s_axis_l_tvalid),
+    .s_axis_l_tready        (s_axis_l_tready),
+    .s_axis_l_tlast         (s_axis_l_tlast),
+    .m_axis_r_tdata         (m_axis_r_tdata),
+    .m_axis_r_tvalid        (m_axis_r_tvalid),
+    .m_axis_r_tready        (m_axis_r_tready),
+    .m_axis_r_tlast         (m_axis_r_tlast),
+    .s_axis_t_tdata         (s_axis_t_tdata),
+    .s_axis_t_tvalid        (s_axis_t_tvalid),
+    .s_axis_t_tready        (s_axis_t_tready),
+    .s_axis_t_tlast         (s_axis_t_tlast),
+    .m_axis_b_tdata         (m_axis_b_tdata),
+    .m_axis_b_tvalid        (m_axis_b_tvalid),
+    .m_axis_b_tready        (m_axis_b_tready),
+    .m_axis_b_tlast         (m_axis_b_tlast),
+    .err_unalligned_data    (err_unalligned_data)
   );
 
 endmodule

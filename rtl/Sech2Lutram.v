@@ -42,36 +42,32 @@ module Sech2Lutram #(
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt"
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                                 clk,
+  input  wire                                 rst,
 
   /*
    * AXI Stream Data input
    */
-  input  wire [CHANNELS*DATA_WIDTH-1:0] s_axis_0_tdata,
-  output wire [CHANNELS*DATA_KEEP_WIDTH-1:0] s_axis_0_tkeep,
-  input  wire [CHANNELS-1:0]                 s_axis_0_tlast,
-  input  wire [CHANNELS-1:0]                 s_axis_0_tvalid,
-  output wire [CHANNELS-1:0]                 s_axis_0_tready,
-  input  wire [CHANNELS*ID_WIDTH-1:0]        s_axis_0_tid,
-  input  wire [CHANNELS*DEST_WIDTH-1:0]      s_axis_0_tdest,
-  input  wire [CHANNELS*USER_WIDTH-1:0]      s_axis_0_tuser,
+  input  wire [CHANNELS*DATA_WIDTH-1:0]       s_axis_0_tdata,
+  output wire [CHANNELS*DATA_KEEP_WIDTH-1:0]  s_axis_0_tkeep,
+  input  wire [CHANNELS-1:0]                  s_axis_0_tlast,
+  input  wire [CHANNELS-1:0]                  s_axis_0_tvalid,
+  output wire [CHANNELS-1:0]                  s_axis_0_tready,
+  input  wire [CHANNELS*ID_WIDTH-1:0]         s_axis_0_tid,
+  input  wire [CHANNELS*DEST_WIDTH-1:0]       s_axis_0_tdest,
+  input  wire [CHANNELS*USER_WIDTH-1:0]       s_axis_0_tuser,
 
   /*
    * AXI Stream output
    */
-  output wire [CHANNELS*RSLT_WIDTH-1:0] m_axis_0_tdata,
-  output wire [CHANNELS*RSLT_KEEP_WIDTH-1:0] m_axis_0_tkeep,
-  output wire [CHANNELS-1:0]                 m_axis_0_tlast,
-  output wire [CHANNELS-1:0]                 m_axis_0_tvalid,
-  input  wire [CHANNELS-1:0]                 m_axis_0_tready,
-  output wire [CHANNELS*ID_WIDTH-1:0]        m_axis_0_tid,
-  output wire [CHANNELS*DEST_WIDTH-1:0]      m_axis_0_tdest,
-  output wire [CHANNELS*USER_WIDTH-1:0]      m_axis_0_tuser
-
-  // // Error Signals
-  // output wire                  err_unalligned_data,
-  // output wire                  err_unalligned_scale
+  output wire [CHANNELS*RSLT_WIDTH-1:0]       m_axis_0_tdata,
+  output wire [CHANNELS*RSLT_KEEP_WIDTH-1:0]  m_axis_0_tkeep,
+  output wire [CHANNELS-1:0]                  m_axis_0_tlast,
+  output wire [CHANNELS-1:0]                  m_axis_0_tvalid,
+  input  wire [CHANNELS-1:0]                  m_axis_0_tready,
+  output wire [CHANNELS*ID_WIDTH-1:0]         m_axis_0_tid,
+  output wire [CHANNELS*DEST_WIDTH-1:0]       m_axis_0_tdest,
+  output wire [CHANNELS*USER_WIDTH-1:0]       m_axis_0_tuser
 );
   // LUTRAM Configuration    
   reg [RSLT_WIDTH-1:0] LUTRAM_ARRAY [0:2**DATA_WIDTH-1];
@@ -87,7 +83,7 @@ module Sech2Lutram #(
   generate for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin      
     // Internal Registers & Wires
     // Data wires
-    wire [DATA_WIDTH-1:0]  stage_1_in_axis_0_tdata, stage_1_out_axis_0_tdata;
+    wire [DATA_WIDTH-1:0]       stage_1_in_axis_0_tdata, stage_1_out_axis_0_tdata;
     wire [DATA_KEEP_WIDTH-1:0]  stage_1_in_axis_0_tkeep, stage_1_out_axis_0_tkeep;
     wire                        stage_1_in_axis_0_tvalid, stage_1_out_axis_0_tvalid;
     wire                        stage_1_in_axis_0_tready, stage_1_out_axis_0_tready;
@@ -96,7 +92,7 @@ module Sech2Lutram #(
     wire [DEST_WIDTH-1:0]       stage_1_in_axis_0_tdest, stage_1_out_axis_0_tdest;
     wire [USER_WIDTH-1:0]       stage_1_in_axis_0_tuser, stage_1_out_axis_0_tuser;
 
-    wire [RSLT_WIDTH-1:0]  stage_2_in_axis_0_tdata, stage_2_out_axis_0_tdata;
+    wire [RSLT_WIDTH-1:0]       stage_2_in_axis_0_tdata, stage_2_out_axis_0_tdata;
     wire [RSLT_KEEP_WIDTH-1:0]  stage_2_in_axis_0_tkeep, stage_2_out_axis_0_tkeep;
     wire                        stage_2_in_axis_0_tvalid, stage_2_out_axis_0_tvalid;
     wire                        stage_2_in_axis_0_tready, stage_2_out_axis_0_tready;
@@ -138,24 +134,24 @@ module Sech2Lutram #(
       // tuser signal width
       .USER_WIDTH(USER_WIDTH)
     ) axis_register_data_inst (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_tdata(stage_1_in_axis_0_tdata),
-      .s_axis_tkeep(stage_1_in_axis_0_tkeep),
-      .s_axis_tvalid(stage_1_in_axis_0_tvalid),
-      .s_axis_tready(stage_1_in_axis_0_tready),
-      .s_axis_tlast(stage_1_in_axis_0_tlast),
-      .s_axis_tid(stage_1_in_axis_0_tid),
-      .s_axis_tdest(stage_1_in_axis_0_tdest),
-      .s_axis_tuser(stage_1_in_axis_0_tuser),
-      .m_axis_tdata(stage_1_out_axis_0_tdata),
-      .m_axis_tkeep(stage_1_out_axis_0_tkeep),
-      .m_axis_tvalid(stage_1_out_axis_0_tvalid),
-      .m_axis_tready(stage_1_out_axis_0_tready),
-      .m_axis_tlast(stage_1_out_axis_0_tlast),
-      .m_axis_tid(stage_1_out_axis_0_tid),
-      .m_axis_tdest(stage_1_out_axis_0_tdest),
-      .m_axis_tuser(stage_1_out_axis_0_tuser)
+      .clk              (clk),
+      .rst              (rst),
+      .s_axis_tdata     (stage_1_in_axis_0_tdata),
+      .s_axis_tkeep     (stage_1_in_axis_0_tkeep),
+      .s_axis_tvalid    (stage_1_in_axis_0_tvalid),
+      .s_axis_tready    (stage_1_in_axis_0_tready),
+      .s_axis_tlast     (stage_1_in_axis_0_tlast),
+      .s_axis_tid       (stage_1_in_axis_0_tid),
+      .s_axis_tdest     (stage_1_in_axis_0_tdest),
+      .s_axis_tuser     (stage_1_in_axis_0_tuser),
+      .m_axis_tdata     (stage_1_out_axis_0_tdata),
+      .m_axis_tkeep     (stage_1_out_axis_0_tkeep),
+      .m_axis_tvalid    (stage_1_out_axis_0_tvalid),
+      .m_axis_tready    (stage_1_out_axis_0_tready),
+      .m_axis_tlast     (stage_1_out_axis_0_tlast),
+      .m_axis_tid       (stage_1_out_axis_0_tid),
+      .m_axis_tdest     (stage_1_out_axis_0_tdest),
+      .m_axis_tuser     (stage_1_out_axis_0_tuser)
     );
 
     // Stage 2 Input
@@ -194,35 +190,35 @@ module Sech2Lutram #(
       // 0 to bypass, 1 for simple buffer, 2 for skid buffer
       .REG_TYPE(2)
     ) axis_register_output_inst (
-      .clk(clk),
-      .rst(rst),
-      .s_axis_tdata(stage_2_in_axis_0_tdata),
-      .s_axis_tkeep(stage_2_in_axis_0_tkeep),
-      .s_axis_tvalid(stage_2_in_axis_0_tvalid),
-      .s_axis_tready(stage_2_in_axis_0_tready),
-      .s_axis_tlast(stage_2_in_axis_0_tlast),
-      .s_axis_tid(stage_2_in_axis_0_tid),
-      .s_axis_tdest(stage_2_in_axis_0_tdest),
-      .s_axis_tuser(stage_2_in_axis_0_tuser),
-      .m_axis_tdata(stage_2_out_axis_0_tdata),
-      .m_axis_tkeep(stage_2_out_axis_0_tkeep),
-      .m_axis_tvalid(stage_2_out_axis_0_tvalid),
-      .m_axis_tready(stage_2_out_axis_0_tready),
-      .m_axis_tlast(stage_2_out_axis_0_tlast),
-      .m_axis_tid(stage_2_out_axis_0_tid),
-      .m_axis_tdest(stage_2_out_axis_0_tdest),
-      .m_axis_tuser(stage_2_out_axis_0_tuser)
+      .clk              (clk),
+      .rst              (rst),
+      .s_axis_tdata     (stage_2_in_axis_0_tdata),
+      .s_axis_tkeep     (stage_2_in_axis_0_tkeep),
+      .s_axis_tvalid    (stage_2_in_axis_0_tvalid),
+      .s_axis_tready    (stage_2_in_axis_0_tready),
+      .s_axis_tlast     (stage_2_in_axis_0_tlast),
+      .s_axis_tid       (stage_2_in_axis_0_tid),
+      .s_axis_tdest     (stage_2_in_axis_0_tdest),
+      .s_axis_tuser     (stage_2_in_axis_0_tuser),
+      .m_axis_tdata     (stage_2_out_axis_0_tdata),
+      .m_axis_tkeep     (stage_2_out_axis_0_tkeep),
+      .m_axis_tvalid    (stage_2_out_axis_0_tvalid),
+      .m_axis_tready    (stage_2_out_axis_0_tready),
+      .m_axis_tlast     (stage_2_out_axis_0_tlast),
+      .m_axis_tid       (stage_2_out_axis_0_tid),
+      .m_axis_tdest     (stage_2_out_axis_0_tdest),
+      .m_axis_tuser     (stage_2_out_axis_0_tuser)
     );
 
     // Output Control Logic
-    assign m_axis_0_tdata[(CHN+1)*DATA_WIDTH -1: CHN*DATA_WIDTH] = stage_2_out_axis_0_tdata ;
-    assign m_axis_0_tkeep[(CHN+1)*DATA_KEEP_WIDTH -1: CHN*DATA_KEEP_WIDTH] = stage_2_out_axis_0_tkeep ;
-    assign m_axis_0_tvalid[CHN]                                            = stage_2_out_axis_0_tvalid;
-    assign stage_2_out_axis_0_tready                                       = m_axis_0_tready[CHN]     ;
-    assign m_axis_0_tlast[CHN]                                             = stage_2_out_axis_0_tlast ;
-    assign m_axis_0_tid  [(CHN+1)*ID_WIDTH -1: CHN*ID_WIDTH]               = stage_2_out_axis_0_tid   ;
-    assign m_axis_0_tdest[(CHN+1)*DEST_WIDTH -1: CHN*DEST_WIDTH]           = stage_2_out_axis_0_tdest ;
-    assign m_axis_0_tuser[(CHN+1)*USER_WIDTH -1: CHN*USER_WIDTH]           = stage_2_out_axis_0_tuser ;
+    assign m_axis_0_tdata[(CHN+1)*DATA_WIDTH -1: CHN*DATA_WIDTH]            = stage_2_out_axis_0_tdata ;
+    assign m_axis_0_tkeep[(CHN+1)*DATA_KEEP_WIDTH -1: CHN*DATA_KEEP_WIDTH]  = stage_2_out_axis_0_tkeep ;
+    assign m_axis_0_tvalid[CHN]                                             = stage_2_out_axis_0_tvalid;
+    assign stage_2_out_axis_0_tready                                        = m_axis_0_tready[CHN]     ;
+    assign m_axis_0_tlast[CHN]                                              = stage_2_out_axis_0_tlast ;
+    assign m_axis_0_tid  [(CHN+1)*ID_WIDTH -1: CHN*ID_WIDTH]                = stage_2_out_axis_0_tid   ;
+    assign m_axis_0_tdest[(CHN+1)*DEST_WIDTH -1: CHN*DEST_WIDTH]            = stage_2_out_axis_0_tdest ;
+    assign m_axis_0_tuser[(CHN+1)*USER_WIDTH -1: CHN*USER_WIDTH]            = stage_2_out_axis_0_tuser ;
 
   end
   endgenerate
