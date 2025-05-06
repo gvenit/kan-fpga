@@ -52,7 +52,7 @@ module DataProcessor #(
   // Scale Channels
   parameter SCALE_CHANNELS = (SCALE_SHARE)? 1 : DATA_CHANNELS,
   // Path to ROM Data
-  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt",
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt",
   // Output Destination 
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 

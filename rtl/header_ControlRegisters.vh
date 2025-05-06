@@ -6,7 +6,7 @@
   When a write collision occurs, the PL value is dropped and the PS value is
   preserved. 
 */
-  
+ `include "header_utils.vh"
   // PS to PL
   // Configuration signals -- Nulled from PL at the end of the operation -- READ-WRITE
   // Control Register : data length -- 4B -- Equals data_len / data_banks

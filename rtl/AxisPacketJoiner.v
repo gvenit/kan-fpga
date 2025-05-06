@@ -125,7 +125,10 @@ generate
   // FSM Logic output Restiters & Wires
   reg  [FSM_WIDTH-1:0] fsm_state, fsm_state_next;
 
-  // FSM Logic intput Registers & Wires
+  // FSM Logic intput Registers & 
+  wire [CHANNELS-1:0]       s_axis_tready_int;
+  wire [CHANNELS-1:0]       s_axis_tvalid_int = {CHANNELS{(operation_busy || ~lock_reg)}} & use_channels_reg & s_axis_tvalid;
+
   wire                      grant_valid;
   wire [CHANNELS-1:0]       grant;
   wire [CHANNELS-1:0]       acknowledge = s_axis_tlast & s_axis_tvalid_int & s_axis_tready_int & grant;
@@ -137,9 +140,6 @@ generate
 
   wire                      m_axis_tlast_int;
   assign                    m_axis_tlast = m_axis_tlast_int && generate_tlast_out;
-
-  wire [CHANNELS-1:0]       s_axis_tready_int;
-  wire [CHANNELS-1:0]       s_axis_tvalid_int = {CHANNELS{(operation_busy || ~lock_reg)}} & use_channels_reg & s_axis_tvalid;
 
   assign s_axis_tready = {CHANNELS{(operation_busy || ~lock_reg)}} & use_channels_reg & s_axis_tready_int;
 
@@ -191,7 +191,7 @@ generate
     end
   end
 
-  `define GLO_CHECK_OP_START \
+  `define CHECK_OP_START \
     if (operation_start) begin \
       if (use_channels) begin \
         fsm_state_next <= FSM_OPE; \
@@ -207,7 +207,7 @@ generate
     if (~ALLOW_LOCKS || ~lock) begin
       case (fsm_state)
         FSM_STR: begin
-          `GLO_CHECK_OP_START
+          `CHECK_OP_START
         end
         FSM_OPE: begin
           fsm_state_next <= FSM_OPE;
@@ -216,7 +216,7 @@ generate
           end
         end
         FSM_END: begin
-          `GLO_CHECK_OP_START
+          `CHECK_OP_START
         end
         FSM_ERR: begin
           fsm_state_next <= FSM_STR;
@@ -315,6 +315,7 @@ generate
  end
 endgenerate
 
+`undef CHECK_OP_START
 endmodule
 
 `resetall

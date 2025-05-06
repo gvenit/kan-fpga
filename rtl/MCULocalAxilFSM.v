@@ -93,8 +93,6 @@ module MCULocalAxilFSM #(
     if (operation_start) begin \
       if(addr_counter_max == 0 || inter_counter_max == 0) begin \
         loc_fsm_state_next <= LOC_FSM_ERR; \
-      // end else if (addr_counter_max == 1 && inter_counter_max == 1) begin \
-      //   loc_fsm_state_next <= LOC_FSM_END; \
       end else begin \
         loc_fsm_state_next <= LOC_FSM_OPE; \
       end \
@@ -334,6 +332,7 @@ axil_fifo_rd # (
   assign error = error_reg;
   assign tlast_transmitted = tlast_transmitted_reg | (loc_out_axis_tlast && loc_out_axis_tready && loc_out_axis_tvalid);
 
+`undef LOC_CHECK_OP_START
 endmodule
 
 `resetall

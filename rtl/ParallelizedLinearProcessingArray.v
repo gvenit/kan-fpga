@@ -116,25 +116,25 @@ module ParallelizedLinearProcessingArray #(
 
   // Internal AXI-Stream Signals
   // Output Partial Sums (Up->Down)
-  wire [PSUM_WIDTH-1:0]                        int_axis_ud_tdata    [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1];
+  wire [PSUM_WIDTH-1:0]                             int_axis_ud_tdata    [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1];
   wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tvalid;
   wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tready;
   wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_tlast;
 
   // Input Data (Left->Right)
-  wire [OP0_WIDTH-1:0]                         int_axis_lr_tdata    [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1];
+  wire [OP0_WIDTH-1:0]                              int_axis_lr_tdata    [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1];
   wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tvalid;
   wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tready;
   wire [0:(PE_NUMBER_I+1)*PE_NUMBER_J*BATCH_SIZE-1] int_axis_lr_tlast;
 
   // Input Weights (Top->Bottom)
-  wire [OP1_WIDTH-1:0]                         int_axis_tb_tdata    [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1];
+  wire [OP1_WIDTH-1:0]                              int_axis_tb_tdata    [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1];
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tvalid;
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tready;
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_tlast;
 
   // Internal Error Signals
-  wire [0:PE_NUMBER_I*PE_NUMBER_J*BATCH_SIZE-1] err_unalligned_data_int;
+  wire [0:PE_NUMBER_I*PE_NUMBER_J*BATCH_SIZE-1]     err_unalligned_data_int;
 
   // Debugging Signals
   wire [0:PE_NUMBER_I*(PE_NUMBER_J+1)*BATCH_SIZE-1] int_axis_ud_handshake = int_axis_ud_tready & int_axis_ud_tvalid;
@@ -142,8 +142,8 @@ module ParallelizedLinearProcessingArray #(
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_handshake = int_axis_tb_tready & int_axis_tb_tvalid;
 
   // Internal Reset
-  reg  [3:0] rst_pipeline;
-  wire rst_int;
+  reg  [3:0]  rst_pipeline;
+  wire        rst_int;
 
   // Error Signal Reduction
   assign err_unalligned_data = |err_unalligned_data_int;
@@ -155,7 +155,7 @@ module ParallelizedLinearProcessingArray #(
     rst_pipeline[3] <= |rst_pipeline[2:0];
   end
 
-  assign rst_int = rst_pipeline[3];
+  assign rst_int  = rst_pipeline[3];
   assign core_rst = rst_int;
 
   // PE Coordinates
@@ -163,15 +163,16 @@ module ParallelizedLinearProcessingArray #(
 
   generate
     always @* begin
-      if (INTERNAL_RESET)
+      if (INTERNAL_RESET) begin : internal_reset_genblock
         rst_pipeline[0] <= rst | err_unalligned_data;
-      else 
+      end else begin : internal_reset_ignore_genblock
        rst_pipeline[0] <= rst;
+      end
     end
 
-    for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin
-      for (pe_pos_j = 0; pe_pos_j < PE_NUMBER_J; pe_pos_j = pe_pos_j + 1) begin
-        for (pe_pos_i = 0; pe_pos_i < PE_NUMBER_I; pe_pos_i = pe_pos_i + 1) begin
+    for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin  : batch_plane_genblock
+      for (pe_pos_j = 0; pe_pos_j < PE_NUMBER_J; pe_pos_j = pe_pos_j + 1) begin : col_genblock
+        for (pe_pos_i = 0; pe_pos_i < PE_NUMBER_I; pe_pos_i = pe_pos_i + 1) begin : row_genblock
           localparam PE_POSITION_I = pe_pos_i;
           localparam PE_POSITION_J = pe_pos_j;
           localparam UID    = (  batch    *  PE_NUMBER_J    +  PE_POSITION_J    ) *  PE_NUMBER_I    +  PE_POSITION_I;
@@ -235,7 +236,7 @@ module ParallelizedLinearProcessingArray #(
             .err_unalligned_data(err_unalligned_data_int[UID])
           );
 
-          if (PE_POSITION_I == 0) begin
+          if (PE_POSITION_I == 0) begin : left_pos_input_connections_genblock
             localparam LFT_POS = batch * PE_NUMBER_J + PE_POSITION_J;
             localparam LSB = LFT_POS*OP0_WIDTH;
             localparam MSB = LSB + OP0_WIDTH -1;
@@ -247,12 +248,12 @@ module ParallelizedLinearProcessingArray #(
             assign int_axis_lr_tlast   [NODE_L]    = s_axis_l_tlast  [LFT_POS];
           end 
 
-          if (PE_POSITION_I == PE_NUMBER_I-1) begin
+          if (PE_POSITION_I == PE_NUMBER_I-1) begin : right_pos_output_connections_drop_genblock
             // Drop Output from Right Border
             assign int_axis_lr_tready[NODE_R] = 1'b1;
           end 
 
-          if (batch == 0) begin
+          if (batch == 0) begin : top_pos_input_connections_genblock
             localparam TOP_POS = PE_POSITION_J * PE_NUMBER_I + PE_POSITION_I;
             localparam LSB = TOP_POS*OP1_WIDTH;
             localparam MSB = LSB + OP1_WIDTH -1;
@@ -264,19 +265,19 @@ module ParallelizedLinearProcessingArray #(
             assign int_axis_tb_tlast  [NODE_T]    = s_axis_t_tlast  [TOP_POS];
           end
           
-          if (batch == BATCH_SIZE-1) begin
+          if (batch == BATCH_SIZE-1) begin : bottom_pos_output_connections_drop_genblock
             // Drop Output from Bottom Border
             assign int_axis_tb_tready[NODE_B] = 1'b1;
           end 
           
-          if (PE_POSITION_J == 0) begin
+          if (PE_POSITION_J == 0) begin : up_pos_input_connections_disconnect_genblock
             // Close Input from Up Border -- Disconnect Up Border
             assign int_axis_ud_tdata  [NODE_U] = {PSUM_WIDTH{1'bZ}};
             assign int_axis_ud_tvalid [NODE_U] = 1'bZ;
             assign int_axis_ud_tlast  [NODE_U] = 1'bZ;
           end 
           
-          if (PE_POSITION_J == PE_NUMBER_J-1) begin
+          if (PE_POSITION_J == PE_NUMBER_J-1) begin : down_pos_output_connections_genblock
             localparam DWN_POS = batch * PE_NUMBER_I + PE_POSITION_I;
             localparam LSB = DWN_POS*RSLT_WIDTH;
             localparam MSB = LSB + RSLT_WIDTH -1;

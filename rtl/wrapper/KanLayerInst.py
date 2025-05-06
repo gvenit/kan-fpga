@@ -63,18 +63,21 @@ def main():
     args = parser.parse_args()
     
     # Resolve Arguments
-    if (args.grid_share) :
-        args.grid_axil = True
-        args.grid_bram = False
+    if (not args.grid_share) :
+        args.grid_axil = False
+        args.grid_bram = True
         
-    if (args.scle_share) :
-        args.scle_axil = True
-        args.scle_bram = False
+    if (not args.scle_share) :
+        args.scle_axil = False
+        args.scle_bram = True
         
     if (args.data_axil and args.data_chn != 1) :
         raise ValueError('Cannot use Axi-Lite with multiple data channels.')
     elif (args.data_chn > 1) :
         args.data_bram = True
+        args.data_axil = False
+        
+        print(args.data_chn, args.data_bram)
     
     try:
         generate(**args.__dict__)
@@ -114,8 +117,11 @@ def generate(batch_size=4, name=None, output=None, **kwargs):
 `timescale 1ns/1ps
 `default_nettype none
 
-{% if data_axil %}`define DATA_IF_IS_AXIL{% endif %}
-{% if data_bram %}`define DATA_IF_IS_BRAM{% endif %}
+`ifdef IF_OPTIONS_INST_H
+`undef IF_OPTIONS_INST_H
+`endif
+
+{% if data_axil %}`define DATA_IF_IS_AXIL{% elif data_bram %}`define DATA_IF_IS_BRAM{% endif %}
 {% if grid_share %}`define GRID_IS_SHARED{% endif %}
 {% if scle_share %}`define SCALE_IS_SHARED{% endif %}
 
@@ -380,9 +386,6 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RREADY" *)
   input  wire                                       s{{'%02d'%p}}_axil_data_rready,
 {% endfor -%}
-
-  // Uncomment the following to set interface specific parameter on the bus interface.
-  // (* X_INTERFACE_PARAMETER = "MASTER_TYPE BRAM_CTRL,MEM_ECC <value>,MEM_WIDTH <value>,MEM_SIZE <value>,READ_WRITE_MODE <value>" *)
 
  `elsif DATA_IF_IS_BRAM
 {%- for p in range(n) %}
@@ -822,7 +825,7 @@ module {{name}} #(
         AXI-Lite Control Slave interface
     ------------------------------------------------------------------*/
 
-    .s_axil_ctrl_awaddr             (s_axil_ctrl_awaddr),
+    .s_axil_ctrl_awaddr             (s_axil_ctrl_awaddr[5:0]),
     .s_axil_ctrl_awprot             (s_axil_ctrl_awprot),
     .s_axil_ctrl_awvalid            (s_axil_ctrl_awvalid),
     .s_axil_ctrl_awready            (s_axil_ctrl_awready),
@@ -833,7 +836,7 @@ module {{name}} #(
     .s_axil_ctrl_bresp              (s_axil_ctrl_bresp),
     .s_axil_ctrl_bvalid             (s_axil_ctrl_bvalid),
     .s_axil_ctrl_bready             (s_axil_ctrl_bready),
-    .s_axil_ctrl_araddr             (s_axil_ctrl_araddr),
+    .s_axil_ctrl_araddr             (s_axil_ctrl_araddr[5:0]),
     .s_axil_ctrl_arprot             (s_axil_ctrl_arprot),
     .s_axil_ctrl_arvalid            (s_axil_ctrl_arvalid),
     .s_axil_ctrl_arready            (s_axil_ctrl_arready),

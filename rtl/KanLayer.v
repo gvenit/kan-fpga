@@ -674,7 +674,7 @@ module KanLayer #(
       $error("Data width for DMA master & slave interfaces must be multiples of 32.");
       $finish;
     end
-    if ( (`LOG2(DATA_CHANNELS)) ** 2 != DATA_CHANNELS) begin
+    if ( 2 ** (`LOG2(DATA_CHANNELS)) != DATA_CHANNELS) begin
       $error("Data channels is expected to be a power of 2.");
       $finish;
     end
@@ -1544,13 +1544,7 @@ module KanLayer #(
     .operation_busy             (mcu_operation_busy),
     .operation_complete         (mcu_operation_complete),
     .operation_error            (mcu_operation_error),
-   `ifdef DATA_IF_IS_BRAM
-    .data_bram_clk              (int_mcu_data_bram_clk),
-    .data_bram_en               (int_mcu_data_bram_en),
-    .data_bram_addr             (int_mcu_data_bram_addr),
-    .data_bram_rddata           (int_mcu_data_bram_rddata),
-    .data_bram_rdack            (int_mcu_data_bram_rdack),
-   `elsif DATA_IF_IS_AXIL
+   `ifdef DATA_IF_IS_AXIL
     .m_axil_data_araddr         (int_mcu_data_m_axil_araddr),
     .m_axil_data_arprot         (int_mcu_data_m_axil_arprot),
     .m_axil_data_arvalid        (int_mcu_data_m_axil_arvalid),
@@ -1559,19 +1553,19 @@ module KanLayer #(
     .m_axil_data_rresp          (int_mcu_data_m_axil_rresp),
     .m_axil_data_rvalid         (int_mcu_data_m_axil_rvalid),
     .m_axil_data_rready         (int_mcu_data_m_axil_rready),
+   `elsif DATA_IF_IS_BRAM
+    .data_bram_clk              (int_mcu_data_bram_clk),
+    .data_bram_en               (int_mcu_data_bram_en),
+    .data_bram_addr             (int_mcu_data_bram_addr),
+    .data_bram_rddata           (int_mcu_data_bram_rddata),
+    .data_bram_rdack            (int_mcu_data_bram_rdack),
    `endif
     .m_axis_data_aclk           (int_mcu_data_m_axis_aclk),
     .m_axis_data_tdata          (int_mcu_data_m_axis_tdata),
     .m_axis_data_tvalid         (int_mcu_data_m_axis_tvalid),
     .m_axis_data_tready         (int_mcu_data_m_axis_tready),
     .m_axis_data_tlast          (int_mcu_data_m_axis_tlast),
-   `ifdef GRID_IF_IS_BRAM
-    .grid_bram_clk              (int_mcu_grid_bram_clk),
-    .grid_bram_en               (int_mcu_grid_bram_en),
-    .grid_bram_addr             (int_mcu_grid_bram_addr),
-    .grid_bram_rddata           (int_mcu_grid_bram_rddata),
-    .grid_bram_rdack            (int_mcu_grid_bram_rdack),
-   `elsif GRID_IF_IS_AXIL
+   `ifdef GRID_IF_IS_AXIL
     .m_axil_grid_araddr         (int_mcu_grid_m_axil_araddr),
     .m_axil_grid_arprot         (int_mcu_grid_m_axil_arprot),
     .m_axil_grid_arvalid        (int_mcu_grid_m_axil_arvalid),
@@ -1580,19 +1574,19 @@ module KanLayer #(
     .m_axil_grid_rresp          (int_mcu_grid_m_axil_rresp),
     .m_axil_grid_rvalid         (int_mcu_grid_m_axil_rvalid),
     .m_axil_grid_rready         (int_mcu_grid_m_axil_rready),
+   `elsif GRID_IF_IS_BRAM
+    .grid_bram_clk              (int_mcu_grid_bram_clk),
+    .grid_bram_en               (int_mcu_grid_bram_en),
+    .grid_bram_addr             (int_mcu_grid_bram_addr),
+    .grid_bram_rddata           (int_mcu_grid_bram_rddata),
+    .grid_bram_rdack            (int_mcu_grid_bram_rdack),
    `endif
     .m_axis_grid_aclk           (int_mcu_grid_m_axis_aclk),
     .m_axis_grid_tdata          (int_mcu_grid_m_axis_tdata),
     .m_axis_grid_tvalid         (int_mcu_grid_m_axis_tvalid),
     .m_axis_grid_tready         (int_mcu_grid_m_axis_tready),
     .m_axis_grid_tlast          (int_mcu_grid_m_axis_tlast),
-   `ifdef SCALE_IF_IS_BRAM
-    .scle_bram_clk              (int_mcu_scle_bram_clk),
-    .scle_bram_en               (int_mcu_scle_bram_en),
-    .scle_bram_addr             (int_mcu_scle_bram_addr),
-    .scle_bram_rddata           (int_mcu_scle_bram_rddata),
-    .scle_bram_rdack            (int_mcu_scle_bram_rdack),
-   `elsif SCALE_IF_IS_AXIL
+   `ifdef SCALE_IF_IS_AXIL
     .m_axil_scle_araddr         (int_mcu_scle_m_axil_araddr),
     .m_axil_scle_arprot         (int_mcu_scle_m_axil_arprot),
     .m_axil_scle_arvalid        (int_mcu_scle_m_axil_arvalid),
@@ -1601,6 +1595,12 @@ module KanLayer #(
     .m_axil_scle_rresp          (int_mcu_scle_m_axil_rresp),
     .m_axil_scle_rvalid         (int_mcu_scle_m_axil_rvalid),
     .m_axil_scle_rready         (int_mcu_scle_m_axil_rready),
+   `elsif SCALE_IF_IS_BRAM
+    .scle_bram_clk              (int_mcu_scle_bram_clk),
+    .scle_bram_en               (int_mcu_scle_bram_en),
+    .scle_bram_addr             (int_mcu_scle_bram_addr),
+    .scle_bram_rddata           (int_mcu_scle_bram_rddata),
+    .scle_bram_rdack            (int_mcu_scle_bram_rdack),
    `endif
     .m_axis_scle_aclk           (int_mcu_scle_m_axis_aclk),
     .m_axis_scle_tdata          (int_mcu_scle_m_axis_tdata),
@@ -1980,42 +1980,35 @@ module KanLayer #(
   wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_m_axis_tready;
   wire [BATCH_SIZE*RSLT_CHANNELS-1:0]             int_buf_rslt_m_axis_tlast;
 
-  generate
-    for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin
-      for (CHN = 0; CHN < RSLT_CHANNELS; CHN = CHN + 1) begin
-        localparam BTM_POS = BATCH * RSLT_CHANNELS + CHN;
-
-        axis_register #(
-          .DATA_WIDTH     (RSLT_WIDTH),
-          .KEEP_ENABLE    (0),
-          .KEEP_WIDTH     (1),
-          .LAST_ENABLE    (1),
-          .ID_ENABLE      (0),
-          .ID_WIDTH       (1),
-          .DEST_ENABLE    (0),
-          .DEST_WIDTH     (1),
-          .USER_ENABLE    (0),
-          .USER_WIDTH     (1),
-          .REG_TYPE       (1)
-        ) axis_register_up_inst (
-          .clk            (core_clk),
-          .rst            (core_rst),
-          .s_axis_tdata   (int_buf_rslt_s_axis_tdata  [BTM_POS*RSLT_WIDTH +: RSLT_WIDTH]),
-          .s_axis_tkeep   (1'b1), 
-          .s_axis_tvalid  (int_buf_rslt_s_axis_tvalid [BTM_POS]),
-          .s_axis_tready  (int_buf_rslt_s_axis_tready [BTM_POS]),
-          .s_axis_tlast   (int_buf_rslt_s_axis_tlast  [BTM_POS]),
-          .s_axis_tid     (1'b0),
-          .s_axis_tdest   (1'b0),
-          .s_axis_tuser   (1'b0),
-          .m_axis_tdata   (int_buf_rslt_m_axis_tdata  [BTM_POS*RSLT_WIDTH +: RSLT_WIDTH]),
-          .m_axis_tvalid  (int_buf_rslt_m_axis_tvalid [BTM_POS]),
-          .m_axis_tready  (int_buf_rslt_m_axis_tready [BTM_POS]),
-          .m_axis_tlast   (int_buf_rslt_m_axis_tlast  [BTM_POS])
-        );
-      end
-    end
-  endgenerate
+  Buffer #(
+    .CHANNELS         (BATCH_SIZE*RSLT_CHANNELS),
+    .DATA_WIDTH       (RSLT_WIDTH),  
+    .KEEP_ENABLE      (0),    
+    .KEEP_WIDTH       (1),  
+    .LAST_ENABLE      (1),    
+    .ID_ENABLE        (0),  
+    .ID_WIDTH         (1),
+    .DEST_ENABLE      (0),    
+    .DEST_WIDTH       (1),  
+    .USER_ENABLE      (0),    
+    .USER_WIDTH       (1),  
+    .REG_TYPE         (1)
+  ) buffer_inst (
+    .clk              (core_clk),
+    .rst              (core_rst),
+    .s_axis_tdata     (int_buf_rslt_s_axis_tdata),
+    .s_axis_tkeep     ({BATCH_SIZE*RSLT_CHANNELS{1'b1}}),
+    .s_axis_tvalid    (int_buf_rslt_s_axis_tvalid),
+    .s_axis_tready    (int_buf_rslt_s_axis_tready),
+    .s_axis_tlast     (int_buf_rslt_s_axis_tlast),
+    .s_axis_tid       ({BATCH_SIZE*RSLT_CHANNELS{1'b0}}),
+    .s_axis_tdest     ({BATCH_SIZE*RSLT_CHANNELS{1'b0}}),
+    .s_axis_tuser     ({BATCH_SIZE*RSLT_CHANNELS{1'b0}}),
+    .m_axis_tdata     (int_buf_rslt_m_axis_tdata),
+    .m_axis_tvalid    (int_buf_rslt_m_axis_tvalid),
+    .m_axis_tready    (int_buf_rslt_m_axis_tready),
+    .m_axis_tlast     (int_buf_rslt_m_axis_tlast)
+  );
 
   /**********************************************
     Result streams AXI-Stream Joiner between
@@ -2309,7 +2302,7 @@ module KanLayer #(
 
  `ifdef DATA_IF_IS_AXIL
 
- generate
+  generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin
     assign int_ram_data_b_axil_aclk    [BATCH]                          = s_axil_data_aclk   [BATCH];
     assign int_ram_data_b_axil_arst    [BATCH]                          = s_axil_data_areset [BATCH];
@@ -2322,7 +2315,7 @@ module KanLayer #(
     assign int_mcu_data_m_axil_rvalid  [BATCH]                          = int_ram_data_b_axil_rvalid  [BATCH];
     assign int_ram_data_b_axil_rready  [BATCH]                          = int_mcu_data_m_axil_rready  [BATCH];
   end
- endgenerate
+  endgenerate
 
  `elsif DATA_IF_IS_BRAM
   generate
@@ -2363,36 +2356,63 @@ module KanLayer #(
   assign int_mcu_grid_m_axil_rresp   = int_ram_grid_b_axil_rresp;
   assign int_mcu_grid_m_axil_rvalid  = int_ram_grid_b_axil_rvalid;
   assign int_ram_grid_b_axil_rready  = int_mcu_grid_m_axil_rready;
+
  `elsif GRID_IF_IS_BRAM
+  // bram control interface to the data bram translator
+  assign int_ctr_grid_bram_en_i     = bram_ctrl_grid_en;
+  assign int_ctr_grid_bram_we_i     = bram_ctrl_grid_we;
+  assign int_ctr_grid_bram_addr_i   = bram_ctrl_grid_addr;
+  assign int_ctr_grid_bram_wrdata_i = bram_ctrl_grid_din;
+  assign bram_ctrl_grid_dout        = int_ctr_grid_bram_rddata_i;
+
   // bram control interface to the grid bram port a
   assign int_ram_grid_bram_clk_a     = bram_ctrl_grid_clk;
-  assign int_ram_grid_bram_en_a      = bram_ctrl_grid_en;
-  assign int_ram_grid_bram_we_a      = bram_ctrl_grid_we;
-  assign int_ram_grid_bram_addr_a    = bram_ctrl_grid_addr[2 +: GRID_EXTRL_ADDR];
-  assign int_ram_grid_bram_wrdata_a  = bram_ctrl_grid_din;
-  assign bram_ctrl_grid_dout         = int_ram_grid_bram_rddata_a;
+  assign int_ram_grid_bram_en_a      = int_ctr_grid_bram_en_o;
+  assign int_ram_grid_bram_we_a      = int_ctr_grid_bram_we_o;
+  assign int_ram_grid_bram_addr_a    = int_ctr_grid_bram_addr_o;
+  assign int_ram_grid_bram_wrdata_a  = int_ctr_grid_bram_wrdata_o;
+  assign int_ctr_grid_bram_rddata_o  = int_ram_grid_bram_rddata_a;
 
   // grid bram port b to memory control unit
   assign int_mcu_grid_bram_clk       = int_ram_grid_bram_clk_a;
-  assign int_ram_grid_bram_en_b     = int_mcu_grid_bram_en;
-  assign int_ram_grid_bram_addr_b   = int_mcu_grid_bram_addr;
+  assign int_ram_grid_bram_en_b      = int_mcu_grid_bram_en;
+  assign int_ram_grid_bram_addr_b    = int_mcu_grid_bram_addr;
   assign int_mcu_grid_bram_rddata    = int_ram_grid_bram_rddata_b;
   assign int_mcu_grid_bram_rdack     = int_ram_grid_bram_rdack_b;
  `endif
  
- `ifdef SCALE_IF_IS_BRAM
-  // bram control interface to the scle bram port a
-  assign int_ram_scle_bram_clk_a    = bram_ctrl_scle_clk;
-  assign int_ram_scle_bram_en_a     = bram_ctrl_scle_en;
-  assign int_ram_scle_bram_we_a     = bram_ctrl_scle_we;
-  assign int_ram_scle_bram_addr_a   = bram_ctrl_scle_addr[2 +: SCALE_EXTRL_ADDR];
-  assign int_ram_scle_bram_wrdata_a = bram_ctrl_scle_din;
-  assign bram_ctrl_scle_dout         = int_ram_scle_bram_rddata_a;
+ `ifdef SCALE_IF_IS_AXIL
+  assign int_ram_scle_b_axil_aclk    = s_axil_scle_aclk;
+  assign int_ram_scle_b_axil_arst    = s_axil_scle_areset;
+  assign int_ram_scle_b_axil_araddr  = int_mcu_scle_m_axil_araddr;
+  assign int_ram_scle_b_axil_arprot  = int_mcu_scle_m_axil_arprot;
+  assign int_ram_scle_b_axil_arvalid = int_mcu_scle_m_axil_arvalid;
+  assign int_mcu_scle_m_axil_arready = int_ram_scle_b_axil_arready;
+  assign int_mcu_scle_m_axil_rdata   = int_ram_scle_b_axil_rdata;
+  assign int_mcu_scle_m_axil_rresp   = int_ram_scle_b_axil_rresp;
+  assign int_mcu_scle_m_axil_rvalid  = int_ram_scle_b_axil_rvalid;
+  assign int_ram_scle_b_axil_rready  = int_mcu_scle_m_axil_rready;
 
-  // scle bram port b to memory control unit
+ `elsif SCALE_IF_IS_BRAM
+  // bram control interface to the data bram translator
+  assign int_ctr_scle_bram_en_i     = bram_ctrl_scle_en;
+  assign int_ctr_scle_bram_we_i     = bram_ctrl_scle_we;
+  assign int_ctr_scle_bram_addr_i   = bram_ctrl_scle_addr;
+  assign int_ctr_scle_bram_wrdata_i = bram_ctrl_scle_din;
+  assign bram_ctrl_scle_dout        = int_ctr_scle_bram_rddata_i;
+
+  // bram control interface to the grid bram port a
+  assign int_ram_scle_bram_clk_a     = bram_ctrl_scle_clk;
+  assign int_ram_scle_bram_en_a      = int_ctr_scle_bram_en_o;
+  assign int_ram_scle_bram_we_a      = int_ctr_scle_bram_we_o;
+  assign int_ram_scle_bram_addr_a    = int_ctr_scle_bram_addr_o;
+  assign int_ram_scle_bram_wrdata_a  = int_ctr_scle_bram_wrdata_o;
+  assign int_ctr_scle_bram_rddata_o  = int_ram_scle_bram_rddata_a;
+
+  // grid bram port b to memory control unit
   assign int_mcu_scle_bram_clk       = int_ram_scle_bram_clk_a;
-  assign int_ram_scle_bram_en_b     = int_mcu_scle_bram_en;
-  assign int_ram_scle_bram_addr_b   = int_mcu_scle_bram_addr;
+  assign int_ram_scle_bram_en_b      = int_mcu_scle_bram_en;
+  assign int_ram_scle_bram_addr_b    = int_mcu_scle_bram_addr;
   assign int_mcu_scle_bram_rddata    = int_ram_scle_bram_rddata_b;
   assign int_mcu_scle_bram_rdack     = int_ram_scle_bram_rdack_b;
  `endif

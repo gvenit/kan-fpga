@@ -155,7 +155,7 @@ module AxisSplitter #(
   assign new_transfer = &( ( ~keep_channels ) | ( locked_channels_reg | handshakes ) );
 
   generate
-    for ( CHN = 0 ; CHN < CHANNELS ; CHN=CHN+1 ) begin
+    for ( CHN = 0 ; CHN < CHANNELS ; CHN=CHN+1 ) begin : channel_genblock
       // Break Internal AXI_Stream Data into channels
       assign int_axis_chn_tdata    [CHN] = int_axis_tdata  [CHN*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH];
 
@@ -173,7 +173,7 @@ module AxisSplitter #(
       // Validate data transfer from master side
       assign int_axis_chn_tvalid   [CHN] = int_axis_tvalid && ~ locked_channels_reg[CHN] && keep_channels[CHN];
 
-      if (EXTRA_CYCLE) begin
+      if (EXTRA_CYCLE) begin : extra_register_genblock
         axis_register #(
           // Width of AXI stream interfaces in bits
           .DATA_WIDTH(OUTPUT_DATA_WIDTH),

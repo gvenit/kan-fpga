@@ -60,7 +60,7 @@ module ParallelizedDataProcessor #(
   // Grid Channels
   parameter GRID_CHANNELS = (GRID_SHARE)? 1 : DATA_CHANNELS*BATCH_SIZE,
   // Path to ROM Data
-  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt",
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt",
   // Output User
   parameter OUTPUT_USER = 0,
   // Output Destination 

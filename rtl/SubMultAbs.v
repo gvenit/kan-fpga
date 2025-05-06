@@ -9,6 +9,8 @@
  *    two shortest are extended to match the length of the longest.
  */
 
+ `include "header_utils.vh"
+
 module SubMultAbs #(
   // Width of AXI stream Input Data & Grid interfaces in bits
   parameter DATA_WIDTH = 16,
@@ -37,7 +39,9 @@ module SubMultAbs #(
   // Propagate tuser signal
   parameter USER_ENABLE = 0,
   // tuser signal width
-  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1
+  parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
+  // Buffer result
+  parameter OUTPUT_BUFFER = 1
 ) (
   input  wire                         clk,
   input  wire                         rst,
@@ -87,21 +91,30 @@ module SubMultAbs #(
   output wire [DEST_WIDTH-1:0]        m_axis_data_tdest,
   output wire [USER_WIDTH-1:0]        m_axis_data_tuser
 );
-  `define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
+  localparam OP_SIZE  = (RSLT_WIDTH > DATA_WIDTH + SCALE_WIDTH) ? RSLT_WIDTH : DATA_WIDTH + SCALE_WIDTH;
+  localparam RSLT_LSB = DATA_FRACTIONAL_BITS + SCALE_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
+  localparam RSLT_MSB = RSLT_LSB + RSLT_WIDTH - 1;
 
-  wire signed [RSLT_WIDTH:0] signed_rslt;
+  wire [OP_SIZE-1:0]           int_axis_data_tdata;
+  wire [KEEP_WIDTH-1:0]        int_axis_data_tkeep;
+  wire                         int_axis_data_tvalid;
+  wire                         int_axis_data_tready;
+  wire                         int_axis_data_tlast;
+  wire [ID_WIDTH-1:0]          int_axis_data_tid;
+  wire [DEST_WIDTH-1:0]        int_axis_data_tdest;
+  wire [USER_WIDTH-1:0]        int_axis_data_tuser;
 
-  assign m_axis_data_tdata = `abs(signed_rslt)[RSLT_WIDTH-1:0];
+  wire signed [OP_SIZE-1:0] signed_rslt;
+
+  assign int_axis_data_tdata = `abs( signed_rslt);
 
   SubMult #(
     .DATA_WIDTH               (DATA_WIDTH),
-    .DATA_FRACTIONAL_BITS     (DATA_FRACTIONAL_BITS),
+    .DATA_FRACTIONAL_BITS     (0),
     .SCALE_WIDTH              (SCALE_WIDTH),
-    .SCALE_FRACTIONAL_BITS    (SCALE_FRACTIONAL_BITS),
-    .RSLT_WIDTH               (RSLT_WIDTH+1),
-    .RSLT_FRACTIONAL_BITS     (RSLT_FRACTIONAL_BITS),
-    .KEEP_ENABLE              (KEEP_ENABLE),
-    .KEEP_WIDTH               (KEEP_WIDTH),
+    .SCALE_FRACTIONAL_BITS    (0),
+    .RSLT_WIDTH               (OP_SIZE),      // Do not truncate output 
+    .RSLT_FRACTIONAL_BITS     (0),
     .ID_ENABLE                (ID_ENABLE),
     .ID_WIDTH                 (ID_WIDTH),
     .DEST_ENABLE              (DEST_ENABLE),
@@ -133,15 +146,46 @@ module SubMultAbs #(
     .s_axis_scle_tdest        (s_axis_scle_tdest),
     .s_axis_scle_tuser        (s_axis_scle_tuser),
     .m_axis_data_tdata        (signed_rslt),
-    .m_axis_data_tkeep        (m_axis_data_tkeep),
-    .m_axis_data_tvalid       (m_axis_data_tvalid),
-    .m_axis_data_tready       (m_axis_data_tready),
-    .m_axis_data_tlast        (m_axis_data_tlast),
-    .m_axis_data_tid          (m_axis_data_tid),
-    .m_axis_data_tdest        (m_axis_data_tdest),
-    .m_axis_data_tuser        (m_axis_data_tuser)
+    .m_axis_data_tvalid       (int_axis_data_tvalid),
+    .m_axis_data_tready       (int_axis_data_tready),
+    .m_axis_data_tlast        (int_axis_data_tlast),
+    .m_axis_data_tid          (int_axis_data_tid),
+    .m_axis_data_tdest        (int_axis_data_tdest),
+    .m_axis_data_tuser        (int_axis_data_tuser)
   );
 
+  // Stage 2 Skid Register
+  axis_register #(
+    .DATA_WIDTH       (RSLT_WIDTH),
+    .KEEP_ENABLE      (0),
+    .KEEP_WIDTH       (1),
+    .LAST_ENABLE      (1),
+    .ID_ENABLE        (ID_ENABLE),
+    .ID_WIDTH         (ID_WIDTH),
+    .DEST_ENABLE      (DEST_ENABLE),
+    .DEST_WIDTH       (DEST_WIDTH),
+    .USER_ENABLE      (USER_ENABLE),
+    .USER_WIDTH       (USER_WIDTH),
+    .REG_TYPE         (OUTPUT_BUFFER * 2)
+  ) axis_register_output_inst (
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (int_axis_data_tdata[RSLT_MSB:RSLT_LSB]),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (int_axis_data_tvalid),
+    .s_axis_tready    (int_axis_data_tready),
+    .s_axis_tlast     (int_axis_data_tlast),
+    .s_axis_tid       (int_axis_data_tid),
+    .s_axis_tdest     (int_axis_data_tdest),
+    .s_axis_tuser     (int_axis_data_tuser),
+    .m_axis_tdata     (m_axis_data_tdata),
+    .m_axis_tvalid    (m_axis_data_tvalid),
+    .m_axis_tready    (m_axis_data_tready),
+    .m_axis_tlast     (m_axis_data_tlast),
+    .m_axis_tid       (m_axis_data_tid),
+    .m_axis_tdest     (m_axis_data_tdest),
+    .m_axis_tuser     (m_axis_data_tuser)
+  );
 endmodule
 
 `resetall

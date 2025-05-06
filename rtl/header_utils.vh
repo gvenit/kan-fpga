@@ -22,6 +22,6 @@
 
 `define MAX(a,b) (a < b) ? b : a
 
-`define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
+`define abs(signal) (($signed(signal) < 0) ? -$signed(signal) : signal)
     
 `endif

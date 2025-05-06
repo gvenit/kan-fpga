@@ -248,6 +248,10 @@ module CCURegisterFile #(
       `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LEN,rslt_size_wr,DATA_WIDTH);
       `PL_WRITE_MEM(mem,CTRL_REG_PCKT_LEN,pckt_size_wr,DATA_WIDTH);
       `PL_WRITE_MEM(mem,CTRL_REG_BTCH_LEN,btch_size_wr,WORD_SIZE);
+      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LDR,data_loaded_wr,WORD_SIZE);
+      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LDR,grid_loaded_wr,WORD_SIZE);
+      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LDR,scle_loaded_wr,WORD_SIZE);
+      `PL_WRITE_MEM(mem,CTRL_REG_WGHT_LDR,wght_loaded_wr,WORD_SIZE);
       // Read-Write Registers (PL->PS)
       `PL_WRITE_MEM(mem,CTRL_REG_OPER_DNE,operation_done_wr,1);
     end

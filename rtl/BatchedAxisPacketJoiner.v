@@ -95,10 +95,6 @@ module BatchedAxisPacketJoiner #(
   wire [BATCH_SIZE*USER_WIDTH-1:0]   batch_axis_tuser;
 
   // Handle module statistics
-  reg  [BATCH_SIZE-1:0] use_batch_reg;
-  reg  [BATCH_SIZE-1:0] batch_operation_complete_reg;
-  wire [BATCH_SIZE-1:0] batch_operation_complete_reg_next = batch_operation_complete | batch_operation_complete_reg;
-
   wire [BATCH_SIZE-1:0] batch_lock;
   wire [BATCH_SIZE-1:0] batch_interrupt;
   wire [BATCH_SIZE-1:0] batch_operation_busy;
@@ -106,13 +102,17 @@ module BatchedAxisPacketJoiner #(
   wire [BATCH_SIZE-1:0] batch_operation_error;
   wire [BATCH_SIZE-1:0] batch_transmission;
 
+  reg  [BATCH_SIZE-1:0] use_batch_reg;
+  reg  [BATCH_SIZE-1:0] batch_operation_complete_reg;
+  wire [BATCH_SIZE-1:0] batch_operation_complete_reg_next = batch_operation_complete | batch_operation_complete_reg;
+
   wire int_external_error = 1'b0;
   wire op_done = &batch_operation_complete_reg_next;
   wire op_busy = |batch_operation_busy;
 
 genvar batch;
 generate
-  for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin
+  for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin : axis_packet_joiner_batch_genblock
     AxisPacketJoiner #(
       // Number of Channels
       .CHANNELS(CHANNELS),
@@ -166,7 +166,7 @@ generate
     );
   end 
  
- if (BATCH_SIZE == 1) begin
+ if (BATCH_SIZE == 1) begin : single_batch_genblock
   assign m_axis_tdata  = batch_axis_tdata;
   assign m_axis_tkeep  = batch_axis_tkeep;
   assign m_axis_tvalid = batch_axis_tvalid;
@@ -184,7 +184,7 @@ generate
     operation_error    <= batch_operation_error;
     transmission       <= batch_transmission;
   end
- end else begin
+ end else begin : multi_batch_genblock
   // Multiplex all packets to a single channel
   axis_arb_mux #(
     // Number of AXI stream inputs
@@ -237,7 +237,6 @@ generate
     .m_axis_tdest   (m_axis_tdest),
     .m_axis_tuser   (m_axis_tuser)
   );
-
 
   reg invalid_batch_config;
 

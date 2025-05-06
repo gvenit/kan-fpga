@@ -215,7 +215,7 @@ module MemoryControlUnit #(
   wire [SCALE_CHANNELS_IN-1:0]        scle_error;
 
   // Global FSM output signals
-  reg  [GLO_FSM_WIDTH-1:0] glo_fsm_state, glo_fsm_state_next;
+  reg  [GLO_FSM_WIDTH-1:0]            glo_fsm_state, glo_fsm_state_next;
   reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg;
   reg  [GRID_CHANNELS_IN-1:0]         grid_op_done_reg;
   reg  [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg;
@@ -225,8 +225,8 @@ module MemoryControlUnit #(
   wire [GRID_CHANNELS_IN-1:0]         grid_op_done_reg_next = grid_op_done_reg | grid_tlast_transmitted;
   wire [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg_next = scle_op_done_reg | scle_tlast_transmitted;
 
-  wire op_done              =  &{data_op_done_reg, grid_op_done_reg, scle_op_done_reg};
-  wire internal_error       = |{data_error, grid_error, scle_error};
+  wire op_done        =  &{data_op_done_reg, grid_op_done_reg, scle_op_done_reg};
+  wire internal_error = |{data_error, grid_error, scle_error};
 
   // Global FSM state logic
   always @(posedge fsm_clk ) begin
@@ -258,6 +258,10 @@ module MemoryControlUnit #(
         GLO_FSM_STR: begin
           operation_busy <= 1'b1;
 
+          data_size_reg <= data_size;
+          grid_size_reg <= grid_size;
+          scle_size_reg <= scle_size;
+
         end
         GLO_FSM_OPE: begin
           data_op_done_reg <= data_op_done_reg_next;
@@ -284,21 +288,12 @@ module MemoryControlUnit #(
 
   `define GLO_CHECK_OP_START \
     if (operation_start) begin \
-      glo_fsm_state_next <= GLO_FSM_STR; \
-      if ((data_size[DATA_ADDR] && (|data_size[DATA_ADDR-1:0])) || ~|data_size) begin \
-        glo_fsm_state_next <= GLO_FSM_ERR; \
+      if (($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && \
+          ($unsigned(grid_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|grid_size) && \
+          ($unsigned(scle_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|scle_size) ) begin \
+        glo_fsm_state_next <= GLO_FSM_STR; \
       end else begin \
-        data_size_reg <= data_size; \
-      end \
-      if ((grid_size[DATA_ADDR] && (|grid_size[DATA_ADDR-1:0])) || ~|grid_size) begin \
         glo_fsm_state_next <= GLO_FSM_ERR; \
-      end else begin \
-        grid_size_reg <= grid_size; \
-      end \
-      if ((scle_size[DATA_ADDR] && (|scle_size[DATA_ADDR-1:0])) || ~|scle_size) begin \
-        glo_fsm_state_next <= GLO_FSM_ERR; \
-      end else begin \
-        scle_size_reg <= scle_size; \
       end \
     end else begin \
       glo_fsm_state_next <= GLO_FSM_ST0; \
@@ -578,7 +573,7 @@ module MemoryControlUnit #(
      `endif 
 
     // Local Scale FIFO I/O
-    wire [SCALE_WIDTH-1:0] scle_fifo_in_axis_tdata,  scle_fifo_out_axis_tdata;
+    wire [SCALE_WIDTH-1:0]      scle_fifo_in_axis_tdata,  scle_fifo_out_axis_tdata;
     wire                        scle_fifo_in_axis_tvalid, scle_fifo_out_axis_tvalid;
     wire                        scle_fifo_in_axis_tready, scle_fifo_out_axis_tready;
     wire                        scle_fifo_in_axis_tlast,  scle_fifo_out_axis_tlast;
@@ -1150,6 +1145,7 @@ module MemoryControlUnit #(
   end
  endgenerate
 
+`undef GLO_CHECK_OP_START
 endmodule
 
 `resetall

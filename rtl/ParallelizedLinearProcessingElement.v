@@ -196,13 +196,13 @@ module ParallelizedLinearProcessingElement #(
   );
 
   generate
-    if (PE_POSITION_J == 0) begin
+    if (PE_POSITION_J == 0) begin : up_register_drop_genblock
       // Processing Element never accepts data from Up AxiS
       assign s_axis_u_tready   = 1'b0;
       assign int_axis_u_tdata  = {PSUM_WIDTH{1'bZ}};
       assign int_axis_u_tvalid = 1'b0;
       assign int_axis_u_tlast  = 1'bZ;
-    end else begin      
+    end else begin : up_register_genblock
       // Up AXI-Stream Skid Buffer
       wire s_axis_u_tready_int;
       assign s_axis_u_tready = s_axis_u_tready_int & store_u;
@@ -469,12 +469,12 @@ module ParallelizedLinearProcessingElement #(
 
   // Output Down AXI-Stream Drivers
   generate
-    if (PE_POSITION_J > 0) begin
+    if (PE_POSITION_J > 0) begin : up_down_connections_genblock
       assign int_axis_d_tdata   = (export_rslt) ? partial_sum_reg  : int_axis_u_tdata;
       assign int_axis_d_tvalid  = (export_rslt) ? 1'b1             : int_axis_u_tvalid & forward_u & !drop_u;
       assign int_axis_u_tready  = (export_rslt) ? 1'b0             : int_axis_d_tready & forward_u |  drop_u;
       assign int_axis_d_tlast   = export_rslt_last;
-    end else begin
+    end else begin : down_interface_genblock
       assign int_axis_d_tdata   = partial_sum_reg;
       assign int_axis_d_tvalid  = export_rslt;
       assign int_axis_u_tready  = 1'bZ;             // Not used

@@ -116,6 +116,6 @@ module axil_fifo_rd #
     .m_axi_rvalid   (m_axil_rvalid),
     .m_axi_rready   (m_axil_rready)
   );  
-endmodule;
+endmodule
 
 `resetall

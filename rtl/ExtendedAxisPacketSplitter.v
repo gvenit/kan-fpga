@@ -91,7 +91,7 @@ module ExtendedAxisPacketSplitter # (
   genvar CHN;
 
   generate
-    if (CHANNELS == 1) begin
+    if (CHANNELS == 1) begin : single_channel_genblock
       assign lock_bus = 0;
       assign int_external_error = external_error; 
 
@@ -100,16 +100,17 @@ module ExtendedAxisPacketSplitter # (
         operation_complete <= operation_complete_bus[0];
         operation_error    <= operation_error_bus[0];
       end
-    end else begin
+    end else begin : multi_channel_genblock
+      reg                 operation_error_reg_reduced;
       reg  [CHANNELS-1:0] operation_complete_bus_reg;
       wire [CHANNELS-1:0] operation_complete_bus_reg_next = operation_complete_bus | operation_complete_bus_reg;
 
-      assign lock_bus = operation_complete_bus_reg & {CHANNELS{~op_done}};
-      assign int_external_error = (&operation_error_bus) ? external_error : (|{operation_error_bus, external_error}); 
-      
       wire op_done = &operation_complete_bus_reg_next;
       wire op_busy = |operation_busy_bus;
 
+      assign lock_bus = operation_complete_bus_reg & {CHANNELS{~op_done}};
+      assign int_external_error = (&operation_error_bus) ? external_error : (operation_error_reg_reduced || external_error); 
+      
       always @(*) begin
         if (rst) begin
           operation_busy     <= 1'b0;
@@ -119,7 +120,7 @@ module ExtendedAxisPacketSplitter # (
           operation_busy     <= 1'b0;
           operation_complete <= 1'b0;
           operation_error    <= 1'b0;
-          if (|operation_error_bus) begin
+          if (operation_error_reg_reduced) begin
             operation_error    <= 1'b1;
           end else if (op_done) begin
             operation_complete <= 1'b1;
@@ -131,9 +132,13 @@ module ExtendedAxisPacketSplitter # (
       always @(posedge clk ) begin
         if (rst) begin
           operation_complete_bus_reg <= 0;
+          operation_error_reg_reduced <= 1'b0;
         end else begin
           operation_complete_bus_reg <= 0;
+          operation_error_reg_reduced <= 1'b0;
           if (int_external_error) begin
+          end if (|operation_error_bus) begin
+            operation_error_reg_reduced <= 1'b1;
           end else if (op_done) begin
           end else if (op_busy) begin
             operation_complete_bus_reg <= operation_complete_bus_reg_next;
@@ -142,7 +147,7 @@ module ExtendedAxisPacketSplitter # (
       end
     end
 
-    for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin
+    for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin : axis_packet_splitter_genblock
       wire                   int_lock; 
       wire                   int_operation_busy;
       wire                   int_operation_complete;
