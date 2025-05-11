@@ -81,11 +81,11 @@ module AxisPacketSplitter #(
   output wire [USER_WIDTH-1:0]  m_axis_tuser
 );
   // Global FSM states
-  parameter FSM_WIDTH = 2;
-  parameter FSM_STR = 0;
-  parameter FSM_OPE = 1;
-  parameter FSM_ERR = 2;
-  parameter FSM_END = 3;
+  localparam FSM_WIDTH = 2;
+  localparam FSM_STR = 0;
+  localparam FSM_OPE = 1;
+  localparam FSM_ERR = 2;
+  localparam FSM_END = 3;
 
   // Control Registers & Wires
   reg  op_in_progress_reg = 1'b0;
@@ -96,12 +96,12 @@ module AxisPacketSplitter #(
   reg  [PCKT_WIDTH-1:0] pckt_size_counter_reg;
 
   // FSM Logic intput Registers & Wires
-  wire get_next = operation_busy && s_axis_tvalid && s_axis_tready;
+  wire s_axis_tready_int;
+  wire get_next = operation_busy && s_axis_tvalid && s_axis_tready_int;
   wire [PCKT_WIDTH-1:0] pckt_size_counter_reg_next = (get_next) ? pckt_size_counter_reg+1 : pckt_size_counter_reg;
 
-  wire generate_tlast = (pckt_size_counter_reg_next == pckt_size_reg);
+  wire generate_tlast = get_next && (pckt_size_counter_reg == pckt_size_reg-1);
 
-  wire   s_axis_tready_int;
   assign s_axis_tready     = operation_busy && s_axis_tready_int;
   wire   s_axis_tvalid_int = operation_busy && s_axis_tvalid;
   wire   s_axis_tlast_int  = generate_tlast || s_axis_tlast;
@@ -152,7 +152,7 @@ module AxisPacketSplitter #(
     end
   end
 
-  `define GLO_CHECK_OP_START \
+  `define CHECK_OP_START \
     if (operation_start) begin \
       fsm_state_next <= FSM_OPE; \
     end else begin \
@@ -164,7 +164,7 @@ module AxisPacketSplitter #(
     if (~ALLOW_LOCKS || ~lock) begin
       case (fsm_state)
         FSM_STR: begin
-          `GLO_CHECK_OP_START
+          `CHECK_OP_START
         end
         FSM_OPE: begin
           fsm_state_next <= FSM_OPE;
@@ -179,7 +179,7 @@ module AxisPacketSplitter #(
           end
         end
         FSM_END: begin
-          `GLO_CHECK_OP_START
+          `CHECK_OP_START
         end
         FSM_ERR: begin
           fsm_state_next <= FSM_STR;
@@ -224,24 +224,24 @@ module AxisPacketSplitter #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(2)
   ) in_axis_register_inst (
-    .clk(clk),
-    .rst(rst),
-    .s_axis_tdata(s_axis_tdata),
-    .s_axis_tkeep(s_axis_tkeep),
-    .s_axis_tvalid(s_axis_tvalid_int),
-    .s_axis_tready(s_axis_tready_int),
-    .s_axis_tlast(s_axis_tlast_int),
-    .s_axis_tid(s_axis_tid),
-    .s_axis_tdest(s_axis_tdest),
-    .s_axis_tuser(s_axis_tuser),
-    .m_axis_tdata(m_axis_tdata),
-    .m_axis_tkeep(m_axis_tkeep),
-    .m_axis_tvalid(m_axis_tvalid),
-    .m_axis_tready(m_axis_tready),
-    .m_axis_tlast(m_axis_tlast),
-    .m_axis_tid(m_axis_tid),
-    .m_axis_tdest(m_axis_tdest),
-    .m_axis_tuser(m_axis_tuser)
+    .clk                  (clk),
+    .rst                  (rst),
+    .s_axis_tdata         (s_axis_tdata),
+    .s_axis_tkeep         (s_axis_tkeep),
+    .s_axis_tvalid        (s_axis_tvalid_int),
+    .s_axis_tready        (s_axis_tready_int),
+    .s_axis_tlast         (s_axis_tlast_int),
+    .s_axis_tid           (s_axis_tid),
+    .s_axis_tdest         (s_axis_tdest),
+    .s_axis_tuser         (s_axis_tuser),
+    .m_axis_tdata         (m_axis_tdata),
+    .m_axis_tkeep         (m_axis_tkeep),
+    .m_axis_tvalid        (m_axis_tvalid),
+    .m_axis_tready        (m_axis_tready),
+    .m_axis_tlast         (m_axis_tlast),
+    .m_axis_tid           (m_axis_tid),
+    .m_axis_tdest         (m_axis_tdest),
+    .m_axis_tuser         (m_axis_tuser)
   );
 
   // Transmission flag
@@ -252,6 +252,7 @@ module AxisPacketSplitter #(
     end
   end
 
+`undef CHECK_OP_START
 endmodule
 
 `resetall

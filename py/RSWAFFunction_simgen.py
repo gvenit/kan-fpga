@@ -21,8 +21,8 @@ from py import addTimeScale, stripModule
 
 def RSWAFFunction():
     return verilog.from_verilog.read_verilog_module(
-        os.path.join(TOP_DIR,'rtl/RSWAFFunction.v')
-    )['RSWAFFunction'] 
+        os.path.join(TOP_DIR,'rtl/wrapper/RSWAFFunctionWrapper.v')
+    )['RSWAFFunctionWrapper'] 
 
 def tb_RSWAFFunction():
     module = Module('tb_RSWAFFunction')
@@ -71,7 +71,7 @@ def tb_RSWAFFunction():
     s_axis_scle_tready = ports['s_axis_scle_tready']
     
     m_axis_data_tdata  = ports['m_axis_data_tdata']
-    m_axis_data_tkeep  = ports['m_axis_data_tkeep']
+    # m_axis_data_tkeep  = ports['m_axis_data_tkeep']
     m_axis_data_tlast  = ports['m_axis_data_tlast']
     m_axis_data_tvalid = ports['m_axis_data_tvalid']
     m_axis_data_tready = ports['m_axis_data_tready']

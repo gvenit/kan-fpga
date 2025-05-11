@@ -1,0 +1,348 @@
+`resetall
+`timescale 1ns / 1ps
+`default_nettype none
+
+/*
+ * AxisALU : An ALU wrapper that allows data processing 
+ *  using the AXI-Stream Protocol.
+ *
+ *    The component is also designed to support multiple
+ *        channels for parallel processing.
+ *
+ *    Available operations:
+ *      -- ADD : 0
+ *      -- SUB : 1
+ *      -- MLT : 2
+ *      -- ABS : 3
+ *
+ */
+
+`include "header_utils.vh"
+
+module AxisALU #(
+  // Data Width of Input Data (Operand 0)
+  parameter OP0_WIDTH = 16,
+  // Data Width of Input Data (Operand 1)
+  parameter OP1_WIDTH = 16,
+  // Data Width of Output Data (Sum)
+  parameter RSLT_WIDTH = OP0_WIDTH + OP1_WIDTH - 1,
+  // Number of Independent AXI-Stream Channels
+  parameter CHANNELS = 1,
+  // Propagate tlast signal
+  parameter LAST_ENABLE = 1,
+  // Propagate tid signal
+  parameter ID_ENABLE = 0,
+  // tid signal width
+  parameter ID_WIDTH = 8,
+  // Propagate tdest signal
+  parameter DEST_ENABLE = 0,
+  // tdest signal width
+  parameter DEST_WIDTH = 8,
+  // Propagate tuser signal
+  parameter USER_ENABLE = 1,
+  // tuser signal width
+  parameter USER_WIDTH = 1,
+  // Operation to perform -- Options :
+  // ADD : 0
+  // SUB : 1
+  // MLT : 2
+  // ABS : 3
+  parameter OP_MODE = 0,
+  // Register type
+  // 0 to bypass, 1 for simple buffer, 2 for skid buffer
+  parameter REG_TYPE = 2
+) (
+  input  wire                                 clk,
+  input  wire                                 rst,
+
+  /*
+   * AXI Stream Data input
+   */
+  input  wire [CHANNELS*OP0_WIDTH-1:0]        s_axis_tdata_op0,
+  input  wire [CHANNELS*OP1_WIDTH-1:0]        s_axis_tdata_op1,
+  input  wire [CHANNELS-1:0]                  s_axis_tlast,
+  input  wire [CHANNELS-1:0]                  s_axis_tvalid,
+  output wire [CHANNELS-1:0]                  s_axis_tready,
+  input  wire [CHANNELS*ID_WIDTH-1:0]         s_axis_tid,
+  input  wire [CHANNELS*DEST_WIDTH-1:0]       s_axis_tdest,
+  input  wire [CHANNELS*USER_WIDTH-1:0]       s_axis_tuser,
+
+  /*
+   * AXI Stream output
+   */
+  output wire [CHANNELS*RSLT_WIDTH-1:0]       m_axis_tdata,
+  output wire [CHANNELS-1:0]                  m_axis_tlast,
+  output wire [CHANNELS-1:0]                  m_axis_tvalid,
+  input  wire [CHANNELS-1:0]                  m_axis_tready,
+  output wire [CHANNELS*ID_WIDTH-1:0]         m_axis_tid,
+  output wire [CHANNELS*DEST_WIDTH-1:0]       m_axis_tdest,
+  output wire [CHANNELS*USER_WIDTH-1:0]       m_axis_tuser
+);
+  initial begin
+    if (OP_MODE > 3) begin
+      $error("Operational Mode not available : %d", OP_MODE);
+      $finish;
+    end
+  end
+
+  // Part of code : https://github.com/alexforencich/verilog-axis/blob/master/rtl/axis_register.v
+/*
+
+Copyright (c) 2014-2018 Alex Forencich
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
+genvar CHN;
+generate
+for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
+  wire [OP0_WIDTH-1:0]  op0_i;
+  wire [OP1_WIDTH-1:0]  op1_i;
+
+  if (REG_TYPE > 1) begin : skid_buffer_genblock
+    // skid buffer, no bubble cycles
+
+    // datapath registers
+    reg                  s_axis_tready_reg = 1'b0;
+
+    reg [RSLT_WIDTH-1:0] m_axis_tdata_reg;
+    reg                  m_axis_tvalid_reg = 1'b0, m_axis_tvalid_next;
+    reg                  m_axis_tlast_reg  = 1'b0;
+    reg [ID_WIDTH-1:0]   m_axis_tid_reg    = {ID_WIDTH{1'b0}};
+    reg [DEST_WIDTH-1:0] m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
+    reg [USER_WIDTH-1:0] m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
+
+    reg [OP0_WIDTH-1:0]  temp_m_axis_tdata_op0_reg = {OP0_WIDTH{1'b0}};
+    reg [OP1_WIDTH-1:0]  temp_m_axis_tdata_op1_reg = {OP1_WIDTH{1'b0}};
+    reg                  temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
+    reg                  temp_m_axis_tlast_reg  = 1'b0;
+    reg [ID_WIDTH-1:0]   temp_m_axis_tid_reg    = {ID_WIDTH{1'b0}};
+    reg [DEST_WIDTH-1:0] temp_m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
+    reg [USER_WIDTH-1:0] temp_m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
+
+    // datapath control
+    reg store_axis_input_to_output;
+    reg store_axis_input_to_temp;
+    reg store_axis_temp_to_output;
+
+    assign s_axis_tready [CHN] = s_axis_tready_reg;
+
+    assign m_axis_tdata  [CHN*RSLT_WIDTH +: RSLT_WIDTH] = m_axis_tdata_reg;
+    assign m_axis_tvalid [CHN]                          = m_axis_tvalid_reg;
+
+    if (LAST_ENABLE) assign m_axis_tlast [CHN] = m_axis_tlast_reg ; 
+    else             assign m_axis_tlast [CHN] = 1'b1;
+    if (ID_ENABLE  ) assign m_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]   = m_axis_tid_reg; 
+    else             assign m_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]   = {ID_WIDTH{1'b0}};
+    if (DEST_ENABLE) assign m_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH] = m_axis_tdest_reg; 
+    else             assign m_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH] = {DEST_WIDTH{1'b0}};
+    if (USER_ENABLE) assign m_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH] = m_axis_tuser_reg; 
+    else             assign m_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH] = {USER_WIDTH{1'b0}};
+
+    // enable ready input next cycle if output is ready or the temp reg will not be filled on the next cycle (output reg empty or no input)
+    wire s_axis_tready_early = m_axis_tready[CHN] || (!temp_m_axis_tvalid_reg && (!m_axis_tvalid_reg || !s_axis_tvalid[CHN]));
+
+    always @* begin
+      // transfer sink ready state to source
+      m_axis_tvalid_next = m_axis_tvalid_reg;
+      temp_m_axis_tvalid_next = temp_m_axis_tvalid_reg;
+
+      store_axis_input_to_output = 1'b0;
+      store_axis_input_to_temp = 1'b0;
+      store_axis_temp_to_output = 1'b0;
+
+      if (s_axis_tready_reg) begin
+        // input is ready
+        if (m_axis_tready[CHN] || !m_axis_tvalid_reg) begin
+          // output is ready or currently not valid, transfer data to output
+          m_axis_tvalid_next = s_axis_tvalid[CHN];
+          store_axis_input_to_output = 1'b1;
+        end else begin
+          // output is not ready, store input in temp
+          temp_m_axis_tvalid_next = s_axis_tvalid[CHN];
+          store_axis_input_to_temp = 1'b1;
+        end
+      end else if (m_axis_tready[CHN]) begin
+        // input is not ready, but output is ready
+        m_axis_tvalid_next = temp_m_axis_tvalid_reg;
+        temp_m_axis_tvalid_next = 1'b0;
+        store_axis_temp_to_output = 1'b1;
+      end
+    end
+
+    always @(posedge clk) begin
+      s_axis_tready_reg <= s_axis_tready_early;
+      m_axis_tvalid_reg <= m_axis_tvalid_next;
+      temp_m_axis_tvalid_reg <= temp_m_axis_tvalid_next;
+
+      if (store_axis_input_to_output || store_axis_temp_to_output) begin
+        case (OP_MODE)
+          0 :      m_axis_tdata_reg <= $signed(op0_i) + $signed(op1_i); // ADD : 0
+          1 :      m_axis_tdata_reg <= $signed(op0_i) - $signed(op1_i); // SUB : 1
+          2 :      m_axis_tdata_reg <= $signed(op0_i) * $signed(op1_i); // MLT : 2
+          3 :      m_axis_tdata_reg <= `ABS( op0_i );                   // ABS : 3
+          default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
+        endcase
+      end
+
+      // datapath
+      if (store_axis_input_to_output) begin
+        m_axis_tlast_reg <= s_axis_tlast [CHN];
+        m_axis_tid_reg   <= s_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]  ;
+        m_axis_tdest_reg <= s_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH];
+        m_axis_tuser_reg <= s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH];
+      end else if (store_axis_temp_to_output) begin
+        m_axis_tlast_reg <= temp_m_axis_tlast_reg;
+        m_axis_tid_reg   <= temp_m_axis_tid_reg;
+        m_axis_tdest_reg <= temp_m_axis_tdest_reg;
+        m_axis_tuser_reg <= temp_m_axis_tuser_reg;
+      end
+
+      if (store_axis_input_to_temp) begin
+        temp_m_axis_tdata_op0_reg <= s_axis_tdata_op0[CHN * OP0_WIDTH +: OP0_WIDTH];
+        temp_m_axis_tdata_op1_reg <= s_axis_tdata_op1[CHN * OP1_WIDTH +: OP1_WIDTH];
+        temp_m_axis_tlast_reg <= s_axis_tlast [CHN];
+        temp_m_axis_tid_reg   <= s_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]  ;
+        temp_m_axis_tdest_reg <= s_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH];
+        temp_m_axis_tuser_reg <= s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH];
+      end
+
+      if (rst) begin
+        s_axis_tready_reg <= 1'b0;
+        m_axis_tvalid_reg <= 1'b0;
+        temp_m_axis_tvalid_reg <= 1'b0;
+      end
+    end
+
+    assign op0_i  = (store_axis_input_to_output) ? s_axis_tdata_op0[CHN * OP0_WIDTH +: OP0_WIDTH] : (
+                    (store_axis_temp_to_output)  ? temp_m_axis_tdata_op0_reg : {OP0_WIDTH{1'bX}}
+                  );
+    assign op1_i  = (store_axis_input_to_output) ? s_axis_tdata_op1[CHN * OP1_WIDTH +: OP1_WIDTH] : (
+                    (store_axis_temp_to_output)  ? temp_m_axis_tdata_op1_reg : {OP1_WIDTH{1'bX}}
+                  );
+
+  end else if (REG_TYPE == 1) begin : simple_register_genblock
+    // simple register, inserts bubble cycles
+
+    // datapath registers
+    reg                  s_axis_tready_reg = 1'b0;
+
+    reg [RSLT_WIDTH-1:0] m_axis_tdata_reg;
+    reg                  m_axis_tvalid_reg = 1'b0, m_axis_tvalid_next;
+    reg                  m_axis_tlast_reg  = 1'b0;
+    reg [ID_WIDTH-1:0]   m_axis_tid_reg    = {ID_WIDTH{1'b0}};
+    reg [DEST_WIDTH-1:0] m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
+    reg [USER_WIDTH-1:0] m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
+
+    // datapath control
+    reg store_axis_input_to_output;
+
+    assign s_axis_tready [CHN] = s_axis_tready_reg;
+
+    assign m_axis_tdata  [CHN*RSLT_WIDTH +: RSLT_WIDTH] = m_axis_tdata_reg;
+    assign m_axis_tvalid [CHN]                        = m_axis_tvalid_reg;
+
+    if (LAST_ENABLE) assign m_axis_tlast [CHN] = m_axis_tlast_reg ; 
+    else             assign m_axis_tlast [CHN] = 1'b1;
+    if (ID_ENABLE  ) assign m_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]   = m_axis_tid_reg; 
+    else             assign m_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]   = {ID_WIDTH{1'b0}};
+    if (DEST_ENABLE) assign m_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH] = m_axis_tdest_reg; 
+    else             assign m_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH] = {DEST_WIDTH{1'b0}};
+    if (USER_ENABLE) assign m_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH] = m_axis_tuser_reg; 
+    else             assign m_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH] = {USER_WIDTH{1'b0}};
+
+    // enable ready input next cycle if output buffer will be empty
+    wire s_axis_tready_early = !m_axis_tvalid_next;
+
+    always @* begin
+      // transfer sink ready state to source
+      m_axis_tvalid_next = m_axis_tvalid_reg;
+
+      store_axis_input_to_output = 1'b0;
+
+      if (s_axis_tready_reg) begin
+        m_axis_tvalid_next = s_axis_tvalid[CHN];
+        store_axis_input_to_output = 1'b1;
+      end else if (m_axis_tready[CHN]) begin
+        m_axis_tvalid_next = 1'b0;
+      end
+    end
+
+    always @(posedge clk) begin
+      s_axis_tready_reg <= s_axis_tready_early;
+      m_axis_tvalid_reg <= m_axis_tvalid_next;
+
+      if (store_axis_input_to_output) begin
+        case (OP_MODE)
+          0 :      m_axis_tdata_reg <= $signed(op0_i) + $signed(op1_i); // ADD : 0
+          1 :      m_axis_tdata_reg <= $signed(op0_i) - $signed(op1_i); // SUB : 1
+          2 :      m_axis_tdata_reg <= $signed(op0_i) * $signed(op1_i); // MLT : 2
+          3 :      m_axis_tdata_reg <= `ABS(op0_i);                     // ABS : 3
+          default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
+        endcase
+      end
+
+      // datapath
+      if (store_axis_input_to_output) begin
+        m_axis_tlast_reg <= s_axis_tlast [CHN];
+        m_axis_tid_reg   <= s_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]  ;
+        m_axis_tdest_reg <= s_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH];
+        m_axis_tuser_reg <= s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH];
+      end
+
+      if (rst) begin
+        s_axis_tready_reg <= 1'b0;
+        m_axis_tvalid_reg <= 1'b0;
+      end
+    end
+
+    assign op0_i  = (store_axis_input_to_output) ? s_axis_tdata_op0[CHN * OP0_WIDTH +: OP0_WIDTH] : {OP0_WIDTH{1'bX}};
+    assign op1_i  = (store_axis_input_to_output) ? s_axis_tdata_op1[CHN * OP1_WIDTH +: OP1_WIDTH] : {OP1_WIDTH{1'bX}};
+
+  end else begin: bypass_genblock
+    // bypass
+
+    case (OP_MODE)
+      0 :      assign m_axis_tdata = $signed(op0_i) + $signed(op1_i); // ADD : 0
+      1 :      assign m_axis_tdata = $signed(op0_i) - $signed(op1_i); // SUB : 1
+      2 :      assign m_axis_tdata = $signed(op0_i) * $signed(op1_i); // MLT : 2
+      3 :      assign m_axis_tdata = `ABS(op0_i);                     // ABS : 3
+      default: assign m_axis_tdata = {RSLT_WIDTH{1'bX}};
+    endcase
+
+    assign m_axis_tvalid [CHN] = s_axis_tvalid [CHN];
+    assign m_axis_tlast  [CHN] = LAST_ENABLE ? s_axis_tlast [CHN] : 1'b1;
+    assign m_axis_tid    [CHN*ID_WIDTH   +: ID_WIDTH]   = ID_ENABLE   ? s_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]   : {ID_WIDTH{1'b0}};
+    assign m_axis_tdest  [CHN*DEST_WIDTH +: DEST_WIDTH] = DEST_ENABLE ? s_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH] : {DEST_WIDTH{1'b0}};
+    assign m_axis_tuser  [CHN*USER_WIDTH +: USER_WIDTH] = USER_ENABLE ? s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH] : {USER_WIDTH{1'b0}};
+
+    assign s_axis_tready [CHN] = m_axis_tready [CHN];
+
+    assign op0_i = s_axis_tdata_op0[CHN * OP0_WIDTH +: OP0_WIDTH];
+    assign op1_i = s_axis_tdata_op1[CHN * OP1_WIDTH +: OP1_WIDTH];
+  end
+
+end
+
+endgenerate
+
+endmodule
+
+`resetall

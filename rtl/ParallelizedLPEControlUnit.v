@@ -29,62 +29,62 @@ module ParallelizedLPEControlUnit #(
     // Position of current PE in the j axis
     parameter PE_POSITION_J = 0
 ) (
-  input  wire                            clk,
-  input  wire                            rst,
+  input  wire                       clk,
+  input  wire                       rst,
 
   /*
    * AXI Stream Up input
    */
-  input  wire                         int_axis_u_tvalid,
-  input  wire                         int_axis_u_tlast,
+  input  wire                       int_axis_u_tvalid,
+  input  wire                       int_axis_u_tlast,
 
   /*
    * AXI Stream Down Output
    */
-  input  wire                         int_axis_d_tready,
+  input  wire                       int_axis_d_tready,
 
   /*
    * AXI Stream Left input
    */
-  input  wire                         int_axis_l_tvalid,
-  input  wire                         int_axis_l_tlast,
+  input  wire                       int_axis_l_tvalid,
+  input  wire                       int_axis_l_tlast,
 
   /*
    * AXI Stream Right Output
    */
-  input  wire                         int_axis_r_tready,
+  input  wire                       int_axis_r_tready,
   
   /*
    * AXI Stream Top Output
    */
-  input  wire                         int_axis_t_tvalid,
-  input  wire                         int_axis_t_tlast,
+  input  wire                       int_axis_t_tvalid,
+  input  wire                       int_axis_t_tlast,
 
   /*
    * AXI Stream Bottom Output
    */
-  input  wire                         int_axis_b_tready,
+  input  wire                       int_axis_b_tready,
 
-  output wire                         store_l,
-  output wire                         store_t,
-  output wire                         store_u,
-  output wire                         forward_l,
-  output wire                         forward_t,
-  output wire                         forward_u,
-  output wire                         drop_l,
-  output wire                         drop_t,
-  output wire                         drop_u,
-  output wire                         export_rslt,
-  output wire                         export_rslt_last,
+  output wire                       store_l,
+  output wire                       store_t,
+  output wire                       store_u,
+  output wire                       forward_l,
+  output wire                       forward_t,
+  output wire                       forward_u,
+  output wire                       drop_l,
+  output wire                       drop_t,
+  output wire                       drop_u,
+  output wire                       export_rslt,
+  output wire                       export_rslt_last,
 
-  output wire                         op_start,
-  output wire                         bypass_adder,
-  output wire                         acc_res,
+  output wire                       op_start,
+  output wire                       bypass_adder,
+  output wire                       acc_res,
 
   /*
    * Error Outputs
    */
-  output wire err_unalligned_data
+  output wire                       err_unalligned_data
 );
   // FSM States
   localparam FSM_STATE_WIDTH = 3;
@@ -98,6 +98,20 @@ module ParallelizedLPEControlUnit #(
   // FSM Registers & Wires
   reg  [FSM_STATE_WIDTH-1:0] fsm_state, fsm_state_next;
   
+  // FSM Output Signals
+  reg  store_l_reg, store_t_reg, store_u_reg;
+  reg  forward_l_reg, forward_t_reg, forward_u_reg;
+  
+  reg  drop_l_reg, drop_t_reg, drop_u_reg;
+  reg  export_rslt_reg;
+  reg  export_rslt_last_reg;
+ 
+  reg  op_start_reg;
+  reg  bypass_adder_reg;
+  reg  acc_res_reg;
+
+  reg  err_unalligned_data_reg;
+
   // FSM input signals
   wire op0_flag  = int_axis_l_tvalid && int_axis_r_tready;
   wire op1_flag  = int_axis_t_tvalid && int_axis_b_tready;
@@ -128,20 +142,6 @@ module ParallelizedLPEControlUnit #(
   endgenerate
 
   wire err_unalligned_data_int = op_valid && (op0_last_flag ^ op1_last_flag) ;
-
-  // FSM Output Signals
-  reg  store_l_reg, store_t_reg, store_u_reg;
-  reg  forward_l_reg, forward_t_reg, forward_u_reg;
-  
-  reg  drop_l_reg, drop_t_reg, drop_u_reg;
-  reg  export_rslt_reg;
-  reg  export_rslt_last_reg;
- 
-  reg  op_start_reg;
-  reg  bypass_adder_reg;
-  reg  acc_res_reg;
-
-  reg  err_unalligned_data_reg;
 
   // // Output Control Registers & Wires -- For debugging
   // wire handshake_r = int_axis_r_tvalid && int_axis_r_tready;
@@ -495,9 +495,10 @@ module ParallelizedLPEControlUnit #(
 
     end else if (PE_POSITION_J == PE_NUMBER_J-1) begin
       // Registers & Wires
+      reg  local_tlast_reg;
+      
       wire partial_sum_updated  = acc_res_reg && !bypass_adder_reg;
       wire local_tlast_reg_next = partial_sum_updated && int_axis_u_tlast;
-      reg  local_tlast_reg;
 
       always @(posedge clk ) begin
         if (rst) begin
@@ -522,11 +523,12 @@ module ParallelizedLPEControlUnit #(
 
     end else begin
       // Registers & Wires
+      reg  local_tlast_reg;
+
       wire partial_sum_updated  = acc_res_reg && !bypass_adder_reg;
       wire local_sum_tlast_reg_next = partial_sum_updated;        // Inherited from summing the last data
       wire local_fw_tlast_reg_next  = down_axis_open;             // Inherited from forwarding the last data
       wire local_tlast_reg_next = ((local_sum_tlast_reg_next || local_fw_tlast_reg_next) && rslt_last_flag) || local_tlast_reg;
-      reg  local_tlast_reg;
 
       always @(posedge clk) begin
         if (rst) begin

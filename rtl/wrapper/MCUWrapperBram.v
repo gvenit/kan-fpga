@@ -71,10 +71,10 @@ module MCUWrapperBram #(
   /*
    * Control signals -- Corresponding clock : fsm_clk
    */
-  input  wire operation_start,
-  input  wire [DATA_ADDR:0]                                 data_size,
-  input  wire [GRID_ADDR:0]                                 grid_size,
-  input  wire [SCALE_ADDR:0]                                scle_size,
+  input  wire                                                     operation_start,
+  input  wire [DATA_ADDR:0]                                       data_size,
+  input  wire [GRID_ADDR:0]                                       grid_size,
+  input  wire [SCALE_ADDR:0]                                      scle_size,
   
   /*
    * Interrupt signals -- Corresponding clock : fsm_clk
@@ -88,17 +88,15 @@ module MCUWrapperBram #(
    */
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_clk,
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_en,
-  // output wire [BATCH_SIZE*DATA_CHANNELS*WE-1:0]                   data_bram_we,  // Read Only Operations allowed
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_ADDR-1:0]      data_bram_addr,
-  // input  wire [BATCH_SIZE*DATA_CHANNELS*WIDTH-1:0]                data_bram_wrdata,
-  input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]      data_bram_rddata,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_ADDR-1:0]            data_bram_addr,
+  input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]           data_bram_rddata,
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      data_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
 
   /*
    * AXI Stream Data Output -- Corresponding clock : m_axis_data_aclk
    */
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_aclk,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]      m_axis_data_tdata,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]           m_axis_data_tdata,
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tvalid,
   input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tready,
   output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                      m_axis_data_tlast,
@@ -111,17 +109,15 @@ module MCUWrapperBram #(
    */
   input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_clk,
   output wire [GRID_CHANNELS_IN-1:0]                              grid_bram_en,
-  // output wire [GRID_CHANNELS_IN*WE-1:0]                           grid_bram_we,  // Read Only Operations allowed
-  output wire [GRID_CHANNELS_IN*DATA_ADDR-1:0]              grid_bram_addr,
-  // input  wire [GRID_CHANNELS_IN*WIDTH-1:0]                        grid_bram_wrdata,
-  input  wire [GRID_CHANNELS_IN*DATA_WIDTH-1:0]              grid_bram_rddata,
+  output wire [GRID_CHANNELS_IN*DATA_ADDR-1:0]                    grid_bram_addr,
+  input  wire [GRID_CHANNELS_IN*DATA_WIDTH-1:0]                   grid_bram_rddata,
   input  wire [GRID_CHANNELS_IN-1:0]                              grid_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0                                     
 
   /*
    * AXI Stream Grid Output -- Corresponding clock : m_axis_grid_aclk
    */
   output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_aclk,
-  output wire [GRID_CHANNELS_OUT*DATA_WIDTH-1:0]             m_axis_grid_tdata,
+  output wire [GRID_CHANNELS_OUT*DATA_WIDTH-1:0]                  m_axis_grid_tdata,
   output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tvalid,
   input  wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tready,
   output wire [GRID_CHANNELS_OUT-1:0]                             m_axis_grid_tlast,
@@ -134,17 +130,15 @@ module MCUWrapperBram #(
    */
   input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_clk,
   output wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_en,
-  // output wire [SCALE_CHANNELS_IN*WE-1:0]                          scle_bram_we,  // Read Only Operations allowed
-  output wire [SCALE_CHANNELS_IN*SCALE_ADDR-1:0]            scle_bram_addr,
-  // input  wire [SCALE_CHANNELS_IN*WIDTH-1:0]                       scle_bram_wrdata,
-  input  wire [SCALE_CHANNELS_IN*SCALE_WIDTH-1:0]            scle_bram_rddata,
+  output wire [SCALE_CHANNELS_IN*SCALE_ADDR-1:0]                  scle_bram_addr,
+  input  wire [SCALE_CHANNELS_IN*SCALE_WIDTH-1:0]                 scle_bram_rddata,
   input  wire [SCALE_CHANNELS_IN-1:0]                             scle_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
 
   /*
    * AXI Stream Scale Output -- Corresponding clock : m_axis_scle_aclk
    */
   output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_aclk,
-  output wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]           m_axis_scle_tdata,
+  output wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]                m_axis_scle_tdata,
   output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tvalid,
   input  wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tready,
   output wire [SCALE_CHANNELS_OUT-1:0]                            m_axis_scle_tlast,

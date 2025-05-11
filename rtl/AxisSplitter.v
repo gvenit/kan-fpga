@@ -38,33 +38,32 @@ module AxisSplitter #(
   // Add Buffer on Output Streams
   parameter EXTRA_CYCLE = 0
 ) (
-  input  wire                                   clk,
-  input  wire                                   rst,
+  input  wire                                       clk,
+  input  wire                                       rst,
 
   /*
    * AXI Stream Data input
    */
-  input  wire [CHANNELS*OUTPUT_DATA_WIDTH-1:0]   s_axis_tdata,
-  input  wire [INPUT_KEEP_WIDTH-1:0]             s_axis_tkeep,
-  input  wire                                    s_axis_tvalid,  
-  output wire                                    s_axis_tready,
-  input  wire                                    s_axis_tlast,
-  input  wire  [ID_WIDTH-1:0]                    s_axis_tid,
-  input  wire  [DEST_WIDTH-1:0]                  s_axis_tdest,
-  input  wire  [USER_WIDTH-1:0]                  s_axis_tuser,
+  input  wire [CHANNELS*OUTPUT_DATA_WIDTH-1:0]      s_axis_tdata,
+  input  wire [INPUT_KEEP_WIDTH-1:0]                s_axis_tkeep,
+  input  wire                                       s_axis_tvalid,  
+  output wire                                       s_axis_tready,
+  input  wire                                       s_axis_tlast,
+  input  wire  [ID_WIDTH-1:0]                       s_axis_tid,
+  input  wire  [DEST_WIDTH-1:0]                     s_axis_tdest,
+  input  wire  [USER_WIDTH-1:0]                     s_axis_tuser,
 
   /*
    * AXI Stream output
    */
-  output wire [CHANNELS*OUTPUT_DATA_WIDTH-1:0]   m_axis_tdata,
-  output wire [CHANNELS*OUTPUT_KEEP_WIDTH-1:0]   m_axis_tkeep,
-  output wire [CHANNELS-1:0]                     m_axis_tvalid,
-  input  wire [CHANNELS-1:0]                     m_axis_tready,
-  output wire [CHANNELS-1:0]                     m_axis_tlast,
-  output wire [CHANNELS*ID_WIDTH-1:0]            m_axis_tid,
-  output wire [CHANNELS*DEST_WIDTH-1:0]          m_axis_tdest,
-  output wire [CHANNELS*USER_WIDTH-1:0]          m_axis_tuser
-
+  output wire [CHANNELS*OUTPUT_DATA_WIDTH-1:0]      m_axis_tdata,
+  output wire [CHANNELS*OUTPUT_KEEP_WIDTH-1:0]      m_axis_tkeep,
+  output wire [CHANNELS-1:0]                        m_axis_tvalid,
+  input  wire [CHANNELS-1:0]                        m_axis_tready,
+  output wire [CHANNELS-1:0]                        m_axis_tlast,
+  output wire [CHANNELS*ID_WIDTH-1:0]               m_axis_tid,
+  output wire [CHANNELS*DEST_WIDTH-1:0]             m_axis_tdest,
+  output wire [CHANNELS*USER_WIDTH-1:0]             m_axis_tuser
 );
   // DataFlow Local Parameters
   localparam INPUT_DATA_WIDTH = CHANNELS*OUTPUT_DATA_WIDTH;
@@ -156,7 +155,7 @@ module AxisSplitter #(
   assign new_transfer = &( ( ~keep_channels ) | ( locked_channels_reg | handshakes ) );
 
   generate
-    for ( CHN = 0 ; CHN < CHANNELS ; CHN=CHN+1 ) begin
+    for ( CHN = 0 ; CHN < CHANNELS ; CHN=CHN+1 ) begin : channel_genblock
       // Break Internal AXI_Stream Data into channels
       assign int_axis_chn_tdata    [CHN] = int_axis_tdata  [CHN*OUTPUT_DATA_WIDTH +: OUTPUT_DATA_WIDTH];
 
@@ -174,7 +173,7 @@ module AxisSplitter #(
       // Validate data transfer from master side
       assign int_axis_chn_tvalid   [CHN] = int_axis_tvalid && ~ locked_channels_reg[CHN] && keep_channels[CHN];
 
-      if (EXTRA_CYCLE) begin
+      if (EXTRA_CYCLE) begin : extra_register_genblock
         axis_register #(
           // Width of AXI stream interfaces in bits
           .DATA_WIDTH(OUTPUT_DATA_WIDTH),

@@ -42,26 +42,25 @@ module axil_reg_if_rd_wrapper #
     input  wire                   reg_rd_ack
 );
 
-  axil_reg_if_rd #
-  (
-    .DATA_WIDTH(DATA_WIDTH),
-    .ADDR_WIDTH(ADDR_WIDTH)
+  axil_reg_if_rd #(
+    .DATA_WIDTH       (DATA_WIDTH),
+    .ADDR_WIDTH       (ADDR_WIDTH)
   ) wrapper (
-    .clk(clk),
-    .rst(rst),
-    .s_axil_araddr(s_axil_araddr),
-    .s_axil_arprot(s_axil_arprot),
-    .s_axil_arvalid(s_axil_arvalid),
-    .s_axil_arready(s_axil_arready),
-    .s_axil_rdata(s_axil_rdata),
-    .s_axil_rresp(s_axil_rresp),
-    .s_axil_rvalid(s_axil_rvalid),
-    .s_axil_rready(s_axil_rready),
-    .reg_rd_addr(reg_rd_addr),
-    .reg_rd_en(reg_rd_en),
-    .reg_rd_data(reg_rd_data),
-    .reg_rd_wait(reg_rd_wait),
-    .reg_rd_ack(reg_rd_ack)
+    .clk              (clk),
+    .rst              (rst),
+    .s_axil_araddr    (s_axil_araddr),
+    .s_axil_arprot    (s_axil_arprot),
+    .s_axil_arvalid   (s_axil_arvalid),
+    .s_axil_arready   (s_axil_arready),
+    .s_axil_rdata     (s_axil_rdata),
+    .s_axil_rresp     (s_axil_rresp),
+    .s_axil_rvalid    (s_axil_rvalid),
+    .s_axil_rready    (s_axil_rready),
+    .reg_rd_addr      (reg_rd_addr),
+    .reg_rd_en        (reg_rd_en),
+    .reg_rd_data      (reg_rd_data),
+    .reg_rd_wait      (reg_rd_wait),
+    .reg_rd_ack       (reg_rd_ack)
   );
 endmodule
 

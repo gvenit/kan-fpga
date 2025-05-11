@@ -60,13 +60,17 @@ module ParallelizedDataProcessor #(
   // Grid Channels
   parameter GRID_CHANNELS = (GRID_SHARE)? 1 : DATA_CHANNELS*BATCH_SIZE,
   // Path to ROM Data
-  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.12_16.16.txt",
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt",
   // Output User
   parameter OUTPUT_USER = 0,
   // Output Destination 
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 
-  parameter OUTPUT_ID = 1
+  parameter OUTPUT_ID = 1,
+  // Input FIFO size
+  parameter FIFO_DEPTH = 0,
+  // Pipeline Level to use for dsp
+  parameter PIPELINE_LEVEL = 0
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -187,7 +191,9 @@ module ParallelizedDataProcessor #(
     // Grid Channels
     .GRID_CHANNELS(GRID_CHANNELS),
     // Path to ROM Data
-    .ROM_DATA_PATH(ROM_DATA_PATH)
+    .ROM_DATA_PATH(ROM_DATA_PATH),
+    // Use FIFO for inputs
+    .FIFO_DEPTH(FIFO_DEPTH)
   ) act_func_inst (
     .clk                  (clk),
     .rst                  (core_rst),
@@ -263,7 +269,9 @@ module ParallelizedDataProcessor #(
     // Output Destination 
     .OUTPUT_DEST(OUTPUT_DEST),
     // Output Thread ID 
-    .OUTPUT_ID(OUTPUT_ID)
+    .OUTPUT_ID(OUTPUT_ID),
+    // Pipeline Level to use for dsp
+    .PIPELINE_LEVEL(PIPELINE_LEVEL)
   ) parallelized_lpa_inst (
     .clk                    (clk),
     .rst                    (rst),

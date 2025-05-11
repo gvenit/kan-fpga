@@ -74,6 +74,11 @@ module MCULocalBramFSM #(
   wire                  loc_in_axis_tready, loc_out_axis_tready;
   wire                  loc_in_axis_tlast,  loc_out_axis_tlast;
 
+  // Intra-Iteration Counter Registers & Wires
+  reg  [INTRA_ITER_WIDTH-1:0] intra_counter_reg;
+  wire [INTRA_ITER_WIDTH-1:0] intra_counter_reg_next = intra_counter_reg + 1;
+  wire forward_reg_next = (intra_counter_reg_next == intra_counter_max) ;
+
   // Local FSM Output Registers & Wires
   reg [LOC_FSM_WIDTH-1:0]     loc_fsm_state, loc_fsm_state_next;
   reg [ADDR_WIDTH-1:0]        loc_counter_addr_reg;
@@ -93,13 +98,13 @@ module MCULocalBramFSM #(
   assign loc_in_axis_tlast  = loc_fsm_state == LOC_FSM_END;
 
   // Local FSM Input Registers & Wires
-  wire [ADDR_WIDTH:0]         loc_counter_addr_reg_next = (get_next_addr) ? loc_counter_addr_reg + 1 : loc_counter_addr_reg;
-  wire [INTER_ITER_WIDTH-1:0] inter_counter_reg_next    = (get_next_iter) ? inter_counter_reg + 1 : inter_counter_reg; // Inter-Iteration Counter
-  wire internal_error = 1'b0;
-  wire tlast_transmitted_reg_next = tlast_transmitted_reg || (loc_out_axis_tlast && loc_out_axis_tready && loc_out_axis_tvalid);
+  wire                        get_next_addr              = bram_en; // loc_in_axis_tvalid && loc_in_axis_tready;
+  wire [ADDR_WIDTH:0]         loc_counter_addr_reg_next  = (get_next_addr) ? loc_counter_addr_reg + 1 : loc_counter_addr_reg;
+  wire [INTER_ITER_WIDTH-1:0] inter_counter_reg_next     = (get_next_iter) ? inter_counter_reg + 1 : inter_counter_reg; // Inter-Iteration Counter
+  wire                        internal_error             = 1'b0;
+  wire                        tlast_transmitted_reg_next = tlast_transmitted_reg || (loc_out_axis_tlast && loc_out_axis_tready && loc_out_axis_tvalid);
 
-  wire get_next_addr = bram_en; // loc_in_axis_tvalid && loc_in_axis_tready;
-  
+  // Check Operation Start
   `define LOC_CHECK_OP_START(operation_start, loc_fsm_state_next, addr_counter_max, inter_counter_max)\
     if (operation_start) begin \
       if(addr_counter_max == 0 || inter_counter_max == 0) begin \
@@ -229,28 +234,23 @@ module MCULocalBramFSM #(
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
     .REG_TYPE(2)
   ) out_axis_register_inst (
-    .clk(clk),
-    .rst(rst || (loc_fsm_state == LOC_FSM_ERR)),
-    .s_axis_tdata(loc_in_axis_tdata),
-    .s_axis_tkeep(1'b1),
-    .s_axis_tvalid(loc_in_axis_tvalid),
-    .s_axis_tready(loc_in_axis_tready),
-    .s_axis_tlast(loc_in_axis_tlast),
-    .s_axis_tid(1'b0),
-    .s_axis_tdest(1'b0),
-    .s_axis_tuser(1'b0),
-    .m_axis_tdata(loc_out_axis_tdata),
-    .m_axis_tvalid(loc_out_axis_tvalid),
-    .m_axis_tready(loc_out_axis_tready),
-    .m_axis_tlast(loc_out_axis_tlast)
+    .clk              (clk),
+    .rst              (rst || (loc_fsm_state == LOC_FSM_ERR)),
+    .s_axis_tdata     (loc_in_axis_tdata),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (loc_in_axis_tvalid),
+    .s_axis_tready    (loc_in_axis_tready),
+    .s_axis_tlast     (loc_in_axis_tlast),
+    .s_axis_tid       (1'b0),
+    .s_axis_tdest     (1'b0),
+    .s_axis_tuser     (1'b0),
+    .m_axis_tdata     (loc_out_axis_tdata),
+    .m_axis_tvalid    (loc_out_axis_tvalid),
+    .m_axis_tready    (loc_out_axis_tready),
+    .m_axis_tlast     (loc_out_axis_tlast)
   );
 
   // Intra-Iteration Counter
-  reg  [INTRA_ITER_WIDTH-1:0] intra_counter_reg;
-  // reg  forward_reg;
-
-  wire [INTRA_ITER_WIDTH-1:0] intra_counter_reg_next = intra_counter_reg + 1;
-  wire forward_reg_next = (intra_counter_reg_next == intra_counter_max) ;
 
   always @(posedge clk ) begin
     if (rst) begin
@@ -274,6 +274,7 @@ module MCULocalBramFSM #(
   assign tlast_transmitted = tlast_transmitted_reg;
   assign error = error_reg;
 
+`undef LOC_CHECK_OP_START
 endmodule
 
 `resetall
