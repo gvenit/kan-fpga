@@ -197,6 +197,9 @@ module KanLayer #(
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt"
 ) (
 
+  /*------------------------------------------------------------------
+      Clocks and Resets
+  ------------------------------------------------------------------*/
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 fsm_clk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_ctrl, ASSOCIATED_RESET fsm_rst" *)
   input  wire                                       fsm_clk,
@@ -527,6 +530,7 @@ module KanLayer #(
   /*************************************************************************************
    Local Parameters
   *************************************************************************************/
+
   /*------------------------------------------------------------------
     DATA parameters for AXI stream and BRAM interface
   ------------------------------------------------------------------*/
