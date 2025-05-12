@@ -52,7 +52,7 @@ module RSWAFFunctionWrapper #
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt",
   // Use FIFO for inputs
-  parameter FIFO_DEPTH = 0
+  parameter USE_FIFO = 0
 )
 (
   input  wire                                         clk,
@@ -143,9 +143,7 @@ module RSWAFFunctionWrapper #
     // Grid Channels
     .GRID_CHANNELS(GRID_CHANNELS),
     // Path to ROM Data
-    .ROM_DATA_PATH(ROM_DATA_PATH),
-    // Use FIFO for inputs
-    .FIFO_DEPTH(FIFO_DEPTH)
+    .ROM_DATA_PATH(ROM_DATA_PATH)
   ) act_func_inst (
     .clk                  (clk),
     .rst                  (rst),

@@ -2,7 +2,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-`include "utils.vh"
+`include "header_utils.vh"
 
 module AxilRam #
 (
