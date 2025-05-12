@@ -1,3 +1,6 @@
+`resetall
+`timescale 1ns/1ps
+`default_nettype none
 
 /* 
  * CCURegisterFile : Register File for the CentralControlUnit.
@@ -238,22 +241,22 @@ module CCURegisterFile #(
 
   always @(posedge clk) begin
     if (rw_op_str_reg_en) begin 
-      `PL_WRITE_MEM(mem,CTRL_REG_OPER_STR,operation_start_wr,1);
+      `PL_WRITE_MEM(mem,CTRL_REG_OPER_STR,operation_start_wr,1)
     end
     if (rw_op_dne_reg_en) begin 
       // Read-Write Registers (PS->PL)
-      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LEN,data_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LEN,grid_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LEN,scle_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LEN,rslt_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_PCKT_LEN,pckt_size_wr,DATA_WIDTH);
-      `PL_WRITE_MEM(mem,CTRL_REG_BTCH_LEN,btch_size_wr,WORD_SIZE);
-      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LDR,data_loaded_wr,WORD_SIZE);
-      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LDR,grid_loaded_wr,WORD_SIZE);
-      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LDR,scle_loaded_wr,WORD_SIZE);
-      `PL_WRITE_MEM(mem,CTRL_REG_WGHT_LDR,wght_loaded_wr,WORD_SIZE);
+      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LEN,data_size_wr,DATA_WIDTH)
+      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LEN,grid_size_wr,DATA_WIDTH)
+      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LEN,scle_size_wr,DATA_WIDTH)
+      `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LEN,rslt_size_wr,DATA_WIDTH)
+      `PL_WRITE_MEM(mem,CTRL_REG_PCKT_LEN,pckt_size_wr,DATA_WIDTH)
+      `PL_WRITE_MEM(mem,CTRL_REG_BTCH_LEN,btch_size_wr,WORD_SIZE)
+      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LDR,data_loaded_wr,WORD_SIZE)
+      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LDR,grid_loaded_wr,WORD_SIZE)
+      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LDR,scle_loaded_wr,WORD_SIZE)
+      `PL_WRITE_MEM(mem,CTRL_REG_WGHT_LDR,wght_loaded_wr,WORD_SIZE)
       // Read-Write Registers (PL->PS)
-      `PL_WRITE_MEM(mem,CTRL_REG_OPER_DNE,operation_done_wr,1);
+      `PL_WRITE_MEM(mem,CTRL_REG_OPER_DNE,operation_done_wr,1)
     end
 
     s_axil_awready_reg <= s_axil_awready_next;

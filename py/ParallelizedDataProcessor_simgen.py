@@ -34,6 +34,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     RSLT_CHANNELS               : Localparam = params['RSLT_CHANNELS']
     BATCH_SIZE                  : Localparam = params['BATCH_SIZE']
     SCALE_SHARE                 : Localparam = params['SCALE_SHARE']
+    GRID_SHARE                  : Localparam = params['GRID_SHARE']
     DATA_WIDTH                  : Localparam = params['DATA_WIDTH']
     DATA_FRACTIONAL_BITS        : Localparam = params['DATA_FRACTIONAL_BITS']
     SCALE_FRACTIONAL_BITS       : Localparam = params['SCALE_FRACTIONAL_BITS']
@@ -42,20 +43,25 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     ACT_FRACTIONAL_BITS         : Localparam = params['ACT_FRACTIONAL_BITS']
     RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
     ROM_DATA_PATH               : Localparam = params['ROM_DATA_PATH']
+    FIFO_DEPTH                  : Localparam = params['FIFO_DEPTH']
+    PIPELINE_LEVEL              : Localparam = params['PIPELINE_LEVEL']
 
     RSLT_CHANNELS.value = I
     DATA_CHANNELS.value = J
     BATCH_SIZE.value  = K
 
     SCALE_SHARE.value = 1
+    GRID_SHARE.value = 1
     DATA_WIDTH.value = 16
-    DATA_FRACTIONAL_BITS.value = 12
+    DATA_FRACTIONAL_BITS.value = 15
     SCALE_FRACTIONAL_BITS.value = 12
-    WEIGHT_FRACTIONAL_BITS.value = 12
+    WEIGHT_FRACTIONAL_BITS.value = 16
     SCALED_DIFF_FRACTIONAL_BITS.value = 13
     ACT_FRACTIONAL_BITS.value = 16
     RSLT_FRACTIONAL_BITS.value = 12
     ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
+    FIFO_DEPTH.value = 0
+    PIPELINE_LEVEL.value = 1
     
     os.system(' '.join([
         'python',
@@ -158,38 +164,39 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     )
     
     module.EmbeddedCode(
-    '''`define assert(signal, value) \
-    if (signal !== value) begin \
-        $display("ASSERTION FAILED in %m:"); \
-        $display("---- Time %0t",$time); \
-        $display("---- %s != %s",`"signal`", `"value`"); \
-        $display("---- %s = 0x%h",`"signal`",signal); \
-        $display("---- %s = 0x%h",`"value`",value); \
-        #5 \
-        $finish; \
-    end
+    '''
+    `include "header_utils.vh"
+    `define assert(signal, value) \
+      if (signal !== value) begin \
+          $display("ASSERTION FAILED in %m:"); \
+          $display("---- Time %0t",$time); \
+          $display("---- %s != %s",`"signal`", `"value`"); \
+          $display("---- %s = 0x%h",`"signal`",signal); \
+          $display("---- %s = 0x%h",`"value`",value); \
+          #5 \
+          $finish; \
+      end
     `define assertTrue(signal) \
-    if (~signal) begin \
-        $display("ASSERTION FAILED in %m:"); \
-        $display("---- Time %0t",$time); \
-        $display("---- %s is not True",`"signal`"); \
-        $display("---- %s = 0x%h",`"signal`",signal); \
-        #5 \
-        $finish; \
-    end
-    `define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
+      if (~signal) begin \
+          $display("ASSERTION FAILED in %m:"); \
+          $display("---- Time %0t",$time); \
+          $display("---- %s is not True",`"signal`"); \
+          $display("---- %s = 0x%h",`"signal`",signal); \
+          #5 \
+          $finish; \
+      end
     `define assertAbsDiffLE(signal0, signal1, value) \
-    if ( `abs(signal0-signal1) > value) begin \
-        $display("ASSERTION FAILED in %m:"); \
-        $display("---- Time %0t",$time); \
-        $display("---- ABS(%s-%s) > %s",`"signal0`",`"signal1`",`"value`"); \
-        $display("---- %s = 0x%h",`"signal0`",signal0); \
-        $display("---- %s = 0x%h",`"signal1`",signal1); \
-        $display("---- Abs Diff = 0x%h",`abs(signal0-signal1)); \
-        $display("---- %s = 0x%h",`"value`",value); \
-        #5 \
-        $finish; \
-    end
+      if ( `ABS(signal0-signal1) > value) begin \
+          $display("ASSERTION FAILED in %m:"); \
+          $display("---- Time %0t",$time); \
+          $display("---- ABS(%s-%s) > %s",`"signal0`",`"signal1`",`"value`"); \
+          $display("---- %s = 0x%h",`"signal0`",signal0); \
+          $display("---- %s = 0x%h",`"signal1`",signal1); \
+          $display("---- Abs Diff = 0x%h",`ABS(signal0-signal1)); \
+          $display("---- %s = 0x%h",`"value`",value); \
+          #5 \
+          $finish; \
+      end
     ''')
     def Assert(signal,value):
         return EmbeddedCode(f'`assert({signal},{value})')
@@ -200,28 +207,30 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
 
     # KAN Layer parameters
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    data_len = DATA_CHANNELS.value * (N_in // DATA_CHANNELS.value)
+    data_len = DATA_CHANNELS.value * max(N_in // DATA_CHANNELS.value, 1)
     grid_len = 8
     scale_len = (1,1,1) if SCALE_SHARE.value else (1,grid_len,data_len)
-    rslt_len = RSLT_CHANNELS.value * (N_out // RSLT_CHANNELS.value)
+    rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
     weight_len = data_len*grid_len
+    weight_scale = weight_len
+    adder_size = 64
     # print(data_len,grid_len,scale_len,rslt_len,weight_len)
     
-    # Create data - size = [BATCH X DATA]
+    # Create data - size = [BATCH X 1 X DATA]
     layer_data = torch.randn(K, 1, data_len, device=device)
     # Quantize data
     layer_data_q = torch.tensor((layer_data * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'),device=device)
     # Dequantize data
     layer_data = layer_data_qd = layer_data_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
-    # Create grid - size = [GRID]
+    # Create grid - size = [1 X GRID X 1]
     layer_grid = torch.randn(1, grid_len, 1, device=device)
     # Quantize grid
     layer_grid_q = torch.tensor((layer_grid * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize grid
     layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
-    # Create scale - size = [GRID X DATA] or [1] 
+    # Create scale - size = [1 X GRID X DATA] or [1] 
     layer_scle = torch.rand(*scale_len, device=device)
     # Quantize scale
     layer_scle_q = torch.tensor((layer_scle * 2 ** SCALE_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
@@ -230,56 +239,67 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     
     
     # Create weight - size = [WEIGHT x RESULT] or [1] 
-    layer_wght = (torch.rand(weight_len, rslt_len, device=device) * 2 - 1) / weight_len * 10
+    layer_wght = (torch.rand(weight_len, rslt_len, device=device) * 2 - 1) / weight_scale * 2
     # Quantize scale
     layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Dequantize scale
     layer_wght = layer_wght_qd = layer_wght_q.to(torch.float32) / 2 ** WEIGHT_FRACTIONAL_BITS.value
+    # print(layer_wght_q,layer_wght)
+    # exit()
     
     # Create expected scaled difference - size = [BATCH X GRID X DATA]
-    layer_exp_diff = (layer_scle * (layer_data - layer_grid)).abs()
+    layer_exp_sdff = (layer_scle * (layer_data - layer_grid)).abs()
+    
     # Create scaled difference - size = [BATCH X GRID X DATA]
-    layer_diff = layer_scle_qd * (layer_data_qd - layer_grid_qd)
+    layer_diff = (layer_data_qd - layer_grid_qd)
     # Quantize scaled difference
-    layer_diff_q = torch.tensor((layer_diff * 2 ** SCALED_DIFF_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device).abs()
+    layer_diff_q = torch.tensor((layer_diff * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device).abs()
     # Dequantize scaled difference
-    layer_diff_qd = layer_diff_q.to(torch.float32) / 2 ** SCALED_DIFF_FRACTIONAL_BITS.value
+    layer_diff_qd = layer_diff_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
+    
+    # Create scaled difference - size = [BATCH X GRID X DATA]
+    layer_sdff = (layer_scle_qd * layer_diff_qd).abs()
+    # Quantize scaled difference
+    layer_sdff_q = torch.tensor((layer_sdff * 2 ** SCALED_DIFF_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{adder_size}'), device=device).abs()
+    # Dequantize scaled difference
+    layer_sdff_qd = layer_sdff_q.cpu().numpy().astype('float128') / 2 ** SCALED_DIFF_FRACTIONAL_BITS.value
     
     # Create expected activation data - size = [BATCH X GRID X DATA]
-    layer_exp_actd = (1 - torch.tanh(layer_exp_diff)**2)
+    layer_exp_actd = torch.tensor((1 - np.tanh(layer_exp_sdff.cpu().numpy().astype('float128'))**2).astype('float32'), device=device)
     # Reshape expected activation data - size = [BATCH X WEIGHT]
     layer_exp_actd = layer_exp_actd.reshape(-1, weight_len)
     
-    # Create activation data - size = [BATCH X GRID X DATA]
-    layer_actd = 1 - torch.tanh(layer_diff_qd)**2
+    # Create activation data - size = [BATCH X WEIGHT]
+    layer_actd = 1 - np.tanh(layer_sdff_qd)**2
     # Reshape activation data - size = [BATCH X WEIGHT]
     layer_actd = layer_actd.reshape(-1, weight_len)
     # Quantize activation data
-    layer_actd_q = torch.tensor((layer_actd * 2 ** ACT_FRACTIONAL_BITS.value).round().cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
+    layer_actd_q = torch.tensor((layer_actd * 2 ** ACT_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Unit correction
     if (DATA_WIDTH.value == ACT_FRACTIONAL_BITS.value):
         layer_actd_q = torch.where(
-            (layer_actd_q >> DATA_WIDTH.value) > 0,
-            layer_actd_q-1,
+            layer_actd_q > 2 ** ACT_FRACTIONAL_BITS.value -1,
+            2 ** ACT_FRACTIONAL_BITS.value - 1,
             layer_actd_q
         )
-    # Dequantize activation data
+    # Dequantize activation data - size = [BATCH X WEIGHT]
     layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACT_FRACTIONAL_BITS.value
     
-    # Perform expected Linear Layer / Matrix-Matrix Multiplication
+    # Perform expected Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
     layer_exp_rslt = layer_exp_actd @ layer_wght
     # Quantize expected result
     layer_exp_rslt_q = torch.tensor((layer_exp_rslt * 2 ** RSLT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     
-    # Perform Linear Layer / Matrix-Matrix Multiplication
+    # Perform Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
     layer_rslt = layer_actd_qd @ layer_wght_qd
     # Quantize result
-    layer_rslt_q = torch.tensor((layer_rslt * 2 ** RSLT_FRACTIONAL_BITS.value).round().cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_rslt_q = torch.tensor((layer_rslt * 2 ** RSLT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # # Dequantize result
     # layer_rslt_qd = layer_rslt_q.to('float32') / 2 ** RSLT_FRACTIONAL_BITS.value
     
-    # Perform Linear Layer / Matrix-Matrix Multiplication -- with integers
-    layer_rslt_int = torch.tensor(((layer_actd_q.cpu() @ layer_wght_q.cpu()) * 2 ** (RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
+    # Perform Linear Layer / Matrix-Matrix Multiplication -- with integers - size = [BATCH X RESULT]
+    layer_rslt_int = torch.einsum("bw,wr->wbr", layer_actd_q, layer_wght_q).cpu().numpy().astype('int64')
+    layer_rslt_int = torch.tensor(np.right_shift(np.sum(layer_rslt_int,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize result -- with integers
     layer_rslt_intd = layer_rslt_int.to(torch.float32) / 2 ** RSLT_FRACTIONAL_BITS.value
     
@@ -297,6 +317,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # Theoretical Quantization Error Rate
     theo_qer = torch.sqrt(torch.mean((layer_rslt - layer_rslt_intd) ** 2)).cpu().numpy()
     print('Theoretical Quantization Error Rate:', theo_qer)
+    # exit()
     
     # Generate Variables
     chn_rslt = module.Genvar('chn_rslt')
@@ -311,11 +332,14 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     
     LFT_POS = per_channel_jk.Localparam('LFT_POS',chn_batch * DATA_CHANNELS + chn_data)
     
-    test_data = layer_data_q.reshape(-1, BATCH_SIZE.value, DATA_CHANNELS.value).cpu().tolist()
+    test_data = torch.stack(layer_data_q.squeeze(dim=1).split(DATA_CHANNELS.value,-1)).cpu().to(torch.uint16).tolist()
     test_grid = layer_grid_q.squeeze().cpu().tolist()
-    test_scle = layer_scle_q.squeeze(0).cpu().tolist() if SCALE_SHARE.value else layer_scle_q.reshape(-1, DATA_CHANNELS.value).cpu().tolist()
+    test_scle = layer_scle_q.squeeze(0).cpu().tolist() if SCALE_SHARE.value else \
+                torch.stack(layer_data_q.reshape(-1).split(DATA_CHANNELS.value,-1)).cpu().to(torch.uint16).tolist()
     
-    # print(test_data)
+    hex_list = lambda x: hex(x) if isinstance(x, int) else [hex_list(_) for _ in x]
+    # print('Test data:', np.array(test_data).shape)
+    # print(np.array(hex_list(test_data)).squeeze())
     # print(layer_data_qd)
     # print(layer_data_qd.reshape(-1, BATCH_SIZE.value, DATA_CHANNELS.value))
     
@@ -397,7 +421,10 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     grid_iter = per_channel_jk.Integer('grid_iter')
     iteration = per_channel_jk.Integer('iteration_grid')
     
-    per_channel_jk.Initial(
+    per_channel_jk.GenerateIf(Ors(
+        GRID_SHARE == 0,
+        LFT_POS == 0
+    )).Initial(
         Wait(reset_done),
         Wait(clk),
         
@@ -525,24 +552,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
         lsb = TOP_POS * DATA_WIDTH
     )
     test_wght = torch.stack( torch.split(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)), DATA_CHANNELS.value,0) ).cpu().tolist()
-    # print(np.array(test_wght).shape)
-    # print(layer_wght_q)
-    # print(layer_wght_q.reshape(-1, DATA_CHANNELS.value, RSLT_CHANNELS.value))
-    hex_list = lambda x: hex(x) if isinstance(x, int) else [hex_list(_) for _ in x]
-    # print()
-    print(layer_wght_q.shape)
-    # print(layer_wght_q)
-    # print(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)))
-    # print(torch.stack( torch.split(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)), DATA_CHANNELS.value,0) ))
-    # print(hex_list(layer_wght_q.T.cpu().numpy().astype('uint16').tolist()))
-    # print(hex_list(layer_wght_q.T.reshape(-1, RSLT_CHANNELS.value, DATA_CHANNELS.value).T.movedim(-1,0).cpu().numpy().astype('uint16').tolist()))
-    # # print([hex(_) for _ in layer_wght_q.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-    # # print([hex(_) for _ in layer_actd_q.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-
-    # print()
-    # print(hex_list(layer_actd_q.cpu().numpy().astype('uint32').tolist()))
-    # print(hex_list(layer_actd_q.reshape(-1, BATCH_SIZE.value, DATA_CHANNELS.value).cpu().numpy().astype('uint32').tolist()))
-    # exit()
 
     ## Weight driver
     iteration_len = len(test_wght) // (rslt_len // RSLT_CHANNELS.value)
@@ -608,27 +617,27 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
         msb = (DWN_POS+1)*DATA_WIDTH-1,
         lsb = DWN_POS * DATA_WIDTH
     )
-    test_rslt = layer_rslt_q.reshape(-1, BATCH_SIZE.value, RSLT_CHANNELS.value).cpu().numpy().astype(f'uint{DATA_WIDTH.value}').tolist()
-    # test_rslt = layer_rslt_int.reshape(-1, BATCH_SIZE.value, RSLT_CHANNELS.value).cpu().tolist()
-    # print(layer_diff_qd.squeeze().T.reshape(-1))
-    # print([hex(_) for _ in layer_diff_q.T.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-    # print(layer_actd_qd.squeeze().T.reshape(-1))
-    # print([hex(_) for _ in layer_actd_q.T.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-    # print(layer_rslt_int)
-    # print([hex(_) for _ in layer_rslt_int.T.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-    # print(hex_list(layer_rslt_int.T.reshape(-1).cpu().numpy().astype('uint16').tolist()))
-    # print((layer_wght_q.T*layer_actd_q).shape,layer_wght_q.shape,layer_actd_q.shape)
-    # print([hex(_) for _ in layer_diff_q.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-    # print([hex(_) for _ in layer_actd_q.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-    # print([hex(_) for _ in layer_wght_q.T.reshape(-1).cpu().numpy().astype('uint16').tolist()])
-    # print([hex(_) for _ in (layer_actd_q * layer_wght_q.T).reshape(-1).cpu().numpy().astype('uint32').tolist()])
-    # print(layer_actd_q.shape,layer_wght_q.T.shape,(layer_actd_q * layer_wght_q.T).shape)
-    # x = (layer_actd_q * layer_wght_q.T).cpu().numpy().astype('int64')
-    # print(hex_list([np.sum(x[:,:_iter+1],axis=-1).astype('uint32').tolist() for _iter in range(x.shape[-1])]))
-    # print([hex(np.sum(x[:_iter+1]).astype('uint32')) for _iter in range(len(x))])
-    # print(hex_list( (np.sum(x,axis=1).astype('int32') * 2** (RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('int16').tolist() ))
-    # print(hex( (np.sum(x).astype('int32') * 2** (RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('int16') ))
-    
+    test_rslt = torch.stack(layer_rslt_int.split(RSLT_CHANNELS.value,-1)).cpu().to(torch.uint16).tolist()
+    # print('Test layer_data_q:', layer_data_q.shape)
+    # print(np.array(hex_list(layer_data_q.cpu().numpy().astype('uint16').tolist())))
+    # print('Test layer_grid_q:', layer_grid_q.shape)
+    # print(np.array(hex_list(layer_grid_q.cpu().numpy().astype('uint16').tolist())))
+    # print('Test layer_scle_q:', layer_scle_q.shape)
+    # print(np.array(hex_list(layer_scle_q.cpu().numpy().astype('uint16').tolist())))
+    # print('Test layer_diff_q:', layer_diff_q.shape)
+    # print(np.array(hex_list(layer_diff_q.cpu().numpy().astype('uint16').tolist())))
+    # print('Test layer_sdff_q:', layer_sdff_q.shape)
+    # print(np.array(hex_list(layer_sdff_q.cpu().numpy().astype('uint16').tolist())))
+    # x = torch.einsum("bw,wr->wbr", layer_actd_q, layer_wght_q).cpu().numpy().astype('int64')
+    # print('Test layer_actd_q:', layer_actd_q.shape)
+    # print(np.array(hex_list(layer_actd_q.cpu().numpy().astype('uint16').tolist())))
+    # print('Test layer_wght_q:', layer_wght_q.shape)
+    # print(np.array(hex_list(layer_wght_q.T.cpu().numpy().astype('uint16').tolist())))
+    # print('Test psum')
+    # print(*hex_list([np.sum(x[:_iter+1],axis=0).astype('uint64').tolist() for _iter in range(x.shape[0])]), sep ='\n')
+    # print('Test rslt')
+    # print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
+
     ## Result driver
     per_channel_ik.Initial(
         Wait(reset_done),
@@ -661,7 +670,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
                                                     AssertAbsDiffLE(
                                                         data_slice,
                                                         test_rslt[_iter][batch][rslt],
-                                                        1
+                                                        0
                                                     ),
                                                 ) for _iter in range(len(test_rslt))
                                             ],
@@ -715,10 +724,12 @@ def main():
     # exit()
     
     for I,J,K in (
-        # (1,1,1),
+        (1,1,1),
+        # (1,1,2),
         # (2,2,1),
+        # (2,2,2),
         # (2,3,1),
-        (8,4,2),
+        # (8,4,2),
         # (5,5,5),
     ):
         N_in, N_out = 64,64

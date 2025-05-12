@@ -125,6 +125,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         $display("---- Time %0t",$time); \
         $display("---- %s = 0x%h",`"signal`",signal); \
         $display("---- %s = 0x%h",`"value`",value); \
+        #5; \
         $finish; \
     end
     `define assertTrue(signal) \
@@ -132,6 +133,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         $display("ASSERTION FAILED in %m: %s is not True",`"signal`"); \
         $display("---- Time %0t",$time); \
         $display("---- %s = 0x%h",`"signal`",signal); \
+        #5; \
         $finish; \
     end
     ''')
@@ -184,6 +186,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 0 : Unalligned data (top -> left)
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](1),
         s_axis_l_tlast[LFT_POS](0),
         For(i_op0(0), Ands(i_op0 < len(values)), i_op0(i_op0+1))(
@@ -207,6 +210,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             ),
             Wait(clk),
         ),
+        Wait(~clk),
         Wait(err_unalligned_data),
         Wait(core_rst),
         s_axis_l_tvalid[LFT_POS](0),
@@ -217,6 +221,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 1 : Unalligned data (left -> top)
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](1),
         For(i_op0(0), Ands(i_op0 < len(values)), i_op0(i_op0+1))(
             Wait(~clk),
@@ -240,6 +245,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             ),
             Wait(clk),
         ),
+        Wait(~clk),
         Wait(err_unalligned_data),
         If(Ands(
             LFT_POS == 0,
@@ -248,8 +254,8 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             rst(1),
             s_axis_l_tvalid[LFT_POS](0),
             s_axis_l_tlast[LFT_POS](0),
-            Wait(~clk),
             Wait(clk),
+            Wait(~clk),
             rst(0)
         ),
         Wait(core_rst),
@@ -261,6 +267,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 2 : Back to Back single burst frames (Blocked Output)
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](1),
         While(~core_rst)(
             Wait(~clk),
@@ -274,6 +281,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             s_axis_l_tlast(1),
             Wait(clk),
         ),
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](0),
         s_axis_l_tlast[LFT_POS](0),
         Wait(~core_rst),
@@ -281,6 +289,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 3 : Back to Back single burst frames
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](1),
         While(~core_rst)(
             Wait(~clk),
@@ -294,6 +303,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             s_axis_l_tlast(1),
             Wait(clk),
         ),
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](0),
         s_axis_l_tlast[LFT_POS](0),
         Wait(~core_rst),
@@ -301,6 +311,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 4 : Nominal function
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](1),
         While(~core_rst)(
             For(i_op0(0), Ands(i_op0 < (len(values)**2),~core_rst), i_op0(i_op0+1))(
@@ -328,6 +339,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
                 Wait(clk),
             ),
         ),
+        Wait(~clk),
         s_axis_l_tvalid[LFT_POS](0),
         s_axis_l_tlast[LFT_POS](0),
         Wait(~core_rst),
@@ -368,6 +380,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 0 : Unalligned data (top -> left)
+        Wait(~clk),
         s_axis_t_tvalid[TOP_POS](1),
         For(i_op1(0), Ands(i_op1 < len(values)), i_op1(i_op1+1))(
             Wait(~clk),
@@ -385,6 +398,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             ),
             Wait(clk),
         ),
+        Wait(~clk),
         Wait(err_unalligned_data),
         If(Ands(
             TOP_POS == 0,
@@ -393,8 +407,8 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             rst(1),
             s_axis_t_tvalid[TOP_POS](0),
             s_axis_t_tlast[TOP_POS](0),
-            Wait(~clk),
             Wait(clk),
+            Wait(~clk),
             rst(0),
         ),
         Wait(core_rst),
@@ -406,6 +420,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 1 : Unalligned data (left -> top)
+        Wait(~clk),
         s_axis_t_tvalid[TOP_POS](1),
         s_axis_t_tlast[TOP_POS](0),
         For(i_op1(0), Ands(i_op1 < len(values)), i_op1(i_op1+1))(
@@ -429,6 +444,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             ),
             Wait(clk),
         ),
+        Wait(~clk),
         Wait(err_unalligned_data),
         Wait(core_rst),
         s_axis_t_tvalid[TOP_POS](0),
@@ -439,6 +455,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 2 : Back to Back single burst frames (Blocked Output)
+        Wait(~clk),
         s_axis_t_tvalid[TOP_POS](1),
         While(~core_rst)(
             Wait(~clk),
@@ -452,6 +469,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             s_axis_t_tlast(1),
             Wait(clk),
         ),
+        Wait(~clk),
         s_axis_t_tvalid[TOP_POS](0),
         s_axis_t_tlast[TOP_POS](0),
         Wait(~core_rst),
@@ -459,6 +477,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 3 : Back to Back single burst frames
+        Wait(~clk),
         s_axis_t_tvalid[TOP_POS](1),
         While(~core_rst)(
             Wait(~clk),
@@ -472,6 +491,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             s_axis_t_tlast(1),
             Wait(clk),
         ),
+        Wait(~clk),
         s_axis_t_tvalid[TOP_POS](0),
         s_axis_t_tlast[TOP_POS](0),
         Wait(~core_rst),
@@ -479,6 +499,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
         Wait(clk),
         
         # Test 4 : Nominal function
+        Wait(~clk),
         s_axis_t_tvalid[TOP_POS](1),
         While(~core_rst)(
             For(i_op1(0), Ands(i_op1 < (len(values)**2), ~core_rst), i_op1(i_op1+1))(
@@ -504,6 +525,7 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
                 Wait(clk),
             ),
         ),
+        Wait(~clk),
         s_axis_t_tvalid(0),
         s_axis_t_tlast(0),
         Wait(~core_rst),
@@ -583,11 +605,12 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             Wait(clk),
             Wait(~clk),
         ),
-        Wait(clk),
+        Wait(~clk),
+        # Wait(clk),
         If(DWN_POS == 0)(
             rst(1),
-            Wait(~clk),
             Wait(clk),
+            Wait(~clk),
             rst(0),  
         ),
         Wait(core_rst),
@@ -655,12 +678,13 @@ def tb_ParallelizedLinearProcessingArray(I=1,J=1,K=1):
             Wait(~clk),
             m_axis_d_tready[DWN_POS](0),
         ),
-        Wait(clk),
+        # Wait(clk),
+        Wait(~clk),
         If(DWN_POS == 0)(
             Wait(m_axis_d_tready == 0),
             rst(1),
-            Wait(~clk),
             Wait(clk),
+            Wait(~clk),
             rst(0),  
         ),
         Wait(core_rst),
@@ -690,8 +714,8 @@ def main():
     # exit()
     
     for I,J,K in (
-        (1,1,1),
-        # (5,5,5),
+        # (1,1,1),
+        (5,5,5),
     ):
         test = tb_ParallelizedLinearProcessingArray(I=I,J=J,K=K)
         fname_base = f'tb_ParallelizedLinearProcessingArray_{I}_{J}_{K}'

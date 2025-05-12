@@ -221,15 +221,15 @@ def tb_MemoryControlUnitAxil(J=1,K=1):
         #5 \
         $finish; \
     end
-    `define abs(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
+    `define ABS(signal) ($signed(signal) < 0) ? -$signed(signal) : signal
     `define assertAbsDiffLE(signal0, signal1, value) \
-    if ( `abs(signal0-signal1) > value) begin \
+    if ( `ABS(signal0-signal1) > value) begin \
         $display("ASSERTION FAILED in %m:"); \
         $display("---- Time %0t",$time); \
         $display("---- ABS(%s-%s) > %s",`"signal0`",`"signal1`",`"value`"); \
         $display("---- %s = 0x%h",`"signal0`",signal0); \
         $display("---- %s = 0x%h",`"signal1`",signal1); \
-        $display("---- Abs Diff = 0x%h",`abs(signal0-signal1)); \
+        $display("---- Abs Diff = 0x%h",`ABS(signal0-signal1)); \
         $display("---- %s = 0x%h",`"value`",value); \
         #5 \
         $finish; \

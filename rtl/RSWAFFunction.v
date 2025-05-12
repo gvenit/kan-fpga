@@ -1,4 +1,3 @@
-
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -53,7 +52,7 @@ module RSWAFFunction #
   // Path to ROM Data
   parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt",
   // Use FIFO for inputs
-  parameter USE_FIFO = 0
+  parameter FIFO_DEPTH = 0
 )
 (
   input  wire                                         clk,
@@ -277,7 +276,7 @@ module RSWAFFunction #
     assign s_fifo_in_axis_scle_tdest_slice    = s_axis_scle_tdest_int[CHN*DEST_WIDTH +: DEST_WIDTH];
     assign s_fifo_in_axis_scle_tuser_slice    = s_axis_scle_tuser_int[CHN*USER_WIDTH +: USER_WIDTH];
 
-    if (USE_FIFO) begin : input_fifo_genblock
+    if (FIFO_DEPTH) begin : input_fifo_genblock
       
       axis_srl_fifo #(
         // Width of AXI stream interfaces in bits
@@ -301,7 +300,7 @@ module RSWAFFunction #
         // tuser signal width
         .USER_WIDTH(USER_WIDTH),
         // FIFO depth in cycles
-        .DEPTH(8)
+        .DEPTH(FIFO_DEPTH)
       ) axis_fifo_data_inst (
         .clk              (clk),
         .rst              (rst),
@@ -344,7 +343,7 @@ module RSWAFFunction #
         // tuser signal width
         .USER_WIDTH(USER_WIDTH),
         // FIFO depth in cycles
-        .DEPTH(8)
+        .DEPTH(FIFO_DEPTH)
       ) axis_fifo_grid_inst (
         .clk              (clk),
         .rst              (rst),
@@ -387,7 +386,7 @@ module RSWAFFunction #
         // tuser signal width
         .USER_WIDTH(USER_WIDTH),
         // FIFO depth in cycles
-        .DEPTH(8)
+        .DEPTH(FIFO_DEPTH)
       ) axis_fifo_scle_inst (
         .clk              (clk),
         .rst              (rst),
@@ -409,29 +408,29 @@ module RSWAFFunction #
       );
     end else begin : input_skip_fifo_genblock
 
-      assign s_fifo_in_axis_data_tdata_slice    = s_fifo_out_axis_data_tdata_slice;
-      assign s_fifo_in_axis_data_tvalid_slice   = s_fifo_out_axis_data_tvalid_slice;
-      assign s_fifo_out_axis_data_tready_slice  = s_fifo_in_axis_data_tready_slice;
-      assign s_fifo_in_axis_data_tlast_slice    = s_fifo_out_axis_data_tlast_slice;
-      assign s_fifo_in_axis_data_tid_slice      = s_fifo_out_axis_data_tid_slice;
-      assign s_fifo_in_axis_data_tdest_slice    = s_fifo_out_axis_data_tdest_slice;
-      assign s_fifo_in_axis_data_tuser_slice    = s_fifo_out_axis_data_tuser_slice;
+      assign s_fifo_out_axis_data_tdata_slice    = s_fifo_in_axis_data_tdata_slice;
+      assign s_fifo_out_axis_data_tvalid_slice   = s_fifo_in_axis_data_tvalid_slice;
+      assign s_fifo_in_axis_data_tready_slice    = s_fifo_out_axis_data_tready_slice;
+      assign s_fifo_out_axis_data_tlast_slice    = s_fifo_in_axis_data_tlast_slice;
+      assign s_fifo_out_axis_data_tid_slice      = s_fifo_in_axis_data_tid_slice;
+      assign s_fifo_out_axis_data_tdest_slice    = s_fifo_in_axis_data_tdest_slice;
+      assign s_fifo_out_axis_data_tuser_slice    = s_fifo_in_axis_data_tuser_slice;
 
-      assign s_fifo_in_axis_grid_tdata_slice    = s_fifo_out_axis_grid_tdata_slice;
-      assign s_fifo_in_axis_grid_tvalid_slice   = s_fifo_out_axis_grid_tvalid_slice;
-      assign s_fifo_out_axis_grid_tready_slice  = s_fifo_in_axis_grid_tready_slice;
-      assign s_fifo_in_axis_grid_tlast_slice    = s_fifo_out_axis_grid_tlast_slice;
-      assign s_fifo_in_axis_grid_tid_slice      = s_fifo_out_axis_grid_tid_slice;
-      assign s_fifo_in_axis_grid_tdest_slice    = s_fifo_out_axis_grid_tdest_slice;
-      assign s_fifo_in_axis_grid_tuser_slice    = s_fifo_out_axis_grid_tuser_slice;
+      assign s_fifo_out_axis_grid_tdata_slice    = s_fifo_in_axis_grid_tdata_slice;
+      assign s_fifo_out_axis_grid_tvalid_slice   = s_fifo_in_axis_grid_tvalid_slice;
+      assign s_fifo_in_axis_grid_tready_slice    = s_fifo_out_axis_grid_tready_slice;
+      assign s_fifo_out_axis_grid_tlast_slice    = s_fifo_in_axis_grid_tlast_slice;
+      assign s_fifo_out_axis_grid_tid_slice      = s_fifo_in_axis_grid_tid_slice;
+      assign s_fifo_out_axis_grid_tdest_slice    = s_fifo_in_axis_grid_tdest_slice;
+      assign s_fifo_out_axis_grid_tuser_slice    = s_fifo_in_axis_grid_tuser_slice;
     
-      assign s_fifo_in_axis_scle_tdata_slice    = s_fifo_out_axis_scle_tdata_slice;
-      assign s_fifo_in_axis_scle_tvalid_slice   = s_fifo_out_axis_scle_tvalid_slice;
-      assign s_fifo_out_axis_scle_tready_slice  = s_fifo_in_axis_scle_tready_slice;
-      assign s_fifo_in_axis_scle_tlast_slice    = s_fifo_out_axis_scle_tlast_slice;
-      assign s_fifo_in_axis_scle_tid_slice      = s_fifo_out_axis_scle_tid_slice;
-      assign s_fifo_in_axis_scle_tdest_slice    = s_fifo_out_axis_scle_tdest_slice;
-      assign s_fifo_in_axis_scle_tuser_slice    = s_fifo_out_axis_scle_tuser_slice;
+      assign s_fifo_out_axis_scle_tdata_slice    = s_fifo_in_axis_scle_tdata_slice;
+      assign s_fifo_out_axis_scle_tvalid_slice   = s_fifo_in_axis_scle_tvalid_slice;
+      assign s_fifo_in_axis_scle_tready_slice    = s_fifo_out_axis_scle_tready_slice;
+      assign s_fifo_out_axis_scle_tlast_slice    = s_fifo_in_axis_scle_tlast_slice;
+      assign s_fifo_out_axis_scle_tid_slice      = s_fifo_in_axis_scle_tid_slice;
+      assign s_fifo_out_axis_scle_tdest_slice    = s_fifo_in_axis_scle_tdest_slice;
+      assign s_fifo_out_axis_scle_tuser_slice    = s_fifo_in_axis_scle_tuser_slice;
     end
 
     SubMultAbs #(
@@ -492,7 +491,7 @@ module RSWAFFunction #
   end
   endgenerate
 
-  ROM #(
+  AxisRom #(
     .ADDR_WIDTH             (SCALED_DIFF_WIDTH),
     .DATA_WIDTH             (RSLT_WIDTH),
     .LAST_ENABLE            (1),

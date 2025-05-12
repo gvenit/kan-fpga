@@ -60,7 +60,9 @@ module ParallelizedLinearProcessingArray #(
   // Output Destination 
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 
-  parameter OUTPUT_ID = 0
+  parameter OUTPUT_ID = 0,
+  // Pipeline Level to use for dsp
+  parameter PIPELINE_LEVEL = 0
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -110,9 +112,10 @@ module ParallelizedLinearProcessingArray #(
 );
   // Global Local Parameters
   localparam MLT_OP_SIZE     = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
-  localparam PSUM_WIDTH = (RSLT_WIDTH > MLT_OP_SIZE) ? RSLT_WIDTH : MLT_OP_SIZE;
+  localparam PSUM_WIDTH      = 48; // `MAX( RSLT_WIDTH, MLT_OP_SIZE);
   localparam MAC_RSLT_LSB    = OP0_FRACTIONAL_BITS + OP1_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
-  localparam MAC_RSLT_MSB    = MAC_RSLT_LSB + RSLT_WIDTH - 1;
+
+  localparam IS_UNSIGNED_RES = (IS_UNSIGNED_OP0 > 0) && (IS_UNSIGNED_OP1 > 0);
 
   // Internal AXI-Stream Signals
   // Output Partial Sums (Up->Down)
@@ -184,56 +187,44 @@ module ParallelizedLinearProcessingArray #(
           localparam NODE_D = (  batch    * (PE_NUMBER_J+1) + (PE_POSITION_J+1) ) *  PE_NUMBER_I    +  PE_POSITION_I;
 
           ParallelizedLinearProcessingElement #(
-            // Number of PEs in Processing Array i axis
-            .PE_NUMBER_I(PE_NUMBER_I),
-            // Number of PEs in Processing Array j axis
-            .PE_NUMBER_J(PE_NUMBER_J),
-            // Position of current PE in the i axis
-            .PE_POSITION_I(PE_POSITION_I),
-            // Position of current PE in the j axis
-            .PE_POSITION_J(PE_POSITION_J),
-            // Data Width of Input Data (L-AXIS)
-            .OP0_WIDTH(OP0_WIDTH),
-            // Fractional Bits of Input Data (L-AXIS)
-            .OP0_FRACTIONAL_BITS(OP0_FRACTIONAL_BITS),
-            // Treat operand 0 as unsigned
-            .IS_UNSIGNED_OP0(IS_UNSIGNED_OP0),
-            // Data Width of Input Weights (T-AXIS)
-            .OP1_WIDTH(OP1_WIDTH),
-            // Fractional Bits of Input Weights (T-AXIS)
-            .OP1_FRACTIONAL_BITS(OP1_FRACTIONAL_BITS),
-            // Treat operand 1 as unsigned
-            .IS_UNSIGNED_OP1(IS_UNSIGNED_OP1),
-            // Data Width of Output Data (D-AXIS)
-            .PSUM_WIDTH(PSUM_WIDTH)
+            .PE_NUMBER_I            (PE_NUMBER_I),
+            .PE_NUMBER_J            (PE_NUMBER_J),
+            .PE_POSITION_I          (PE_POSITION_I),
+            .PE_POSITION_J          (PE_POSITION_J),
+            .OP0_WIDTH              (OP0_WIDTH),
+            .IS_UNSIGNED_OP0        (IS_UNSIGNED_OP0),
+            .OP1_WIDTH              (OP1_WIDTH),
+            .IS_UNSIGNED_OP1        (IS_UNSIGNED_OP1),
+            .PSUM_WIDTH             (PSUM_WIDTH),
+            .PIPELINE_LEVEL         (PIPELINE_LEVEL)
           ) parallelized_lpe_ijk (
-            .clk(clk),
-            .rst(rst_int),
-            .s_axis_u_tdata(int_axis_ud_tdata[NODE_U]),
-            .s_axis_u_tvalid(int_axis_ud_tvalid[NODE_U]),
-            .s_axis_u_tready(int_axis_ud_tready[NODE_U]),
-            .s_axis_u_tlast(int_axis_ud_tlast[NODE_U]),
-            .m_axis_d_tdata(int_axis_ud_tdata[NODE_D]),
-            .m_axis_d_tvalid(int_axis_ud_tvalid[NODE_D]),
-            .m_axis_d_tready(int_axis_ud_tready[NODE_D]),
-            .m_axis_d_tlast(int_axis_ud_tlast[NODE_D]),
-            .s_axis_l_tdata(int_axis_lr_tdata[NODE_L]),
-            .s_axis_l_tvalid(int_axis_lr_tvalid[NODE_L]),
-            .s_axis_l_tready(int_axis_lr_tready[NODE_L]),
-            .s_axis_l_tlast(int_axis_lr_tlast[NODE_L]),
-            .m_axis_r_tdata(int_axis_lr_tdata[NODE_R]),
-            .m_axis_r_tvalid(int_axis_lr_tvalid[NODE_R]),
-            .m_axis_r_tready(int_axis_lr_tready[NODE_R]),
-            .m_axis_r_tlast(int_axis_lr_tlast[NODE_R]),
-            .s_axis_t_tdata(int_axis_tb_tdata[NODE_T]),
-            .s_axis_t_tvalid(int_axis_tb_tvalid[NODE_T]),
-            .s_axis_t_tready(int_axis_tb_tready[NODE_T]),
-            .s_axis_t_tlast(int_axis_tb_tlast[NODE_T]),
-            .m_axis_b_tdata(int_axis_tb_tdata[NODE_B]),
-            .m_axis_b_tvalid(int_axis_tb_tvalid[NODE_B]),
-            .m_axis_b_tready(int_axis_tb_tready[NODE_B]),
-            .m_axis_b_tlast(int_axis_tb_tlast[NODE_B]),
-            .err_unalligned_data(err_unalligned_data_int[UID])
+            .clk                    (clk),
+            .rst                    (rst_int),
+            .s_axis_u_tdata         (int_axis_ud_tdata        [NODE_U]),
+            .s_axis_u_tvalid        (int_axis_ud_tvalid       [NODE_U]),
+            .s_axis_u_tready        (int_axis_ud_tready       [NODE_U]),
+            .s_axis_u_tlast         (int_axis_ud_tlast        [NODE_U]),
+            .m_axis_d_tdata         (int_axis_ud_tdata        [NODE_D]),
+            .m_axis_d_tvalid        (int_axis_ud_tvalid       [NODE_D]),
+            .m_axis_d_tready        (int_axis_ud_tready       [NODE_D]),
+            .m_axis_d_tlast         (int_axis_ud_tlast        [NODE_D]),
+            .s_axis_l_tdata         (int_axis_lr_tdata        [NODE_L]),
+            .s_axis_l_tvalid        (int_axis_lr_tvalid       [NODE_L]),
+            .s_axis_l_tready        (int_axis_lr_tready       [NODE_L]),
+            .s_axis_l_tlast         (int_axis_lr_tlast        [NODE_L]),
+            .m_axis_r_tdata         (int_axis_lr_tdata        [NODE_R]),
+            .m_axis_r_tvalid        (int_axis_lr_tvalid       [NODE_R]),
+            .m_axis_r_tready        (int_axis_lr_tready       [NODE_R]),
+            .m_axis_r_tlast         (int_axis_lr_tlast        [NODE_R]),
+            .s_axis_t_tdata         (int_axis_tb_tdata        [NODE_T]),
+            .s_axis_t_tvalid        (int_axis_tb_tvalid       [NODE_T]),
+            .s_axis_t_tready        (int_axis_tb_tready       [NODE_T]),
+            .s_axis_t_tlast         (int_axis_tb_tlast        [NODE_T]),
+            .m_axis_b_tdata         (int_axis_tb_tdata        [NODE_B]),
+            .m_axis_b_tvalid        (int_axis_tb_tvalid       [NODE_B]),
+            .m_axis_b_tready        (int_axis_tb_tready       [NODE_B]),
+            .m_axis_b_tlast         (int_axis_tb_tlast        [NODE_B]),
+            .err_unalligned_data    (err_unalligned_data_int  [UID])
           );
 
           if (PE_POSITION_I == 0) begin : left_pos_input_connections_genblock
@@ -282,13 +273,17 @@ module ParallelizedLinearProcessingArray #(
             localparam LSB = DWN_POS*RSLT_WIDTH;
             localparam MSB = LSB + RSLT_WIDTH -1;
 
-            assign m_axis_d_tdata     [MSB:LSB]  = int_axis_ud_tdata  [NODE_D][MAC_RSLT_MSB:MAC_RSLT_LSB];
+            if (IS_UNSIGNED_RES) begin
+              assign m_axis_d_tdata   [MSB:LSB]  = $unsigned(int_axis_ud_tdata [NODE_D][PSUM_WIDTH-1:MAC_RSLT_LSB]);
+            end else begin
+              assign m_axis_d_tdata   [MSB:LSB]  =   $signed(int_axis_ud_tdata [NODE_D][PSUM_WIDTH-1:MAC_RSLT_LSB]);
+            end
             assign m_axis_d_tvalid    [DWN_POS]  = int_axis_ud_tvalid [NODE_D];
             assign int_axis_ud_tready [NODE_D]   = m_axis_d_tready   [DWN_POS];
             assign m_axis_d_tlast     [DWN_POS]  = int_axis_ud_tlast  [NODE_D];
 
             assign m_axis_d_tdest     [DWN_POS*DEST_WIDTH] = (DEST_ENABLE) ? OUTPUT_DEST : {DEST_WIDTH{1'b0}};
-            assign m_axis_d_tid       [DWN_POS*ID_WIDTH]   = (ID_ENABLE)   ? OUTPUT_ID   : {ID_WIDTH{1'b0}};
+            assign m_axis_d_tid       [DWN_POS*ID_WIDTH]   =   (ID_ENABLE) ? OUTPUT_ID   :   {ID_WIDTH{1'b0}};
             assign m_axis_d_tuser     [DWN_POS*USER_WIDTH] = (USER_ENABLE) ? OUTPUT_USER : {USER_WIDTH{1'b0}};
           end 
         end 

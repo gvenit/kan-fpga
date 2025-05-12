@@ -148,6 +148,13 @@ module {{name}} #(
   parameter DMA_KEEP_WIDTH = (DMA_KEEP_ENABLE) ? ((DMA_WIDTH + 7) / 8) : 1,
 
   /*------------------------------------------------------------------
+    AXI_Lite controller mem interface parameters
+  ------------------------------------------------------------------*/
+
+  parameter AXIL_WIDTH = 32,
+  parameter AXIL_STRB_WIDTH = (AXIL_WIDTH / 8),
+
+  /*------------------------------------------------------------------
     Bram controller mem interface parameters
   ------------------------------------------------------------------*/
 
@@ -187,8 +194,6 @@ module {{name}} #(
  `ifdef GRID_IF_IS_AXIL
   // Grid Address Width
   parameter GRID_ADDR = `LOG2(GRID_DEPTH),
-  // Grid Strobe Width
-  parameter GRID_STRB_WIDTH = GRID_WIDTH / 8,
  `endif
 
   /*------------------------------------------------------------------
@@ -356,9 +361,9 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data AWREADY" *)
   output wire                                       s{{'%02d'%p}}_axil_data_awready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WDATA" *)
-  input  wire [DATA_WIDTH-1:0]                      s{{'%02d'%p}}_axil_data_wdata,
+  input  wire [AXIL_WIDTH-1:0]                      s{{'%02d'%p}}_axil_data_wdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WSTRB" *)
-  input  wire [DATA_STRB_WIDTH-1:0]                 s{{'%02d'%p}}_axil_data_wstrb,
+  input  wire [AXIL_STRB_WIDTH-1:0]                 s{{'%02d'%p}}_axil_data_wstrb,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WVALID" *)
   input  wire                                       s{{'%02d'%p}}_axil_data_wvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WREADY" *)
@@ -378,7 +383,7 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data ARREADY" *)
   output wire                                       s{{'%02d'%p}}_axil_data_arready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RDATA" *)
-  output wire [DATA_WIDTH-1:0]                      s{{'%02d'%p}}_axil_data_rdata,
+  output wire [AXIL_WIDTH-1:0]                      s{{'%02d'%p}}_axil_data_rdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RRESP" *)
   output wire [1:0]                                 s{{'%02d'%p}}_axil_data_rresp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RVALID" *)
@@ -390,6 +395,7 @@ module {{name}} #(
  `elsif DATA_IF_IS_BRAM
 {%- for p in range(n) %}
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram{{'%02d'%p}}_ctrl_data, ASSOCIATED_RESET bram{{'%02d'%p}}_ctrl_data_rst" *)
   input  wire                                       bram{{'%02d'%p}}_ctrl_data_clk,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data RST" *)
   input  wire                                       bram{{'%02d'%p}}_ctrl_data_rst,
@@ -427,9 +433,9 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid AWREADY" *)
   output wire                                       s_axil_grid_awready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WDATA" *)
-  input  wire [GRID_WIDTH-1:0]                      s_axil_grid_wdata,
+  input  wire [AXIL_WIDTH-1:0]                      s_axil_grid_wdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WSTRB" *)
-  input  wire [GRID_STRB_WIDTH-1:0]                 s_axil_grid_wstrb,
+  input  wire [AXIL_STRB_WIDTH-1:0]                 s_axil_grid_wstrb,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WVALID" *)
   input  wire                                       s_axil_grid_wvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid WREADY" *)
@@ -449,7 +455,7 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid ARREADY" *)
   output wire                                       s_axil_grid_arready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RDATA" *)
-  output wire [GRID_WIDTH-1:0]                      s_axil_grid_rdata,
+  output wire [AXIL_WIDTH-1:0]                      s_axil_grid_rdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RRESP" *)
   output wire [1:0]                                 s_axil_grid_rresp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RVALID" *)
@@ -459,6 +465,7 @@ module {{name}} #(
 
  `elsif GRID_IF_IS_BRAM
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram_ctrl_grid, ASSOCIATED_RESET bram_ctrl_grid_rst" *)
   input  wire                                       bram_ctrl_grid_clk,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid RST" *)
   input  wire                                       bram_ctrl_grid_rst,
@@ -496,9 +503,9 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWREADY" *)
   output wire                                       s_axil_scle_awready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WDATA" *)
-  input  wire [SCALE_WIDTH-1:0]                     s_axil_scle_wdata,
+  input  wire [AXIL_WIDTH-1:0]                     s_axil_scle_wdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WSTRB" *)
-  input  wire [SCALE_STRB_WIDTH-1:0]                s_axil_scle_wstrb,
+  input  wire [AXIL_STRB_WIDTH-1:0]                s_axil_scle_wstrb,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WVALID" *)
   input  wire                                       s_axil_scle_wvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WREADY" *)
@@ -518,7 +525,7 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARREADY" *)
   output wire                                       s_axil_scle_arready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RDATA" *)
-  output wire [SCALE_WIDTH-1:0]                     s_axil_scle_rdata,
+  output wire [AXIL_WIDTH-1:0]                     s_axil_scle_rdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RRESP" *)
   output wire [1:0]                                 s_axil_scle_rresp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RVALID" *)
@@ -528,6 +535,7 @@ module {{name}} #(
 
  `elsif  SCALE_IF_IS_BRAM
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram_ctrl_scle, ASSOCIATED_RESET bram_ctrl_scle_rst" *)
   input  wire                                       bram_ctrl_scle_clk,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle RST" *)
   input  wire                                       bram_ctrl_scle_rst,
@@ -635,12 +643,16 @@ module {{name}} #(
 
   // Grid Data Width
   localparam GRID_WIDTH = DATA_WIDTH;
+  // Grid Strobe Width
+  localparam GRID_STRB_WIDTH = GRID_WIDTH / 8;
 
   KanLayer #(
     .BATCH_SIZE                     (BATCH_SIZE),
     .DMA_WIDTH                      (DMA_WIDTH),
     .DMA_KEEP_ENABLE                (DMA_KEEP_ENABLE),
     .DMA_KEEP_WIDTH                 (DMA_KEEP_WIDTH),
+    .AXIL_WIDTH                     (AXIL_WIDTH),
+    .AXIL_STRB_WIDTH                (AXIL_STRB_WIDTH),
     .BRAM_CTRL_WIDTH                (BRAM_CTRL_WIDTH),
     .BRAM_CTRL_WE                   (BRAM_CTRL_WE),
     .BRAM_CTRL_ADDR                 (BRAM_CTRL_ADDR),
