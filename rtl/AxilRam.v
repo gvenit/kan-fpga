@@ -13,7 +13,7 @@ module AxilRam #
 )
 (
     input  wire                   clk,
-    input  wire                   rstn,
+    input  wire                   rst,
 
     /*-----------------------------------------
         Port A AXI-Lite
@@ -218,7 +218,7 @@ always @(posedge clk) begin
         s_axil_a_rvalid_pipe_reg <= s_axil_a_rvalid_reg;
     end
 
-    if (~rstn) begin
+    if (rst) begin
         last_read_a_reg <= 1'b0;
 
         s_axil_a_awready_reg <= 1'b0;
@@ -280,7 +280,7 @@ always @(posedge clk) begin
         s_axil_b_rvalid_pipe_reg <= s_axil_b_rvalid_reg;
     end
 
-    if (~rstn) begin
+    if (rst) begin
         last_read_b_reg <= 1'b0;
 
         s_axil_b_awready_reg <= 1'b0;

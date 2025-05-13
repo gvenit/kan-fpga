@@ -1,127 +1,4 @@
-#!/usr/bin/env python
-"""
-Generates an KanLayer wrapper with the specified batch size and other system parameters.
-"""
-import argparse
-import os
-from jinja2 import Template
 
-TOP_DIR = os.path.dirname(  # .../kan-fpga
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-)
-print(TOP_DIR)
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.strip())
-    parser.add_argument('-b', '--batch-size',  type=int, default=1, help="batch size", dest='batch_size')
-    parser.add_argument('--dma-width',  type=int, default=64, help="DMA Data Width", dest='dma_width')
-    parser.add_argument('--ctrl-addr',  type=int, default=13, help="Control Address Width", dest='ctrl_addr')
-    
-    parser.add_argument('--data-width',     type=int, default=16, help="Data & Grid Width", dest='data_width')
-    parser.add_argument('--data-frac-bits', type=int, default=12, help="Data & Grid Fractional Bits", dest='data_fbits')
-    parser.add_argument('--data-chn',       type=int, default=4, help="Data Channels", dest='data_chn')
-    parser.add_argument('--data-depth',     type=int, default=1024, help="Data Depth", dest='data_depth')
-    parser.add_argument('--data-axil',      action='store_true', dest='data_axil')
-    parser.add_argument('--data-bram',      action='store_true', dest='data_bram')
-    
-    parser.add_argument('--grid-depth', type=int, default=16, help="Grid Depth", dest='grid_depth')
-    parser.add_argument('--grid-share', action='store_true', dest='grid_share')
-    parser.add_argument('--grid-axil',  action='store_true', dest='grid_axil')
-    parser.add_argument('--grid-bram',  action='store_true', dest='grid_bram')
-    
-    parser.add_argument('--scale-width',     '--scle-width',     type=int, default=16, help="Scale Width", dest='scle_width')
-    parser.add_argument('--scale-frac-bits', '--scle-frac-bits', type=int, default=12, help="Scale Fractional Bits", dest='scle_fbits')
-    parser.add_argument('--scale-depth',     '--scle-depth',     type=int, default=16, help="Scale Depth", dest='scle_depth')
-    parser.add_argument('--scale-share',     '--scle-share',     action='store_true', dest='scle_share')
-    parser.add_argument('--scale-axil',      '--scle-axil',      action='store_true', dest='scle_axil')
-    parser.add_argument('--scale-bram',      '--scle-bram',      action='store_true', dest='scle_bram')
-    
-    parser.add_argument('--weight-width',     '--wght-width',     type=int, default=16, help="Weight Width", dest='wght_width')
-    parser.add_argument('--weight-frac-bits', '--wght-frac-bits', type=int, default=12, help="Weight Fractional Bits", dest='wght_fbits')
-    parser.add_argument('--weight-depth',     '--wght-depth',     type=int, default=16, help="Weight Depth", dest='wght_depth')
-    
-    parser.add_argument('--scaled-diff-width',     '--sdff-width',     type=int, default=16, help="Scaled Difference Width", dest='sdff_width')
-    parser.add_argument('--scaled-diff-frac-bits', '--sdff-frac-bits', type=int, default=13, help="Scaled Difference Fractional Bits", dest='sdff_fbits')
-    
-    parser.add_argument('--activation-function-width',     '--actf-width',     type=int, default=16, help="Activation Function Width", dest='actf_width')
-    parser.add_argument('--activation-function-frac-bits', '--actf-frac-bits', type=int, default=16, help="Activation Function Fractional Bits", dest='actf_fbits')
-    
-    parser.add_argument('--result-chn',       '--rslt-chn',       type=int, default=1, help="Result Channels", dest='rslt_chn')
-    parser.add_argument('--result-width',     '--rslt-width',     type=int, default=16, help="Result Width", dest='rslt_width')
-    parser.add_argument('--result-frac-bits', '--rslt-frac-bits', type=int, default=12, help="Result Fractional Bits", dest='rslt_fbits')
-    parser.add_argument('--result-depth',     '--rslt-depth',     type=int, default=8, help="Result Depth", dest='rslt_depth')
-    
-    parser.add_argument('--bram-width', type=int, default=32, help="batch size", dest='bram_width')
-    parser.add_argument('--bram-we',    type=int, default=4, help="batch size",  dest='bram_we')
-    parser.add_argument('--bram-addr',  type=int, default=13, help="batch size", dest='bram_addr')
-    
-    parser.add_argument('-n', '--name',   type=str, help="module name")
-    parser.add_argument('-o', '--output', type=str, help="output file name")
-
-    args = parser.parse_args()
-    
-    # Resolve Arguments
-    if (not args.grid_share) :
-        args.grid_axil = False
-        args.grid_bram = True
-    elif not (args.grid_axil or args.grid_bram) :
-        args.grid_axil = True
-      
-    if (not args.scle_share) :
-        args.scle_axil = False
-        args.scle_bram = True
-    elif not (args.scle_axil or args.scle_bram) :
-        args.scle_axil = True
-        
-    if (args.data_axil and args.data_chn != 1) :
-        raise ValueError('Cannot use Axi-Lite with multiple data channels.')
-    elif (args.data_chn > 1) :
-        args.data_axil = False
-        args.data_bram = True
-    elif (args.data_chn == 1) and not (args.data_axil or args.data_bram):
-        args.data_axil = True
-        args.data_adata_bramxil = False
-        
-        print(args.data_chn, args.data_bram)
-    
-    try:
-        generate(**args.__dict__)
-    except IOError as ex:
-        print(ex)
-        exit(1)
-
-
-def generate(batch_size=4, name=None, output=None, **kwargs):
-    n = batch_size
-
-    if name is None:
-        name = "KanLayerInstWrapper{0}".format(n)
-
-    if output is None:
-        output = os.path.join(TOP_DIR, 'rtl', 'wrapper', name + ".v")
-        
-    print("Generating {0} port AXI stream broadcast wrapper {1}...".format(n, name))
-
-    cn = (n-1).bit_length()
-    
-    # Produce Rom File
-    exec_str = ' '.join([
-        'python',
-        os.path.join(TOP_DIR,'auxiliary/Sech2Lutram.py'),
-        '-I', f'uint{kwargs["sdff_width"]}',
-        '-i', f'{kwargs["sdff_fbits"]}',
-        '-O', f'uint{kwargs["actf_width"]}',
-        '-o', f'{kwargs["actf_fbits"]}',
-        '-N'
-    ])
-    print(exec_str)
-    os.system(exec_str)
-        
-    t = Template(u"""
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -130,27 +7,27 @@ def generate(batch_size=4, name=None, output=None, **kwargs):
 `undef IF_OPTIONS_INST_H
 `endif
 
-{% if data_axil %}`define DATA_IF_IS_AXIL{% elif data_bram %}`define DATA_IF_IS_BRAM{% endif %}
-{% if grid_share %}`define GRID_IS_SHARED{% endif %}
-{% if scle_share %}`define SCALE_IS_SHARED{% endif %}
+`define DATA_IF_IS_BRAM
+`define GRID_IS_SHARED
+`define SCALE_IS_SHARED
 
 `include "header_utils.vh"
 `include "header_IFOptions.vh"
 
-module {{name}} #(
+module KanLayerInst #(
   /*------------------------------------------------------------------
     Genreal parameters of the architecture
   ------------------------------------------------------------------*/
   
   // Number of PEs in Processing Array k axis -- Number of batches per run
-  parameter BATCH_SIZE = {{n}},
+  parameter BATCH_SIZE = 1,
 
   /*------------------------------------------------------------------
     DMA parameters
   ------------------------------------------------------------------*/
   
   // Width of DMA streams
-  parameter DMA_WIDTH = {{dma_width}},
+  parameter DMA_WIDTH = 64,
   // Propagate tkeep signal
   parameter DMA_KEEP_ENABLE = (DMA_WIDTH > 8),
   // tkeep signal width (words per cycle)
@@ -167,108 +44,103 @@ module {{name}} #(
     Bram controller mem interface parameters
   ------------------------------------------------------------------*/
 
-  parameter BRAM_CTRL_WIDTH = {{bram_width}},
-  parameter BRAM_CTRL_WE = {{bram_we}},
-  parameter BRAM_CTRL_ADDR = {{bram_addr}},
+  parameter BRAM_CTRL_WIDTH = 32,
+  parameter BRAM_CTRL_WE = 4,
+  parameter BRAM_CTRL_ADDR = 13,
 
   /*------------------------------------------------------------------
     DATA parameters for AXI stream and BRAM interface
   ------------------------------------------------------------------*/
 
   // Width of AXI stream Input Data & Grid interfaces in bits
-  parameter DATA_WIDTH = {{data_width}},
+  parameter DATA_WIDTH = 16,
   // Fractional bits of input data & grid
-  parameter DATA_FRACTIONAL_BITS = {{data_fbits}},
+  parameter DATA_FRACTIONAL_BITS = 12,
   // Number of Independent AXI-Stream Data Channels
-  parameter DATA_CHANNELS = {{data_chn}},
+  parameter DATA_CHANNELS = 4,
   // Total memory size allocated for Data in words
-  parameter DATA_DEPTH = {{data_depth}},
-{% if data_axil %}
-  // Data Address Width
-  parameter DATA_ADDR = `LOG2(DATA_DEPTH),
-  // Data Strobe Width
-  parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
-{% endif %}
+  parameter DATA_DEPTH = 1024,
+
 
   /*------------------------------------------------------------------
     GRID parameters for AXI stream and BRAM interface
   ------------------------------------------------------------------*/
 
   // Use Common Grid Channel 
-  parameter GRID_SHARE = {{ grid_share | int }}, 
+  parameter GRID_SHARE = 1, 
   // Total memory size allocated for Grid in words
-  parameter GRID_DEPTH = {{grid_depth}},
-{% if grid_axil %}
+  parameter GRID_DEPTH = 16,
+
   // Grid Address Width
   parameter GRID_ADDR = `LOG2(GRID_DEPTH),
-{% endif %}
+
 
   /*------------------------------------------------------------------
     SCALE streams parameters
   ------------------------------------------------------------------*/
 
   // Use Common Share Channel 
-  parameter SCALE_SHARE = {{ scle_share | int }},
+  parameter SCALE_SHARE = 1,
   // Width of AXI stream Scale interface in bits
-  parameter SCALE_WIDTH = {{scle_width}},
+  parameter SCALE_WIDTH = 16,
   // Fractional bits of input scle
-  parameter SCALE_FRACTIONAL_BITS = {{scle_fbits}},
+  parameter SCALE_FRACTIONAL_BITS = 12,
   // Total memory size allocated for Data in words
-  parameter SCALE_DEPTH = {{scle_depth}},
+  parameter SCALE_DEPTH = 16,
 
   /*------------------------------------------------------------------
     RESULT / OUTPUT parameters
   ------------------------------------------------------------------*/
 
   // Number of Independent AXI-Stream Result Channels per Batch
-  parameter RSLT_CHANNELS = {{rslt_chn}},
+  parameter RSLT_CHANNELS = 1,
   // Width of AXI stream Output Data interface in bits
-  parameter RSLT_WIDTH = {{rslt_width}},
+  parameter RSLT_WIDTH = 16,
   // Fractional bits of output data
-  parameter RSLT_FRACTIONAL_BITS = {{rslt_fbits}},
+  parameter RSLT_FRACTIONAL_BITS = 12,
   // tkeep signal width (words per cycle)
   parameter RSLT_KEEP_WIDTH = ((RSLT_WIDTH + 7) / 8),
   // FIFO Depth for results
-  parameter RSLT_FIFO_DEPTH = {{rslt_depth}},
-{% if scle_axil %}
+  parameter RSLT_FIFO_DEPTH = 8,
+
   // Scale Address Width
   parameter SCALE_ADDR = `MAX(`LOG2(SCALE_DEPTH), 1),
   // Scale Strobe Width
   parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
-{% endif %}
+
 
   /*------------------------------------------------------------------
     WEIGHT streams parameters
   ------------------------------------------------------------------*/
 
   // Width of input wght word
-  parameter WEIGHT_WIDTH = {{wght_width}},
+  parameter WEIGHT_WIDTH = 16,
   // Fractional bits of wght data
-  parameter WEIGHT_FRACTIONAL_BITS = {{wght_fbits}},
+  parameter WEIGHT_FRACTIONAL_BITS = 12,
   // Propagate tkeep signal
   parameter WEIGHT_KEEP_ENABLE = (WEIGHT_WIDTH > 8),
   // tkeep signal width (words per cycle)
   parameter WEIGHT_KEEP_WIDTH = (WEIGHT_KEEP_ENABLE) ? ((WEIGHT_WIDTH + 7) / 8) : 1,
   // FIFO Depth for WEIGHT parameters
-  parameter WEIGHT_FIFO_DEPTH = {{wght_depth}},
+  parameter WEIGHT_FIFO_DEPTH = 16,
 
   /*------------------------------------------------------------------
     SCALED_DIFF parameters
   ------------------------------------------------------------------*/
 
   // Width of Scaled Data in bits
-  parameter SCALED_DIFF_WIDTH = {{sdff_width}},
+  parameter SCALED_DIFF_WIDTH = 16,
   // Fractional bits of Scaled Data
-  parameter SCALED_DIFF_FRACTIONAL_BITS = {{sdff_fbits}},
+  parameter SCALED_DIFF_FRACTIONAL_BITS = 13,
 
   /*------------------------------------------------------------------
     ACT parameters
   ------------------------------------------------------------------*/
 
   // Width of Activation Function Data in bits
-  parameter ACT_WIDTH = {{actf_width}},
+  parameter ACT_WIDTH = 16,
   // Fractional bits of Activation Function Data
-  parameter ACT_FRACTIONAL_BITS = {{actf_fbits}},
+  parameter ACT_FRACTIONAL_BITS = 16,
 
   /*------------------------------------------------------------------
     Various AXI parameters
@@ -307,14 +179,14 @@ module {{name}} #(
   // Add Buffer on Output Streams
   parameter EXTRA_CYCLE = 0,
   // Central Control Address Width
-  parameter CTRL_ADDR = {{ctrl_addr}}, // 13 
+  parameter CTRL_ADDR = 13, // 13 
 
   /*------------------------------------------------------------------
     Input / Output file constants
   ------------------------------------------------------------------*/
 
   // Path to ROM Data
-  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_{{sdff_width}}.{{sdff_fbits}}_{{actf_width}}.{{actf_fbits}}.txt"
+  parameter ROM_DATA_PATH = "../data/Sech2Lutram_n_16.13_16.16.txt"
 ) (
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 fsm_clk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_ctrl, ASSOCIATED_RESET fsm_rst" *)
@@ -349,76 +221,30 @@ module {{name}} #(
   /*------------------------------------------------------------------
       BRAM Data Control interface
   ------------------------------------------------------------------*/
-{% if data_axil %}{%- for p in range(n) %}
-  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s{{'%02d'%p}}_axil_data_aclk CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s{{'%02d'%p}}_axil_data, ASSOCIATED_RESET s{{'%02d'%p}}_axil_data_areset" *)
-  input  wire                                       s{{'%02d'%p}}_axil_data_aclk,
-  (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 s{{'%02d'%p}}_axil_data_areset RST" *)
-    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
-  input  wire                                       s{{'%02d'%p}}_axil_data_areset,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data AWADDR" *)
-    (* X_INTERFACE_PARAMETER = "READ_WRITE_MODE READ_WRITE,PROTOCOL AXI4LITE" *)
-  input  wire [DATA_ADDR-1:0]                       s{{'%02d'%p}}_axil_data_awaddr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data AWPROT" *)
-  input  wire [2:0]                                 s{{'%02d'%p}}_axil_data_awprot,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data AWVALID" *)
-  input  wire                                       s{{'%02d'%p}}_axil_data_awvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data AWREADY" *)
-  output wire                                       s{{'%02d'%p}}_axil_data_awready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WDATA" *)
-  input  wire [AXIL_WIDTH-1:0]                      s{{'%02d'%p}}_axil_data_wdata,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WSTRB" *)
-  input  wire [AXIL_STRB_WIDTH-1:0]                 s{{'%02d'%p}}_axil_data_wstrb,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WVALID" *)
-  input  wire                                       s{{'%02d'%p}}_axil_data_wvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data WREADY" *)
-  output wire                                       s{{'%02d'%p}}_axil_data_wready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data BRESP" *)
-  output wire [1:0]                                 s{{'%02d'%p}}_axil_data_bresp,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data BVALID" *)
-  output wire                                       s{{'%02d'%p}}_axil_data_bvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data BREADY" *)
-  input  wire                                       s{{'%02d'%p}}_axil_data_bready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data ARADDR" *)
-  input  wire [DATA_ADDR-1:0]                       s{{'%02d'%p}}_axil_data_araddr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data ARPROT" *)
-  input  wire [2:0]                                 s{{'%02d'%p}}_axil_data_arprot,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data ARVALID" *)
-  input  wire                                       s{{'%02d'%p}}_axil_data_arvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data ARREADY" *)
-  output wire                                       s{{'%02d'%p}}_axil_data_arready,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RDATA" *)
-  output wire [AXIL_WIDTH-1:0]                      s{{'%02d'%p}}_axil_data_rdata,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RRESP" *)
-  output wire [1:0]                                 s{{'%02d'%p}}_axil_data_rresp,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RVALID" *)
-  output wire                                       s{{'%02d'%p}}_axil_data_rvalid,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RREADY" *)
-  input  wire                                       s{{'%02d'%p}}_axil_data_rready,
-{% endfor -%}{% endif %}
-{% if data_bram %}{%- for p in range(n) %}
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram{{'%02d'%p}}_ctrl_data, ASSOCIATED_RESET bram{{'%02d'%p}}_ctrl_data_rst" *)
-  input  wire                                       bram{{'%02d'%p}}_ctrl_data_clk,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data RST" *)
-  input  wire                                       bram{{'%02d'%p}}_ctrl_data_rst,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data EN" *)
+
+
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram00_ctrl_data, ASSOCIATED_RESET bram00_ctrl_data_rst" *)
+  input  wire                                       bram00_ctrl_data_clk,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data RST" *)
+  input  wire                                       bram00_ctrl_data_rst,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data EN" *)
     (* X_INTERFACE_PARAMETER = "MASTER_TYPE BRAM_CTRL , READ_WRITE_MODE READ_WRITE" *)
-  input  wire                                       bram{{'%02d'%p}}_ctrl_data_en,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data WE" *)
-  input  wire [BRAM_CTRL_WE-1:0]                    bram{{'%02d'%p}}_ctrl_data_we,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data ADDR" *)
-  input  wire [BRAM_CTRL_ADDR-1:0]                  bram{{'%02d'%p}}_ctrl_data_addr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data DIN" *)
-  input  wire [BRAM_CTRL_WIDTH-1:0]                 bram{{'%02d'%p}}_ctrl_data_din,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data DOUT" *)
-  output wire [BRAM_CTRL_WIDTH-1:0]                 bram{{'%02d'%p}}_ctrl_data_dout,
-{% endfor -%}{% endif %}
+  input  wire                                       bram00_ctrl_data_en,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data WE" *)
+  input  wire [BRAM_CTRL_WE-1:0]                    bram00_ctrl_data_we,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data ADDR" *)
+  input  wire [BRAM_CTRL_ADDR-1:0]                  bram00_ctrl_data_addr,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data DIN" *)
+  input  wire [BRAM_CTRL_WIDTH-1:0]                 bram00_ctrl_data_din,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data DOUT" *)
+  output wire [BRAM_CTRL_WIDTH-1:0]                 bram00_ctrl_data_dout,
+
 
   /*------------------------------------------------------------------
       BRAM Grid Control interface
   ------------------------------------------------------------------*/
-{% if grid_axil %}
+
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_grid_aclk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_grid, ASSOCIATED_RESET s_axil_grid_areset" *)
   input  wire                                       s_axil_grid_aclk,
@@ -464,31 +290,14 @@ module {{name}} #(
   output wire                                       s_axil_grid_rvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RREADY" *)
   input  wire                                       s_axil_grid_rready,
-{% endif %}
-{% if grid_bram %}
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram_ctrl_grid, ASSOCIATED_RESET bram_ctrl_grid_rst" *)
-  input  wire                                       bram_ctrl_grid_clk,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid RST" *)
-  input  wire                                       bram_ctrl_grid_rst,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid EN" *)
-  (* X_INTERFACE_PARAMETER = "MASTER_TYPE BRAM_CTRL , READ_WRITE_MODE READ_WRITE" *)
-  input  wire                                       bram_ctrl_grid_en,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid WE" *)
-  input  wire [BRAM_CTRL_WE-1:0]                    bram_ctrl_grid_we,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid ADDR" *)
-  input  wire [BRAM_CTRL_ADDR-1:0]                  bram_ctrl_grid_addr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid DIN" *)
-  input  wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_grid_din,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid DOUT" *)
-  output wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_grid_dout,
-{% endif %}
+
+
 
     /*------------------------------------------------------------------
         BRAM Scale Control interface
     ------------------------------------------------------------------*/
 
-{% if scle_axil %}
+
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_scle_aclk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_scle, ASSOCIATED_RESET s_axil_scle_areset" *)
   input  wire                                       s_axil_scle_aclk,
@@ -534,25 +343,8 @@ module {{name}} #(
   output wire                                       s_axil_scle_rvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RREADY" *)
   input  wire                                       s_axil_scle_rready,
-{% endif %}
-{% if scle_bram %}
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram_ctrl_scle, ASSOCIATED_RESET bram_ctrl_scle_rst" *)
-  input  wire                                       bram_ctrl_scle_clk,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle RST" *)
-  input  wire                                       bram_ctrl_scle_rst,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle EN" *)
-  (* X_INTERFACE_PARAMETER = "MASTER_TYPE BRAM_CTRL , READ_WRITE_MODE READ_WRITE" *)
-  input  wire                                       bram_ctrl_scle_en,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle WE" *)
-  input  wire [BRAM_CTRL_WE-1:0]                    bram_ctrl_scle_we,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle ADDR" *)
-  input  wire [BRAM_CTRL_ADDR-1:0]                  bram_ctrl_scle_addr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle DIN" *)
-  input  wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_scle_din,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle DOUT" *)
-  output wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_scle_dout,
-{% endif %}
+
+
  
   /*------------------------------------------------------------------
       AXI-Lite Control Slave interface
@@ -663,24 +455,21 @@ module {{name}} #(
     .DATA_FRACTIONAL_BITS           (DATA_FRACTIONAL_BITS),
     .DATA_CHANNELS                  (DATA_CHANNELS),
     .DATA_DEPTH                     (DATA_DEPTH),
-{% if data_axil %}
-    .DATA_ADDR                      (DATA_ADDR),
-    .DATA_STRB_WIDTH                (DATA_STRB_WIDTH),
-{% endif %}
+
     .GRID_SHARE                     (GRID_SHARE), 
     .GRID_DEPTH                     (GRID_DEPTH),
-{% if grid_axil %}
+
 //    .GRID_ADDR                      (GRID_ADDR),
 //    .GRID_STRB_WIDTH                (GRID_STRB_WIDTH),
-{% endif %}
+
     .SCALE_SHARE                    (SCALE_SHARE),
     .SCALE_WIDTH                    (SCALE_WIDTH),
     .SCALE_FRACTIONAL_BITS          (SCALE_FRACTIONAL_BITS),
     .SCALE_DEPTH                    (SCALE_DEPTH),
-{% if scle_axil %}
+
 //    .SCALE_ADDR                     (SCALE_ADDR),
 //    .SCALE_STRB_WIDTH               (SCALE_STRB_WIDTH),
-{% endif %}
+
     .RSLT_CHANNELS                  (RSLT_CHANNELS),
     .RSLT_WIDTH                     (RSLT_WIDTH),
     .RSLT_FRACTIONAL_BITS           (RSLT_FRACTIONAL_BITS),
@@ -730,43 +519,21 @@ module {{name}} #(
     /*------------------------------------------------------------------
         BRAM Data Control interface
     ------------------------------------------------------------------*/
-{% if data_axil %}
-    .s_axil_data_aclk               ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_aclk{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_areset             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_areset{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_awaddr             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_awaddr{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_awprot             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_awprot{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_awvalid            ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_awvalid{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_awready            ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_awready{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_wdata              ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_wdata{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_wstrb              ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_wstrb{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_wvalid             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_wvalid{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_wready             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_wready{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_bresp              ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_bresp{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_bvalid             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_bvalid{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_bready             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_bready{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_araddr             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_araddr{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_arprot             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_arprot{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_arvalid            ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_arvalid{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_arready            ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_arready{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_rdata              ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_rdata{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_rresp              ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_rresp{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_rvalid             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_rvalid{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .s_axil_data_rready             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_rready{% if not loop.last %}, {% endif %}{% endfor %} }),
-{% endif %}
-{% if data_bram %}
-    .bram_ctrl_data_clk             ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_clk{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .bram_ctrl_data_rst             ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_rst{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .bram_ctrl_data_en              ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_en{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .bram_ctrl_data_we              ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_we{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .bram_ctrl_data_addr            ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_addr{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .bram_ctrl_data_din             ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_din{% if not loop.last %}, {% endif %}{% endfor %} }),
-    .bram_ctrl_data_dout            ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_dout{% if not loop.last %}, {% endif %}{% endfor %} }),
-{% endif %}
+
+
+    .bram_ctrl_data_clk             ({ bram00_ctrl_data_clk }),
+    .bram_ctrl_data_rst             ({ bram00_ctrl_data_rst }),
+    .bram_ctrl_data_en              ({ bram00_ctrl_data_en }),
+    .bram_ctrl_data_we              ({ bram00_ctrl_data_we }),
+    .bram_ctrl_data_addr            ({ bram00_ctrl_data_addr }),
+    .bram_ctrl_data_din             ({ bram00_ctrl_data_din }),
+    .bram_ctrl_data_dout            ({ bram00_ctrl_data_dout }),
+
 
     /*------------------------------------------------------------------
         BRAM Grid Control interface
     ------------------------------------------------------------------*/
-{% if grid_axil %}
+
     .s_axil_grid_aclk               (s_axil_grid_aclk),
     .s_axil_grid_areset             (s_axil_grid_areset),
     .s_axil_grid_awaddr             (s_axil_grid_awaddr),
@@ -788,22 +555,14 @@ module {{name}} #(
     .s_axil_grid_rresp              (s_axil_grid_rresp),
     .s_axil_grid_rvalid             (s_axil_grid_rvalid),
     .s_axil_grid_rready             (s_axil_grid_rready),
-{% endif %}
-{% if grid_bram %}
-    .bram_ctrl_grid_clk             (bram_ctrl_grid_clk),
-    .bram_ctrl_grid_rst             (bram_ctrl_grid_rst),
-    .bram_ctrl_grid_en              (bram_ctrl_grid_en),
-    .bram_ctrl_grid_we              (bram_ctrl_grid_we),
-    .bram_ctrl_grid_addr            (bram_ctrl_grid_addr),
-    .bram_ctrl_grid_din             (bram_ctrl_grid_din),
-    .bram_ctrl_grid_dout            (bram_ctrl_grid_dout),
-{% endif %}
+
+
 
     /*------------------------------------------------------------------
         BRAM Scale Control interface
     ------------------------------------------------------------------*/
 
-{% if scle_axil %}
+
     .s_axil_scle_aclk               (s_axil_scle_aclk),
     .s_axil_scle_areset             (s_axil_scle_areset),
     .s_axil_scle_awaddr             (s_axil_scle_awaddr),
@@ -825,16 +584,8 @@ module {{name}} #(
     .s_axil_scle_rresp              (s_axil_scle_rresp),
     .s_axil_scle_rvalid             (s_axil_scle_rvalid),
     .s_axil_scle_rready             (s_axil_scle_rready),
-{% endif %}
-{% if scle_bram %}
-    .bram_ctrl_scle_clk             (bram_ctrl_scle_clk),
-    .bram_ctrl_scle_rst             (bram_ctrl_scle_rst),
-    .bram_ctrl_scle_en              (bram_ctrl_scle_en),
-    .bram_ctrl_scle_we              (bram_ctrl_scle_we),
-    .bram_ctrl_scle_addr            (bram_ctrl_scle_addr),
-    .bram_ctrl_scle_din             (bram_ctrl_scle_din),
-    .bram_ctrl_scle_dout            (bram_ctrl_scle_dout),
-{% endif %}
+
+
   
     /*------------------------------------------------------------------
         AXI-Lite Control Slave interface
@@ -890,20 +641,3 @@ module {{name}} #(
 endmodule
 
 `resetall
-
-""")
-    print(f"Writing file '{output}'...")
-    
-    with open(output, 'w') as f:
-        f.write(t.render(
-            n=n,
-            cn=cn,
-            name=name,
-            **kwargs
-        ))
-        f.flush()
-
-    print("Done")
-
-if __name__ == "__main__":
-    main()

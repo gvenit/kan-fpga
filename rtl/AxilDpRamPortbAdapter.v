@@ -149,7 +149,7 @@ axil_adapter #(
 );
 
 AxilRam #(
-    .DATA_WIDTH_EXT(DATA_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
     .ADDR_WIDTH(ADDR_WIDTH),
     .PIPELINE_OUTPUT(PIPELINE_OUTPUT)
 ) axil_dp_ram_inst (

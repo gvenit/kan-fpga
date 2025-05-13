@@ -5,13 +5,13 @@
 // `define DATA_IF_IS_AXIL
 
 // Uncomment for Bram IF for Data 
-  `define DATA_IF_IS_BRAM
+`define DATA_IF_IS_BRAM
 
 // Uncomment for GRID_SHARE == 1
- `define GRID_IS_SHARED
+`define GRID_IS_SHARED
 
 // Uncomment for SCALE_SHARE == 1
- `define SCALE_IS_SHARED
+`define SCALE_IS_SHARED
 
 // Macro fixups -- DO NOT EDIT BEYOND THIS POINT
 `ifndef GRID_IS_SHARED
