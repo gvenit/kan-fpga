@@ -18,20 +18,20 @@ module BramReadEn #(
   parameter ADDR_WIDTH = 16,
   parameter STRB_WIDTH = (DATA_WIDTH/8)
 ) (
-  input wire                      clk,
+  input  wire                     clk,
 
-  input wire                      rdena,
-  input wire                      wrena,
-  input wire [STRB_WIDTH-1:0]     wrstrba,
-  input wire [ADDR_WIDTH-1:0]     addra,
-  input wire [DATA_WIDTH-1:0]     dina,
+  input  wire                     rdena,
+  input  wire                     wrena,
+  input  wire [STRB_WIDTH-1:0]    wrstrba,
+  input  wire [ADDR_WIDTH-1:0]    addra,
+  input  wire [DATA_WIDTH-1:0]    dina,
   output wire [DATA_WIDTH-1:0]    douta,
-
-  input wire                      rdenb,
-  input wire                      wrenb,
-  input wire [STRB_WIDTH-1:0]     wrstrbb,
-  input wire [ADDR_WIDTH-1:0]     addrb,
-  input wire [DATA_WIDTH-1:0]     dinb,
+  
+  input  wire                     rdenb,
+  input  wire                     wrenb,
+  input  wire [STRB_WIDTH-1:0]    wrstrbb,
+  input  wire [ADDR_WIDTH-1:0]    addrb,
+  input  wire [DATA_WIDTH-1:0]    dinb,
   output wire [DATA_WIDTH-1:0]    doutb
 );
 

@@ -112,7 +112,7 @@ module ParallelizedLinearProcessingArray #(
 );
   // Global Local Parameters
   localparam MLT_OP_SIZE     = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
-  localparam PSUM_WIDTH      = 48; // `MAX( RSLT_WIDTH, MLT_OP_SIZE);
+  localparam PSUM_WIDTH      = `MAX( RSLT_WIDTH, MLT_OP_SIZE);
   localparam MAC_RSLT_LSB    = OP0_FRACTIONAL_BITS + OP1_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
 
   localparam IS_UNSIGNED_RES = (IS_UNSIGNED_OP0 > 0) && (IS_UNSIGNED_OP1 > 0);
@@ -145,7 +145,7 @@ module ParallelizedLinearProcessingArray #(
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_handshake = int_axis_tb_tready & int_axis_tb_tvalid;
 
   // Internal Reset
-  reg  [3:0]  rst_pipeline;
+  reg  [3:0]  rst_pipeline = 1;
   wire        rst_int;
 
   // Error Signal Reduction

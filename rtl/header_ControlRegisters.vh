@@ -87,3 +87,5 @@
   parameter CTRL_REG_OPER_STS_MASK_LCK = 8,
   // Control Register Mask: valid configuration
   parameter CTRL_REG_OPER_STS_MASK_VLD = 16,
+  // Control Register Mask: core reset
+  parameter CTRL_REG_OPER_STS_MASK_RST = 32,

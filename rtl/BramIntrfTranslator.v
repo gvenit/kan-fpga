@@ -36,8 +36,11 @@ module BramIntrfTranslator #(
   /*-------------------------------------------------------------------------------------*/
   parameter BANKS = 4,                            // number of BRAM banks
   /*-------------------------------------------------------------------------------------*/
-  parameter OUT_DEPTH = 256              // the depth of each BRAM bank
+  parameter OUT_DEPTH = 256,              // the depth of each BRAM bank
+  parameter RD_LATENCY = 1
 ) (
+  input  wire                           clk,
+  // output wire                           rst,
   /*-----------------------------------------------
       Input BRAM interface
   -----------------------------------------------*/
@@ -62,7 +65,7 @@ module BramIntrfTranslator #(
   localparam  OUT_ADDR = `LOG2( OUT_DEPTH); // number of output address bits
   localparam  OUT_WE = OUT_WIDTH / 8;       // number of output write-enable bits
   /*-------------------------------------------------------------------------------------*/
-  localparam  IN_DEPTH = BANKS * OUT_DEPTH; // number of total input data
+  localparam  IN_DEPTH = BANKS * OUT_DEPTH / IN_WORD_DATA; // number of total input data
   localparam  IN_ADDR = `LOG2( IN_DEPTH);   // number of input address bits
   localparam  IN_WE = IN_WIDTH / 8;          // number of input write-enable bits
 
@@ -89,6 +92,8 @@ module BramIntrfTranslator #(
 
   wire [OUT_WIDTH-1:0]   rddata_itrl_mbanks [BANKS-1:0];
   wire [OUT_WIDTH-1:0]   rddata_itrl [IN_WORD_DATA-1:0];
+
+  reg  [BANK_BITS-1:0]   target_banks_pipeline [0 : RD_LATENCY-1][IN_WORD_DATA-1:0];
 
   /********************************
     Function prototypes
@@ -155,7 +160,7 @@ module BramIntrfTranslator #(
 
     // assigning output interface read data 
     for (i = 0; i < IN_WORD_DATA; i = i + 1) begin
-      assign rddata_itrl[i] = rddata_o[(target_banks[i])*OUT_WIDTH +: OUT_WIDTH];
+      assign rddata_itrl[i] = rddata_o[(target_banks_pipeline[RD_LATENCY-1][i])*OUT_WIDTH +: OUT_WIDTH];
     end
 
     // assigning output interface write-enable
@@ -178,4 +183,15 @@ module BramIntrfTranslator #(
 
   assign en_o = en_reduct;
 
+  always @(posedge clk ) begin
+    for (k = 0; k < IN_WORD_DATA; k = k + 1) begin
+      target_banks_pipeline[0][k] <= target_banks[k]; 
+      for (j = 0; j < RD_LATENCY; j = j + 1) begin
+        target_banks_pipeline[j+1][k] <= target_banks_pipeline[j][k];
+      end
+    end
+  end
+
 endmodule
+
+`resetall

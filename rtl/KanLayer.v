@@ -60,10 +60,10 @@ module KanLayer #(
   parameter DATA_DEPTH = 1024,
 
  `ifdef DATA_IF_IS_AXIL
-  // Grid Address Width
-  parameter DATA_ADDR = `LOG2(DATA_DEPTH),
-  // Grid Strobe Width
+  // Data Strobe Width
   parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
+  // Data Address Width
+  parameter DATA_ADDR = `LOG2( DATA_DEPTH * DATA_STRB_WIDTH ),
  `endif
 
   /*------------------------------------------------------------------
@@ -76,10 +76,10 @@ module KanLayer #(
   parameter GRID_DEPTH = 16,
 
  `ifdef GRID_IF_IS_AXIL
-  // Grid Address Width
-  parameter GRID_ADDR = `LOG2(GRID_DEPTH),
   // Grid Strobe Width
   parameter GRID_STRB_WIDTH = GRID_WIDTH / 8,
+  // Grid Address Width
+  parameter GRID_ADDR = `LOG2( GRID_DEPTH * GRID_STRB_WIDTH ),
  `endif
 
   /*------------------------------------------------------------------
@@ -93,13 +93,13 @@ module KanLayer #(
   // Fractional bits of input scle
   parameter SCALE_FRACTIONAL_BITS = 12,
   // Total memory size allocated for Data in words
-  parameter SCALE_DEPTH = (SCALE_SHARE) ? 1 : GRID_DEPTH*DATA_DEPTH,
+  parameter SCALE_DEPTH = (SCALE_SHARE) ? 1 : GRID_DEPTH * DATA_DEPTH,
 
  `ifdef SCALE_IF_IS_AXIL
-  // Grid Address Width
-  parameter SCALE_ADDR = `MAX(`LOG2(SCALE_DEPTH), 1),
   // Grid Strobe Width
   parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
+  // Grid Address Width
+  parameter SCALE_ADDR = `MAX(`LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ), SCALE_STRB_WIDTH),
  `endif
 
   /*------------------------------------------------------------------
@@ -540,7 +540,7 @@ module KanLayer #(
   // number of elements on a single bram bank
   localparam DATA_BANK_DEPTH = DATA_DEPTH;
   // Pipeline Output DATA
-  localparam DATA_PIPELINE_OUTPUT = 0;
+  localparam DATA_PIPELINE_OUTPUT = 1;
  `elsif DATA_IF_IS_BRAM
   // number of DATA bram banks
   localparam DATA_BANKS = DATA_CHANNELS;
@@ -571,7 +571,7 @@ module KanLayer #(
   // number of elements on a single bram bank
   localparam GRID_BANK_DEPTH = GRID_DEPTH;
   // Pipeline Output Grid
-  localparam GRID_PIPELINE_OUTPUT = 0;
+  localparam GRID_PIPELINE_OUTPUT = 1;
  `elsif GRID_IF_IS_BRAM
   // number of GRID bram banks
   localparam GRID_BANKS = (GRID_SHARE) ? 1 : DATA_CHANNELS;
@@ -600,7 +600,7 @@ module KanLayer #(
   // number of elements on a single bram bank
   localparam SCALE_BANK_DEPTH = SCALE_DEPTH;
   // Pipeline Output Grid
-  localparam SCALE_PIPELINE_OUTPUT = 0;
+  localparam SCALE_PIPELINE_OUTPUT = 1;
  `elsif SCALE_IF_IS_BRAM
   // number of SCALE bram banks
   localparam SCALE_BANKS = (SCALE_SHARE) ? 1 : DATA_CHANNELS;
@@ -657,7 +657,7 @@ module KanLayer #(
  `endif
   // localparam DATA_WIDTH_GRID = DATA_WIDTH_DATA;
 
-  localparam PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR -1;
+  localparam PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR;
 
   // Number of Independent AXI-Stream Weight Channels
   localparam WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS;
@@ -711,9 +711,6 @@ module KanLayer #(
    Internal Signals
   *************************************************************************************/
 
-  wire err_unalligned_data;   // Error output. WARNING: Might be grouped into AXI-Lite MM interfaces later
-
-  // wire core_rst; // Interrupt outputs. WARNING: Might be grouped into AXI-Lite MM interfaces later
   wire                            operation_start;
   wire [DATA_ADDR:0]              data_size;
   wire [GRID_ADDR:0]              grid_size;
@@ -763,7 +760,7 @@ module KanLayer #(
   wire                        int_ram_data_a_axil_awvalid [0:BATCH_SIZE-1];
   wire                        int_ram_data_a_axil_awready [0:BATCH_SIZE-1];
   wire [AXIL_WIDTH-1:0]       int_ram_data_a_axil_wdata   [0:BATCH_SIZE-1];
-  wire [1-1:0]                int_ram_data_a_axil_wstrb   [0:BATCH_SIZE-1];
+  wire [AXIL_STRB_WIDTH-1:0]  int_ram_data_a_axil_wstrb   [0:BATCH_SIZE-1];
   wire                        int_ram_data_a_axil_wvalid  [0:BATCH_SIZE-1];
   wire                        int_ram_data_a_axil_wready  [0:BATCH_SIZE-1];
   wire [1:0]                  int_ram_data_a_axil_bresp   [0:BATCH_SIZE-1];
@@ -785,8 +782,8 @@ module KanLayer #(
   wire [2:0]                  int_ram_data_b_axil_awprot = {2'b00};
   wire                        int_ram_data_b_axil_awvalid = 1'b0;
   wire                        int_ram_data_b_axil_awready [0:BATCH_SIZE-1];
-  wire [AXIL_WIDTH-1:0]       int_ram_data_b_axil_wdata = {AXIL_WIDTH{1'b0}};
-  wire [1-1:0]                int_ram_data_b_axil_wstrb = 1'b0;
+  wire [DATA_WIDTH-1:0]       int_ram_data_b_axil_wdata = {DATA_WIDTH{1'b0}};
+  wire [DATA_STRB_WIDTH-1:0]  int_ram_data_b_axil_wstrb = {DATA_STRB_WIDTH{1'b0}};
   wire                        int_ram_data_b_axil_wvalid = 1'b0;
   wire                        int_ram_data_b_axil_wready = 1'b0;
   wire [1:0]                  int_ram_data_b_axil_bresp   [0:BATCH_SIZE-1];
@@ -797,17 +794,19 @@ module KanLayer #(
   wire [2:0]                  int_ram_data_b_axil_arprot  [0:BATCH_SIZE-1];
   wire                        int_ram_data_b_axil_arvalid [0:BATCH_SIZE-1];
   wire                        int_ram_data_b_axil_arready [0:BATCH_SIZE-1];
-  wire [AXIL_WIDTH-1:0]       int_ram_data_b_axil_rdata   [0:BATCH_SIZE-1];
+  wire [DATA_WIDTH-1:0]       int_ram_data_b_axil_rdata   [0:BATCH_SIZE-1];
   wire [1:0]                  int_ram_data_b_axil_rresp   [0:BATCH_SIZE-1];
   wire                        int_ram_data_b_axil_rvalid  [0:BATCH_SIZE-1];
   wire                        int_ram_data_b_axil_rready  [0:BATCH_SIZE-1];
 
   generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: axil_ram_data_genblock
-    AxilDpBram # (
-      .DATA_WIDTH         (AXIL_WIDTH),
-      .ADDR_WIDTH         (DATA_ADDR),
-      .STRB_WIDTH         (1),
+    AxilDpRamPortbAdapter # (
+      .ADDR_WIDTH         (DATA_ADDR), 
+      .A_DATA_WIDTH       (AXIL_WIDTH), 
+      .A_STRB_WIDTH       (AXIL_STRB_WIDTH),
+      .B_DATA_WIDTH       (DATA_WIDTH), 
+      .B_STRB_WIDTH       (DATA_STRB_WIDTH),
       .PIPELINE_OUTPUT    (DATA_PIPELINE_OUTPUT)
     ) axil_ram_data_inst (
       .clk                (int_ram_data_s_axil_aclk       [BATCH]),
@@ -851,93 +850,9 @@ module KanLayer #(
       .s_axil_b_rvalid    (int_ram_data_b_axil_rvalid     [BATCH]),
       .s_axil_b_rready    (int_ram_data_b_axil_rready     [BATCH])
     );
-
-    // Connect Port A to S_AXIL_DATA interface
-    assign int_ram_data_s_axil_aclk [BATCH]                   = s_axil_data_aclk [BATCH];
-    assign int_ram_data_s_axil_arst [BATCH]                   = s_axil_data_areset [BATCH];
-    assign int_ram_data_a_axil_awaddr [BATCH]                 = s_axil_data_awaddr [BATCH*DATA_ADDR +: DATA_ADDR];
-    assign int_ram_data_a_axil_awprot [BATCH]                 = s_axil_data_awprot [BATCH*3 +: 3];
-    assign int_ram_data_a_axil_awvalid [BATCH]                = s_axil_data_awvalid [BATCH];
-    assign s_axil_data_awready [BATCH]                        = int_ram_data_a_axil_awready [BATCH];
-    assign int_ram_data_a_axil_wdata [BATCH]                  = s_axil_data_wdata [BATCH*AXIL_WIDTH +: AXIL_WIDTH];
-    assign int_ram_data_a_axil_wstrb [BATCH]                  = s_axil_data_wstrb [BATCH*DATA_STRB_WIDTH +: DATA_STRB_WIDTH];
-    assign int_ram_data_a_axil_wvalid [BATCH]                 = s_axil_data_wvalid [BATCH];
-    assign s_axil_data_wready [BATCH]                         = int_ram_data_a_axil_wready [BATCH];
-    assign s_axil_data_bresp [BATCH*2 +: 2]                   = int_ram_data_a_axil_bresp [BATCH];
-    assign s_axil_data_bvalid [BATCH]                         = int_ram_data_a_axil_bvalid [BATCH];
-    assign int_ram_data_a_axil_bready [BATCH]                 = s_axil_data_bready [BATCH];
-    assign int_ram_data_a_axil_araddr [BATCH]                 = s_axil_data_araddr [BATCH*DATA_ADDR +: DATA_ADDR];
-    assign int_ram_data_a_axil_arprot [BATCH]                 = s_axil_data_arprot [BATCH*3 +: 3];
-    assign int_ram_data_a_axil_arvalid [BATCH]                = s_axil_data_arvalid [BATCH];
-    assign s_axil_data_arready [BATCH]                        = int_ram_data_a_axil_arready [BATCH];
-    assign s_axil_data_rdata [BATCH*AXIL_WIDTH +: AXIL_WIDTH] = int_ram_data_a_axil_rdata [BATCH];
-    assign s_axil_data_rresp [BATCH]                          = int_ram_data_a_axil_rresp [BATCH];
-    assign s_axil_data_rvalid [BATCH]                         = int_ram_data_a_axil_rvalid [BATCH];
-    assign int_ram_data_a_axil_rready [BATCH]                 = s_axil_data_rready [BATCH];
   end
   endgenerate
     
-  /**********************************************
-    Slave AXI-Lite Adapter
-    between the Data RAM
-    and the MCU Data stream
-
-    Naming conventions
-    - int_ : internal signal
-    - _axil_ : axi lite
-    - _s_ : input / slave interface
-    - _m_ : otuput / master interface
-  *********************************************/
-
-  wire [DATA_ADDR-1:0]        int_adp_data_s_axil_araddr  [0:BATCH_SIZE-1];
-  wire [2:0]                  int_adp_data_s_axil_arprot  [0:BATCH_SIZE-1];
-  wire                        int_adp_data_s_axil_arvalid [0:BATCH_SIZE-1];
-  wire                        int_adp_data_s_axil_arready [0:BATCH_SIZE-1];
-  wire [AXIL_WIDTH-1:0]       int_adp_data_s_axil_rdata   [0:BATCH_SIZE-1];
-  wire [1:0]                  int_adp_data_s_axil_rresp   [0:BATCH_SIZE-1];
-  wire                        int_adp_data_s_axil_rvalid  [0:BATCH_SIZE-1];
-  wire                        int_adp_data_s_axil_rready  [0:BATCH_SIZE-1];
-
-  wire [DATA_ADDR-1:0]        int_adp_data_m_axil_araddr  [0:BATCH_SIZE-1];
-  wire [2:0]                  int_adp_data_m_axil_arprot  [0:BATCH_SIZE-1];
-  wire                        int_adp_data_m_axil_arvalid [0:BATCH_SIZE-1];
-  wire                        int_adp_data_m_axil_arready [0:BATCH_SIZE-1];
-  wire [DATA_WIDTH-1:0]       int_adp_data_m_axil_rdata   [0:BATCH_SIZE-1];
-  wire [1:0]                  int_adp_data_m_axil_rresp   [0:BATCH_SIZE-1];
-  wire                        int_adp_data_m_axil_rvalid  [0:BATCH_SIZE-1];
-  wire                        int_adp_data_m_axil_rready  [0:BATCH_SIZE-1];
-
-  generate
-  for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: axil_adp_data_genblock
-    axil_adapter_rd #(
-      .ADDR_WIDTH         (DATA_ADDR), 
-      .S_DATA_WIDTH       (AXIL_WIDTH), 
-      .S_STRB_WIDTH       (AXIL_STRB_WIDTH), 
-      .M_DATA_WIDTH       (DATA_WIDTH), 
-      .M_STRB_WIDTH       (DATA_STRB_WIDTH)
-    ) axil_adp_data_inst  (
-      .clk                (int_ram_data_s_axil_aclk       [BATCH]),
-      .rst                (int_ram_data_s_axil_arst       [BATCH]),
-      .s_axil_araddr      (int_adp_data_s_axil_araddr     [BATCH]),
-      .s_axil_arprot      (int_adp_data_s_axil_arprot     [BATCH]),
-      .s_axil_arvalid     (int_adp_data_s_axil_arvalid    [BATCH]),
-      .s_axil_arready     (int_adp_data_s_axil_arready    [BATCH]),
-      .s_axil_rdata       (int_adp_data_s_axil_rdata      [BATCH]),
-      .s_axil_rresp       (int_adp_data_s_axil_rresp      [BATCH]),
-      .s_axil_rvalid      (int_adp_data_s_axil_rvalid     [BATCH]),
-      .s_axil_rready      (int_adp_data_s_axil_rready     [BATCH]),
-      .m_axil_araddr      (int_adp_data_m_axil_araddr     [BATCH]),
-      .m_axil_arprot      (int_adp_data_m_axil_arprot     [BATCH]),
-      .m_axil_arvalid     (int_adp_data_m_axil_arvalid    [BATCH]),
-      .m_axil_arready     (int_adp_data_m_axil_arready    [BATCH]),
-      .m_axil_rdata       (int_adp_data_m_axil_rdata      [BATCH]),
-      .m_axil_rresp       (int_adp_data_m_axil_rresp      [BATCH]),
-      .m_axil_rvalid      (int_adp_data_m_axil_rvalid     [BATCH]),
-      .m_axil_rready      (int_adp_data_m_axil_rready     [BATCH])
-    );
-  end
-  endgenerate
-
  `elsif DATA_IF_IS_BRAM
   /**********************************************
     Interface Translator between BRAM Controller
@@ -949,17 +864,17 @@ module KanLayer #(
     - _i : input / slave interface
     - _o : output / master interface
   *********************************************/
-  wire                                    int_trl_data_bram_en_i [0:BATCH_SIZE-1];
-  wire [BRAM_CTRL_WE-1:0]                 int_trl_data_bram_we_i [0:BATCH_SIZE-1];
-  wire [DATA_ITRL_ADDR-1:0]               int_trl_data_bram_addr_i [0:BATCH_SIZE-1];
-  wire [BRAM_CTRL_WIDTH-1:0]              int_trl_data_bram_wrdata_i [0:BATCH_SIZE-1];
-  wire [BRAM_CTRL_WIDTH-1:0]              int_trl_data_bram_rddata_i [0:BATCH_SIZE-1];
+  wire                                    int_trl_data_bram_en_i        [0:BATCH_SIZE-1];
+  wire [BRAM_CTRL_WE-1:0]                 int_trl_data_bram_we_i        [0:BATCH_SIZE-1];
+  wire [DATA_ITRL_ADDR-1:0]               int_trl_data_bram_addr_i      [0:BATCH_SIZE-1];
+  wire [BRAM_CTRL_WIDTH-1:0]              int_trl_data_bram_wrdata_i    [0:BATCH_SIZE-1];
+  wire [BRAM_CTRL_WIDTH-1:0]              int_trl_data_bram_rddata_i    [0:BATCH_SIZE-1];
   
-  wire [DATA_BANKS-1:0]                   int_trl_data_bram_en_o [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WE)-1:0]         int_trl_data_bram_we_o [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_trl_data_bram_addr_o [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_trl_data_bram_wrdata_o [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_trl_data_bram_rddata_o [0:BATCH_SIZE-1];
+  wire [DATA_BANKS-1:0]                   int_trl_data_bram_en_o        [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_WE)-1:0]         int_trl_data_bram_we_o        [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_trl_data_bram_addr_o      [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_trl_data_bram_wrdata_o    [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_trl_data_bram_rddata_o    [0:BATCH_SIZE-1];
 
   generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: bram_trl_data_genblock
@@ -967,18 +882,20 @@ module KanLayer #(
       .IN_WIDTH  (BRAM_CTRL_WIDTH),
       .OUT_WIDTH (DATA_WIDTH),
       .BANKS     (DATA_BANKS),
-      .OUT_DEPTH (DATA_BANK_DEPTH)
+      .OUT_DEPTH (DATA_BANK_DEPTH),
+      .RD_LATENCY   (1)
     ) bram_trl_data_inst (
-      .en_i      (int_trl_data_bram_en_i[BATCH]),
-      .we_i      (int_trl_data_bram_we_i[BATCH]),
-      .addr_i    (int_trl_data_bram_addr_i[BATCH]),
-      .wrdata_i  (int_trl_data_bram_wrdata_i[BATCH]),
-      .rddata_i  (int_trl_data_bram_rddata_i[BATCH]),
-      .en_o      (int_trl_data_bram_en_o[BATCH]),
-      .we_o      (int_trl_data_bram_we_o[BATCH]),
-      .addr_o    (int_trl_data_bram_addr_o[BATCH]),
-      .wrdata_o  (int_trl_data_bram_wrdata_o[BATCH]),
-      .rddata_o  (int_trl_data_bram_rddata_o[BATCH])
+      .clk       (bram_ctrl_data_clk            [BATCH]),
+      .en_i      (int_trl_data_bram_en_i        [BATCH]),
+      .we_i      (int_trl_data_bram_we_i        [BATCH]),
+      .addr_i    (int_trl_data_bram_addr_i      [BATCH]),
+      .wrdata_i  (int_trl_data_bram_wrdata_i    [BATCH]),
+      .rddata_i  (int_trl_data_bram_rddata_i    [BATCH]),
+      .en_o      (int_trl_data_bram_en_o        [BATCH]),
+      .we_o      (int_trl_data_bram_we_o        [BATCH]),
+      .addr_o    (int_trl_data_bram_addr_o      [BATCH]),
+      .wrdata_o  (int_trl_data_bram_wrdata_o    [BATCH]),
+      .rddata_o  (int_trl_data_bram_rddata_o    [BATCH])
     );
   end
   endgenerate
@@ -991,17 +908,17 @@ module KanLayer #(
     - _a : port a (control port)
     - _b : port b (internal use)
   *********************************************/
-  wire                                    int_ram_data_bram_clk_a [0:BATCH_SIZE-1];
-  wire [DATA_BANKS-1:0]                   int_ram_data_bram_en_a [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WE)-1:0]         int_ram_data_bram_we_a [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_ram_data_bram_addr_a [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_wrdata_a [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_rddata_a [0:BATCH_SIZE-1];
+  wire                                    int_ram_data_bram_clk_a       [0:BATCH_SIZE-1];
+  wire [DATA_BANKS-1:0]                   int_ram_data_bram_en_a        [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_WE)-1:0]         int_ram_data_bram_we_a        [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_ram_data_bram_addr_a      [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_wrdata_a    [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_rddata_a    [0:BATCH_SIZE-1];
 
-  wire [DATA_BANKS-1:0]                   int_ram_data_bram_en_b [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_ram_data_bram_addr_b [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_rddata_b [0:BATCH_SIZE-1];
-  wire [DATA_BANKS-1:0]                   int_ram_data_bram_rdack_b [0:BATCH_SIZE-1];
+  wire [DATA_BANKS-1:0]                   int_ram_data_bram_en_b        [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_ram_data_bram_addr_b      [0:BATCH_SIZE-1];
+  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_rddata_b    [0:BATCH_SIZE-1];
+  wire [DATA_BANKS-1:0]                   int_ram_data_bram_rdack_b     [0:BATCH_SIZE-1];
 
   generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: bram_ram_data_genblock
@@ -1057,7 +974,7 @@ module KanLayer #(
   wire                        int_ram_grid_a_axil_awvalid;
   wire                        int_ram_grid_a_axil_awready;
   wire [AXIL_WIDTH-1:0]       int_ram_grid_a_axil_wdata;
-  wire [1-1:0]                int_ram_grid_a_axil_wstrb;
+  wire [AXIL_STRB_WIDTH-1:0]  int_ram_grid_a_axil_wstrb;
   wire                        int_ram_grid_a_axil_wvalid;
   wire                        int_ram_grid_a_axil_wready;
   wire [1:0]                  int_ram_grid_a_axil_bresp;
@@ -1079,8 +996,8 @@ module KanLayer #(
   wire [2:0]                  int_ram_grid_b_axil_awprot = {2'b00};
   wire                        int_ram_grid_b_axil_awvalid = 1'b0;
   wire                        int_ram_grid_b_axil_awready;
-  wire [AXIL_WIDTH-1:0]       int_ram_grid_b_axil_wdata = {AXIL_WIDTH{1'b0}};
-  wire [1-1:0]                int_ram_grid_b_axil_wstrb = 1'b0;
+  wire [GRID_WIDTH-1:0]       int_ram_grid_b_axil_wdata = {GRID_WIDTH{1'b0}};
+  wire [GRID_STRB_WIDTH-1:0]  int_ram_grid_b_axil_wstrb = {GRID_STRB_WIDTH{1'b0}};
   wire                        int_ram_grid_b_axil_wvalid = 1'b0;
   wire                        int_ram_grid_b_axil_wready = 1'b0;
   wire [1:0]                  int_ram_grid_b_axil_bresp;
@@ -1091,15 +1008,17 @@ module KanLayer #(
   wire [2:0]                  int_ram_grid_b_axil_arprot;
   wire                        int_ram_grid_b_axil_arvalid;
   wire                        int_ram_grid_b_axil_arready;
-  wire [AXIL_WIDTH-1:0]       int_ram_grid_b_axil_rdata;
+  wire [GRID_WIDTH-1:0]       int_ram_grid_b_axil_rdata;
   wire [1:0]                  int_ram_grid_b_axil_rresp;
   wire                        int_ram_grid_b_axil_rvalid;
   wire                        int_ram_grid_b_axil_rready;
 
-  AxilDpBram # (
-    .DATA_WIDTH         (AXIL_WIDTH),
-    .ADDR_WIDTH         (GRID_ADDR),
-    .STRB_WIDTH         (1),
+  AxilDpRamPortbAdapter # (
+    .ADDR_WIDTH         (GRID_ADDR), 
+    .A_DATA_WIDTH       (AXIL_WIDTH), 
+    .A_STRB_WIDTH       (AXIL_STRB_WIDTH),
+    .B_DATA_WIDTH       (GRID_WIDTH), 
+    .B_STRB_WIDTH       (GRID_STRB_WIDTH),
     .PIPELINE_OUTPUT    (GRID_PIPELINE_OUTPUT)
   ) axil_ram_grid_inst (
     .clk                (int_ram_grid_s_axil_aclk),
@@ -1144,86 +1063,6 @@ module KanLayer #(
     .s_axil_b_rready    (int_ram_grid_b_axil_rready)
   );
 
-  // Connect Port A to S_AXIL_GRID interface
-  assign int_ram_grid_s_axil_aclk     = s_axil_grid_aclk;
-  assign int_ram_grid_s_axil_arst     = s_axil_grid_areset;
-  assign int_ram_grid_a_axil_awaddr   = s_axil_grid_awaddr;
-  assign int_ram_grid_a_axil_awprot   = s_axil_grid_awprot;
-  assign int_ram_grid_a_axil_awvalid  = s_axil_grid_awvalid;
-  assign s_axil_grid_awready          = int_ram_grid_a_axil_awready;
-  assign int_ram_grid_a_axil_wdata    = s_axil_grid_wdata;
-  assign int_ram_grid_a_axil_wstrb    = s_axil_grid_wstrb;
-  assign int_ram_grid_a_axil_wvalid   = s_axil_grid_wvalid;
-  assign s_axil_grid_wready           = int_ram_grid_a_axil_wready;
-  assign s_axil_grid_bresp            = int_ram_grid_a_axil_bresp;
-  assign s_axil_grid_bvalid           = int_ram_grid_a_axil_bvalid;
-  assign int_ram_grid_a_axil_bready   = s_axil_grid_bready;
-  assign int_ram_grid_a_axil_araddr   = s_axil_grid_araddr;
-  assign int_ram_grid_a_axil_arprot   = s_axil_grid_arprot;
-  assign int_ram_grid_a_axil_arvalid  = s_axil_grid_arvalid;
-  assign s_axil_grid_arready          = int_ram_grid_a_axil_arready;
-  assign s_axil_grid_rdata            = int_ram_grid_a_axil_rdata;
-  assign s_axil_grid_rresp            = int_ram_grid_a_axil_rresp;
-  assign s_axil_grid_rvalid           = int_ram_grid_a_axil_rvalid;
-  assign int_ram_grid_a_axil_rready   = s_axil_grid_rready;
-
-  /**********************************************
-    Slave AXI-Lite Adapter
-    between the Grid RAM
-    and the MCU Grid stream
-
-    Naming conventions
-    - int_ : internal signal
-    - _axil_ : axi lite
-    - _s_ : input / slave interface
-    - _m_ : otuput / master interface
-  *********************************************/
-
-  wire [GRID_ADDR-1:0]        int_adp_grid_s_axil_araddr;
-  wire [2:0]                  int_adp_grid_s_axil_arprot;
-  wire                        int_adp_grid_s_axil_arvalid;
-  wire                        int_adp_grid_s_axil_arready;
-  wire [AXIL_WIDTH-1:0]       int_adp_grid_s_axil_rdata;
-  wire [1:0]                  int_adp_grid_s_axil_rresp;
-  wire                        int_adp_grid_s_axil_rvalid;
-  wire                        int_adp_grid_s_axil_rready;
-
-  wire [GRID_ADDR-1:0]        int_adp_grid_m_axil_araddr;
-  wire [2:0]                  int_adp_grid_m_axil_arprot;
-  wire                        int_adp_grid_m_axil_arvalid;
-  wire                        int_adp_grid_m_axil_arready;
-  wire [GRID_WIDTH-1:0]       int_adp_grid_m_axil_rdata;
-  wire [1:0]                  int_adp_grid_m_axil_rresp;
-  wire                        int_adp_grid_m_axil_rvalid;
-  wire                        int_adp_grid_m_axil_rready;
-
-  axil_adapter_rd #(
-    .ADDR_WIDTH         (GRID_ADDR), 
-    .S_DATA_WIDTH       (AXIL_WIDTH), 
-    .S_STRB_WIDTH       (AXIL_STRB_WIDTH), 
-    .M_DATA_WIDTH       (GRID_WIDTH), 
-    .M_STRB_WIDTH       (GRID_STRB_WIDTH)
-  ) axil_adp_grid_inst  (
-    .clk                (int_ram_grid_s_axil_aclk),
-    .rst                (int_ram_grid_s_axil_arst),
-    .s_axil_araddr      (int_adp_grid_s_axil_araddr),
-    .s_axil_arprot      (int_adp_grid_s_axil_arprot),
-    .s_axil_arvalid     (int_adp_grid_s_axil_arvalid),
-    .s_axil_arready     (int_adp_grid_s_axil_arready),
-    .s_axil_rdata       (int_adp_grid_s_axil_rdata),
-    .s_axil_rresp       (int_adp_grid_s_axil_rresp),
-    .s_axil_rvalid      (int_adp_grid_s_axil_rvalid),
-    .s_axil_rready      (int_adp_grid_s_axil_rready),
-    .m_axil_araddr      (int_adp_grid_m_axil_araddr),
-    .m_axil_arprot      (int_adp_grid_m_axil_arprot),
-    .m_axil_arvalid     (int_adp_grid_m_axil_arvalid),
-    .m_axil_arready     (int_adp_grid_m_axil_arready),
-    .m_axil_rdata       (int_adp_grid_m_axil_rdata),
-    .m_axil_rresp       (int_adp_grid_m_axil_rresp),
-    .m_axil_rvalid      (int_adp_grid_m_axil_rvalid),
-    .m_axil_rready      (int_adp_grid_m_axil_rready)
-  );
-
  `elsif GRID_IF_IS_BRAM
   /**********************************************
     Interface Translator between BRAM Controller
@@ -1251,8 +1090,10 @@ module KanLayer #(
     .IN_WIDTH     (BRAM_CTRL_WIDTH),
     .OUT_WIDTH    (GRID_WIDTH),
     .BANKS        (GRID_BANKS),
-    .OUT_DEPTH    (GRID_BANK_DEPTH)
+    .OUT_DEPTH    (GRID_BANK_DEPTH),
+    .RD_LATENCY   (1)
   ) bram_trl_grid_inst (
+    .clk          (bram_ctrl_grid_clk),
     .en_i         (int_trl_grid_bram_en_i),
     .we_i         (int_trl_grid_bram_we_i),
     .addr_i       (int_trl_grid_bram_addr_i),
@@ -1335,7 +1176,7 @@ module KanLayer #(
   wire                        int_ram_scle_a_axil_awvalid;
   wire                        int_ram_scle_a_axil_awready;
   wire [AXIL_WIDTH-1:0]       int_ram_scle_a_axil_wdata;
-  wire [1-1:0]                int_ram_scle_a_axil_wstrb;
+  wire [AXIL_STRB_WIDTH-1:0]  int_ram_scle_a_axil_wstrb;
   wire                        int_ram_scle_a_axil_wvalid;
   wire                        int_ram_scle_a_axil_wready;
   wire [1:0]                  int_ram_scle_a_axil_bresp;
@@ -1357,8 +1198,8 @@ module KanLayer #(
   wire [2:0]                  int_ram_scle_b_axil_awprot = {2'b00};
   wire                        int_ram_scle_b_axil_awvalid = 1'b0;
   wire                        int_ram_scle_b_axil_awready;
-  wire [AXIL_WIDTH-1:0]       int_ram_scle_b_axil_wdata = {AXIL_WIDTH{1'b0}};
-  wire [1-1:0]                int_ram_scle_b_axil_wstrb = 1'b0;
+  wire [SCALE_WIDTH-1:0]      int_ram_scle_b_axil_wdata = {SCALE_WIDTH{1'b0}};
+  wire [SCALE_STRB_WIDTH-1:0] int_ram_scle_b_axil_wstrb = {SCALE_STRB_WIDTH{1'b0}};
   wire                        int_ram_scle_b_axil_wvalid = 1'b0;
   wire                        int_ram_scle_b_axil_wready = 1'b0;
   wire [1:0]                  int_ram_scle_b_axil_bresp;
@@ -1369,15 +1210,17 @@ module KanLayer #(
   wire [2:0]                  int_ram_scle_b_axil_arprot;
   wire                        int_ram_scle_b_axil_arvalid;
   wire                        int_ram_scle_b_axil_arready;
-  wire [AXIL_WIDTH-1:0]       int_ram_scle_b_axil_rdata;
+  wire [SCALE_WIDTH-1:0]      int_ram_scle_b_axil_rdata;
   wire [1:0]                  int_ram_scle_b_axil_rresp;
   wire                        int_ram_scle_b_axil_rvalid;
   wire                        int_ram_scle_b_axil_rready;
 
-  AxilDpBram # (
-    .DATA_WIDTH         (AXIL_WIDTH),
-    .ADDR_WIDTH         (SCALE_ADDR),
-    .STRB_WIDTH         (1),
+  AxilDpRamPortbAdapter # (
+    .ADDR_WIDTH         (SCALE_ADDR), 
+    .A_DATA_WIDTH       (AXIL_WIDTH), 
+    .A_STRB_WIDTH       (AXIL_STRB_WIDTH),
+    .B_DATA_WIDTH       (SCALE_WIDTH), 
+    .B_STRB_WIDTH       (SCALE_STRB_WIDTH),
     .PIPELINE_OUTPUT    (SCALE_PIPELINE_OUTPUT)
   ) axil_ram_scle_inst (
     .clk                (int_ram_scle_s_axil_aclk),
@@ -1422,164 +1265,86 @@ module KanLayer #(
     .s_axil_b_rready    (int_ram_scle_b_axil_rready)
   );
 
-  // Connect Port A to S_AXIL_SCALE interface
-  assign int_ram_scle_s_axil_aclk       = s_axil_scle_aclk;
-  assign int_ram_scle_s_axil_arst       = s_axil_scle_areset;
-  assign int_ram_scle_a_axil_awaddr     = s_axil_scle_awaddr;
-  assign int_ram_scle_a_axil_awprot     = s_axil_scle_awprot;
-  assign int_ram_scle_a_axil_awvalid    = s_axil_scle_awvalid;
-  assign s_axil_scle_awready            = int_ram_scle_a_axil_awready;
-  assign int_ram_scle_a_axil_wdata      = s_axil_scle_wdata;
-  assign int_ram_scle_a_axil_wstrb      = s_axil_scle_wstrb;
-  assign int_ram_scle_a_axil_wvalid     = s_axil_scle_wvalid;
-  assign s_axil_scle_wready             = int_ram_scle_a_axil_wready;
-  assign s_axil_scle_bresp              = int_ram_scle_a_axil_bresp;
-  assign s_axil_scle_bvalid             = int_ram_scle_a_axil_bvalid;
-  assign int_ram_scle_a_axil_bready     = s_axil_scle_bready;
-  assign int_ram_scle_a_axil_araddr     = s_axil_scle_araddr;
-  assign int_ram_scle_a_axil_arprot     = s_axil_scle_arprot;
-  assign int_ram_scle_a_axil_arvalid    = s_axil_scle_arvalid;
-  assign s_axil_scle_arready            = int_ram_scle_a_axil_arready;
-  assign s_axil_scle_rdata              = int_ram_scle_a_axil_rdata;
-  assign s_axil_scle_rresp              = int_ram_scle_a_axil_rresp;
-  assign s_axil_scle_rvalid             = int_ram_scle_a_axil_rvalid;
-  assign int_ram_scle_a_axil_rready     = s_axil_scle_rready;
-
+ `elsif SCALE_IF_IS_BRAM
   /**********************************************
-    Slave AXI-Lite Adapter
-    between the Scale RAM
-    and the MCU Scale stream
+    Interface Translator between BRAM Controller
+    and Scale BRAM
 
     Naming conventions
     - int_ : internal signal
-    - _axil_ : axi lite
-    - _s_ : input / slave interface
-    - _m_ : otuput / master interface
+    - _trl_ : indicates a translator module
+    - _i : input / slave interface
+    - _o : output / master interface
   *********************************************/
+  wire                                      int_trl_scle_bram_en_i;
+  wire [BRAM_CTRL_WE-1:0]                   int_trl_scle_bram_we_i;
+  wire [SCALE_ITRL_ADDR-1:0]                int_trl_scle_bram_addr_i;
+  wire [BRAM_CTRL_WIDTH-1:0]                int_trl_scle_bram_wrdata_i;
+  wire [BRAM_CTRL_WIDTH-1:0]                int_trl_scle_bram_rddata_i;
+  
+  wire [SCALE_BANKS-1:0]                    int_trl_scle_bram_en_o;
+  wire [(SCALE_BANKS*SCALE_WE)-1:0]         int_trl_scle_bram_we_o;
+  wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_trl_scle_bram_addr_o;
+  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_trl_scle_bram_wrdata_o;
+  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_trl_scle_bram_rddata_o;
 
-  wire [SCALE_ADDR-1:0]       int_adp_scle_s_axil_araddr;
-  wire [2:0]                  int_adp_scle_s_axil_arprot;
-  wire                        int_adp_scle_s_axil_arvalid;
-  wire                        int_adp_scle_s_axil_arready;
-  wire [AXIL_WIDTH-1:0]       int_adp_scle_s_axil_rdata;
-  wire [1:0]                  int_adp_scle_s_axil_rresp;
-  wire                        int_adp_scle_s_axil_rvalid;
-  wire                        int_adp_scle_s_axil_rready;
-
-  wire [SCALE_ADDR-1:0]       int_adp_scle_m_axil_araddr;
-  wire [2:0]                  int_adp_scle_m_axil_arprot;
-  wire                        int_adp_scle_m_axil_arvalid;
-  wire                        int_adp_scle_m_axil_arready;
-  wire [SCALE_WIDTH-1:0]      int_adp_scle_m_axil_rdata;
-  wire [1:0]                  int_adp_scle_m_axil_rresp;
-  wire                        int_adp_scle_m_axil_rvalid;
-  wire                        int_adp_scle_m_axil_rready;
-
-  axil_adapter_rd #(
-    .ADDR_WIDTH         (SCALE_ADDR), 
-    .S_DATA_WIDTH       (AXIL_WIDTH), 
-    .S_STRB_WIDTH       (AXIL_STRB_WIDTH), 
-    .M_DATA_WIDTH       (SCALE_WIDTH), 
-    .M_STRB_WIDTH       (SCALE_STRB_WIDTH)
-  ) axil_adp_scle_inst  (
-    .clk                (int_ram_scle_s_axil_aclk),
-    .rst                (int_ram_scle_s_axil_arst),
-    .s_axil_araddr      (int_adp_scle_s_axil_araddr),
-    .s_axil_arprot      (int_adp_scle_s_axil_arprot),
-    .s_axil_arvalid     (int_adp_scle_s_axil_arvalid),
-    .s_axil_arready     (int_adp_scle_s_axil_arready),
-    .s_axil_rdata       (int_adp_scle_s_axil_rdata),
-    .s_axil_rresp       (int_adp_scle_s_axil_rresp),
-    .s_axil_rvalid      (int_adp_scle_s_axil_rvalid),
-    .s_axil_rready      (int_adp_scle_s_axil_rready),
-    .m_axil_araddr      (int_adp_scle_m_axil_araddr),
-    .m_axil_arprot      (int_adp_scle_m_axil_arprot),
-    .m_axil_arvalid     (int_adp_scle_m_axil_arvalid),
-    .m_axil_arready     (int_adp_scle_m_axil_arready),
-    .m_axil_rdata       (int_adp_scle_m_axil_rdata),
-    .m_axil_rresp       (int_adp_scle_m_axil_rresp),
-    .m_axil_rvalid      (int_adp_scle_m_axil_rvalid),
-    .m_axil_rready      (int_adp_scle_m_axil_rready)
+  BramIntrfTranslator # (
+    .IN_WIDTH     (BRAM_CTRL_WIDTH),
+    .OUT_WIDTH    (SCALE_WIDTH),
+    .BANKS        (SCALE_BANKS),
+    .OUT_DEPTH    (SCALE_BANK_DEPTH),
+    .RD_LATENCY   (1)
+  ) bram_trl_scle_inst (
+    .clk          (bram_ctrl_scle_clk),
+    .en_i         (int_trl_scle_bram_en_i),
+    .we_i         (int_trl_scle_bram_we_i),
+    .addr_i       (int_trl_scle_bram_addr_i),
+    .wrdata_i     (int_trl_scle_bram_wrdata_i),
+    .rddata_i     (int_trl_scle_bram_rddata_i),
+    .en_o         (int_trl_scle_bram_en_o),
+    .we_o         (int_trl_scle_bram_we_o),
+    .addr_o       (int_trl_scle_bram_addr_o),
+    .wrdata_o     (int_trl_scle_bram_wrdata_o),
+    .rddata_o     (int_trl_scle_bram_rddata_o)
   );
 
- `elsif SCALE_IF_IS_BRAM
-    /**********************************************
-      Interface Translator between BRAM Controller
-      and Scale BRAM
+  /**********************************************
+    Grid Multi-Bank Dual-Port BRAM
 
-      Naming conventions
-      - int_ : internal signal
-      - _trl_ : indicates a translator module
-      - _i : input / slave interface
-      - _o : output / master interface
-    *********************************************/
-    wire                                      int_trl_scle_bram_en_i;
-    wire [BRAM_CTRL_WE-1:0]                   int_trl_scle_bram_we_i;
-    wire [SCALE_ITRL_ADDR-1:0]                int_trl_scle_bram_addr_i;
-    wire [BRAM_CTRL_WIDTH-1:0]                int_trl_scle_bram_wrdata_i;
-    wire [BRAM_CTRL_WIDTH-1:0]                int_trl_scle_bram_rddata_i;
-    
-    wire [SCALE_BANKS-1:0]                    int_trl_scle_bram_en_o;
-    wire [(SCALE_BANKS*SCALE_WE)-1:0]         int_trl_scle_bram_we_o;
-    wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_trl_scle_bram_addr_o;
-    wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_trl_scle_bram_wrdata_o;
-    wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_trl_scle_bram_rddata_o;
+    Naming conventions
+    - int_ : internal signal
+    - _a : port a (control port)
+    - _b : port b (internal use)
+  *********************************************/
+  wire                                      int_ram_scle_bram_clk_a;
+  wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_a;
+  wire [(SCALE_BANKS*SCALE_WE)-1:0]         int_ram_scle_bram_we_a;
+  wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_ram_scle_bram_addr_a;
+  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_wrdata_a;
+  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_rddata_a;
 
-    BramIntrfTranslator # (
-      .IN_WIDTH   (BRAM_CTRL_WIDTH),
-      .OUT_WIDTH  (SCALE_WIDTH),
-      .BANKS      (SCALE_BANKS),
-      .OUT_DEPTH  (SCALE_BANK_DEPTH)
-    ) bram_trl_scle_inst (
-      .en_i       (int_trl_scle_bram_en_i),
-      .we_i       (int_trl_scle_bram_we_i),
-      .addr_i     (int_trl_scle_bram_addr_i),
-      .wrdata_i   (int_trl_scle_bram_wrdata_i),
-      .rddata_i   (int_trl_scle_bram_rddata_i),
-      .en_o       (int_trl_scle_bram_en_o),
-      .we_o       (int_trl_scle_bram_we_o),
-      .addr_o     (int_trl_scle_bram_addr_o),
-      .wrdata_o   (int_trl_scle_bram_wrdata_o),
-      .rddata_o   (int_trl_scle_bram_rddata_o)
-    );
+  wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_b;
+  wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_ram_scle_bram_addr_b;
+  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_rddata_b;
+  wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_rdack_b;
 
-    /**********************************************
-      Grid Multi-Bank Dual-Port BRAM
-
-      Naming conventions
-      - int_ : internal signal
-      - _a : port a (control port)
-      - _b : port b (internal use)
-    *********************************************/
-    wire                                      int_ram_scle_bram_clk_a;
-    wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_a;
-    wire [(SCALE_BANKS*SCALE_WE)-1:0]         int_ram_scle_bram_we_a;
-    wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_ram_scle_bram_addr_a;
-    wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_wrdata_a;
-    wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_rddata_a;
-
-    wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_b;
-    wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_ram_scle_bram_addr_b;
-    wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_rddata_b;
-    wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_rdack_b;
-
-    MultiBankBram #(
-      .BANKS  (SCALE_BANKS),
-      .WIDTH  (SCALE_WIDTH),
-      .DEPTH  (DATA_BANK_DEPTH),
-      .ADDR   (SCALE_ADDR)
-    ) bram_ram_scle_inst (
-      .clk    (int_ram_scle_bram_clk_a),
-      .ena    (int_ram_scle_bram_en_a),
-      .wea    (int_ram_scle_bram_we_a),
-      .addra  (int_ram_scle_bram_addr_a),
-      .dina   (int_ram_scle_bram_wrdata_a),
-      .douta  (int_ram_scle_bram_rddata_a),
-      .enb    (int_ram_scle_bram_en_b),
-      .addrb  (int_ram_scle_bram_addr_b),
-      .doutb  (int_ram_scle_bram_rddata_b),
-      .validb (int_ram_scle_bram_rdack_b)
-    );
+  MultiBankBram #(
+    .BANKS  (SCALE_BANKS),
+    .WIDTH  (SCALE_WIDTH),
+    .DEPTH  (DATA_BANK_DEPTH),
+    .ADDR   (SCALE_ADDR)
+  ) bram_ram_scle_inst (
+    .clk    (int_ram_scle_bram_clk_a),
+    .ena    (int_ram_scle_bram_en_a),
+    .wea    (int_ram_scle_bram_we_a),
+    .addra  (int_ram_scle_bram_addr_a),
+    .dina   (int_ram_scle_bram_wrdata_a),
+    .douta  (int_ram_scle_bram_rddata_a),
+    .enb    (int_ram_scle_bram_en_b),
+    .addrb  (int_ram_scle_bram_addr_b),
+    .doutb  (int_ram_scle_bram_rddata_b),
+    .validb (int_ram_scle_bram_rdack_b)
+  );
   
   // bram control interface to the scle bram port a
   assign int_ram_scle_bram_clk_a    = bram_ctrl_scle_clk;
@@ -2062,7 +1827,7 @@ module KanLayer #(
     .USER_ENABLE        (0),
     .USER_WIDTH         (1),
     .EXTRA_CYCLE        (EXTRA_CYCLE)
-  ) axis_spl_wghts_inst (
+  ) axis_spl_wght_inst (
     .clk                (core_clk),
     .rst                (core_rst),
     .s_axis_tdata       (int_spl_wght_s_axis_tdata),
@@ -2233,7 +1998,7 @@ module KanLayer #(
     .DEST_WIDTH         (1),
     .USER_ENABLE        (0),
     .USER_WIDTH         (1)
-  ) batched_axis_packet_joiner_inst (
+  ) axis_jnr_rslt_inst (
     .clk                (core_clk),
     .rst                (core_rst),
     .operation_start    (operation_start),
@@ -2357,6 +2122,11 @@ module KanLayer #(
   wire [RSLT_CHANNELS_OUT-1:0]                    int_dpu_rslt_m_axis_tready;
   wire [RSLT_CHANNELS_OUT-1:0]                    int_dpu_rslt_m_axis_tlast;
 
+  wire                                            dpu_operation_busy = |(int_dpu_rslt_m_axis_tready & int_dpu_wght_s_axis_tvalid);
+  wire                                            dpu_operation_complete = int_dpu_rslt_m_axis_tlast[0];
+  wire                                            dpu_operation_error;
+  wire                                            dpu_transmission = |(int_dpu_rslt_m_axis_tready & int_dpu_rslt_m_axis_tvalid);
+
   ParallelizedDataProcessor #(
     .BATCH_SIZE                   (BATCH_SIZE),
     .DATA_WIDTH                   (DATA_WIDTH),
@@ -2390,7 +2160,7 @@ module KanLayer #(
     .PIPELINE_LEVEL               (2)
   ) data_processor_inst (
     .clk                          (core_clk),
-    .rst                          (~fsm_rst),
+    .rst                          (fsm_rst || internal_operation_error),
     .s_axis_data_tdata            (int_dpu_data_s_axis_tdata),
     .s_axis_data_tvalid           (int_dpu_data_s_axis_tvalid),
     .s_axis_data_tready           (int_dpu_data_s_axis_tready),
@@ -2423,7 +2193,7 @@ module KanLayer #(
     .m_axis_data_tvalid           (int_dpu_rslt_m_axis_tvalid),
     .m_axis_data_tready           (int_dpu_rslt_m_axis_tready),
     .m_axis_data_tlast            (int_dpu_rslt_m_axis_tlast),
-    .err_unalligned_data          (err_unalligned_data),
+    .err_unalligned_data          (dpu_operation_error),
     .core_rst                     (core_rst)
   );
 
@@ -2443,7 +2213,8 @@ module KanLayer #(
     .PCKT_SIZE_WIDTH                (PCKT_SIZE_WIDTH)
   ) ccu (
     .fsm_clk                        (fsm_clk),
-    .rst                            (fsm_rst),
+    .fsm_rst                        (fsm_rst),
+    .core_rst                       (core_rst),
     .operation_start                (operation_start),
     .data_size                      (data_size),
     .grid_size                      (grid_size),
@@ -2490,28 +2261,40 @@ module KanLayer #(
  `ifdef DATA_IF_IS_AXIL
   generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: axil_if_batch_genblock
-    // Connect Axi-Lite Data Ram to Axi-Lite Data Adapter
-    assign int_ram_data_s_axil_aclk    [BATCH] = s_axil_data_aclk            [BATCH];
-    assign int_ram_data_s_axil_arst    [BATCH] = s_axil_data_areset          [BATCH];
-    assign int_ram_data_b_axil_araddr  [BATCH] = int_adp_data_m_axil_araddr  [BATCH];
-    assign int_ram_data_b_axil_arprot  [BATCH] = int_adp_data_m_axil_arprot  [BATCH];
-    assign int_ram_data_b_axil_arvalid [BATCH] = int_adp_data_m_axil_arvalid [BATCH];
-    assign int_adp_data_m_axil_arready [BATCH] = int_ram_data_b_axil_arready [BATCH];
-    assign int_adp_data_m_axil_rdata   [BATCH] = int_ram_data_b_axil_rdata   [BATCH];
-    assign int_adp_data_m_axil_rresp   [BATCH] = int_ram_data_b_axil_rresp   [BATCH];
-    assign int_adp_data_m_axil_rvalid  [BATCH] = int_ram_data_b_axil_rvalid  [BATCH];
-    assign int_ram_data_b_axil_rready  [BATCH] = int_adp_data_m_axil_rready  [BATCH];
+    // Connect S_AXIL_DATA interface to AXI-Lite Data Ram Port A
+    assign int_ram_data_s_axil_aclk [BATCH]                             = s_axil_data_aclk [BATCH];
+    assign int_ram_data_s_axil_arst [BATCH]                             = s_axil_data_areset [BATCH];
+    assign int_ram_data_a_axil_awaddr [BATCH]                           = s_axil_data_awaddr [BATCH*DATA_ADDR +: DATA_ADDR];
+    assign int_ram_data_a_axil_awprot [BATCH]                           = s_axil_data_awprot [BATCH*3 +: 3];
+    assign int_ram_data_a_axil_awvalid [BATCH]                          = s_axil_data_awvalid [BATCH];
+    assign s_axil_data_awready [BATCH]                                  = int_ram_data_a_axil_awready [BATCH];
+    assign int_ram_data_a_axil_wdata [BATCH]                            = s_axil_data_wdata [BATCH*AXIL_WIDTH +: AXIL_WIDTH];
+    assign int_ram_data_a_axil_wstrb [BATCH]                            = s_axil_data_wstrb [BATCH*AXIL_STRB_WIDTH +: AXIL_STRB_WIDTH];
+    assign int_ram_data_a_axil_wvalid [BATCH]                           = s_axil_data_wvalid [BATCH];
+    assign s_axil_data_wready [BATCH]                                   = int_ram_data_a_axil_wready [BATCH];
+    assign s_axil_data_bresp [BATCH*2 +: 2]                             = int_ram_data_a_axil_bresp [BATCH];
+    assign s_axil_data_bvalid [BATCH]                                   = int_ram_data_a_axil_bvalid [BATCH];
+    assign int_ram_data_a_axil_bready [BATCH]                           = s_axil_data_bready [BATCH];
+    assign int_ram_data_a_axil_araddr [BATCH]                           = s_axil_data_araddr [BATCH*DATA_ADDR +: DATA_ADDR];
+    assign int_ram_data_a_axil_arprot [BATCH]                           = s_axil_data_arprot [BATCH*3 +: 3];
+    assign int_ram_data_a_axil_arvalid [BATCH]                          = s_axil_data_arvalid [BATCH];
+    assign s_axil_data_arready [BATCH]                                  = int_ram_data_a_axil_arready [BATCH];
+    assign s_axil_data_rdata [BATCH*AXIL_WIDTH +: AXIL_WIDTH]           = int_ram_data_a_axil_rdata [BATCH];
+    assign s_axil_data_rresp [BATCH*2 +: 2]                             = int_ram_data_a_axil_rresp [BATCH];
+    assign s_axil_data_rvalid [BATCH]                                   = int_ram_data_a_axil_rvalid [BATCH];
+    assign int_ram_data_a_axil_rready [BATCH]                           = s_axil_data_rready [BATCH];
 
-    // Connect Axi-Lite Data Adapter to Data MCU
-    assign int_mcu_data_m_axil_aclk    [BATCH]                          = int_ram_data_s_axil_aclk    [BATCH];
-    assign int_adp_data_s_axil_araddr  [BATCH]                          = int_mcu_data_m_axil_araddr  [BATCH*DATA_ADDR +: DATA_ADDR];
-    assign int_adp_data_s_axil_arprot  [BATCH]                          = int_mcu_data_m_axil_arprot  [BATCH*3 +: 3];
-    assign int_adp_data_s_axil_arvalid [BATCH]                          = int_mcu_data_m_axil_arvalid [BATCH];
-    assign int_mcu_data_m_axil_arready [BATCH]                          = int_adp_data_s_axil_arready [BATCH];
-    assign int_mcu_data_m_axil_rdata   [BATCH*DATA_WIDTH +: DATA_WIDTH] = int_adp_data_s_axil_rdata   [BATCH];
-    assign int_mcu_data_m_axil_rresp   [BATCH*2 +: 2]                   = int_adp_data_s_axil_rresp   [BATCH];
-    assign int_mcu_data_m_axil_rvalid  [BATCH]                          = int_adp_data_s_axil_rvalid  [BATCH];
-    assign int_adp_data_s_axil_rready  [BATCH]                          = int_mcu_data_m_axil_rready  [BATCH];
+    // Connect Axi-Lite Data Ram Port B to Axi-Lite Data MCU
+    assign int_mcu_data_m_axil_aclk    [BATCH]                          = s_axil_data_aclk            [BATCH];
+    assign int_ram_data_b_axil_araddr  [BATCH]                          = int_mcu_data_m_axil_araddr  [BATCH*DATA_ADDR +: DATA_ADDR];
+    assign int_ram_data_b_axil_arprot  [BATCH]                          = int_mcu_data_m_axil_arprot  [BATCH*3 +: 3];
+    assign int_ram_data_b_axil_arvalid [BATCH]                          = int_mcu_data_m_axil_arvalid [BATCH];
+    assign int_mcu_data_m_axil_arready [BATCH]                          = int_ram_data_b_axil_arready [BATCH];
+    assign int_mcu_data_m_axil_rdata   [BATCH*DATA_WIDTH +: DATA_WIDTH] = int_ram_data_b_axil_rdata   [BATCH];
+    assign int_mcu_data_m_axil_rresp   [BATCH*2 +: 2]                   = int_ram_data_b_axil_rresp   [BATCH];
+    assign int_mcu_data_m_axil_rvalid  [BATCH]                          = int_ram_data_b_axil_rvalid  [BATCH];
+    assign int_ram_data_b_axil_rready  [BATCH]                          = int_mcu_data_m_axil_rready  [BATCH];
+
   end
   endgenerate
 
@@ -2520,7 +2303,7 @@ module KanLayer #(
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: bram_if_batch_genblock
     // bram control interface to the data bram translator
     assign int_trl_data_bram_en_i     [BATCH]                                     = bram_ctrl_data_en [BATCH];
-    assign int_trl_data_bram_we_i     [BATCH]                                     = bram_ctrl_data_we [BATCH];
+    assign int_trl_data_bram_we_i     [BATCH]                                     = bram_ctrl_data_we [BATCH*BRAM_CTRL_WE +: BRAM_CTRL_WE];
     assign int_trl_data_bram_addr_i   [BATCH]                                     = bram_ctrl_data_addr [BATCH*BRAM_CTRL_ADDR +2 +: DATA_ITRL_ADDR];
     assign int_trl_data_bram_wrdata_i [BATCH]                                     = bram_ctrl_data_din [BATCH*BRAM_CTRL_WIDTH +: BRAM_CTRL_WIDTH];
     assign bram_ctrl_data_dout        [BATCH*BRAM_CTRL_WIDTH +: BRAM_CTRL_WIDTH]  = int_trl_data_bram_rddata_i [BATCH];
@@ -2544,26 +2327,39 @@ module KanLayer #(
  `endif
  
  `ifdef GRID_IF_IS_AXIL
-  // Connect Axi-Lite Grid Ram to Axi-Lite Grid Adapter
-  assign int_ram_grid_b_axil_araddr  = int_adp_grid_m_axil_araddr;
-  assign int_ram_grid_b_axil_arprot  = int_adp_grid_m_axil_arprot;
-  assign int_ram_grid_b_axil_arvalid = int_adp_grid_m_axil_arvalid;
-  assign int_adp_grid_m_axil_arready = int_ram_grid_b_axil_arready;
-  assign int_adp_grid_m_axil_rdata   = int_ram_grid_b_axil_rdata;
-  assign int_adp_grid_m_axil_rresp   = int_ram_grid_b_axil_rresp;
-  assign int_adp_grid_m_axil_rvalid  = int_ram_grid_b_axil_rvalid;
-  assign int_ram_grid_b_axil_rready  = int_adp_grid_m_axil_rready;
+  // Connect S_AXIL_GRID interface to AXI-Lite Grid Ram Port A
+  assign int_ram_grid_s_axil_aclk    = s_axil_grid_aclk            ;
+  assign int_ram_grid_s_axil_arst    = s_axil_grid_areset          ;
+  assign int_ram_grid_a_axil_awaddr  = s_axil_grid_awaddr          ;
+  assign int_ram_grid_a_axil_awprot  = s_axil_grid_awprot          ;
+  assign int_ram_grid_a_axil_awvalid = s_axil_grid_awvalid         ;
+  assign s_axil_grid_awready         = int_ram_grid_a_axil_awready ;
+  assign int_ram_grid_a_axil_wdata   = s_axil_grid_wdata           ;
+  assign int_ram_grid_a_axil_wstrb   = s_axil_grid_wstrb           ;
+  assign int_ram_grid_a_axil_wvalid  = s_axil_grid_wvalid          ;
+  assign s_axil_grid_wready          = int_ram_grid_a_axil_wready  ;
+  assign s_axil_grid_bresp           = int_ram_grid_a_axil_bresp   ;
+  assign s_axil_grid_bvalid          = int_ram_grid_a_axil_bvalid  ;
+  assign int_ram_grid_a_axil_bready  = s_axil_grid_bready          ;
+  assign int_ram_grid_a_axil_araddr  = s_axil_grid_araddr          ;
+  assign int_ram_grid_a_axil_arprot  = s_axil_grid_arprot          ;
+  assign int_ram_grid_a_axil_arvalid = s_axil_grid_arvalid         ;
+  assign s_axil_grid_arready         = int_ram_grid_a_axil_arready ;
+  assign s_axil_grid_rdata           = int_ram_grid_a_axil_rdata   ;
+  assign s_axil_grid_rresp           = int_ram_grid_a_axil_rresp   ;
+  assign s_axil_grid_rvalid          = int_ram_grid_a_axil_rvalid  ;
+  assign int_ram_grid_a_axil_rready  = s_axil_grid_rready          ;
 
-  // Connect Axi-Lite Grid Adapter to Grid MCU  
-  assign int_mcu_grid_m_axil_aclk    = int_ram_grid_s_axil_aclk;
-  assign int_adp_grid_s_axil_araddr  = int_mcu_grid_m_axil_araddr;
-  assign int_adp_grid_s_axil_arprot  = int_mcu_grid_m_axil_arprot;
-  assign int_adp_grid_s_axil_arvalid = int_mcu_grid_m_axil_arvalid;
-  assign int_mcu_grid_m_axil_arready = int_adp_grid_s_axil_arready;
-  assign int_mcu_grid_m_axil_rdata   = int_adp_grid_s_axil_rdata;
-  assign int_mcu_grid_m_axil_rresp   = int_adp_grid_s_axil_rresp;
-  assign int_mcu_grid_m_axil_rvalid  = int_adp_grid_s_axil_rvalid;
-  assign int_adp_grid_s_axil_rready  = int_mcu_grid_m_axil_rready;
+  // Connect Axi-Lite Grid Ram Port B to Axi-Lite Grid MCU
+  assign int_mcu_grid_m_axil_aclk    = s_axil_grid_aclk            ;
+  assign int_ram_grid_b_axil_araddr  = int_mcu_grid_m_axil_araddr  ;
+  assign int_ram_grid_b_axil_arprot  = int_mcu_grid_m_axil_arprot  ;
+  assign int_ram_grid_b_axil_arvalid = int_mcu_grid_m_axil_arvalid ;
+  assign int_mcu_grid_m_axil_arready = int_ram_grid_b_axil_arready ;
+  assign int_mcu_grid_m_axil_rdata   = int_ram_grid_b_axil_rdata   ;
+  assign int_mcu_grid_m_axil_rresp   = int_ram_grid_b_axil_rresp   ;
+  assign int_mcu_grid_m_axil_rvalid  = int_ram_grid_b_axil_rvalid  ;
+  assign int_ram_grid_b_axil_rready  = int_mcu_grid_m_axil_rready  ;
 
  `elsif GRID_IF_IS_BRAM
   // bram control interface to the data bram translator
@@ -2590,26 +2386,39 @@ module KanLayer #(
  `endif
  
  `ifdef SCALE_IF_IS_AXIL
-  // Connect Axi-Lite Scale Ram to Axi-Lite Scale Adapter
-  assign int_ram_scle_b_axil_araddr  = int_adp_scle_m_axil_araddr;
-  assign int_ram_scle_b_axil_arprot  = int_adp_scle_m_axil_arprot;
-  assign int_ram_scle_b_axil_arvalid = int_adp_scle_m_axil_arvalid;
-  assign int_adp_scle_m_axil_arready = int_ram_scle_b_axil_arready;
-  assign int_adp_scle_m_axil_rdata   = int_ram_scle_b_axil_rdata;
-  assign int_adp_scle_m_axil_rresp   = int_ram_scle_b_axil_rresp;
-  assign int_adp_scle_m_axil_rvalid  = int_ram_scle_b_axil_rvalid;
-  assign int_ram_scle_b_axil_rready  = int_adp_scle_m_axil_rready;
+  // Connect S_AXIL_SCLE interface to AXI-Lite Scale Ram Port A
+  assign int_ram_scle_s_axil_aclk    = s_axil_scle_aclk            ;
+  assign int_ram_scle_s_axil_arst    = s_axil_scle_areset          ;
+  assign int_ram_scle_a_axil_awaddr  = s_axil_scle_awaddr          ;
+  assign int_ram_scle_a_axil_awprot  = s_axil_scle_awprot          ;
+  assign int_ram_scle_a_axil_awvalid = s_axil_scle_awvalid         ;
+  assign s_axil_scle_awready         = int_ram_scle_a_axil_awready ;
+  assign int_ram_scle_a_axil_wdata   = s_axil_scle_wdata           ;
+  assign int_ram_scle_a_axil_wstrb   = s_axil_scle_wstrb           ;
+  assign int_ram_scle_a_axil_wvalid  = s_axil_scle_wvalid          ;
+  assign s_axil_scle_wready          = int_ram_scle_a_axil_wready  ;
+  assign s_axil_scle_bresp           = int_ram_scle_a_axil_bresp   ;
+  assign s_axil_scle_bvalid          = int_ram_scle_a_axil_bvalid  ;
+  assign int_ram_scle_a_axil_bready  = s_axil_scle_bready          ;
+  assign int_ram_scle_a_axil_araddr  = s_axil_scle_araddr          ;
+  assign int_ram_scle_a_axil_arprot  = s_axil_scle_arprot          ;
+  assign int_ram_scle_a_axil_arvalid = s_axil_scle_arvalid         ;
+  assign s_axil_scle_arready         = int_ram_scle_a_axil_arready ;
+  assign s_axil_scle_rdata           = int_ram_scle_a_axil_rdata   ;
+  assign s_axil_scle_rresp           = int_ram_scle_a_axil_rresp   ;
+  assign s_axil_scle_rvalid          = int_ram_scle_a_axil_rvalid  ;
+  assign int_ram_scle_a_axil_rready  = s_axil_scle_rready          ;
 
-  // Connect Axi-Lite Scale Adapter to Scale MCU  
-  assign int_mcu_scle_m_axil_aclk    = int_ram_scle_s_axil_aclk;
-  assign int_adp_scle_s_axil_araddr  = int_mcu_scle_m_axil_araddr;
-  assign int_adp_scle_s_axil_arprot  = int_mcu_scle_m_axil_arprot;
-  assign int_adp_scle_s_axil_arvalid = int_mcu_scle_m_axil_arvalid;
-  assign int_mcu_scle_m_axil_arready = int_adp_scle_s_axil_arready;
-  assign int_mcu_scle_m_axil_rdata   = int_adp_scle_s_axil_rdata;
-  assign int_mcu_scle_m_axil_rresp   = int_adp_scle_s_axil_rresp;
-  assign int_mcu_scle_m_axil_rvalid  = int_adp_scle_s_axil_rvalid;
-  assign int_adp_scle_s_axil_rready  = int_mcu_scle_m_axil_rready;
+  // Connect Axi-Lite Scale Ram Port B to Axi-Lite Scale MCU
+  assign int_mcu_scle_m_axil_aclk    = s_axil_scle_aclk            ;
+  assign int_ram_scle_b_axil_araddr  = int_mcu_scle_m_axil_araddr  ;
+  assign int_ram_scle_b_axil_arprot  = int_mcu_scle_m_axil_arprot  ;
+  assign int_ram_scle_b_axil_arvalid = int_mcu_scle_m_axil_arvalid ;
+  assign int_mcu_scle_m_axil_arready = int_ram_scle_b_axil_arready ;
+  assign int_mcu_scle_m_axil_rdata   = int_ram_scle_b_axil_rdata   ;
+  assign int_mcu_scle_m_axil_rresp   = int_ram_scle_b_axil_rresp   ;
+  assign int_mcu_scle_m_axil_rvalid  = int_ram_scle_b_axil_rvalid  ;
+  assign int_ram_scle_b_axil_rready  = int_mcu_scle_m_axil_rready  ;
 
  `elsif SCALE_IF_IS_BRAM
   // bram control interface to the data bram translator
@@ -2748,6 +2557,11 @@ module KanLayer #(
   assign peripheral_operation_error    [PERIPHERAL_MCU] = mcu_operation_error;
   assign peripheral_transmission       [PERIPHERAL_MCU] = mcu_transmission;
 
+  assign peripheral_operation_busy     [PERIPHERAL_DPU] = dpu_operation_busy;
+  assign peripheral_operation_complete [PERIPHERAL_DPU] = dpu_operation_complete;
+  assign peripheral_operation_error    [PERIPHERAL_DPU] = dpu_operation_error;
+  assign peripheral_transmission       [PERIPHERAL_DPU] = dpu_transmission;
+
   assign peripheral_operation_busy     [PERIPHERAL_APS] = aps_operation_busy;
   assign peripheral_operation_complete [PERIPHERAL_APS] = aps_operation_complete;
   assign peripheral_operation_error    [PERIPHERAL_APS] = aps_operation_error;
@@ -2757,6 +2571,8 @@ module KanLayer #(
   assign peripheral_operation_complete [PERIPHERAL_JNR] = jnr_operation_complete;
   assign peripheral_operation_error    [PERIPHERAL_JNR] = jnr_operation_error;
   assign peripheral_transmission       [PERIPHERAL_JNR] = jnr_transmission;
+
+  assign rslt_tlast = int_jnr_rslt_m_axis_tlast;
 endmodule
 
 `resetall

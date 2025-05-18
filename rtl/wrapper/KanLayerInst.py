@@ -21,17 +21,17 @@ def main():
     parser.add_argument('--dma-width',  type=int, default=64, help="DMA Data Width", dest='dma_width')
     parser.add_argument('--ctrl-addr',  type=int, default=13, help="Control Address Width", dest='ctrl_addr')
     
-    parser.add_argument('--data-width',  type=int, default=16, help="Data & Grid Width", dest='data_width')
-    parser.add_argument('--data-frac-bits',  type=int, default=12, help="Data & Grid Fractional Bits", dest='data_fbits')
-    parser.add_argument('--data-chn',  type=int, default=4, help="Data Channels", dest='data_chn')
-    parser.add_argument('--data-depth',  type=int, default=1024, help="Data Depth", dest='data_depth')
-    parser.add_argument('--data-axil', action='store_true', dest='data_axil')
-    parser.add_argument('--data-bram', action='store_true', dest='data_bram')
+    parser.add_argument('--data-width',     type=int, default=16, help="Data & Grid Width", dest='data_width')
+    parser.add_argument('--data-frac-bits', type=int, default=12, help="Data & Grid Fractional Bits", dest='data_fbits')
+    parser.add_argument('--data-chn',       type=int, default=4, help="Data Channels", dest='data_chn')
+    parser.add_argument('--data-depth',     type=int, default=1024, help="Data Depth", dest='data_depth')
+    parser.add_argument('--data-axil',      action='store_true', dest='data_axil')
+    parser.add_argument('--data-bram',      action='store_true', dest='data_bram')
     
     parser.add_argument('--grid-depth', type=int, default=16, help="Grid Depth", dest='grid_depth')
     parser.add_argument('--grid-share', action='store_true', dest='grid_share')
-    parser.add_argument('--grid-axil', action='store_true', dest='grid_axil')
-    parser.add_argument('--grid-bram', action='store_true', dest='grid_bram')
+    parser.add_argument('--grid-axil',  action='store_true', dest='grid_axil')
+    parser.add_argument('--grid-bram',  action='store_true', dest='grid_bram')
     
     parser.add_argument('--scale-width',     '--scle-width',     type=int, default=16, help="Scale Width", dest='scle_width')
     parser.add_argument('--scale-frac-bits', '--scle-frac-bits', type=int, default=12, help="Scale Fractional Bits", dest='scle_fbits')
@@ -42,6 +42,7 @@ def main():
     
     parser.add_argument('--weight-width',     '--wght-width',     type=int, default=16, help="Weight Width", dest='wght_width')
     parser.add_argument('--weight-frac-bits', '--wght-frac-bits', type=int, default=12, help="Weight Fractional Bits", dest='wght_fbits')
+    parser.add_argument('--weight-depth',     '--wght-depth',     type=int, default=16, help="Weight Depth", dest='wght_depth')
     
     parser.add_argument('--scaled-diff-width',     '--sdff-width',     type=int, default=16, help="Scaled Difference Width", dest='sdff_width')
     parser.add_argument('--scaled-diff-frac-bits', '--sdff-frac-bits', type=int, default=13, help="Scaled Difference Fractional Bits", dest='sdff_fbits')
@@ -50,8 +51,9 @@ def main():
     parser.add_argument('--activation-function-frac-bits', '--actf-frac-bits', type=int, default=16, help="Activation Function Fractional Bits", dest='actf_fbits')
     
     parser.add_argument('--result-chn',       '--rslt-chn',       type=int, default=1, help="Result Channels", dest='rslt_chn')
-    parser.add_argument('--result-width',     '--rslt-width',     type=int, default=16, help="Weight Width", dest='rslt_width')
-    parser.add_argument('--result-frac-bits', '--rslt-frac-bits', type=int, default=12, help="Weight Fractional Bits", dest='rslt_fbits')
+    parser.add_argument('--result-width',     '--rslt-width',     type=int, default=16, help="Result Width", dest='rslt_width')
+    parser.add_argument('--result-frac-bits', '--rslt-frac-bits', type=int, default=12, help="Result Fractional Bits", dest='rslt_fbits')
+    parser.add_argument('--result-depth',     '--rslt-depth',     type=int, default=8, help="Result Depth", dest='rslt_depth')
     
     parser.add_argument('--bram-width', type=int, default=32, help="batch size", dest='bram_width')
     parser.add_argument('--bram-we',    type=int, default=4, help="batch size",  dest='bram_we')
@@ -66,16 +68,23 @@ def main():
     if (not args.grid_share) :
         args.grid_axil = False
         args.grid_bram = True
-        
+    elif not (args.grid_axil or args.grid_bram) :
+        args.grid_axil = True
+      
     if (not args.scle_share) :
         args.scle_axil = False
         args.scle_bram = True
+    elif not (args.scle_axil or args.scle_bram) :
+        args.scle_axil = True
         
     if (args.data_axil and args.data_chn != 1) :
         raise ValueError('Cannot use Axi-Lite with multiple data channels.')
     elif (args.data_chn > 1) :
-        args.data_bram = True
         args.data_axil = False
+        args.data_bram = True
+    elif (args.data_chn == 1) and not (args.data_axil or args.data_bram):
+        args.data_axil = True
+        args.data_adata_bramxil = False
         
         print(args.data_chn, args.data_bram)
     
@@ -174,13 +183,12 @@ module {{name}} #(
   parameter DATA_CHANNELS = {{data_chn}},
   // Total memory size allocated for Data in words
   parameter DATA_DEPTH = {{data_depth}},
-
- `ifdef DATA_IF_IS_AXIL
-  // Grid Address Width
-  parameter DATA_ADDR = `LOG2(DATA_DEPTH),
-  // Grid Strobe Width
+{% if data_axil %}
+  // Data Strobe Width
   parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
- `endif
+  // Data Address Width
+  parameter DATA_ADDR = `LOG2( DATA_DEPTH * DATA_STRB_WIDTH ),
+{% endif %}
 
   /*------------------------------------------------------------------
     GRID parameters for AXI stream and BRAM interface
@@ -190,11 +198,10 @@ module {{name}} #(
   parameter GRID_SHARE = {{ grid_share | int }}, 
   // Total memory size allocated for Grid in words
   parameter GRID_DEPTH = {{grid_depth}},
-
- `ifdef GRID_IF_IS_AXIL
+{% if grid_axil %}
   // Grid Address Width
-  parameter GRID_ADDR = `LOG2(GRID_DEPTH),
- `endif
+  parameter GRID_ADDR = `LOG2( GRID_DEPTH * DATA_STRB_WIDTH ),
+{% endif %}
 
   /*------------------------------------------------------------------
     SCALE streams parameters
@@ -209,13 +216,6 @@ module {{name}} #(
   // Total memory size allocated for Data in words
   parameter SCALE_DEPTH = {{scle_depth}},
 
- `ifdef SCALE_IF_IS_AXIL
-  // Grid Address Width
-  parameter SCALE_ADDR = `MAX(`LOG2(SCALE_DEPTH), 1),
-  // Grid Strobe Width
-  parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
- `endif
-
   /*------------------------------------------------------------------
     RESULT / OUTPUT parameters
   ------------------------------------------------------------------*/
@@ -229,7 +229,13 @@ module {{name}} #(
   // tkeep signal width (words per cycle)
   parameter RSLT_KEEP_WIDTH = ((RSLT_WIDTH + 7) / 8),
   // FIFO Depth for results
-  parameter RSLT_FIFO_DEPTH = `MAX( 2 ** `LOG2(`LOG2(BATCH_SIZE + RSLT_CHANNELS) + DMA_KEEP_WIDTH), 8),
+  parameter RSLT_FIFO_DEPTH = {{rslt_depth}},
+{% if scle_axil %}
+  // Scale Strobe Width
+  parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
+  // Scale Address Width
+  parameter SCALE_ADDR = `MAX( `LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ), SCALE_STRB_WIDTH),
+{% endif %}
 
   /*------------------------------------------------------------------
     WEIGHT streams parameters
@@ -244,7 +250,7 @@ module {{name}} #(
   // tkeep signal width (words per cycle)
   parameter WEIGHT_KEEP_WIDTH = (WEIGHT_KEEP_ENABLE) ? ((WEIGHT_WIDTH + 7) / 8) : 1,
   // FIFO Depth for WEIGHT parameters
-  parameter WEIGHT_FIFO_DEPTH = 2 ** `LOG2((DATA_CHANNELS + RSLT_CHANNELS) * DMA_KEEP_WIDTH),
+  parameter WEIGHT_FIFO_DEPTH = {{wght_depth}},
 
   /*------------------------------------------------------------------
     SCALED_DIFF parameters
@@ -343,8 +349,7 @@ module {{name}} #(
   /*------------------------------------------------------------------
       BRAM Data Control interface
   ------------------------------------------------------------------*/
- `ifdef DATA_IF_IS_AXIL
-{%- for p in range(n) %}
+{% if data_axil %}{%- for p in range(n) %}
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s{{'%02d'%p}}_axil_data_aclk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s{{'%02d'%p}}_axil_data, ASSOCIATED_RESET s{{'%02d'%p}}_axil_data_areset" *)
   input  wire                                       s{{'%02d'%p}}_axil_data_aclk,
@@ -390,10 +395,8 @@ module {{name}} #(
   output wire                                       s{{'%02d'%p}}_axil_data_rvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s{{'%02d'%p}}_axil_data RREADY" *)
   input  wire                                       s{{'%02d'%p}}_axil_data_rready,
-{% endfor -%}
-
- `elsif DATA_IF_IS_BRAM
-{%- for p in range(n) %}
+{% endfor -%}{% endif %}
+{% if data_bram %}{%- for p in range(n) %}
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram{{'%02d'%p}}_ctrl_data, ASSOCIATED_RESET bram{{'%02d'%p}}_ctrl_data_rst" *)
   input  wire                                       bram{{'%02d'%p}}_ctrl_data_clk,
@@ -410,13 +413,12 @@ module {{name}} #(
   input  wire [BRAM_CTRL_WIDTH-1:0]                 bram{{'%02d'%p}}_ctrl_data_din,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram{{'%02d'%p}}_ctrl_data DOUT" *)
   output wire [BRAM_CTRL_WIDTH-1:0]                 bram{{'%02d'%p}}_ctrl_data_dout,
-{% endfor -%}
- `endif 
+{% endfor -%}{% endif %}
 
   /*------------------------------------------------------------------
       BRAM Grid Control interface
   ------------------------------------------------------------------*/
- `ifdef GRID_IF_IS_AXIL
+{% if grid_axil %}
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_grid_aclk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_grid, ASSOCIATED_RESET s_axil_grid_areset" *)
   input  wire                                       s_axil_grid_aclk,
@@ -462,8 +464,8 @@ module {{name}} #(
   output wire                                       s_axil_grid_rvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RREADY" *)
   input  wire                                       s_axil_grid_rready,
-
- `elsif GRID_IF_IS_BRAM
+{% endif %}
+{% if grid_bram %}
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram_ctrl_grid, ASSOCIATED_RESET bram_ctrl_grid_rst" *)
   input  wire                                       bram_ctrl_grid_clk,
@@ -480,13 +482,13 @@ module {{name}} #(
   input  wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_grid_din,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_grid DOUT" *)
   output wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_grid_dout,
- `endif
+{% endif %}
 
     /*------------------------------------------------------------------
         BRAM Scale Control interface
     ------------------------------------------------------------------*/
 
- `ifdef SCALE_IF_IS_AXIL
+{% if scle_axil %}
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_scle_aclk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_scle, ASSOCIATED_RESET s_axil_scle_areset" *)
   input  wire                                       s_axil_scle_aclk,
@@ -503,9 +505,9 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle AWREADY" *)
   output wire                                       s_axil_scle_awready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WDATA" *)
-  input  wire [AXIL_WIDTH-1:0]                     s_axil_scle_wdata,
+  input  wire [AXIL_WIDTH-1:0]                      s_axil_scle_wdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WSTRB" *)
-  input  wire [AXIL_STRB_WIDTH-1:0]                s_axil_scle_wstrb,
+  input  wire [AXIL_STRB_WIDTH-1:0]                 s_axil_scle_wstrb,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WVALID" *)
   input  wire                                       s_axil_scle_wvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle WREADY" *)
@@ -525,15 +527,15 @@ module {{name}} #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle ARREADY" *)
   output wire                                       s_axil_scle_arready,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RDATA" *)
-  output wire [AXIL_WIDTH-1:0]                     s_axil_scle_rdata,
+  output wire [AXIL_WIDTH-1:0]                      s_axil_scle_rdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RRESP" *)
   output wire [1:0]                                 s_axil_scle_rresp,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RVALID" *)
   output wire                                       s_axil_scle_rvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RREADY" *)
   input  wire                                       s_axil_scle_rready,
-
- `elsif  SCALE_IF_IS_BRAM
+{% endif %}
+{% if scle_bram %}
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram_ctrl_scle, ASSOCIATED_RESET bram_ctrl_scle_rst" *)
   input  wire                                       bram_ctrl_scle_clk,
@@ -550,7 +552,7 @@ module {{name}} #(
   input  wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_scle_din,
   (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram_ctrl_scle DOUT" *)
   output wire [BRAM_CTRL_WIDTH-1:0]                 bram_ctrl_scle_dout,
- `endif
+{% endif %}
  
   /*------------------------------------------------------------------
       AXI-Lite Control Slave interface
@@ -645,6 +647,7 @@ module {{name}} #(
   localparam GRID_WIDTH = DATA_WIDTH;
   // Grid Strobe Width
   localparam GRID_STRB_WIDTH = GRID_WIDTH / 8;
+  
 
   KanLayer #(
     .BATCH_SIZE                     (BATCH_SIZE),
@@ -660,24 +663,24 @@ module {{name}} #(
     .DATA_FRACTIONAL_BITS           (DATA_FRACTIONAL_BITS),
     .DATA_CHANNELS                  (DATA_CHANNELS),
     .DATA_DEPTH                     (DATA_DEPTH),
-  `ifdef DATA_IF_IS_AXIL
+{% if data_axil %}
     .DATA_ADDR                      (DATA_ADDR),
     .DATA_STRB_WIDTH                (DATA_STRB_WIDTH),
-  `endif
+{% endif %}
     .GRID_SHARE                     (GRID_SHARE), 
     .GRID_DEPTH                     (GRID_DEPTH),
-  `ifdef GRID_IF_IS_AXIL
-    .GRID_ADDR                      (GRID_ADDR),
-    .GRID_STRB_WIDTH                (GRID_STRB_WIDTH),
-  `endif
+{% if grid_axil %}
+//    .GRID_ADDR                      (GRID_ADDR),
+//    .GRID_STRB_WIDTH                (GRID_STRB_WIDTH),
+{% endif %}
     .SCALE_SHARE                    (SCALE_SHARE),
     .SCALE_WIDTH                    (SCALE_WIDTH),
     .SCALE_FRACTIONAL_BITS          (SCALE_FRACTIONAL_BITS),
     .SCALE_DEPTH                    (SCALE_DEPTH),
-  `ifdef SCALE_IF_IS_AXIL
-    .SCALE_ADDR                     (SCALE_ADDR),
-    .SCALE_STRB_WIDTH               (SCALE_STRB_WIDTH),
-  `endif
+{% if scle_axil %}
+//    .SCALE_ADDR                     (SCALE_ADDR),
+//    .SCALE_STRB_WIDTH               (SCALE_STRB_WIDTH),
+{% endif %}
     .RSLT_CHANNELS                  (RSLT_CHANNELS),
     .RSLT_WIDTH                     (RSLT_WIDTH),
     .RSLT_FRACTIONAL_BITS           (RSLT_FRACTIONAL_BITS),
@@ -727,7 +730,7 @@ module {{name}} #(
     /*------------------------------------------------------------------
         BRAM Data Control interface
     ------------------------------------------------------------------*/
-  `ifdef DATA_IF_IS_AXIL
+{% if data_axil %}
     .s_axil_data_aclk               ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_aclk{% if not loop.last %}, {% endif %}{% endfor %} }),
     .s_axil_data_areset             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_areset{% if not loop.last %}, {% endif %}{% endfor %} }),
     .s_axil_data_awaddr             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_awaddr{% if not loop.last %}, {% endif %}{% endfor %} }),
@@ -749,8 +752,8 @@ module {{name}} #(
     .s_axil_data_rresp              ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_rresp{% if not loop.last %}, {% endif %}{% endfor %} }),
     .s_axil_data_rvalid             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_rvalid{% if not loop.last %}, {% endif %}{% endfor %} }),
     .s_axil_data_rready             ({ {% for p in range(n-1,-1,-1) %}s{{'%02d'%p}}_axil_data_rready{% if not loop.last %}, {% endif %}{% endfor %} }),
-
-  `elsif DATA_IF_IS_BRAM
+{% endif %}
+{% if data_bram %}
     .bram_ctrl_data_clk             ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_clk{% if not loop.last %}, {% endif %}{% endfor %} }),
     .bram_ctrl_data_rst             ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_rst{% if not loop.last %}, {% endif %}{% endfor %} }),
     .bram_ctrl_data_en              ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_en{% if not loop.last %}, {% endif %}{% endfor %} }),
@@ -758,12 +761,12 @@ module {{name}} #(
     .bram_ctrl_data_addr            ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_addr{% if not loop.last %}, {% endif %}{% endfor %} }),
     .bram_ctrl_data_din             ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_din{% if not loop.last %}, {% endif %}{% endfor %} }),
     .bram_ctrl_data_dout            ({ {% for p in range(n-1,-1,-1) %}bram{{'%02d'%p}}_ctrl_data_dout{% if not loop.last %}, {% endif %}{% endfor %} }),
-  `endif 
+{% endif %}
 
     /*------------------------------------------------------------------
         BRAM Grid Control interface
     ------------------------------------------------------------------*/
-  `ifdef GRID_IF_IS_AXIL
+{% if grid_axil %}
     .s_axil_grid_aclk               (s_axil_grid_aclk),
     .s_axil_grid_areset             (s_axil_grid_areset),
     .s_axil_grid_awaddr             (s_axil_grid_awaddr),
@@ -785,8 +788,8 @@ module {{name}} #(
     .s_axil_grid_rresp              (s_axil_grid_rresp),
     .s_axil_grid_rvalid             (s_axil_grid_rvalid),
     .s_axil_grid_rready             (s_axil_grid_rready),
-
-  `elsif GRID_IF_IS_BRAM
+{% endif %}
+{% if grid_bram %}
     .bram_ctrl_grid_clk             (bram_ctrl_grid_clk),
     .bram_ctrl_grid_rst             (bram_ctrl_grid_rst),
     .bram_ctrl_grid_en              (bram_ctrl_grid_en),
@@ -794,13 +797,13 @@ module {{name}} #(
     .bram_ctrl_grid_addr            (bram_ctrl_grid_addr),
     .bram_ctrl_grid_din             (bram_ctrl_grid_din),
     .bram_ctrl_grid_dout            (bram_ctrl_grid_dout),
-  `endif
+{% endif %}
 
     /*------------------------------------------------------------------
         BRAM Scale Control interface
     ------------------------------------------------------------------*/
 
-  `ifdef SCALE_IF_IS_AXIL
+{% if scle_axil %}
     .s_axil_scle_aclk               (s_axil_scle_aclk),
     .s_axil_scle_areset             (s_axil_scle_areset),
     .s_axil_scle_awaddr             (s_axil_scle_awaddr),
@@ -822,8 +825,8 @@ module {{name}} #(
     .s_axil_scle_rresp              (s_axil_scle_rresp),
     .s_axil_scle_rvalid             (s_axil_scle_rvalid),
     .s_axil_scle_rready             (s_axil_scle_rready),
-
-  `elsif  SCALE_IF_IS_BRAM
+{% endif %}
+{% if scle_bram %}
     .bram_ctrl_scle_clk             (bram_ctrl_scle_clk),
     .bram_ctrl_scle_rst             (bram_ctrl_scle_rst),
     .bram_ctrl_scle_en              (bram_ctrl_scle_en),
@@ -831,7 +834,7 @@ module {{name}} #(
     .bram_ctrl_scle_addr            (bram_ctrl_scle_addr),
     .bram_ctrl_scle_din             (bram_ctrl_scle_din),
     .bram_ctrl_scle_dout            (bram_ctrl_scle_dout),
-  `endif
+{% endif %}
   
     /*------------------------------------------------------------------
         AXI-Lite Control Slave interface
@@ -887,6 +890,7 @@ module {{name}} #(
 endmodule
 
 `resetall
+
 """)
     print(f"Writing file '{output}'...")
     

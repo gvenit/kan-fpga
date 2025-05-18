@@ -26,10 +26,16 @@ module MemoryControlUnit #(
   parameter BATCH_SIZE = 1,
   // Width of AXI stream Input Data interfaces in bits
   parameter DATA_WIDTH = 16,
+  // Data Strobe Width
+  parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
   // Width of AXI stream Input Grid interfaces in bits
   parameter GRID_WIDTH = 16,
+  // Grid Strobe Width
+  parameter GRID_STRB_WIDTH = GRID_WIDTH / 8,
   // Width of AXI stream Scale interface in bits
   parameter SCALE_WIDTH = 16,
+  // Grid Strobe Width
+  parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
   // Propagate tid signal
   parameter ID_ENABLE = 0,
   // tid signal width
@@ -336,8 +342,8 @@ module MemoryControlUnit #(
   genvar pos, batch;
 
  generate
-  if (SCALE_SHARE == 0) begin
-    for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin // One scale per data channel
+  if (SCALE_SHARE == 0) begin : scle_not_shared_genblock
+    for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin : scle_chn_genblock // One scale per data channel
       // Channel's clk driver
       wire scle_clk_pos = 
        `ifdef SCALE_IF_IS_AXIL
@@ -377,6 +383,8 @@ module MemoryControlUnit #(
        `endif 
         // Width of AXI stream Output interfaces in bits
         .DATA_WIDTH(SCALE_WIDTH),
+        // Data Strobe Width
+        .DATA_STRB_WIDTH(SCALE_STRB_WIDTH),
         // Width of address bus in bits
         .ADDR_WIDTH(SCALE_ADDR),
         // Width of inter-iteration counters
@@ -413,7 +421,7 @@ module MemoryControlUnit #(
         .error                    (scle_error[pos])
       );
 
-      if (SCALE_FIFO_DEPTH > 0) begin
+      if (SCALE_FIFO_DEPTH > 0) begin : scle_fifo_genblock
         axis_srl_fifo #(
           // Width of AXI stream interfaces in bits
           .DATA_WIDTH(SCALE_WIDTH),
@@ -496,7 +504,7 @@ module MemoryControlUnit #(
         .m_axis_tlast   (scle_bcst_out_axis_tlast)
       );
 
-      for (batch=0; batch < BATCH_SIZE; batch = batch+1) begin  // Broadcast scales to BATCH_SIZE channels
+      for (batch=0; batch < BATCH_SIZE; batch = batch+1) begin : scle_batch_fifo_genblock // Broadcast scales to BATCH_SIZE channels
         localparam LFT_POS = batch * DATA_CHANNELS + pos;
         // Batch Local Scale FIFO I/O
         wire [SCALE_WIDTH-1:0]      scle_batch_fifo_in_axis_tdata,  scle_batch_fifo_out_axis_tdata;
@@ -509,7 +517,7 @@ module MemoryControlUnit #(
         assign scle_bcst_out_axis_tready[batch] = scle_batch_fifo_in_axis_tready;
         assign scle_batch_fifo_in_axis_tlast   =scle_bcst_out_axis_tlast [batch];
 
-        if (SCALE_FIFO_DEPTH > 1) begin
+        if (SCALE_FIFO_DEPTH > 1) begin : scle_batch_fifo_genblock
           axis_srl_fifo #(
             // Width of AXI stream interfaces in bits
             .DATA_WIDTH(SCALE_WIDTH),
@@ -549,7 +557,7 @@ module MemoryControlUnit #(
             .m_axis_tready    (scle_batch_fifo_out_axis_tready),
             .m_axis_tlast     (scle_batch_fifo_out_axis_tlast)
           );
-        end else begin
+        end else begin : scle_fifo_bypass_genblock
           assign scle_batch_fifo_out_axis_tdata  = scle_batch_fifo_in_axis_tdata;
           assign scle_batch_fifo_out_axis_tvalid = scle_batch_fifo_in_axis_tvalid;
           assign scle_batch_fifo_in_axis_tready  = scle_batch_fifo_out_axis_tready;
@@ -563,7 +571,7 @@ module MemoryControlUnit #(
         assign m_axis_scle_tlast  [LFT_POS] = scle_batch_fifo_out_axis_tlast;
       end
     end
-  end else begin // One scale per data channel
+  end else begin : scle_share_genblock // One scale per data channel
     // Channel's clk driver
     wire scle_clk = 
      `ifdef SCALE_IF_IS_AXIL
@@ -591,6 +599,8 @@ module MemoryControlUnit #(
      `endif 
       // Width of AXI stream Output interfaces in bits
       .DATA_WIDTH(SCALE_WIDTH),
+      // Data Strobe Width
+      .DATA_STRB_WIDTH(SCALE_STRB_WIDTH),
       // Width of address bus in bits
       .ADDR_WIDTH(SCALE_ADDR),
       // Width of inter-iteration counters
@@ -627,7 +637,7 @@ module MemoryControlUnit #(
       .error                    (scle_error[0])
     );
 
-    if (SCALE_FIFO_DEPTH > 1) begin
+    if (SCALE_FIFO_DEPTH > 1) begin : scle_fifo_genblock
       axis_srl_fifo #(
         // Width of AXI stream interfaces in bits
         .DATA_WIDTH(SCALE_WIDTH),
@@ -667,22 +677,22 @@ module MemoryControlUnit #(
         .m_axis_tready    (scle_fifo_out_axis_tready),
         .m_axis_tlast     (scle_fifo_out_axis_tlast)
       );
-    end else begin
+    end else begin : scle_fifo_bypass_genblock
       assign scle_fifo_out_axis_tdata  = scle_fifo_in_axis_tdata;
       assign scle_fifo_out_axis_tvalid = scle_fifo_in_axis_tvalid;
       assign scle_fifo_in_axis_tready  = scle_fifo_out_axis_tready;
       assign scle_fifo_out_axis_tlast  = scle_fifo_in_axis_tlast;
     end
 
-    assign m_axis_scle_aclk   [0] = scle_clk;
-    assign m_axis_scle_tdata      = scle_fifo_out_axis_tdata;
-    assign m_axis_scle_tvalid [0] = scle_fifo_out_axis_tvalid;
+    assign m_axis_scle_aclk   [0]     = scle_clk;
+    assign m_axis_scle_tdata          = scle_fifo_out_axis_tdata;
+    assign m_axis_scle_tvalid [0]     = scle_fifo_out_axis_tvalid;
     assign scle_fifo_out_axis_tready  = m_axis_scle_tready[0];
-    assign m_axis_scle_tlast  [0] = scle_fifo_out_axis_tlast;
+    assign m_axis_scle_tlast  [0]     = scle_fifo_out_axis_tlast;
   end
 
-  if (GRID_SHARE == 0) begin
-    for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin // One scale per data channel
+  if (GRID_SHARE == 0) begin : grid_not_shared_genblock
+    for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin : grid_chn_genblock // One scale per data channel
       // Channel's clk driver
       wire grid_clk_pos = 
        `ifdef GRID_IF_IS_AXIL
@@ -692,18 +702,18 @@ module MemoryControlUnit #(
        `endif 
 
       // Local Scale FIFO I/O
-      wire [DATA_WIDTH-1:0]       grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
+      wire [GRID_WIDTH-1:0]       grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
       wire                        grid_fifo_in_axis_tvalid, grid_fifo_out_axis_tvalid;
       wire                        grid_fifo_in_axis_tready, grid_fifo_out_axis_tready;
       wire                        grid_fifo_in_axis_tlast,  grid_fifo_out_axis_tlast;
 
       // Local Grid Broadcaster I/O
-      wire [DATA_WIDTH-1:0]               grid_bcst_in_axis_tdata;  
+      wire [GRID_WIDTH-1:0]               grid_bcst_in_axis_tdata;  
       wire                                grid_bcst_in_axis_tvalid; 
       wire                                grid_bcst_in_axis_tready; 
       wire                                grid_bcst_in_axis_tlast;
 
-      wire [BATCH_SIZE*DATA_WIDTH-1:0]    grid_bcst_out_axis_tdata;
+      wire [BATCH_SIZE*GRID_WIDTH-1:0]    grid_bcst_out_axis_tdata;
       wire [BATCH_SIZE-1:0]               grid_bcst_out_axis_tvalid;
       wire [BATCH_SIZE-1:0]               grid_bcst_out_axis_tready;
       wire [BATCH_SIZE-1:0]               grid_bcst_out_axis_tlast;
@@ -721,7 +731,9 @@ module MemoryControlUnit #(
         .BRAM_ACK_SIG(BRAM_ACK_SIG),
        `endif 
         // Width of AXI stream Output interfaces in bits
-        .DATA_WIDTH(DATA_WIDTH),
+        .DATA_WIDTH(GRID_WIDTH),
+        // Data Strobe Width
+        .DATA_STRB_WIDTH(GRID_STRB_WIDTH),
         // Width of address bus in bits
         .ADDR_WIDTH(GRID_ADDR),
         // Width of inter-iteration counters
@@ -736,14 +748,14 @@ module MemoryControlUnit #(
         .m_axil_arprot            (m_axil_grid_arprot[pos*3 +:3]),
         .m_axil_arvalid           (m_axil_grid_arvalid[pos]),
         .m_axil_arready           (m_axil_grid_arready[pos]),
-        .m_axil_rdata             (m_axil_grid_rdata[pos*DATA_WIDTH +: DATA_WIDTH]),
+        .m_axil_rdata             (m_axil_grid_rdata[pos*GRID_WIDTH +: GRID_WIDTH]),
         .m_axil_rresp             (m_axil_grid_rresp[pos*2 +:2]),
         .m_axil_rvalid            (m_axil_grid_rvalid[pos]),
         .m_axil_rready            (m_axil_grid_rready[pos]),
        `elsif GRID_IF_IS_BRAM
         .bram_en                  (grid_bram_en[pos]),
         .bram_addr                (grid_bram_addr[pos*GRID_ADDR +: GRID_ADDR]),
-        .bram_rddata              (grid_bram_rddata[pos*DATA_WIDTH +: DATA_WIDTH]),
+        .bram_rddata              (grid_bram_rddata[pos*GRID_WIDTH +: GRID_WIDTH]),
         .bram_rdack               (grid_bram_rdack[pos]),
        `endif 
         .m_axis_tdata             (grid_fifo_in_axis_tdata),
@@ -908,7 +920,7 @@ module MemoryControlUnit #(
         assign m_axis_grid_tlast  [LFT_POS] = grid_batch_fifo_out_axis_tlast;
       end
     end
-  end else begin // One scale per data channel
+  end else begin : grid_share_genblock // One scale per data channel
     // Channel's clk driver
     wire grid_clk = 
      `ifdef SCALE_IF_IS_AXIL
@@ -918,7 +930,7 @@ module MemoryControlUnit #(
      `endif 
 
     // Local Grid FIFO I/O
-    wire [DATA_WIDTH-1:0]  grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
+    wire [GRID_WIDTH-1:0]  grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
     wire                   grid_fifo_in_axis_tvalid, grid_fifo_out_axis_tvalid;
     wire                   grid_fifo_in_axis_tready, grid_fifo_out_axis_tready;
     wire                   grid_fifo_in_axis_tlast,  grid_fifo_out_axis_tlast;
@@ -934,8 +946,9 @@ module MemoryControlUnit #(
       // BRAM control has valid signal
       .BRAM_ACK_SIG(BRAM_ACK_SIG),
      `endif 
-      // Width of AXI stream Output interfaces in bits
-      .DATA_WIDTH(DATA_WIDTH),
+      .DATA_WIDTH(GRID_WIDTH),
+      // Data Strobe Width
+      .DATA_STRB_WIDTH(GRID_STRB_WIDTH),
       // Width of address bus in bits
       .ADDR_WIDTH(GRID_ADDR),
       // Width of inter-iteration counters
@@ -975,7 +988,7 @@ module MemoryControlUnit #(
     if (GRID_FIFO_DEPTH > 1) begin
       axis_srl_fifo #(
         // Width of AXI stream interfaces in bits
-        .DATA_WIDTH(DATA_WIDTH),
+        .DATA_WIDTH(GRID_WIDTH),
         // Propagate tkeep signal
         .KEEP_ENABLE(0),
         // tkeep signal width (words per cycle)
@@ -1026,7 +1039,7 @@ module MemoryControlUnit #(
     assign m_axis_grid_tlast  [0] = grid_fifo_out_axis_tlast;
   end
 
-  for (pos = 0; pos < BATCH_SIZE*DATA_CHANNELS; pos = pos + 1) begin // One data per data channel per batch
+  for (pos = 0; pos < BATCH_SIZE*DATA_CHANNELS; pos = pos + 1) begin : data_chn_genblock // One data per data channel per batch
     // Channel's clk driver
     wire data_clk_pos = 
      `ifdef DATA_IF_IS_AXIL
@@ -1037,9 +1050,9 @@ module MemoryControlUnit #(
 
     // Local Data FIFO I/O
     wire [DATA_WIDTH-1:0]  data_fifo_in_axis_tdata,  data_fifo_out_axis_tdata;
-    wire                        data_fifo_in_axis_tvalid, data_fifo_out_axis_tvalid;
-    wire                        data_fifo_in_axis_tready, data_fifo_out_axis_tready;
-    wire                        data_fifo_in_axis_tlast,  data_fifo_out_axis_tlast;
+    wire                   data_fifo_in_axis_tvalid, data_fifo_out_axis_tvalid;
+    wire                   data_fifo_in_axis_tready, data_fifo_out_axis_tready;
+    wire                   data_fifo_in_axis_tlast,  data_fifo_out_axis_tlast;
 
     `ifdef DATA_IF_IS_AXIL
     MCULocalAxilFSM 
@@ -1054,6 +1067,8 @@ module MemoryControlUnit #(
      `endif 
       // Width of AXI stream Output interfaces in bits
       .DATA_WIDTH(DATA_WIDTH),
+      // Data Strobe Width
+      .DATA_STRB_WIDTH(DATA_STRB_WIDTH),
       // Width of address bus in bits
       .ADDR_WIDTH(DATA_ADDR),
       // Width of inter-iteration counters

@@ -30,8 +30,8 @@ THE SOFTWARE.
 `include "header_utils.vh"
 
 module AxilDpBram #(
-  parameter DATA_WIDTH = 32,
   parameter ADDR_WIDTH = 9,
+  parameter DATA_WIDTH = 32,
   parameter STRB_WIDTH = (DATA_WIDTH/8),
   parameter PIPELINE_OUTPUT = 0
 ) (

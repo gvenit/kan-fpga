@@ -6,6 +6,8 @@ module MCULocalBramFSM #(
   `include "header_MCUGlobalFSMParameters.vh"
   // Width of AXI stream Output interfaces in bits
   parameter DATA_WIDTH = 16,
+  // Data Strobe Width
+  parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
   // Width of address bus in bits
   parameter ADDR_WIDTH = 32,
   // Width of inter-iteration counters

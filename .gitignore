@@ -10,11 +10,13 @@ vcd/
 
 rtl/DummyBRAM.v
 rtl/wrapper/KanLayerInstWrapper*.v
+rtl/wrapper/tb_kan_layer_wrapper.v
 rtl/*tmp*
 
 py/*
 !py/*_simgen.py
 !py/__init__.py
+!py/CCURegisters.py
 # !py/example_codegen.py
 
 venv/*

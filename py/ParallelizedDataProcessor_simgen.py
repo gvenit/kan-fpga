@@ -50,18 +50,30 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     DATA_CHANNELS.value = J
     BATCH_SIZE.value  = K
 
+    # SCALE_SHARE.value = 1
+    # GRID_SHARE.value = 1
+    # DATA_WIDTH.value = 16
+    # DATA_FRACTIONAL_BITS.value = 15
+    # SCALE_FRACTIONAL_BITS.value = 12
+    # WEIGHT_FRACTIONAL_BITS.value = 16
+    # SCALED_DIFF_FRACTIONAL_BITS.value = 13
+    # ACT_FRACTIONAL_BITS.value = 16
+    # RSLT_FRACTIONAL_BITS.value = 15
+    # ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
+    # FIFO_DEPTH.value = 0
+    # PIPELINE_LEVEL.value = 2
     SCALE_SHARE.value = 1
     GRID_SHARE.value = 1
     DATA_WIDTH.value = 16
-    DATA_FRACTIONAL_BITS.value = 15
-    SCALE_FRACTIONAL_BITS.value = 12
-    WEIGHT_FRACTIONAL_BITS.value = 16
-    SCALED_DIFF_FRACTIONAL_BITS.value = 13
-    ACT_FRACTIONAL_BITS.value = 16
-    RSLT_FRACTIONAL_BITS.value = 12
+    DATA_FRACTIONAL_BITS.value = DATA_WIDTH.value-1
+    SCALE_FRACTIONAL_BITS.value = DATA_WIDTH.value-2
+    WEIGHT_FRACTIONAL_BITS.value = DATA_WIDTH.value
+    SCALED_DIFF_FRACTIONAL_BITS.value = DATA_WIDTH.value-3
+    ACT_FRACTIONAL_BITS.value = DATA_WIDTH.value
+    RSLT_FRACTIONAL_BITS.value = DATA_WIDTH.value-1
     ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
     FIFO_DEPTH.value = 0
-    PIPELINE_LEVEL.value = 1
+    PIPELINE_LEVEL.value = 2
     
     os.system(' '.join([
         'python',
@@ -212,7 +224,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     scale_len = (1,1,1) if SCALE_SHARE.value else (1,grid_len,data_len)
     rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
     weight_len = data_len*grid_len
-    weight_scale = weight_len
     adder_size = 64
     # print(data_len,grid_len,scale_len,rslt_len,weight_len)
     
@@ -231,7 +242,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
     # Create scale - size = [1 X GRID X DATA] or [1] 
-    layer_scle = torch.rand(*scale_len, device=device)
+    layer_scle = torch.rand(*scale_len, device=device) / 2 ** (DATA_WIDTH.value - SCALE_FRACTIONAL_BITS.value)
     # Quantize scale
     layer_scle_q = torch.tensor((layer_scle * 2 ** SCALE_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize scale
@@ -239,7 +250,25 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     
     
     # Create weight - size = [WEIGHT x RESULT] or [1] 
-    layer_wght = (torch.rand(weight_len, rslt_len, device=device) * 2 - 1) / weight_scale * 2
+    layer_wght = (torch.rand(weight_len, rslt_len, device=device) * 2 - 1)
+
+    # Create expected scaled difference - size = [BATCH X GRID X DATA]
+    layer_exp_sdff = (layer_scle * (layer_data - layer_grid)).abs()
+    # Create expected activation data - size = [BATCH X GRID X DATA]
+    layer_exp_actd = torch.tensor((1 - np.tanh(layer_exp_sdff.cpu().numpy().astype('float128'))**2).astype('float32'), device=device)
+    # Reshape expected activation data - size = [BATCH X WEIGHT]
+    layer_exp_actd = layer_exp_actd.reshape(-1, weight_len)
+    
+    if True:
+        # Perform expected Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
+        layer_exp_rslt = layer_exp_actd @ layer_wght
+        
+        # Normalize weights
+        weight_scale = layer_exp_rslt.abs().max()
+    
+    
+    # Normalize weight - size = [WEIGHT x RESULT] or [1] 
+    layer_wght = layer_wght / weight_scale
     # Quantize scale
     layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Dequantize scale
@@ -247,8 +276,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # print(layer_wght_q,layer_wght)
     # exit()
     
-    # Create expected scaled difference - size = [BATCH X GRID X DATA]
-    layer_exp_sdff = (layer_scle * (layer_data - layer_grid)).abs()
     
     # Create scaled difference - size = [BATCH X GRID X DATA]
     layer_diff = (layer_data_qd - layer_grid_qd)
@@ -263,11 +290,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     layer_sdff_q = torch.tensor((layer_sdff * 2 ** SCALED_DIFF_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{adder_size}'), device=device).abs()
     # Dequantize scaled difference
     layer_sdff_qd = layer_sdff_q.cpu().numpy().astype('float128') / 2 ** SCALED_DIFF_FRACTIONAL_BITS.value
-    
-    # Create expected activation data - size = [BATCH X GRID X DATA]
-    layer_exp_actd = torch.tensor((1 - np.tanh(layer_exp_sdff.cpu().numpy().astype('float128'))**2).astype('float32'), device=device)
-    # Reshape expected activation data - size = [BATCH X WEIGHT]
-    layer_exp_actd = layer_exp_actd.reshape(-1, weight_len)
     
     # Create activation data - size = [BATCH X WEIGHT]
     layer_actd = 1 - np.tanh(layer_sdff_qd)**2
@@ -727,7 +749,7 @@ def main():
         (1,1,1),
         # (1,1,2),
         # (2,2,1),
-        # (2,2,2),
+        (2,2,2),
         # (2,3,1),
         # (8,4,2),
         # (5,5,5),

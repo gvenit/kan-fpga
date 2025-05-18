@@ -89,7 +89,7 @@ module AxisPacketSplitter #(
 
   // Control Registers & Wires
   reg  op_in_progress_reg = 1'b0;
-  reg  [PCKT_WIDTH-1:0]  pckt_size_reg;
+  reg  [PCKT_WIDTH-1:0]  pckt_size_reg_early;
 
   // FSM Logic output Restiters & Wires
   reg  [FSM_WIDTH-1:0]  fsm_state, fsm_state_next;
@@ -100,7 +100,7 @@ module AxisPacketSplitter #(
   wire get_next = operation_busy && s_axis_tvalid && s_axis_tready_int;
   wire [PCKT_WIDTH-1:0] pckt_size_counter_reg_next = (get_next) ? pckt_size_counter_reg+1 : pckt_size_counter_reg;
 
-  wire generate_tlast = get_next && (pckt_size_counter_reg == pckt_size_reg-1);
+  wire generate_tlast = get_next && (pckt_size_counter_reg == pckt_size_reg_early);
 
   assign s_axis_tready     = operation_busy && s_axis_tready_int;
   wire   s_axis_tvalid_int = operation_busy && s_axis_tvalid;
@@ -121,12 +121,12 @@ module AxisPacketSplitter #(
       case (fsm_state_next)
         FSM_STR: begin
           pckt_size_counter_reg <= $unsigned(0);
-          pckt_size_reg <= pckt_size;
+          pckt_size_reg_early <= pckt_size-1;
 
         end
         FSM_OPE: begin
           if (fsm_state != FSM_OPE) begin
-            pckt_size_reg <= pckt_size;
+            pckt_size_reg_early <= pckt_size-1;
           end
           if (get_next && generate_tlast) begin
             pckt_size_counter_reg <= $unsigned(0);

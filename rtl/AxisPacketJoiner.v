@@ -84,7 +84,7 @@ module AxisPacketJoiner #(
 );
 
 generate
- if (CHANNELS == 1) begin
+ if (CHANNELS == 1) begin : pass_through_genblock
   // Pass through
   assign m_axis_tdata  = s_axis_tdata;
   assign m_axis_tkeep  = s_axis_tkeep;
@@ -96,6 +96,7 @@ generate
   assign m_axis_tuser  = s_axis_tuser;
 
   always @(posedge clk ) begin
+    operation_error    <= 1'b0;
     operation_busy     <= 1'b1;
     operation_complete <= 1'b0;
     transmission       <= m_axis_tvalid && m_axis_tready;
@@ -105,7 +106,7 @@ generate
     end
   end
 
- end else begin
+ end else begin : joiner_logic_genblock
   // Local Parameters
   localparam CLOG2_CHANNELS = `LOG2( CHANNELS );
 

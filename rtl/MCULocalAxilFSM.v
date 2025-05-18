@@ -6,6 +6,8 @@ module MCULocalAxilFSM #(
   `include "header_MCUGlobalFSMParameters.vh"
   // Width of AXI stream Output interfaces in bits
   parameter DATA_WIDTH = 16,
+  // Data Strobe Width
+  parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
   // Width of address bus in bits
   parameter ADDR_WIDTH = 32,
   // Width of inter-iteration counters
@@ -299,7 +301,7 @@ axil_fifo_rd # (
 ) axil_fifo_rd_inst (
   .clk             (clk),
   .rst             (rst),
-  .s_axil_araddr   (int_axil_araddr),
+  .s_axil_araddr   (int_axil_araddr << `RLOG2( DATA_STRB_WIDTH )),
   .s_axil_arprot   (int_axil_arprot),
   .s_axil_arvalid  (int_axil_arvalid),
   .s_axil_arready  (int_axil_arready),
@@ -318,10 +320,10 @@ axil_fifo_rd # (
 );
 
   // Output AXI_Stream Drivers
-  assign m_axis_tdata   = loc_out_axis_tdata;
-  assign m_axis_tvalid  = loc_out_axis_tvalid;
-  assign loc_out_axis_tready = m_axis_tready && forward_reg_next;
-  assign m_axis_tlast   = loc_out_axis_tlast && forward_reg_next;
+  assign m_axis_tdata         = loc_out_axis_tdata;
+  assign m_axis_tvalid        = loc_out_axis_tvalid;
+  assign loc_out_axis_tready  = m_axis_tready && forward_reg_next;
+  assign m_axis_tlast         = loc_out_axis_tlast && forward_reg_next;
 
   // Output AXI-Lite Drivers
   assign int_axil_araddr  = loc_counter_addr_reg;
