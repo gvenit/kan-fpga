@@ -19,7 +19,7 @@
 
 `include "header_utils.vh"
 
-module AxilDpRamPortbAdapter #(
+module AxilDpRamParameterizable #(
   parameter ADDR_WIDTH = 9,
   parameter A_DATA_WIDTH = 16,
   parameter A_STRB_WIDTH = (A_DATA_WIDTH/8),

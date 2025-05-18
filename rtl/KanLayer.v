@@ -801,7 +801,7 @@ module KanLayer #(
 
   generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: axil_ram_data_genblock
-    AxilDpRamPortbAdapter # (
+    AxilDpRamParameterizable # (
       .ADDR_WIDTH         (DATA_ADDR), 
       .A_DATA_WIDTH       (AXIL_WIDTH), 
       .A_STRB_WIDTH       (AXIL_STRB_WIDTH),
@@ -1013,7 +1013,7 @@ module KanLayer #(
   wire                        int_ram_grid_b_axil_rvalid;
   wire                        int_ram_grid_b_axil_rready;
 
-  AxilDpRamPortbAdapter # (
+  AxilDpRamParameterizable # (
     .ADDR_WIDTH         (GRID_ADDR), 
     .A_DATA_WIDTH       (AXIL_WIDTH), 
     .A_STRB_WIDTH       (AXIL_STRB_WIDTH),
@@ -1215,7 +1215,7 @@ module KanLayer #(
   wire                        int_ram_scle_b_axil_rvalid;
   wire                        int_ram_scle_b_axil_rready;
 
-  AxilDpRamPortbAdapter # (
+  AxilDpRamParameterizable # (
     .ADDR_WIDTH         (SCALE_ADDR), 
     .A_DATA_WIDTH       (AXIL_WIDTH), 
     .A_STRB_WIDTH       (AXIL_STRB_WIDTH),
