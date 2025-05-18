@@ -64,6 +64,7 @@ module CCURegisterFile #(
   input  wire                   operation_status_error_wr,
   input  wire                   operation_status_locked_wr,
   input  wire                   operation_status_valid_wr,
+  input  wire                   operation_status_reset_wr,
 
   input  wire [31:0]            operation_progress_rslt_wr,
   input  wire [31:0]            operation_progress_iter_wr,
@@ -184,8 +185,8 @@ module CCURegisterFile #(
 
   // Write-Protection Macro
   `define PL_WRITE_MEM(mem,REG,value,VALUE_WIDTH) \
-    if (s_axil_awaddr_valid != (REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH))) begin \
-      mem[REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(REG % WORD_WIDTH) * WORD_WIDTH +: VALUE_WIDTH] = value; \
+    if (s_axil_awaddr_valid != (REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)) || ~(mem_wr_en && s_axil_wstrb[REG % WORD_WIDTH])) begin \
+      mem[REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(REG % WORD_WIDTH) * WORD_SIZE +: VALUE_WIDTH] = value; \
     end
 
   // Read-Write Registers (PS -> PL) 
@@ -194,14 +195,14 @@ module CCURegisterFile #(
   assign scle_size_rd   = mem[CTRL_REG_SCLE_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
   assign rslt_size_rd   = mem[CTRL_REG_RSLT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
   assign pckt_size_rd   = mem[CTRL_REG_PCKT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign btch_size_rd   = mem[CTRL_REG_BTCH_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_BTCH_LEN % WORD_WIDTH) * WORD_SIZE];
+  assign btch_size_rd   = mem[CTRL_REG_BTCH_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_BTCH_LEN % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE];
 
   assign data_loaded_rd = mem[CTRL_REG_DATA_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_DATA_LDR % WORD_WIDTH) * WORD_SIZE];
   assign grid_loaded_rd = mem[CTRL_REG_GRID_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_GRID_LDR % WORD_WIDTH) * WORD_SIZE];
   assign scle_loaded_rd = mem[CTRL_REG_SCLE_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_SCLE_LDR % WORD_WIDTH) * WORD_SIZE];
   assign wght_loaded_rd = mem[CTRL_REG_WGHT_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_WGHT_LDR % WORD_WIDTH) * WORD_SIZE];
 
-  assign operation_start_rd = mem[CTRL_REG_OPER_STR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_STR % WORD_WIDTH)];
+  assign operation_start_rd = mem[CTRL_REG_OPER_STR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_STR % WORD_WIDTH) * WORD_SIZE];
 
   // Read-Only Registers (PS -> PL)
   wire [WORD_SIZE-1:0]  interrupt_register = mem[CTRL_REG_INTR_REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_INTR_REG % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE];
@@ -216,12 +217,13 @@ module CCURegisterFile #(
   // Write-Only Registers (PL -> PS)
   wire [WORD_SIZE-1:0]  operation_status_wr;
 
-  assign operation_status_wr[`LOG2(CTRL_REG_OPER_STS_MASK_IDL)] = operation_status_idle_wr;
-  assign operation_status_wr[`LOG2(CTRL_REG_OPER_STS_MASK_BSY)] = operation_status_busy_wr;
-  assign operation_status_wr[`LOG2(CTRL_REG_OPER_STS_MASK_ERR)] = operation_status_error_wr;
-  assign operation_status_wr[`LOG2(CTRL_REG_OPER_STS_MASK_LCK)] = operation_status_locked_wr;
-  assign operation_status_wr[`LOG2(CTRL_REG_OPER_STS_MASK_VLD)] = operation_status_valid_wr;
-  assign operation_status_wr[WORD_SIZE-1:`LOG2(CTRL_REG_OPER_STS_MASK_VLD)+1] = {WORD_SIZE-`LOG2(CTRL_REG_OPER_STS_MASK_VLD){1'b0}};
+  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_IDL)] = operation_status_idle_wr;
+  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_BSY)] = operation_status_busy_wr;
+  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR)] = operation_status_error_wr;
+  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_LCK)] = operation_status_locked_wr;
+  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_VLD)] = operation_status_valid_wr;
+  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_RST)] = operation_status_reset_wr;
+  assign operation_status_wr[WORD_SIZE-1:`RLOG2(CTRL_REG_OPER_STS_MASK_RST)+1] = {WORD_SIZE-`RLOG2(CTRL_REG_OPER_STS_MASK_RST){1'b0}};
 
   always @* begin
     mem_wr_en = 1'b0;
@@ -251,10 +253,10 @@ module CCURegisterFile #(
       `PL_WRITE_MEM(mem,CTRL_REG_RSLT_LEN,rslt_size_wr,DATA_WIDTH)
       `PL_WRITE_MEM(mem,CTRL_REG_PCKT_LEN,pckt_size_wr,DATA_WIDTH)
       `PL_WRITE_MEM(mem,CTRL_REG_BTCH_LEN,btch_size_wr,WORD_SIZE)
-      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LDR,data_loaded_wr,WORD_SIZE)
-      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LDR,grid_loaded_wr,WORD_SIZE)
-      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LDR,scle_loaded_wr,WORD_SIZE)
-      `PL_WRITE_MEM(mem,CTRL_REG_WGHT_LDR,wght_loaded_wr,WORD_SIZE)
+      `PL_WRITE_MEM(mem,CTRL_REG_DATA_LDR,data_loaded_wr,1)
+      `PL_WRITE_MEM(mem,CTRL_REG_GRID_LDR,grid_loaded_wr,1)
+      `PL_WRITE_MEM(mem,CTRL_REG_SCLE_LDR,scle_loaded_wr,1)
+      `PL_WRITE_MEM(mem,CTRL_REG_WGHT_LDR,wght_loaded_wr,1)
       // Read-Write Registers (PL->PS)
       `PL_WRITE_MEM(mem,CTRL_REG_OPER_DNE,operation_done_wr,1)
     end
@@ -291,7 +293,7 @@ module CCURegisterFile #(
       mem[CTRL_REG_OPER_TMR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_timer_wr;
       mem[CTRL_REG_OPER_LAT >> (ADDR_WIDTH - VALID_ADDR_WIDTH)] = operation_latency_wr;
     end
-    mem[CTRL_REG_OPER_STS >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_DNE % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE] = operation_status_wr;
+    mem[CTRL_REG_OPER_STS >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_STS % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE] = operation_status_wr;
   end
 
   always @* begin

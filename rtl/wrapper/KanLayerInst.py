@@ -184,10 +184,10 @@ module {{name}} #(
   // Total memory size allocated for Data in words
   parameter DATA_DEPTH = {{data_depth}},
 {% if data_axil %}
-  // Data Address Width
-  parameter DATA_ADDR = `LOG2(DATA_DEPTH),
   // Data Strobe Width
   parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
+  // Data Address Width
+  parameter DATA_ADDR = `LOG2( DATA_DEPTH * DATA_STRB_WIDTH ),
 {% endif %}
 
   /*------------------------------------------------------------------
@@ -200,7 +200,7 @@ module {{name}} #(
   parameter GRID_DEPTH = {{grid_depth}},
 {% if grid_axil %}
   // Grid Address Width
-  parameter GRID_ADDR = `LOG2(GRID_DEPTH),
+  parameter GRID_ADDR = `LOG2( GRID_DEPTH * DATA_STRB_WIDTH ),
 {% endif %}
 
   /*------------------------------------------------------------------
@@ -231,10 +231,10 @@ module {{name}} #(
   // FIFO Depth for results
   parameter RSLT_FIFO_DEPTH = {{rslt_depth}},
 {% if scle_axil %}
-  // Scale Address Width
-  parameter SCALE_ADDR = `MAX(`LOG2(SCALE_DEPTH), 1),
   // Scale Strobe Width
   parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
+  // Scale Address Width
+  parameter SCALE_ADDR = `MAX( `LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ), SCALE_STRB_WIDTH),
 {% endif %}
 
   /*------------------------------------------------------------------

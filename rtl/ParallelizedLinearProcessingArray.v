@@ -145,7 +145,7 @@ module ParallelizedLinearProcessingArray #(
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_handshake = int_axis_tb_tready & int_axis_tb_tvalid;
 
   // Internal Reset
-  reg  [3:0]  rst_pipeline;
+  reg  [3:0]  rst_pipeline = 1;
   wire        rst_int;
 
   // Error Signal Reduction

@@ -12,7 +12,7 @@
  *    Signals :
  *        fsm_clk -- The FSM Clock domain. It is expected to be the 
  *            slowest clock of the KanLayer
- *        rst -- The reset signal assosiated with the fsm_clk
+ *        fsm_rst -- The reset signal assosiated with the fsm_clk
  *        operation_start -- An internal control signal for peripheral
  *            initialization and for signaling the start of 
  *            data processing throughout the core's submodules.
@@ -58,10 +58,11 @@ module CentralControlUnit #(
   // Scale Width of address bus in bits
   parameter SCALE_ADDR = 32,
   // Width of Packet size bus in bits
-  parameter PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR -1
+  parameter PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR
 ) (
   input  wire                             fsm_clk,
-  input  wire                             rst,
+  input  wire                             fsm_rst,
+  input  wire                             core_rst,
 
   /*
    * Control signals -- Corresponding clock : fsm_clk
@@ -189,8 +190,8 @@ module CentralControlUnit #(
   // Input PL control signals
   reg         rw_op_str_reg_en;
   reg         rw_op_dne_reg_en;
-  wire        wo_reg_en  = rslt_tlast; 
-  wire        wo_reg_rst = (fsm_state == FSM_STR);
+  wire        wo_reg_en  = rslt_tlast == 1'b1; 
+  wire        wo_reg_rst = (fsm_state == FSM_STR || fsm_state == FSM_ITR);
 
   // Read-Write Registers (PS -> PL) 
   wire [31:0] data_size_rd; 
@@ -230,11 +231,12 @@ module CentralControlUnit #(
   wire        operation_done_wr = 1'b0;
   
   // Write-Only Registers (PL -> PS)
-  wire        operation_status_idle_wr;
-  wire        operation_status_busy_wr;
-  wire        operation_status_error_wr;
+  wire        operation_status_idle_wr = ~(operation_busy || operation_error);
+  wire        operation_status_busy_wr = operation_busy;
+  wire        operation_status_error_wr = operation_error;
   wire        operation_status_locked_wr;
   wire        operation_status_valid_wr;
+  wire        operation_status_reset_wr = core_rst;
 
   wire [31:0] operation_progress_rslt_wr;
   wire [31:0] operation_progress_iter_wr;
@@ -245,49 +247,50 @@ module CentralControlUnit #(
 
   CCURegisterFile #(
   ) register_file (
-    .clk                        (fsm_clk),     
-    .rst                        (rst), 
-    .rw_op_str_reg_en           (rw_op_str_reg_en),             
-    .rw_op_dne_reg_en           (rw_op_dne_reg_en),             
-    .wo_reg_en                  (wo_reg_en), 
+    .clk                        (fsm_clk),
+    .rst                        (fsm_rst),
+    .rw_op_str_reg_en           (rw_op_str_reg_en),
+    .rw_op_dne_reg_en           (rw_op_dne_reg_en),
+    .wo_reg_en                  (wo_reg_en),
     .wo_reg_rst                 (wo_reg_rst),
-    .data_size_rd               (data_size_rd),         
-    .grid_size_rd               (grid_size_rd),         
-    .scle_size_rd               (scle_size_rd),         
-    .rslt_size_rd               (rslt_size_rd),         
-    .pckt_size_rd               (pckt_size_rd),         
-    .btch_size_rd               (btch_size_rd),         
-    .data_size_wr               (data_size_wr),         
-    .grid_size_wr               (grid_size_wr),         
-    .scle_size_wr               (scle_size_wr),         
-    .rslt_size_wr               (rslt_size_wr),         
-    .pckt_size_wr               (pckt_size_wr),         
-    .btch_size_wr               (btch_size_wr),         
-    .data_loaded_rd             (data_loaded_rd),           
-    .grid_loaded_rd             (grid_loaded_rd),           
-    .scle_loaded_rd             (scle_loaded_rd),           
-    .wght_loaded_rd             (wght_loaded_rd),           
-    .data_loaded_wr             (data_loaded_wr),           
-    .grid_loaded_wr             (grid_loaded_wr),           
-    .scle_loaded_wr             (scle_loaded_wr),           
-    .wght_loaded_wr             (wght_loaded_wr),           
-    .operation_start_rd         (operation_start_rd),               
-    .operation_start_wr         (operation_start_wr),               
-    .interrupt_soft             (interrupt_soft),           
-    .interrupt_abort            (interrupt_abort),             
-    .interrupt_error            (interrupt_error),             
-    .operation_done_rd          (operation_done_rd),               
-    .operation_done_wr          (operation_done_wr),               
-    .operation_status_idle_wr   (operation_status_idle_wr),                     
-    .operation_status_busy_wr   (operation_status_busy_wr),                     
-    .operation_status_error_wr  (operation_status_error_wr),                       
-    .operation_status_locked_wr (operation_status_locked_wr),                       
-    .operation_status_valid_wr  (operation_status_valid_wr),                       
-    .operation_progress_rslt_wr (operation_progress_rslt_wr),                       
-    .operation_progress_iter_wr (operation_progress_iter_wr),                       
-    .iteration_timer_wr         (iteration_timer_wr),               
-    .iteration_latency_wr       (iteration_latency_wr),                 
-    .operation_timer_wr         (operation_timer_wr),               
+    .data_size_rd               (data_size_rd),
+    .grid_size_rd               (grid_size_rd),
+    .scle_size_rd               (scle_size_rd),
+    .rslt_size_rd               (rslt_size_rd),
+    .pckt_size_rd               (pckt_size_rd),
+    .btch_size_rd               (btch_size_rd),
+    .data_size_wr               (data_size_wr),
+    .grid_size_wr               (grid_size_wr),
+    .scle_size_wr               (scle_size_wr),
+    .rslt_size_wr               (rslt_size_wr),
+    .pckt_size_wr               (pckt_size_wr),
+    .btch_size_wr               (btch_size_wr),
+    .data_loaded_rd             (data_loaded_rd),
+    .grid_loaded_rd             (grid_loaded_rd),
+    .scle_loaded_rd             (scle_loaded_rd),
+    .wght_loaded_rd             (wght_loaded_rd),
+    .data_loaded_wr             (data_loaded_wr),
+    .grid_loaded_wr             (grid_loaded_wr),
+    .scle_loaded_wr             (scle_loaded_wr),
+    .wght_loaded_wr             (wght_loaded_wr),
+    .operation_start_rd         (operation_start_rd),
+    .operation_start_wr         (operation_start_wr),
+    .interrupt_soft             (interrupt_soft),
+    .interrupt_abort            (interrupt_abort),
+    .interrupt_error            (interrupt_error),
+    .operation_done_rd          (operation_done_rd),
+    .operation_done_wr          (operation_done_wr),
+    .operation_status_idle_wr   (operation_status_idle_wr),
+    .operation_status_busy_wr   (operation_status_busy_wr),
+    .operation_status_error_wr  (operation_status_error_wr),
+    .operation_status_locked_wr (operation_status_locked_wr),
+    .operation_status_valid_wr  (operation_status_valid_wr),
+    .operation_status_reset_wr  (operation_status_reset_wr),
+    .operation_progress_rslt_wr (operation_progress_rslt_wr),
+    .operation_progress_iter_wr (operation_progress_iter_wr),
+    .iteration_timer_wr         (iteration_timer_wr),
+    .iteration_latency_wr       (iteration_latency_wr),
+    .operation_timer_wr         (operation_timer_wr),
     .operation_latency_wr       (operation_latency_wr),
     .s_axil_awaddr              (s_axil_awaddr),
     .s_axil_awprot              (s_axil_awprot),
@@ -320,17 +323,16 @@ module CentralControlUnit #(
   };
   assign operation_status_valid_wr = operation_valid;
 
-  // Check if operation is idle
-  assign operation_status_idle_wr = ~|{operation_busy, operation_complete, operation_error};
-
   // Check if operation is error
-  reg  interrupt_soft_reg, interrupt_soft_reg_early;
+  reg  interrupt_soft_reg, interrupt_soft_reg_early, interrupt_error_reg;
   wire internal_error = |peripheral_operation_error_sampled;
   wire external_error = interrupt_error || interrupt_abort || interrupt_soft_reg;
 
   // Check if core is locked
   reg  locked_next_error, locked_next_rslt_done;
   wire locked_next = locked_next_error || locked_next_rslt_done;
+
+  assign operation_status_locked_wr = locked_next;
 
   // Check results exported -- Contain information about the next iteration
   reg  [31:0] results_left_reg;
@@ -361,9 +363,12 @@ module CentralControlUnit #(
   // Check if last iteration
   wire last_iteration = (results_left_reg == 0);
 
+  // Check if all components are in error state
+  reg  internal_error_asserted;
+
   // Global FSM state logic
   always @(posedge fsm_clk ) begin
-    if (rst) begin
+    if (fsm_rst) begin
       fsm_state <= FSM_ST0;
 
       operation_start <= 1'b0;
@@ -384,9 +389,14 @@ module CentralControlUnit #(
       results_left_reg      <= {32{1'b0}};
       results_exported_reg  <= {32{1'b0}};
 
-      locked <= 1'b0;
+      locked      <= 1'b0;
+      pl2ps_intr  <= 1'b0;
+
       interrupt_soft_reg        <= 1'b0;
       interrupt_soft_reg_early  <= 1'b0;
+      internal_operation_error  <= 1'b0;
+
+      internal_error_asserted   <= 1'b0;
 
     end else begin
       fsm_state <= fsm_state_next;
@@ -411,11 +421,13 @@ module CentralControlUnit #(
       operation_complete    <= 1'b0;
       operation_error       <= 1'b0;
 
-      locked                <= locked_next;
+      locked      <= locked_next;
+      pl2ps_intr  <= 1'b0;
 
       // Soft Interrupts -- Capture soft interrupts, activate at the end of an iteration
       interrupt_soft_reg        <= interrupt_soft_reg;
       interrupt_soft_reg_early  <= interrupt_soft_reg_early || interrupt_soft;
+      internal_operation_error  <= 1'b0;
 
       case (fsm_state_next)
         FSM_ST0: begin
@@ -424,6 +436,8 @@ module CentralControlUnit #(
 
           interrupt_soft_reg        <= 1'b0;
           interrupt_soft_reg_early  <= 1'b0;
+
+          internal_error_asserted   <= 1'b0;
         end
         FSM_STR: begin
           operation_start <= 1'b1;
@@ -439,6 +453,9 @@ module CentralControlUnit #(
 
           operation_start <= 1'b1;
           operation_busy  <= 1'b1;
+
+          pl2ps_intr  <= 1'b1;
+
         end
         FSM_OPE: begin
           operation_busy  <= 1'b1;
@@ -455,20 +472,29 @@ module CentralControlUnit #(
             iteration_reg             <= iteration_reg_next;
             interrupt_soft_reg        <= interrupt_soft_reg_early || interrupt_soft;
             interrupt_soft_reg_early  <= 1'b0;
+            pl2ps_intr  <= 1'b1;
           end
         end
         FSM_END: begin
           operation_complete <= 1'b1;
+          pl2ps_intr  <= 1'b1;
         end
         FSM_ERR: begin
-          internal_operation_error <= 1'b1;
-          operation_error <= 1'b1;
+          internal_operation_error  <= ~(internal_error_asserted || core_rst);
+          operation_error           <= 1'b1;
+          interrupt_soft_reg        <= interrupt_soft_reg_early || interrupt_soft;
+          pl2ps_intr                <= 1'b1;
+          internal_error_asserted   <= internal_error_asserted || core_rst;
         end
         FSM_ITR: begin
-          internal_operation_error <= 1'b1;
+          internal_operation_error  <= ~(internal_error_asserted || core_rst);
+          operation_error           <= interrupt_error_reg;
+          interrupt_soft_reg        <= 1'b0;
+          interrupt_soft_reg_early  <= 1'b0;
+
+          internal_error_asserted   <= internal_error_asserted || core_rst;
         end
         default: begin
-          
         end 
       endcase
     end
@@ -481,14 +507,16 @@ module CentralControlUnit #(
     locked_next_rslt_done <= 1'b0;
     rw_op_str_reg_en      <= 1'b0;
     rw_op_dne_reg_en      <= 1'b0;
+    interrupt_error_reg   <= 1'b0;
 
     case (fsm_state)
       FSM_ST0: begin
         if (operation_start_rd) begin 
           if (operation_valid) begin 
-            fsm_state_next <= FSM_STR; 
+            fsm_state_next      <= FSM_STR; 
           end else begin 
-            fsm_state_next <= FSM_ERR; 
+            fsm_state_next      <= FSM_ERR; 
+            locked_next_error   <= 1'b1;
           end
         end else begin 
           fsm_state_next <= FSM_ST0; 
@@ -499,6 +527,7 @@ module CentralControlUnit #(
         rw_op_str_reg_en <= 1'b1;
       end
       FSM_OPE: begin
+        fsm_state_next <= FSM_OPE;
         if (last_iteration && rslt_tlast) begin
           fsm_state_next <= FSM_END;
           rw_op_dne_reg_en <= 1'b1;
@@ -514,6 +543,7 @@ module CentralControlUnit #(
       FSM_ERR: begin
         // Lock core until external error occures
         locked_next_error <= 1'b1;
+        rw_op_str_reg_en  <= 1'b1;
         fsm_state_next    <= FSM_ERR;
       end
       default: begin
@@ -527,8 +557,10 @@ module CentralControlUnit #(
       fsm_state_next        <= FSM_ITR;
       locked_next_error     <= 1'b0;
       locked_next_rslt_done <= 1'b0;
+      interrupt_error_reg   <= interrupt_error;
+      rw_op_dne_reg_en      <= interrupt_error;
     end
-    if (rst) begin
+    if (fsm_rst) begin
       fsm_state_next <= FSM_ST0;
     end
   end

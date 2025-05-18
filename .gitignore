@@ -10,11 +10,13 @@ vcd/
 
 rtl/DummyBRAM.v
 rtl/wrapper/KanLayerInstWrapper*.v
+rtl/wrapper/tb_kan_layer_wrapper.v
 rtl/*tmp*
 
 py/*
 !py/*_simgen.py
 !py/__init__.py
+!py/CCURegisters.py
 # !py/example_codegen.py
 
 venv/*
@@ -23,14 +25,13 @@ test
 
 # vivado
 
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.cache
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.hw
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.ip_user_files
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.sim
+*.cache
+*.hw
+*.ip_user_files
+*.sim
 
 test
 log
-vivado
 graphs
 dot
 

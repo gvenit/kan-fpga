@@ -1,0 +1,153 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
+| Date         : Sun May 18 22:17:58 2025
+| Host         : yannos running 64-bit major release  (build 9200)
+| Command      : report_drc -file design_1_wrapper_drc_opted.rpt -pb design_1_wrapper_drc_opted.pb -rpx design_1_wrapper_drc_opted.rpx
+| Design       : design_1_wrapper
+| Device       : xc7z007sclg400-1
+| Speed File   : -1
+| Design State : Synthesized
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+           Ruledeck: default
+             Max violations: <unlimited>
+             Violations found: 22
++-------------+----------+-------------------------------------------------------------+------------+
+| Rule        | Severity | Description                                                 | Violations |
++-------------+----------+-------------------------------------------------------------+------------+
+| PLHOLDVIO-2 | Warning  | Non-Optimal connections which could lead to hold violations | 6          |
+| REQP-1840   | Warning  | RAMB18 async control check                                  | 16         |
++-------------+----------+-------------------------------------------------------------+------------+
+
+2. REPORT DETAILS
+-----------------
+PLHOLDVIO-2#1 Warning
+Non-Optimal connections which could lead to hold violations  
+A LUT design_1_i/KanLayerInst_0/inst/wrapper/data_processor_inst/parallelized_lpa_inst/batch_plane_genblock[0].col_genblock[0].row_genblock[0].parallelized_lpe_ijk/axis_register_l_inst/samples_out[0]_i_1__0 is driving clock pin of 1 cells. This could lead to large hold time violations. Involved cells are:
+design_1_i/KanLayerInst_0/inst/wrapper/ccu/genblk1[1].sampler_peripheral_op_error_inst/samples_out_reg[0]
+Related violations: <none>
+
+PLHOLDVIO-2#2 Warning
+Non-Optimal connections which could lead to hold violations  
+A LUT design_1_i/KanLayerInst_0/inst/wrapper/data_processor_inst/parallelized_lpa_inst/batch_plane_genblock[0].col_genblock[0].row_genblock[0].parallelized_lpe_ijk/axis_register_l_inst/samples_out[1]_i_1 is driving clock pin of 1 cells. This could lead to large hold time violations. Involved cells are:
+design_1_i/KanLayerInst_0/inst/wrapper/ccu/genblk1[1].sampler_peripheral_op_error_inst/samples_out_reg[1]
+Related violations: <none>
+
+PLHOLDVIO-2#3 Warning
+Non-Optimal connections which could lead to hold violations  
+A LUT design_1_i/KanLayerInst_0/inst/wrapper/data_processor_inst/parallelized_lpa_inst/samples_out[0]_i_1__1 is driving clock pin of 1 cells. This could lead to large hold time violations. Involved cells are:
+design_1_i/KanLayerInst_0/inst/wrapper/ccu/genblk1[2].sampler_peripheral_op_error_inst/samples_out_reg[0]
+Related violations: <none>
+
+PLHOLDVIO-2#4 Warning
+Non-Optimal connections which could lead to hold violations  
+A LUT design_1_i/KanLayerInst_0/inst/wrapper/data_processor_inst/parallelized_lpa_inst/samples_out[1]_i_1__0 is driving clock pin of 1 cells. This could lead to large hold time violations. Involved cells are:
+design_1_i/KanLayerInst_0/inst/wrapper/ccu/genblk1[2].sampler_peripheral_op_error_inst/samples_out_reg[1]
+Related violations: <none>
+
+PLHOLDVIO-2#5 Warning
+Non-Optimal connections which could lead to hold violations  
+A LUT design_1_i/KanLayerInst_0/inst/wrapper/mcu_inst/samples_out[0]_i_1 is driving clock pin of 1 cells. This could lead to large hold time violations. Involved cells are:
+design_1_i/KanLayerInst_0/inst/wrapper/ccu/genblk1[0].sampler_peripheral_op_error_inst/samples_out_reg[0]
+Related violations: <none>
+
+PLHOLDVIO-2#6 Warning
+Non-Optimal connections which could lead to hold violations  
+A LUT design_1_i/KanLayerInst_0/inst/wrapper/mcu_inst/samples_out[1]_i_1__1 is driving clock pin of 1 cells. This could lead to large hold time violations. Involved cells are:
+design_1_i/KanLayerInst_0/inst/wrapper/ccu/genblk1[0].sampler_peripheral_op_error_inst/samples_out_reg[1]
+Related violations: <none>
+
+REQP-1840#1 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_grid_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_grid_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg/WEBWE[0] (net: design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_grid_inst/internal_bram_inst/genblk1[0].bram_inst/p_0_in[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#2 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_grid_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_grid_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg/WEBWE[1] (net: design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_grid_inst/internal_bram_inst/genblk1[0].bram_inst/p_0_in[8]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#3 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_scle_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_scle_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg/WEBWE[0] (net: design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_scle_inst/internal_bram_inst/genblk1[0].bram_inst/p_0_in[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#4 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_scle_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_scle_inst/internal_bram_inst/genblk1[0].bram_inst/ram_reg/WEBWE[1] (net: design_1_i/KanLayerInst_0/inst/wrapper/axil_ram_scle_inst/internal_bram_inst/genblk1[0].bram_inst/p_0_in[8]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#5 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/ram_reg/ENARDEN (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/bram00_ctrl_data_en_0) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#6 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/ram_reg/WEA[0] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/bram00_ctrl_data_we[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#7 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/ram_reg/WEA[1] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[0].bram_inst/bram00_ctrl_data_we[1]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#8 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/ram_reg/ENARDEN (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/ram_reg_0) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#9 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/ram_reg/WEA[0] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/bram00_ctrl_data_we[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#10 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/ram_reg/WEA[1] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[1].bram_inst/bram00_ctrl_data_we[1]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#11 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/ram_reg/ENARDEN (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/ena[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#12 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/ram_reg/WEA[0] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/bram00_ctrl_data_we[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#13 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/ram_reg/WEA[1] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[2].bram_inst/bram00_ctrl_data_we[1]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#14 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/ram_reg/ENARDEN (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/ena[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#15 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/ram_reg/WEA[0] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/bram00_ctrl_data_we[0]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+REQP-1840#16 Warning
+RAMB18 async control check  
+The RAMB18E1 design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/ram_reg has an input control pin design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/ram_reg/WEA[1] (net: design_1_i/KanLayerInst_0/inst/wrapper/bram_ram_data_genblock[0].bram_ram_data_inst/genblk1[3].bram_inst/bram00_ctrl_data_we[1]) which is driven by a register (design_1_i/axi_mem_intercon_1/s00_couplers/auto_cc/inst/gen_clock_conv.gen_async_conv.asyncfifo_axi/inst_fifo_gen/gaxi_full_lite.gwrite_ch.gwdch2.axi_wdch/grf.rf/gntv_or_sync_fifo.gl0.rd/gr1.gr1_int.rfwft/empty_fwft_i_reg) that has an active asychronous set or reset. This may cause corruption of the memory contents and/or read values when the set/reset is asserted and is not analyzed by the default static timing analysis. It is suggested to eliminate the use of a set/reset to registers driving this RAMB pin or else use a synchronous reset in which the assertion of the reset is timed by default.
+Related violations: <none>
+
+

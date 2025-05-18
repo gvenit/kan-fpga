@@ -1,4 +1,7 @@
-__all__ = ['addTimeScale']
+__all__ = ['addTimeScale', 'stripModule', 'clear_hints','ctrl_reg',]
+
+from CCURegisters import ctrl_reg
+import re
 
 def addTimeScale(fname):
     txt = []
@@ -42,4 +45,20 @@ def stripModule(fname, module_name):
                 f.writelines([subtxt,'\n'])
             
             return 0
+    
+def clear_hints(fname) :
+    with open(fname,'r') as fr:
+        txt = fr.readlines()
+        
+    txt = [
+        re.sub(
+            r'\(\*.*\*\)',
+            '',
+            line,
+        ) for line in txt
+    ]
+    txt = [line for line in txt if not line.isspace()]
+        
+    with open(fname,'w') as fw:
+        fw.writelines(txt)    
     

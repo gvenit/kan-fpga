@@ -110,7 +110,7 @@ module ParallelizedLPEControlUnit #(
   reg  bypass_adder_reg;
   reg  acc_res_reg;
 
-  reg  err_unalligned_data_reg;
+  reg  err_unalligned_data_reg = 1'b0;
 
   // FSM input signals
   wire op0_flag  = int_axis_l_tvalid && int_axis_r_tready;

@@ -20,7 +20,11 @@
    (x <= 32768) ? 15 : \
    -1)
 
+`define RLOG2(x) ((x <= 1) ? 0 : `LOG2(x))
+
 `define MAX(a,b) ((a < b) ? b : a)
+
+`define MIN(a,b) ((a < b) ? (a) : (b))
 
 `define ABS(signal) (($signed(signal) < 0) ? -$signed(signal) : signal)
     
