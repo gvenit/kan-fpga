@@ -2252,10 +2252,10 @@ module KanLayer #(
     assign int_ram_data_a_axil_arprot  [BATCH]                          = int_mcu_data_m_axil_arprot  [BATCH*3 +: 3];
     assign int_ram_data_a_axil_arvalid [BATCH]                          = int_mcu_data_m_axil_arvalid [BATCH];
     assign int_mcu_data_m_axil_arready [BATCH]                          = int_ram_data_a_axil_arready [BATCH];
-    assign int_mcu_data_m_axil_rdata   [BATCH*DATA_WIDTH +: DATA_WIDTH] = int_ram_data_b_axil_rdata   [BATCH];
-    assign int_mcu_data_m_axil_rresp   [BATCH*2 +: 2]                   = int_ram_data_b_axil_rresp   [BATCH];
-    assign int_mcu_data_m_axil_rvalid  [BATCH]                          = int_ram_data_b_axil_rvalid  [BATCH];
-    assign int_ram_data_b_axil_rready  [BATCH]                          = int_mcu_data_m_axil_rready  [BATCH];
+    assign int_mcu_data_m_axil_rdata   [BATCH*DATA_WIDTH +: DATA_WIDTH] = int_ram_data_a_axil_rdata   [BATCH];
+    assign int_mcu_data_m_axil_rresp   [BATCH*2 +: 2]                   = int_ram_data_a_axil_rresp   [BATCH];
+    assign int_mcu_data_m_axil_rvalid  [BATCH]                          = int_ram_data_a_axil_rvalid  [BATCH];
+    assign int_ram_data_a_axil_rready  [BATCH]                          = int_mcu_data_m_axil_rready  [BATCH];
 
     // Connect Port B of Axil Data Ram to S_AXIL_DATA interface
     assign int_ram_data_s_axil_aclk [BATCH]                   = s_axil_data_aclk [BATCH];
