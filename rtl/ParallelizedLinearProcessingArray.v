@@ -174,8 +174,8 @@ module ParallelizedLinearProcessingArray #(
     end
 
     for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin  : batch_plane_genblock
-      for (pe_pos_j = 0; pe_pos_j < PE_NUMBER_J; pe_pos_j = pe_pos_j + 1) begin : col_genblock
-        for (pe_pos_i = 0; pe_pos_i < PE_NUMBER_I; pe_pos_i = pe_pos_i + 1) begin : row_genblock
+      for (pe_pos_j = 0; pe_pos_j < PE_NUMBER_J; pe_pos_j = pe_pos_j + 1) begin : row_genblock
+        for (pe_pos_i = 0; pe_pos_i < PE_NUMBER_I; pe_pos_i = pe_pos_i + 1) begin : col_genblock
           localparam PE_POSITION_I = pe_pos_i;
           localparam PE_POSITION_J = pe_pos_j;
           localparam UID    = (  batch    *  PE_NUMBER_J    +  PE_POSITION_J    ) *  PE_NUMBER_I    +  PE_POSITION_I;

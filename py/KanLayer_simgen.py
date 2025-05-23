@@ -18,6 +18,8 @@ from py import addTimeScale, stripModule, clear_hints, ctrl_reg
 import numpy as np
 import torch
 
+hex_list = lambda x: [hex_list(_) for _ in x] if hasattr(x, '__iter__') else hex(x)
+
 def find_strobe(out, address, word_size, clog_num_words, prints=False):
     slice = address.slice(
         msb = clog_num_words-1,
@@ -39,7 +41,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256):
     data_width = 16
     basename = 'tb_kan_layer_wrapper'
     fname = os.path.join(TOP_DIR,f'rtl/wrapper/{basename}.v')
-    os.system(' '.join([
+    exec_str = ' '.join([
         str(_) for _ in [
         os.path.join(TOP_DIR,'rtl/wrapper/KanLayerInst.py'),
         '--batch-size',             K,
@@ -51,7 +53,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256):
         '--grid-depth',             8,
         '--grid-share',             
         '--scle-width',             data_width,
-        '--scle-frac-bits',         data_width,
+        '--scle-frac-bits',         data_width-2,
         '--scle-depth',             1,
         '--scle-share',             
         '--wght-width',             data_width,
@@ -67,13 +69,15 @@ def KanLayer(I=1,J=1,K=1,N_in=256):
         '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8)),
         '--name',                   basename,
         '--output',                 fname
-    ]]))
+    ]])
+    print(f'-- {exec_str}')
+    os.system(exec_str)
     clear_hints(fname)
     return verilog.from_verilog.read_verilog_module(fname)[basename] 
 
 def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     module = Module(f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}')
-  
+    
     module.EmbeddedCode(
     f'''
 `ifdef IF_OPTIONS_INST_H
@@ -134,9 +138,11 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     def AssertAbsDiffLE(signal0,signal1,value):
         return EmbeddedCode(f'`assertAbsDiffLE({signal0},{signal1},{value})')
     def LOG2(signal):
-        return EmbeddedCode(f'`LOG2( {signal} )')
+        return EmbeddedNumeric(f'`LOG2( {signal} )')
+    def RLOG2(signal):
+        return EmbeddedNumeric(f'`RLOG2( {signal} )')
     
-    kan = KanLayer(I=1,J=1,K=1, N_in=N_in)
+    kan = KanLayer(I=I,J=J,K=K,N_in=N_in)
     params = module.copy_params_as_localparams(kan)
     ports  = module.copy_ports_as_vars(kan)
     data_width = 16
@@ -164,7 +170,10 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     BRAM_WIDTH                  : Localparam = params['BRAM_CTRL_WIDTH']
     BRAM_STRB_WIDTH             : Localparam = params['BRAM_CTRL_WE']
     
-    DATA_ADDR                   : Localparam = params['DATA_ADDR']
+    if (J == 1):
+        DATA_ADDR                   : Localparam = params['DATA_ADDR']
+    else :
+        DATA_ADDR               = module.Localparam('DATA_ADDR', LOG2(params['DATA_DEPTH']))
     GRID_ADDR                   : Localparam = params['GRID_ADDR']
     SCALE_ADDR                  : Localparam = params['SCALE_ADDR']
     
@@ -226,36 +235,40 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     pl2ps_intr                  = ports['pl2ps_intr']
     
     if (DATA_CHANNELS.value == 1):
-        s00_axil_data_aclk      = ports['s00_axil_data_aclk']
-        s00_axil_data_areset    = ports['s00_axil_data_areset']
-        s00_axil_data_awaddr    = ports['s00_axil_data_awaddr']
-        s00_axil_data_awprot    = ports['s00_axil_data_awprot']
-        s00_axil_data_awvalid   = ports['s00_axil_data_awvalid']
-        s00_axil_data_awready   = ports['s00_axil_data_awready']
-        s00_axil_data_wdata     = ports['s00_axil_data_wdata']
-        s00_axil_data_wstrb     = ports['s00_axil_data_wstrb']
-        s00_axil_data_wvalid    = ports['s00_axil_data_wvalid']
-        s00_axil_data_wready    = ports['s00_axil_data_wready']
-        s00_axil_data_bresp     = ports['s00_axil_data_bresp']
-        s00_axil_data_bvalid    = ports['s00_axil_data_bvalid']
-        s00_axil_data_bready    = ports['s00_axil_data_bready']
-        s00_axil_data_araddr    = ports['s00_axil_data_araddr']
-        s00_axil_data_arprot    = ports['s00_axil_data_arprot']
-        s00_axil_data_arvalid   = ports['s00_axil_data_arvalid']
-        s00_axil_data_arready   = ports['s00_axil_data_arready']
-        s00_axil_data_rdata     = ports['s00_axil_data_rdata']
-        s00_axil_data_rresp     = ports['s00_axil_data_rresp']
-        s00_axil_data_rvalid    = ports['s00_axil_data_rvalid']
-        s00_axil_data_rready    = ports['s00_axil_data_rready']
+        s_axil_data_aclk      = [ports[f's{str(batch).zfill(2)}_axil_data_aclk']    for batch in range(K) ]
+        s_axil_data_areset    = [ports[f's{str(batch).zfill(2)}_axil_data_areset']  for batch in range(K) ]
+        s_axil_data_awaddr    = [ports[f's{str(batch).zfill(2)}_axil_data_awaddr']  for batch in range(K) ]
+        s_axil_data_awprot    = [ports[f's{str(batch).zfill(2)}_axil_data_awprot']  for batch in range(K) ]
+        s_axil_data_awvalid   = [ports[f's{str(batch).zfill(2)}_axil_data_awvalid'] for batch in range(K) ]
+        s_axil_data_awready   = [ports[f's{str(batch).zfill(2)}_axil_data_awready'] for batch in range(K) ]
+        s_axil_data_wdata     = [ports[f's{str(batch).zfill(2)}_axil_data_wdata']   for batch in range(K) ]
+        s_axil_data_wstrb     = [ports[f's{str(batch).zfill(2)}_axil_data_wstrb']   for batch in range(K) ]
+        s_axil_data_wvalid    = [ports[f's{str(batch).zfill(2)}_axil_data_wvalid']  for batch in range(K) ]
+        s_axil_data_wready    = [ports[f's{str(batch).zfill(2)}_axil_data_wready']  for batch in range(K) ]
+        s_axil_data_bresp     = [ports[f's{str(batch).zfill(2)}_axil_data_bresp']   for batch in range(K) ]
+        s_axil_data_bvalid    = [ports[f's{str(batch).zfill(2)}_axil_data_bvalid']  for batch in range(K) ]
+        s_axil_data_bready    = [ports[f's{str(batch).zfill(2)}_axil_data_bready']  for batch in range(K) ]
+        s_axil_data_araddr    = [ports[f's{str(batch).zfill(2)}_axil_data_araddr']  for batch in range(K) ]
+        s_axil_data_arprot    = [ports[f's{str(batch).zfill(2)}_axil_data_arprot']  for batch in range(K) ]
+        s_axil_data_arvalid   = [ports[f's{str(batch).zfill(2)}_axil_data_arvalid'] for batch in range(K) ]
+        s_axil_data_arready   = [ports[f's{str(batch).zfill(2)}_axil_data_arready'] for batch in range(K) ]
+        s_axil_data_rdata     = [ports[f's{str(batch).zfill(2)}_axil_data_rdata']   for batch in range(K) ]
+        s_axil_data_rresp     = [ports[f's{str(batch).zfill(2)}_axil_data_rresp']   for batch in range(K) ]
+        s_axil_data_rvalid    = [ports[f's{str(batch).zfill(2)}_axil_data_rvalid']  for batch in range(K) ]
+        s_axil_data_rready    = [ports[f's{str(batch).zfill(2)}_axil_data_rready']  for batch in range(K) ]
+        
+        DATA_ADDR_BYTES = module.Localparam('DATA_ADDR_BYTES', DATA_ADDR)
     else :
-        bram00_ctrl_data_clk    = ports['bram00_ctrl_data_clk']
-        bram00_ctrl_data_rst    = ports['bram00_ctrl_data_rst']
-        bram00_ctrl_data_en     = ports['bram00_ctrl_data_en']
-        bram00_ctrl_data_we     = ports['bram00_ctrl_data_we']
-        bram00_ctrl_data_addr   = ports['bram00_ctrl_data_addr']
-        bram00_ctrl_data_din    = ports['bram00_ctrl_data_din']
-        bram00_ctrl_data_dout   = ports['bram00_ctrl_data_dout']
+        bram_ctrl_data_clk    = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_clk']  for batch in range(K) ]
+        bram_ctrl_data_rst    = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_rst']  for batch in range(K) ]
+        bram_ctrl_data_en     = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_en']   for batch in range(K) ]
+        bram_ctrl_data_we     = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_we']   for batch in range(K) ]
+        bram_ctrl_data_addr   = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_addr'] for batch in range(K) ]
+        bram_ctrl_data_din    = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_din']  for batch in range(K) ]
+        bram_ctrl_data_dout   = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_dout'] for batch in range(K) ]
     
+        DATA_ADDR_BYTES = module.Localparam('DATA_ADDR_BYTES', DATA_ADDR + RLOG2(DATA_STRB_WIDTH) )
+        
     if (GRID_SHARE.value):
         s_axil_grid_aclk        = ports['s_axil_grid_aclk']
         s_axil_grid_areset      = ports['s_axil_grid_areset']
@@ -278,6 +291,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         s_axil_grid_rresp       = ports['s_axil_grid_rresp']
         s_axil_grid_rvalid      = ports['s_axil_grid_rvalid']
         s_axil_grid_rready      = ports['s_axil_grid_rready']
+        
+        GRID_ADDR_BYTES = module.Localparam('GRID_ADDR_BYTES', GRID_ADDR)
     else :
         bram_ctrl_grid_clk      = ports['bram_ctrl_grid_clk']
         bram_ctrl_grid_rst      = ports['bram_ctrl_grid_rst']
@@ -287,6 +302,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         bram_ctrl_grid_din      = ports['bram_ctrl_grid_din']
         bram_ctrl_grid_dout     = ports['bram_ctrl_grid_dout']
     
+        GRID_ADDR_BYTES = module.Localparam('GRID_ADDR_BYTES', GRID_ADDR + RLOG2(DATA_STRB_WIDTH))
+        
     if (SCALE_SHARE.value):
         s_axil_scle_aclk        = ports['s_axil_scle_aclk']
         s_axil_scle_areset      = ports['s_axil_scle_areset']
@@ -309,6 +326,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         s_axil_scle_rresp       = ports['s_axil_scle_rresp']
         s_axil_scle_rvalid      = ports['s_axil_scle_rvalid']
         s_axil_scle_rready      = ports['s_axil_scle_rready']
+        
+        SCALE_ADDR_BYTES = module.Localparam('SCALE_ADDR_BYTES', SCALE_ADDR)
     else :
         bram_ctrl_scle_clk      = ports['bram_ctrl_scle_clk']
         bram_ctrl_scle_rst      = ports['bram_ctrl_scle_rst']
@@ -317,6 +336,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         bram_ctrl_scle_addr     = ports['bram_ctrl_scle_addr']
         bram_ctrl_scle_din      = ports['bram_ctrl_scle_din']
         bram_ctrl_scle_dout     = ports['bram_ctrl_scle_dout']
+        
+        SCALE_ADDR_BYTES = module.Localparam('SCALE_ADDR_BYTES', SCALE_ADDR + RLOG2(DATA_STRB_WIDTH))
     
     s_axil_ctrl_awaddr          = ports['s_axil_ctrl_awaddr']
     s_axil_ctrl_awprot          = ports['s_axil_ctrl_awprot']
@@ -353,19 +374,20 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     reset_stmt = []
     reset_stmt.append(reset_done(0))
-
-    if (DATA_CHANNELS.value == 1):
-        reset_stmt.append(s00_axil_data_awvalid(0))
-        reset_stmt.append(s00_axil_data_wvalid(0))
-        reset_stmt.append(s00_axil_data_bready(0))
-        reset_stmt.append(s00_axil_data_arvalid(0))
-        reset_stmt.append(s00_axil_data_rready(0))
-        
-        reset_stmt.append(s00_axil_data_awprot(0))
-        reset_stmt.append(s00_axil_data_arprot(0))
-    else :
-        reset_stmt.append(bram00_ctrl_data_en(0))
-        reset_stmt.append(bram00_ctrl_data_we(0))
+    
+    for batch in range(K):
+        if (DATA_CHANNELS.value == 1):
+            reset_stmt.append(s_axil_data_awvalid   [batch] (0))
+            reset_stmt.append(s_axil_data_wvalid    [batch] (0))
+            reset_stmt.append(s_axil_data_bready    [batch] (0))
+            reset_stmt.append(s_axil_data_arvalid   [batch] (0))
+            reset_stmt.append(s_axil_data_rready    [batch] (0))
+            
+            reset_stmt.append(s_axil_data_awprot    [batch](0))
+            reset_stmt.append(s_axil_data_arprot    [batch](0))
+        else :
+            reset_stmt.append(bram_ctrl_data_en     [batch](0))
+            reset_stmt.append(bram_ctrl_data_we     [batch](0))
         
     if (GRID_SHARE.value):
         reset_stmt.append(s_axil_grid_awvalid(0))
@@ -416,16 +438,17 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         dma_clk(fsm_clk),
         dma_rst(core_rst),
     )
-    if(DATA_CHANNELS.value == 1):
-        module.Always()(
-            s00_axil_data_aclk(core_clk),
-            s00_axil_data_areset(core_rst),
-        )
-    else:
-        module.Always()(
-            bram00_ctrl_data_clk(core_clk),
-            bram00_ctrl_data_rst(core_rst),
-        )
+    for batch in range(K):
+        if(DATA_CHANNELS.value == 1):
+            module.Always()(
+                s_axil_data_aclk[batch](core_clk),
+                s_axil_data_areset[batch](core_rst),
+            )
+        else:
+            module.Always()(
+                bram_ctrl_data_clk[batch](core_clk),
+                bram_ctrl_data_rst[batch](core_rst),
+            )
     if(GRID_SHARE.value):
         module.Always()(
             s_axil_grid_aclk(core_clk),
@@ -457,7 +480,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         reset_done(1),
         # Systask('finish'),
         nclk(fsm_clk),
-        Delay(100000),
+        Delay(2000 + 8*N_in*N_out/DATA_CHANNELS/RSLT_CHANNELS * 2 * 4 * (2**4)),
         # Delay(10),
         Display('Timeout error'),
         AssertTrue(0),
@@ -469,29 +492,29 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_len = DATA_CHANNELS.value * max(N_in // DATA_CHANNELS.value, 1)
     grid_len = 8
-    scale_len = (1,1,1) if SCALE_SHARE.value else (1,grid_len,data_len)
+    scale_len = (1,1,1) if SCALE_SHARE.value else (1,data_len,grid_len)
     rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
     weight_len = data_len*grid_len
     adder_size = 64
     pckt_len = (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value))
     # print(data_len,grid_len,scale_len,rslt_len,weight_len)
     
-    # Create data - size = [BATCH X 1 X DATA]
-    layer_data = torch.randn(K, 1, data_len, device=device)
+    # Create data - size = [BATCH X DATA X 1]
+    layer_data = torch.randn(K, data_len, 1, device=device)
     # Quantize data
     layer_data_q = torch.tensor((layer_data * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'),device=device)
     # Dequantize data
     layer_data = layer_data_qd = layer_data_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
-    # Create grid - size = [1 X GRID X 1]
-    layer_grid = torch.randn(1, grid_len, 1, device=device)
+    # Create grid - size = [1 X 1 X GRID]
+    layer_grid = torch.randn(1, 1, grid_len, device=device)
     # Quantize grid
     layer_grid_q = torch.tensor((layer_grid * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize grid
     layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
-    # Create scale - size = [1 X GRID X DATA] or [1] 
-    layer_scle = torch.rand(*scale_len, device=device) / 2 ** (DATA_WIDTH.value - SCALE_FRACTIONAL_BITS.value)
+    # Create scale - size = [1 X DATA X GRID] or [1] 
+    layer_scle = torch.rand(*scale_len, device=device) * 2
     # Quantize scale
     layer_scle_q = torch.tensor((layer_scle * 2 ** SCALE_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize scale
@@ -507,7 +530,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     layer_exp_actd = torch.tensor((1 - np.tanh(layer_exp_sdff.cpu().numpy().astype('float128'))**2).astype('float32'), device=device)
     # Reshape expected activation data - size = [BATCH X WEIGHT]
     layer_exp_actd = layer_exp_actd.reshape(-1, weight_len)
-    
+
     if True:
         # Perform expected Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
         layer_exp_rslt = layer_exp_actd @ layer_wght
@@ -517,7 +540,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     
     # Normalize weight - size = [WEIGHT x RESULT] or [1] 
-    layer_wght = layer_wght / weight_scale
+    layer_wght = layer_wght / weight_scale / 2
     # Quantize scale
     layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Dequantize scale
@@ -542,8 +565,6 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     # Create activation data - size = [BATCH X WEIGHT]
     layer_actd = 1 - np.tanh(layer_sdff_qd)**2
-    # Reshape activation data - size = [BATCH X WEIGHT]
-    layer_actd = layer_actd.reshape(-1, weight_len)
     # Quantize activation data
     layer_actd_q = torch.tensor((layer_actd * 2 ** ACT_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Unit correction
@@ -553,6 +574,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             2 ** ACT_FRACTIONAL_BITS.value - 1,
             layer_actd_q
         )
+    # Reshape activation data - size = [BATCH X WEIGHT]
+    layer_actd_q = layer_actd_q.movedim(-1,-2).reshape(-1, weight_len)
     # Dequantize activation data - size = [BATCH X WEIGHT]
     layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACT_FRACTIONAL_BITS.value
     
@@ -591,197 +614,198 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     # exit()
     
     # Data, Grid & Scale coordinator
-    test_data = layer_data_q.squeeze().cpu().to(final_dtype).tolist()
+    test_data = layer_data_q.squeeze(-1).cpu().to(final_dtype).tolist()
     test_grid = layer_grid_q.squeeze().cpu().to(final_dtype).tolist()
     test_scle = layer_scle_q.squeeze(0).reshape(-1).cpu().to(final_dtype).tolist() if SCALE_SHARE.value else \
                 torch.stack(layer_data_q.reshape(-1).split(DATA_CHANNELS.value,-1)).reshape(-1).cpu().to(final_dtype).tolist()
 
-    hex_list = lambda x: [hex_list(_) for _ in x] if hasattr(x, '__iter__') else hex(x)
-    # hex_list = lambda x: hex(x) if isinstance(x, int) else [hex_list(_) for _ in x]
-    # print('Test data:', np.array(test_data).shape)
-    # print(np.array(hex_list(test_data)).squeeze())
-    # print(layer_data_qd)
-    # print(layer_data_qd.reshape(-1, BATCH_SIZE.value, DATA_CHANNELS.value))
-    
     # Data Driver
-    addr_data = module.Integer('addr_data')
-    data_loaded = module.Reg('data_loaded')
+    addr_data   = [module.Integer(f'addr_data_{str(batch).zfill(2)}') for batch in range(K)]
+    data_loaded = [module.Reg(f'data_loaded_{str(batch).zfill(2)}') for batch in range(K)]
     
-    ## Data AXI-Lite Driver
-    if (DATA_CHANNELS.value == 1):
-        data_axil_gen = module.GenerateIf(DATA_CHANNELS == 1)
-        
-        data_axil_gen.Initial(
-            data_loaded(0),
-            Wait(reset_done),
-            Wait(s00_axil_data_aclk),
+    for batch, test_data_batch in enumerate(test_data):
+        ## Data AXI-Lite Driver
+        if (DATA_CHANNELS.value == 1):
+            data_axil_gen = module.GenerateIf(DATA_CHANNELS == 1)
             
-            Wait(~s00_axil_data_aclk),
-            Wait(s00_axil_data_aclk),
-            
-            # Test 0 : Write Data
-            Wait(~s00_axil_data_aclk),
-            s00_axil_data_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
-            For(addr_data(0), addr_data < len(test_data), addr_data.inc())(
+            data_axil_gen.Initial(
+                data_loaded[batch](0),
+                Wait(reset_done),
+                Wait(s_axil_data_aclk[batch]),
                 
-                s00_axil_data_awvalid(1),
-                s00_axil_data_awaddr(addr_data * DATA_STRB_WIDTH),
+                Wait(~s_axil_data_aclk[batch]),
+                Wait(s_axil_data_aclk[batch]),
                 
-                s00_axil_data_wvalid(1),
-                *find_strobe(s00_axil_data_wstrb, s00_axil_data_awaddr, DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH),
-                
-                Case(addr_data)(
-                    *[
-                        When(i)(
-                            s00_axil_data_wdata.slice(
-                                msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
-                                lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                            )(test_data_i)
-                        ) for i, test_data_i in enumerate(test_data)
-                    ],
-                    When( )(
-                        s00_axil_data_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
-                    ),
-                ),
-                
-                While(~s00_axil_data_awready)(
-                    Wait(s00_axil_data_aclk),
-                    Wait(~s00_axil_data_aclk),
-                ),
-                s00_axil_data_awvalid(0),
-                
-                While(~s00_axil_data_wready)(
-                    Wait(s00_axil_data_aclk),
-                    Wait(~s00_axil_data_aclk),
-                ),
-                s00_axil_data_wvalid(0),
-                
-                s00_axil_data_bready(1),
-                While(~s00_axil_data_bvalid)(
-                    Wait(s00_axil_data_aclk),
-                    Wait(~s00_axil_data_aclk),
-                ),
-                AssertFalse(s00_axil_data_bresp),
-                
-                Wait(s00_axil_data_aclk),
-                Wait(~s00_axil_data_aclk),
-                s00_axil_data_bready(0),
-            ),
-            Wait(s00_axil_data_aclk),
-            
-            # Test 1 : Read & Verify Data
-            Wait(~s00_axil_data_aclk),
-            s00_axil_data_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
-            For(addr_data(0), addr_data < len(test_data), addr_data.inc())(
-                Wait(~s00_axil_data_aclk),
-                
-                s00_axil_data_arvalid(1),
-                s00_axil_data_araddr(addr_data * DATA_STRB_WIDTH),
-                
-                While(~s00_axil_data_arready)(
-                    Wait(s00_axil_data_aclk),
-                    Wait(~s00_axil_data_aclk),
-                ),
-                s00_axil_data_arvalid(0),
-                s00_axil_data_rready(1),
-                
-                While(~s00_axil_data_rvalid)(
-                    Wait(s00_axil_data_aclk),
-                    Wait(~s00_axil_data_aclk),
-                ),
-                AssertFalse(s00_axil_data_rresp),
-                Case(addr_data)(
-                    *[
-                        When(i)(
-                            Assert(
-                                s00_axil_data_rdata.slice(
+                # Test 0 : Write Data
+                Wait(~s_axil_data_aclk[batch]),
+                s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
+                For(addr_data[batch](0), addr_data[batch] < len(test_data_batch), addr_data[batch].inc())(
+                    
+                    s_axil_data_awvalid[batch](1),
+                    s_axil_data_awaddr[batch](addr_data[batch] * DATA_STRB_WIDTH),
+                    
+                    s_axil_data_wvalid[batch](1),
+                    *find_strobe(s_axil_data_wstrb[batch], s_axil_data_awaddr[batch], DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH),
+                    
+                    Case(addr_data[batch])(
+                        *[
+                            When(i)(
+                                s_axil_data_wdata[batch].slice(
                                     msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
                                     lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                ),
-                                test_data_i
-                            )
-                        ) for i, test_data_i in enumerate(test_data)
-                    ],
-                    When( )(AssertTrue(0)),
-                ),
-                Wait(s00_axil_data_aclk),
-                Wait(~s00_axil_data_aclk),
-                s00_axil_data_rready(0),
-            ),
-            Wait(~s00_axil_data_aclk),
-            data_loaded(1),
-        )
-    else :
-        data_bram_gen = module.GenerateIf(DATA_CHANNELS > 1)
-        
-        data_bram_gen.Initial(
-            data_loaded(0),
-            Wait(reset_done),
-            Wait(bram00_ctrl_data_clk),
-            
-            Wait(~bram00_ctrl_data_clk),
-            Wait(bram00_ctrl_data_clk),
-            
-            # Test 0 : Write Data
-            Wait(~bram00_ctrl_data_clk),
-            bram00_ctrl_data_en(1),
-            bram00_ctrl_data_din(EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}")),
-            For(addr_data(0), Ands(addr_data < len(test_data),~bram00_ctrl_data_rst), addr_data.inc())(
-                
-                bram00_ctrl_data_addr(addr_data),
-                
-                *find_strobe(bram00_ctrl_data_we, bram00_ctrl_data_addr, DATA_STRB_WIDTH, CLOG_BRAM_STRB_WIDTH),
-                
-                Case(addr_data)(
-                    *[
-                        When(i)(
-                            bram00_ctrl_data_din.slice(
-                                msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
-                                lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                            )(test_data_i)
-                        ) for i, test_data_i in enumerate(test_data)
-                    ],
-                    When( )(
-                        bram00_ctrl_data_din(EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}"))
+                                )(test_data_batch_i)
+                            ) for i, test_data_batch_i in enumerate(test_data_batch)
+                        ],
+                        When( )(
+                            s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
+                        ),
                     ),
+                    
+                    While(~s_axil_data_awready[batch])(
+                        Wait(s_axil_data_aclk[batch]),
+                        Wait(~s_axil_data_aclk[batch]),
+                    ),
+                    s_axil_data_awvalid[batch](0),
+                    
+                    While(~s_axil_data_wready[batch])(
+                        Wait(s_axil_data_aclk[batch]),
+                        Wait(~s_axil_data_aclk[batch]),
+                    ),
+                    s_axil_data_wvalid[batch](0),
+                    
+                    s_axil_data_bready[batch](1),
+                    While(~s_axil_data_bvalid[batch])(
+                        Wait(s_axil_data_aclk[batch]),
+                        Wait(~s_axil_data_aclk[batch]),
+                    ),
+                    AssertFalse(s_axil_data_bresp[batch]),
+                    
+                    Wait(s_axil_data_aclk[batch]),
+                    Wait(~s_axil_data_aclk[batch]),
+                    s_axil_data_bready[batch](0),
                 ),
-                Wait(bram00_ctrl_data_clk),
-                Wait(~bram00_ctrl_data_clk),
-            ),
-            bram00_ctrl_data_en(0),
-            Wait(bram00_ctrl_data_clk),
+                Wait(s_axil_data_aclk[batch]),
+                
+                # Test 1 : Read & Verify Data
+                Wait(~s_axil_data_aclk[batch]),
+                s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
+                For(addr_data[batch](0), addr_data[batch] < len(test_data_batch), addr_data[batch].inc())(
+                    Wait(~s_axil_data_aclk[batch]),
+                    
+                    s_axil_data_arvalid[batch](1),
+                    s_axil_data_araddr[batch](addr_data[batch] * DATA_STRB_WIDTH),
+                    
+                    While(~s_axil_data_arready[batch])(
+                        Wait(s_axil_data_aclk[batch]),
+                        Wait(~s_axil_data_aclk[batch]),
+                    ),
+                    s_axil_data_arvalid[batch](0),
+                    s_axil_data_rready[batch](1),
+                    
+                    While(~s_axil_data_rvalid[batch])(
+                        Wait(s_axil_data_aclk[batch]),
+                        Wait(~s_axil_data_aclk[batch]),
+                    ),
+                    AssertFalse(s_axil_data_rresp[batch]),
+                    Case(addr_data[batch])(
+                        *[
+                            When(i)(
+                                Assert(
+                                    s_axil_data_rdata[batch].slice(
+                                        msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
+                                        lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
+                                    ),
+                                    test_data_batch_i
+                                )
+                            ) for i, test_data_batch_i in enumerate(test_data_batch)
+                        ],
+                        When( )(AssertTrue(0)),
+                    ),
+                    Wait(s_axil_data_aclk[batch]),
+                    Wait(~s_axil_data_aclk[batch]),
+                    s_axil_data_rready[batch](0),
+                ),
+                Wait(~s_axil_data_aclk[batch]),
+                data_loaded[batch](1),
+            )
+        
+        ## Data Bram Driver
+        else :
+            data_bram_gen = module.GenerateIf(DATA_CHANNELS > 1)
             
-            # Test 1 : Read & Verify Data
-            Wait(~bram00_ctrl_data_clk),
-            bram00_ctrl_data_en(1),
-            bram00_ctrl_data_we(0),
-            bram00_ctrl_data_din(EmbeddedNumeric("{" f"{BRAM_WIDTH.value}" r"{1'bX}}")),
-            For(addr_data(0), Ands(addr_data < len(test_data),~bram00_ctrl_data_rst), addr_data.inc())(
-
-                bram00_ctrl_data_addr(addr_data * DATA_STRB_WIDTH),
-                Wait(bram00_ctrl_data_clk),
-                Wait(~bram00_ctrl_data_clk),
-
-                Case(addr_data)(
-                    *[
-                        When(i)(
-                            Assert(
-                                bram00_ctrl_data_dout.slice(
+            data_bram_gen.Initial(
+                data_loaded[batch](0),
+                Wait(reset_done),
+                Wait(bram_ctrl_data_clk[batch]),
+                
+                Wait(~bram_ctrl_data_clk[batch]),
+                Wait(bram_ctrl_data_clk[batch]),
+                
+                # Test 0 : Write Data
+                Wait(~bram_ctrl_data_clk[batch]),
+                bram_ctrl_data_en[batch](1),
+                bram_ctrl_data_din[batch](EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}")),
+                For(addr_data[batch](0), Ands(addr_data[batch] < len(test_data_batch),~bram_ctrl_data_rst[batch]), addr_data[batch].inc())(
+                    
+                    bram_ctrl_data_addr[batch](addr_data[batch] * (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)),
+                    
+                    *find_strobe(bram_ctrl_data_we[batch], bram_ctrl_data_addr[batch], DATA_STRB_WIDTH, CLOG_BRAM_STRB_WIDTH),
+                    bram_ctrl_data_addr[batch](addr_data[batch]),
+                    
+                    Case(addr_data[batch])(
+                        *[
+                            When(i)(
+                                bram_ctrl_data_din[batch].slice(
                                     msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
                                     lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                ),
-                                test_data_i
-                            )
-                        ) for i, test_data_i in enumerate(test_data)
-                    ],
-                    When( )(AssertTrue(0)),
+                                )(test_data_batch_i)
+                            ) for i, test_data_batch_i in enumerate(test_data_batch)
+                        ],
+                        When( )(
+                            bram_ctrl_data_din[batch](EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}"))
+                        ),
+                    ),
+                    Wait(bram_ctrl_data_clk[batch]),
+                    Wait(~bram_ctrl_data_clk[batch]),
                 ),
-            ),
-            bram00_ctrl_data_en(0),
-            Wait(~bram00_ctrl_data_clk),
-            data_loaded(1),
-        )
-        
+                bram_ctrl_data_en[batch](0),
+                Wait(bram_ctrl_data_clk[batch]),
+                
+                # Test 1 : Read & Verify Data
+                Wait(~bram_ctrl_data_clk[batch]),
+                bram_ctrl_data_en[batch](1),
+                bram_ctrl_data_we[batch](0),
+                bram_ctrl_data_din[batch](EmbeddedNumeric("{" f"{BRAM_WIDTH.value}" r"{1'bX}}")),
+                For(addr_data[batch](0), Ands(addr_data[batch] < len(test_data_batch),~bram_ctrl_data_rst[batch]), addr_data[batch].inc())(
+
+                    bram_ctrl_data_addr[batch](addr_data[batch]),
+                    Wait(bram_ctrl_data_clk[batch]),
+                    Wait(~bram_ctrl_data_clk[batch]),
+
+                    Case(addr_data[batch])(
+                        *[
+                            When(i)(
+                                Assert(
+                                    bram_ctrl_data_dout[batch].slice(
+                                        msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
+                                        lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
+                                    ),
+                                    test_data_batch_i
+                                )
+                            ) for i, test_data_batch_i in enumerate(test_data_batch)
+                        ],
+                        When( )(AssertTrue(0)),
+                    ),
+                ),
+                bram_ctrl_data_en[batch](0),
+                Wait(~bram_ctrl_data_clk[batch]),
+                data_loaded[batch](1),
+            )
+            
+    data_loaded_int = module.Wire('data_loaded')
+    data_loaded_int.assign(Ors(*data_loaded))
+    data_loaded     = data_loaded_int
+    
     # Grid Driver
     addr_grid = module.Integer('addr_grid')
     grid_loaded = module.Reg('grid_loaded')
@@ -890,6 +914,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             Wait(~s_axil_grid_aclk),
             grid_loaded(1),
         )
+    
+    ## Grid Bram Driver
     else :
         grid_bram_gen = module.GenerateIf(~GRID_SHARE)
         
@@ -1069,6 +1095,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             Wait(~s_axil_scle_aclk),
             scle_loaded(1),
         )
+    
+    ## Scale Bram Driver
     else :
         scle_bram_gen = module.GenerateIf(~SCALE_SHARE)
         
@@ -1142,7 +1170,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         
     # Weight coordinator
     test_wght = torch.stack( torch.split(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)), DATA_CHANNELS.value,0) ).cpu().to(final_dtype).reshape(-1).tolist()
-
+    
     ## Weight driver
     intra_wght = module.Integer('intra_wght')
     total_wght = module.Integer('total_wght')
@@ -1167,19 +1195,22 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
                 Wait(~dma_clk),
                 s_axis_wght_tkeep(0),
                 For(intra_wght(0), Ands(intra_wght < (DMA_WIDTH / DATA_WIDTH), total_wght < len(test_wght),~dma_rst, wght_global_stage == global_stage_counter), intra_wght.inc())(
-                    total_wght.inc(),
                     Case(total_wght)(
                         *[
                             When(_iter)(
                                 s_axis_wght_tdata.slice(
                                     msb = ((_iter % (DMA_WIDTH / DATA_WIDTH))+1) * DATA_WIDTH -1,
                                     lsb =  (_iter % (DMA_WIDTH / DATA_WIDTH)) * DATA_WIDTH
-                                )(test_wght_i)
+                                )(test_wght_i),
+                                s_axis_wght_tkeep.slice(
+                                    msb = (_iter % (DMA_WIDTH / DATA_WIDTH) + 1) * DATA_STRB_WIDTH -1,
+                                    lsb = (_iter % (DMA_WIDTH / DATA_WIDTH)    ) * DATA_STRB_WIDTH
+                                )(-1),
                             ) for _iter, test_wght_i in enumerate(test_wght)
                         ],
                         When( )(AssertTrue(0)),
                     ),
-                    s_axis_wght_tkeep[intra_wght](1),
+                    total_wght.inc(),
                 ),
                 s_axis_wght_tlast(total_wght == len(test_wght)-1),
                 While(Ands(~s_axis_wght_tready, ~dma_rst, wght_global_stage == global_stage_counter))(
@@ -1202,31 +1233,33 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     # Result coordinator
     test_rslt = layer_rslt_int.cpu().to(final_dtype).tolist()
     # print('Test layer_data_q:', layer_data_q.shape)
-    # print(np.array(hex_list(layer_data_q.cpu().numpy().astype('uint16').tolist())))
+    # print(np.array(hex_list(layer_data_q.squeeze().cpu().numpy().astype('uint16').tolist())))
     # print('Test layer_grid_q:', layer_grid_q.shape)
-    # print(np.array(hex_list(layer_grid_q.cpu().numpy().astype('uint16').tolist())))
+    # print(np.array(hex_list(layer_grid_q.squeeze().cpu().numpy().astype('uint16').tolist())))
     # print('Test layer_scle_q:', layer_scle_q.shape)
     # print(np.array(hex_list(layer_scle_q.cpu().numpy().astype('uint16').tolist())))
     # print('Test layer_diff_q:', layer_diff_q.shape)
     # print(np.array(hex_list(layer_diff_q.cpu().numpy().astype('uint16').tolist())))
     # print('Test layer_sdff_q:', layer_sdff_q.shape)
     # print(np.array(hex_list(layer_sdff_q.cpu().numpy().astype('uint16').tolist())))
-    x = torch.einsum("bw,wr->wbr", layer_actd_q, layer_wght_q).cpu().numpy().astype('int64')
-    print('Test layer_actd_q:', layer_actd_q.shape)
-    print(np.array(hex_list(layer_actd_q.to(final_dtype).squeeze().cpu().numpy())))
-    print('Test layer_wght_q:', layer_wght_q.shape)
-    print(np.array(hex_list(layer_wght_q.T.to(final_dtype).squeeze().cpu().numpy())))
-    print('Test psum')
-    print(*hex_list([np.sum(x[:_iter+1],axis=0).astype('uint64').tolist() for _iter in range(x.shape[0])]), sep ='\n')
-    print('Test rslt')
-    print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
+    # x = torch.einsum("bw,wr->wbr", layer_actd_q, layer_wght_q).cpu().numpy().astype('int64')
+    # print('Test layer_actd_q:', layer_actd_q.shape)
+    # print(np.array(hex_list(layer_actd_q.to(final_dtype).squeeze().cpu().numpy())))
+    # print('Test layer_wght_q:', layer_wght_q.shape)
+    # print(np.array(hex_list(layer_wght_q.to(final_dtype).squeeze().cpu().numpy())))
+    # print('Test psum')
+    # print(*hex_list([np.sum(x[:_iter+1],axis=0).astype('uint64').tolist() for _iter in range(x.shape[0])]), sep ='\n')
+    # print('Test rslt')
+    # print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
 
     # Result driver
     rslt_done = module.Reg('rslt_done')
     intra_rslt = module.Integer('intra_rslt')
     total_rslt = [module.Integer(f'total_rslt_{batch}') for batch in range(K)]
-    curr_batch = module.Integer('curr_batch')
+    # curr_batch = module.Integer('curr_batch')
     rslt_global_stage = module.Integer('rslt_global_stage')
+    update_total = module.Reg('update_total')
+    rslt_buffer = module.Reg('rslt_buffer', DATA_WIDTH)
     
     module.Initial(
         rslt_global_stage(0),
@@ -1240,62 +1273,70 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             Wait(~dma_clk),
             While(Ands(~rslt_done, ~dma_rst, rslt_global_stage == global_stage_counter))(
                 m_axis_rslt_tready(1),
-                Wait(~dma_clk),
                 While(Ands(~m_axis_rslt_tvalid, ~dma_rst, rslt_global_stage == global_stage_counter))(
                     Wait(dma_clk),
                     Wait(~dma_clk),
                 ),
+                AssertTrue(m_axis_rslt_tkeep != 0),
                 If(And(~dma_rst, rslt_global_stage == global_stage_counter))(
-                    curr_batch(m_axis_rslt_tid),
-                    AssertTrue(curr_batch < K),
-                    Case(curr_batch)(*[
+                    
+                    Display('Rslt -- Caught batch %2d (%0t)', m_axis_rslt_tid, SystemTask('time')),
+                    AssertTrue(m_axis_rslt_tid < K),
+                    Case(m_axis_rslt_tid)(*[
                         When(batch)(
                             AssertTrue(total_rslt_i < rslt_len),
-                        ) for batch, total_rslt_i in enumerate(total_rslt)
-                    ]),
-                    For(
-                        intra_rslt(0), Ands(
-                            intra_rslt < DMA_STRB_WIDTH, Ors(*[
-                                total_rslt_i < rslt_len
-                                    for total_rslt_i in total_rslt
-                            ])
-                        ), intra_rslt.inc()
-                    )(
-                        Case(curr_batch)(*[
-                            When(batch)(
-                                Case(total_rslt[batch])(*[
+                            For(
+                                intra_rslt(0), Ands(
+                                    intra_rslt < DMA_STRB_WIDTH, Ors(*[
+                                        total_rslt_j < rslt_len
+                                            for total_rslt_j in total_rslt
+                                    ]),
+                                    total_rslt_i < rslt_len
+                                ), 
+                                intra_rslt.inc()
+                            )(
+                                update_total(1),
+                                For(rslt_buffer(rslt_buffer), update_total, rslt_buffer((m_axis_rslt_tkeep >> (intra_rslt * DATA_STRB_WIDTH) & EmbeddedNumeric("{DATA_STRB_WIDTH{1'b1}}"))))(
+                                    update_total(0),
+                                ),
+                                # Display("DEBUG: KEEP %h >> %2d = %h -> %b", m_axis_rslt_tkeep, (intra_rslt * DATA_STRB_WIDTH), m_axis_rslt_tkeep >> (intra_rslt * DATA_STRB_WIDTH), rslt_buffer),
+                                Case(total_rslt_i)(*[
                                     When(i)(
-                                        If(m_axis_rslt_tkeep.slice(
-                                                msb = ((i % (DMA_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_STRB_WIDTH,
-                                                lsb = (i % (DMA_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_STRB_WIDTH
-                                            ) == EmbeddedNumeric("{DATA_STRB_WIDTH{1'b1}}")
-                                        )(
-                                            Assert(
-                                                m_axis_rslt_tdata.slice(
-                                                    msb = ((i % (DMA_STRB_WIDTH / DATA_STRB_WIDTH))+1) * DATA_WIDTH -1,
-                                                    lsb = (i % (DMA_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH 
-                                                ), test_rslt_i
+                                        If(rslt_buffer == EmbeddedNumeric("{DATA_STRB_WIDTH{1'b1}}"))(
+                                            AssertTrue(total_rslt_i < rslt_len),
+                                            update_total(1),
+                                            For(rslt_buffer(rslt_buffer), update_total, rslt_buffer(m_axis_rslt_tdata >> (intra_rslt * DATA_WIDTH)))(
+                                                update_total(0),
                                             ),
-                                            total_rslt[batch].inc()
+                                    Display("DEBUG: DATA %h >> %2d = %h -> %h", m_axis_rslt_tdata, (intra_rslt * DATA_WIDTH), m_axis_rslt_tdata >> (intra_rslt * DATA_WIDTH), rslt_buffer),
+                                            AssertAbsDiffLE(rslt_buffer, test_rslt_i,1),
+                                            Display('Rslt -- Batch %2d -- Captured %3d -- PASSED', batch, total_rslt_i),
+                                            If((total_rslt_i % RSLT_CHANNELS) == RSLT_CHANNELS-1)(
+                                                AssertTrue(m_axis_rslt_tlast),
+                                            ).Elif(intra_rslt == DMA_STRB_WIDTH - 1)(
+                                                AssertFalse(m_axis_rslt_tlast),
+                                            ),
+                                            update_total(1),
                                         ) 
                                     ) for i, test_rslt_i in enumerate(test_rslt_batch)
                                 ], When()(AssertTrue(0))
-                                )
-                            ) for batch, test_rslt_batch in enumerate(test_rslt)
-                        ], When()(AssertTrue(0))
-                        ),
+                                ),
+                                For(total_rslt_i(total_rslt_i), update_total, total_rslt_i.inc())(
+                                    update_total(0),
+                                ),
+                            ),
+                            Display('Total after iteration : %3d', total_rslt_i),
+                            
+                        ) for batch, (total_rslt_i, test_rslt_batch) in enumerate(zip(total_rslt, test_rslt))
+                    ], When()(AssertTrue(0))
                     ),
-                    Case(curr_batch)(*[
-                        When(batch)(
-                            Assert(m_axis_rslt_tlast, (total_rslt_i % RSLT_CHANNELS) == RSLT_CHANNELS-1),
-                        ) for batch, total_rslt_i in enumerate(total_rslt)
-                    ]),
-                    Wait(dma_clk),
-                    If(Ands(*[total_rslt_i == rslt_len for total_rslt_i in total_rslt]))(
-                        rslt_done(1),
-                        m_axis_rslt_tready(0),
-                    ),
-                )
+                ),
+                Wait(dma_clk),
+                Wait(~dma_clk),
+                If(Ands(*[total_rslt_i == rslt_len for total_rslt_i in total_rslt]))(
+                    rslt_done(1),
+                    m_axis_rslt_tready(0),
+                ),
             ),
             Wait(~rslt_done),
             Wait(~dma_rst),
@@ -1306,6 +1347,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
 
     # Central Controller Driver
     ctrl_buffer = module.Integer('ctrl_buffer')
+    ctrl_iter_buffer = module.Integer('ctrl_iter_buffer')
     
     def control_wr_seq(REG_NAME, value, value_size):
         return (
@@ -1355,11 +1397,11 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
                 Wait(fsm_clk),
                 Wait(~fsm_clk),
             ),
-            # Display('Ctrl read : %h >> %2d', s_axil_ctrl_rdata, ((ctrl_reg[REG_NAME] % AXIL_CTRL_STRB_WIDTH)*8)),
+            # Display('Ctrl read : %h >> %2d = %h', s_axil_ctrl_rdata, ((ctrl_reg[REG_NAME] % AXIL_CTRL_STRB_WIDTH)*8), (s_axil_ctrl_rdata >> ((ctrl_reg[REG_NAME] % AXIL_CTRL_STRB_WIDTH)*8))),
             out((s_axil_ctrl_rdata >> ((ctrl_reg[REG_NAME] % AXIL_CTRL_STRB_WIDTH)*8)) & EmbeddedNumeric("{" f'{value_size*8}' r"{1'b1}}")),
             
-            
             Wait(fsm_clk),
+            # Display('Ctrl read out : %h', out),
             Wait(~fsm_clk),
             s_axil_ctrl_rready(0),
         )
@@ -1378,7 +1420,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_PCKT_LEN', (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value)), AXIL_CTRL_STRB_WIDTH),
-        *control_wr_seq('CTRL_REG_BTCH_LEN', K, 1),
+        *control_wr_seq('CTRL_REG_BTCH_LEN', BATCH_SIZE, 1),
         *control_wr_seq('CTRL_REG_DATA_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_SCLE_LDR', 1, 1),
@@ -1397,12 +1439,12 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_rd_seq('CTRL_REG_PCKT_LEN', ctrl_buffer, AXIL_CTRL_STRB_WIDTH),
         Assert(ctrl_buffer, pckt_len ),
         *control_rd_seq('CTRL_REG_BTCH_LEN', ctrl_buffer, 1),
-        Assert(ctrl_buffer, K),
-        *control_wr_seq('CTRL_REG_DATA_LDR', ctrl_buffer, 1),
+        Assert(ctrl_buffer, BATCH_SIZE),
+        *control_rd_seq('CTRL_REG_DATA_LDR', ctrl_buffer, 1),
         Assert(ctrl_buffer, 1),
-        *control_wr_seq('CTRL_REG_GRID_LDR', ctrl_buffer, 1),
+        *control_rd_seq('CTRL_REG_GRID_LDR', ctrl_buffer, 1),
         Assert(ctrl_buffer, 1),
-        *control_wr_seq('CTRL_REG_SCLE_LDR', ctrl_buffer, 1),
+        *control_rd_seq('CTRL_REG_SCLE_LDR', ctrl_buffer, 1),
         Assert(ctrl_buffer, 1),
         Display('-- Control Test 1 complete.'),
         
@@ -1413,7 +1455,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 2 complete.'),
         
@@ -1431,7 +1474,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK']),
         *control_wr_seq('CTRL_REG_INTR_REG', ctrl_reg['CTRL_REG_INTR_MASK_SFT'], 1),
@@ -1444,20 +1488,22 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
         Display('-- Control Test 3 complete.'),
         
-        # Test 4: Check invalid configuration -- Data len = 2**DATA_ADDR+1
-        *control_wr_seq('CTRL_REG_DATA_LEN', 2**DATA_ADDR+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 4: Check invalid configuration -- Data len = 2**DATA_ADDR_BYTES+1
+        *control_wr_seq('CTRL_REG_DATA_LEN', 2**DATA_ADDR_BYTES+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         *control_wr_seq('CTRL_REG_DATA_LEN', data_len, AXIL_CTRL_STRB_WIDTH),
         Display('-- Control Test 4 complete.'),
@@ -1470,19 +1516,21 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 5 complete.'),
         
-        # Test 6: Check invalid configuration -- Grid len = 2**GRID_ADDR+1
-        *control_wr_seq('CTRL_REG_GRID_LEN', 2**GRID_ADDR+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 6: Check invalid configuration -- Grid len = 2**GRID_ADDR_BYTES+1
+        *control_wr_seq('CTRL_REG_GRID_LEN', 2**GRID_ADDR_BYTES+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
         Display('-- Control Test 6 complete.'),
@@ -1495,19 +1543,21 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 7 complete.'),
         
-        # Test 8: Check invalid configuration -- Scale len = 2**SCALE_ADDR+1
-        *control_wr_seq('CTRL_REG_SCLE_LEN', 2**SCALE_ADDR+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 8: Check invalid configuration -- Scale len = 2**SCALE_ADDR_BYTES+1
+        *control_wr_seq('CTRL_REG_SCLE_LEN', 2**SCALE_ADDR_BYTES+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
         Display('-- Control Test 8 complete.'),
@@ -1520,24 +1570,40 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 9 complete.'),
         
-        # Test 10: Check invalid configuration -- Packet len = 2**(DATA_ADDR + GRID_ADDR)+1
-        *control_wr_seq('CTRL_REG_PCKT_LEN', 2**(DATA_ADDR + GRID_ADDR)+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 10: Check invalid configuration -- Packet len = 2**(DATA_ADDR_BYTES + GRID_ADDR_BYTES)+1
+        *control_wr_seq('CTRL_REG_PCKT_LEN', 2**(DATA_ADDR_BYTES + GRID_ADDR_BYTES)+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         *control_wr_seq('CTRL_REG_PCKT_LEN', pckt_len, AXIL_CTRL_STRB_WIDTH),
         Display('-- Control Test 10 complete.'),
         
-        # Test 11: Check invalid configuration -- Batch size = 0
+        # Test 11: Check invalid configuration -- Result size = 0
+        *control_wr_seq('CTRL_REG_RSLT_LEN', 0, AXIL_CTRL_STRB_WIDTH),
+        *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+        Assert(ctrl_buffer & (
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+        ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
+        *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
+        Display('-- Control Test 11 complete.'),
+        
+        # Test 12: Check invalid configuration -- Batch size = 0
         *control_wr_seq('CTRL_REG_BTCH_LEN', 0, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
@@ -1545,11 +1611,12 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
-        Display('-- Control Test 11 complete.'),
+        Display('-- Control Test 12 complete.'),
         
-        # Test 12: Check invalid configuration -- Batch size = K+1
+        # Test 13: Check invalid configuration -- Batch size = K+1
         *control_wr_seq('CTRL_REG_BTCH_LEN', K+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
@@ -1557,12 +1624,13 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         *control_wr_seq('CTRL_REG_BTCH_LEN', K, AXIL_CTRL_STRB_WIDTH),
-        Display('-- Control Test 12 complete.'),
+        Display('-- Control Test 13 complete.'),
         
-        # Test 13: Check invalid configuration -- Data not loaded
+        # Test 14: Check invalid configuration -- Data not loaded
         *control_wr_seq('CTRL_REG_DATA_LDR', 0, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
@@ -1570,14 +1638,15 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('Waiting data...'),
         Wait(data_loaded),
         *control_wr_seq('CTRL_REG_DATA_LDR', 1, AXIL_CTRL_STRB_WIDTH),
-        Display('-- Control Test 13 complete.'),
+        Display('-- Control Test 14 complete.'),
         
-        # Test 14: Check invalid configuration -- Grid not loaded
+        # Test 15: Check invalid configuration -- Grid not loaded
         *control_wr_seq('CTRL_REG_GRID_LDR', 0, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
@@ -1585,14 +1654,15 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('Waiting grid...'),
         Wait(grid_loaded),
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, AXIL_CTRL_STRB_WIDTH),
-        Display('-- Control Test 14 complete.'),
+        Display('-- Control Test 15 complete.'),
         
-        # Test 15: Check invalid configuration -- Scale not loaded
+        # Test 16: Check invalid configuration -- Scale not loaded
         *control_wr_seq('CTRL_REG_SCLE_LDR', 0, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
@@ -1600,14 +1670,15 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('Waiting scale...'),
         Wait(scle_loaded),
         *control_wr_seq('CTRL_REG_SCLE_LDR', 1, AXIL_CTRL_STRB_WIDTH),
-        Display('-- Control Test 15 complete.'),
+        Display('-- Control Test 16 complete.'),
         
-        # Test 16: Check invalid configuration -- Weights not loaded
+        # Test 17: Check invalid configuration -- Weights not loaded
         *control_wr_seq('CTRL_REG_WGHT_LDR', 0, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
@@ -1615,26 +1686,28 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         *control_wr_seq('CTRL_REG_WGHT_LDR', 1, AXIL_CTRL_STRB_WIDTH),
-        Display('-- Control Test 16 complete.'),
+        Display('-- Control Test 17 complete.'),
         
-        # Test 17: Check valid configuration
+        # Test 18: Check valid configuration
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
-        Display('-- Control Test 17 complete.'),
+        Display('-- Control Test 18 complete.'),
         
-        # Test 18: Test external error
+        # Test 19: Test external error
         global_stage_counter.inc(),
-        Display('Test 18 start...'),
+        Display('Test 19 start...'),
         *control_wr_seq('CTRL_REG_OPER_STR', 1, 1),
         Wait(operation_busy),
         Wait(~fsm_clk),
@@ -1647,7 +1720,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
         If(rslt_len > RSLT_CHANNELS)(
@@ -1663,8 +1737,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         Display('-- Hit external error'),
         *control_wr_seq('CTRL_REG_INTR_REG', ctrl_reg['CTRL_REG_INTR_MASK_ERR'], 1),
         AssertTrue(operation_error),
-        AssertTrue(core_rst),
         AssertFalse(Cat(operation_busy,operation_complete,locked)),
+        Wait(~core_rst),
         Wait(~fsm_clk),
         Wait(fsm_clk),
         ctrl_buffer(ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']),
@@ -1684,18 +1758,21 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
         Display('-- Unset external error'),
         AssertFalse(Cat(operation_busy,operation_complete,operation_error,locked)),
+        Wait(~fsm_clk),
+        Wait(fsm_clk),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
-        Display('-- Control Test 18 complete.'),
+        Display('-- Control Test 19 complete.'),
         
         
-        # Test 19: Test interrupt abort
+        # Test 20: Test interrupt abort
         global_stage_counter.inc(),
         *control_wr_seq('CTRL_REG_DATA_LEN', data_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
@@ -1707,7 +1784,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_SCLE_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_WGHT_LDR', 1, 1),
-        Display('Test 19 start...'),
+        Display('Test 20 start...'),
         *control_wr_seq('CTRL_REG_OPER_STR', 1, 1),
         Wait(operation_busy),
         Wait(~fsm_clk),
@@ -1720,7 +1797,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
         If(rslt_len > RSLT_CHANNELS)(
@@ -1755,14 +1833,15 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
-        Display('-- Control Test 19 complete.'),
+        Display('-- Control Test 20 complete.'),
         
-        # Test 20: Test interrupt soft
+        # Test 21: Test interrupt soft
         global_stage_counter.inc(),
-        Display('Test 20 start...'),
+        Display('Test 21 start...'),
         *control_wr_seq('CTRL_REG_OPER_STR', 1, 1),
         Wait(operation_busy),
         Wait(~fsm_clk),
@@ -1775,7 +1854,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
         If(rslt_len > RSLT_CHANNELS)(
@@ -1783,65 +1863,282 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             Wait(pl2ps_intr),
         ).Else(
             Display('-- Waiting for time to pass...'),
-            For(ctrl_buffer(0),ctrl_buffer < (weight_len //  (DMA_STRB_WIDTH / DATA_STRB_WIDTH)) // 2, ctrl_buffer.inc())(
+            For(ctrl_buffer(0),ctrl_buffer < (weight_len //  (DMA_STRB_WIDTH / DATA_STRB_WIDTH)) // 4, ctrl_buffer.inc())(
                 Wait(~fsm_clk),
                 Wait(fsm_clk),
             ),
         ),
         Display('-- Hit interrupt soft'),
         *control_wr_seq('CTRL_REG_INTR_REG', ctrl_reg['CTRL_REG_INTR_MASK_SFT'], 1),
-        AssertTrue(operation_busy),
-        AssertFalse(Cat(operation_complete,operation_error,locked)),
-        Wait(~fsm_clk),
-        Wait(fsm_clk),
-        *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
-        Assert(ctrl_buffer & (
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
-        ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
-        *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
-        AssertTrue(operation_busy),
-        AssertFalse(Cat(operation_complete,operation_error,locked)),
-        Wait(~fsm_clk),
-        Wait(fsm_clk),
-        *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
-        Assert(ctrl_buffer & (
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
-        ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
-        
-        Wait(pl2ps_intr),
-        If(rslt_len // RSLT_CHANNELS <= 2)(
-            AssertTrue(operation_complete),
-            AssertFalse(Cat(operation_busy,operation_error,locked)),
-            *control_rd_seq('CTRL_REG_OPER_DNE', ctrl_buffer, 1),
-            Assert(ctrl_buffer,1),
+        If(rslt_len / RSLT_CHANNELS == 1)( # Validate Nominal operation on the next test
+            Wait(~fsm_clk),
+            Wait(fsm_clk),
+            Display('-- Waiting for results...'),
             Wait(rslt_done),
             Wait(~fsm_clk),
             rslt_done(0),
-            *control_wr_seq('CTRL_REG_OPER_DNE', 0, 1),
-            
         ).Else(
-            AssertFalse(Cat(operation_busy,operation_complete,operation_error,locked)),
+            AssertTrue(operation_busy),
+            AssertFalse(Cat(operation_complete,operation_error,locked)),
+            Wait(~fsm_clk),
+            Wait(fsm_clk),
+            *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+            Assert(ctrl_buffer & (
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+            *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
+            AssertTrue(operation_busy),
+            AssertFalse(Cat(operation_complete,operation_error,locked)),
+            Wait(~fsm_clk),
+            Wait(fsm_clk),
+            *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+            Assert(ctrl_buffer & (
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+            
+            If(rslt_len // RSLT_CHANNELS == 2)(
+                Display('-- Waiting for PL interrupt...'),
+                Wait(pl2ps_intr),
+                AssertTrue(operation_complete),
+                AssertFalse(Cat(operation_busy,operation_error,locked)),
+                *control_rd_seq('CTRL_REG_OPER_DNE', ctrl_buffer, 1),
+                Assert(ctrl_buffer,1),
+                Display('-- Waiting for rslt_done...'),
+                Wait(rslt_done),
+                Wait(~fsm_clk),
+                rslt_done(0),
+                *control_wr_seq('CTRL_REG_OPER_DNE', 0, 1),
+                
+            ).Else(
+                Display('-- Waiting for PL interrupt...'),
+                Wait(pl2ps_intr),
+                AssertTrue(operation_busy),
+                AssertFalse(Cat(operation_complete,operation_error,locked)),
+            ),
+            Display('-- Waiting core reset...'),
+            Wait(core_rst),
+            Wait(~core_rst),
+            Wait(~fsm_clk),
+            Wait(fsm_clk),
+            *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+            Assert(ctrl_buffer & (
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
         ),
+        Display('-- Control Test 21 complete.'),
+        rslt_done(0),
+        
+        ## Fix operation valid for next test
+        *control_wr_seq('CTRL_REG_DATA_LEN', data_len, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_PCKT_LEN', (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value)), AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_BTCH_LEN', K, 1),
+        *control_wr_seq('CTRL_REG_DATA_LDR', 1, 1),
+        *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
+        *control_wr_seq('CTRL_REG_SCLE_LDR', 1, 1),
+        *control_wr_seq('CTRL_REG_WGHT_LDR', 1, 1),
+        
+        # Test 22: Test nominal
+        global_stage_counter.inc(),
+        Display('Test 22 start...'),
+        *control_wr_seq('CTRL_REG_OPER_STR', 1, 1),
+        Wait(operation_busy),
+        Wait(~fsm_clk),
+        Wait(fsm_clk),
+        Wait(~fsm_clk),
+        AssertFalse(Cat(operation_error,operation_complete,locked)),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
-        ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+        ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
-        Display('-- Control Test 20 complete.'),
+        ## Iterate until no results left
+        Wait(rslt_global_stage == global_stage_counter),
+        While(rslt_global_stage == global_stage_counter)( 
+            Display('-- Waiting for PL interrupt...'),
+            Wait(pl2ps_intr),
+            *control_rd_seq('CTRL_REG_RSLT_PRG', ctrl_buffer, AXIL_CTRL_STRB_WIDTH),
+            AssertTrue(ctrl_buffer > 0),
+            AssertTrue(ctrl_buffer <= rslt_len),
+            *control_rd_seq('CTRL_REG_ITER_PRG', ctrl_iter_buffer, AXIL_CTRL_STRB_WIDTH),
+            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS - 1),
+            Display('-- Iteration %2d done', ctrl_iter_buffer),
+            Display('-- Results done = %3d', ctrl_buffer),
+            If(ctrl_buffer == rslt_len)(
+                Display('-- Final iteration'),
+                Wait(~fsm_clk),
+                Wait(fsm_clk),
+                Assert(ctrl_buffer, rslt_len),
+                AssertTrue(operation_complete),
+                AssertTrue(locked),
+                AssertFalse(Cat(operation_error,operation_busy)),
+                Wait(~fsm_clk),
+                Wait(fsm_clk),
+                *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK']),
+                *control_rd_seq('CTRL_REG_OPER_DNE', ctrl_buffer, 1),
+                Assert(ctrl_buffer, 1),
+                Display('-- Waiting Result Done'),
+                Wait(rslt_done),
+                Wait(~fsm_clk),
+                rslt_done(0),
+                *control_wr_seq('CTRL_REG_OPER_DNE', 0, 1),
+                *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
+                global_stage_counter.inc(),
+            ).Else(
+                AssertTrue(operation_busy),
+                AssertFalse(Cat(operation_error,operation_complete,locked)),
+                Wait(~pl2ps_intr),
+                *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+            ),
+        ),
+        Display('-- Control Test 22 complete.'),
+        rslt_done(0),
+        
+        ## Fix operation valid for next test
+        *control_wr_seq('CTRL_REG_DATA_LEN', data_len, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_PCKT_LEN', (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value)), AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_BTCH_LEN', K, 1),
+        *control_wr_seq('CTRL_REG_DATA_LDR', 1, 1),
+        *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
+        *control_wr_seq('CTRL_REG_SCLE_LDR', 1, 1),
+        *control_wr_seq('CTRL_REG_WGHT_LDR', 1, 1),
+        
+        # Test 23: Test nominal -- 2nd iteration
+        Display('Test 23 start...'),
+        *control_wr_seq('CTRL_REG_OPER_STR', 1, 1),
+        Wait(operation_busy),
+        Wait(~fsm_clk),
+        Wait(fsm_clk),
+        Wait(~fsm_clk),
+        AssertFalse(Cat(operation_error,operation_complete,locked)),
+        *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+        Assert(ctrl_buffer & (
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+        ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+        ## Iterate until no results left
+        Wait(rslt_global_stage == global_stage_counter),
+        While(rslt_global_stage == global_stage_counter)( 
+            Display('-- Waiting for PL interrupt...'),
+            Wait(pl2ps_intr),
+            *control_rd_seq('CTRL_REG_RSLT_PRG', ctrl_buffer, AXIL_CTRL_STRB_WIDTH),
+            AssertTrue(ctrl_buffer > 0),
+            AssertTrue(ctrl_buffer <= rslt_len),
+            *control_rd_seq('CTRL_REG_ITER_PRG', ctrl_iter_buffer, AXIL_CTRL_STRB_WIDTH),
+            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS - 1),
+            Display('-- Iteration %2d done', ctrl_iter_buffer),
+            Display('-- Results done = %3d', ctrl_buffer),
+            If(ctrl_buffer == rslt_len)(
+                Display('-- Final iteration'),
+                Wait(~fsm_clk),
+                Wait(fsm_clk),
+                Assert(ctrl_buffer, rslt_len),
+                AssertTrue(operation_complete),
+                AssertTrue(locked),
+                AssertFalse(Cat(operation_error,operation_busy)),
+                Wait(~fsm_clk),
+                Wait(fsm_clk),
+                *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK']),
+                *control_rd_seq('CTRL_REG_OPER_DNE', ctrl_buffer, 1),
+                Assert(ctrl_buffer, 1),
+                Display('-- Waiting Result Done'),
+                Wait(rslt_done),
+                Wait(~fsm_clk),
+                rslt_done(0),
+                *control_wr_seq('CTRL_REG_OPER_DNE', 0, 1),
+                *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
+                global_stage_counter.inc(),
+            ).Else(
+                AssertTrue(operation_busy),
+                AssertFalse(Cat(operation_error,operation_complete,locked)),
+                Wait(~pl2ps_intr),
+                *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+            ),
+        ),
+        Display('-- Control Test 23 complete.'),
         
         Delay(20),
         Finish(),
@@ -1859,16 +2156,16 @@ def main():
     os.chdir(os.path.join(TOP_DIR,'rtl'))
     
     for I,J,K in (
-        (1,1,1),
+        # (1,1,1),
         # (1,1,2),
         # (2,2,1),
         # (2,2,2),
         # (2,3,1),
-        # (4,4,1),
+        (4,4,1),
+        # (4,4,4),
         # (8,4,2),
-        # (5,5,5),
     ):
-        N_in, N_out = 8,4
+        N_in, N_out = 24,16
         # N_in, N_out = J,2*I
         test = tb_KanLayer(I=I,J=J,K=K,N_in=N_in,N_out=N_out)
         fname_base = f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}'

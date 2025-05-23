@@ -43,13 +43,13 @@ module DSPELogic #(
   reg  [1:0]             bypass_add_reg = 2'b0;
   reg  [1:0]             reset_acc_reg  = 2'b0;
 
-  reg  [EXTRA_SIGNAL_SIZE-1:0] extra_sig_reg [0:1];
+  reg  [EXTRA_SIGNAL_SIZE-1:0] extra_sig_reg_0;
+  reg  [EXTRA_SIGNAL_SIZE-1:0] extra_sig_reg_1;
 
  generate
   initial begin
-    extra_sig_reg [0] = {EXTRA_SIGNAL_SIZE{1'b0}};
-    extra_sig_reg [1] = {EXTRA_SIGNAL_SIZE{1'b0}};
-    // extra_sig_reg [2] = {EXTRA_SIGNAL_SIZE{1'b0}};
+    extra_sig_reg_0  = {EXTRA_SIGNAL_SIZE{1'b0}};
+    extra_sig_reg_1  = {EXTRA_SIGNAL_SIZE{1'b0}};
   end
 
   always @(posedge clk ) begin
@@ -63,19 +63,18 @@ module DSPELogic #(
         bypass_add_reg [0] <= 1'b0;
         reset_acc_reg  [0] <= 1'b0;
 
-        extra_sig_reg [0] = {EXTRA_SIGNAL_SIZE{1'b0}};
+        extra_sig_reg_0  <= {EXTRA_SIGNAL_SIZE{1'b0}};
       end
 
       if (PIPELINE_LEVEL > 0) begin : stage_mlt_rst_genblock
         mlt_reg <= {MLT_SIZE{1'b0}};
 
-        extra_sig_reg [1] = {EXTRA_SIGNAL_SIZE{1'b0}};
+        extra_sig_reg_1  <= {EXTRA_SIGNAL_SIZE{1'b0}};
       end
 
       // Stage Acc Reset
       acc_reg  <= {ACC_SIZE{1'b0}};
 
-      // extra_sig_reg [2] = {EXTRA_SIGNAL_SIZE{1'b0}};
 
     end else begin
       if (PIPELINE_LEVEL > 1) begin : stage_in_genblock
@@ -87,7 +86,7 @@ module DSPELogic #(
         bypass_add_reg [0] <= bypass_add;
         reset_acc_reg  [0] <= reset_acc;
 
-        extra_sig_reg [0] = extra_sig_in;
+        extra_sig_reg_0   <= extra_sig_in;
       end
 
       if (PIPELINE_LEVEL > 0) begin : stage_mlt_genblock
@@ -99,7 +98,7 @@ module DSPELogic #(
         bypass_add_reg [1] <= bypass_add_reg [0];
         reset_acc_reg  [1] <= reset_acc_reg  [0];
 
-        extra_sig_reg  [1] <= extra_sig_reg [0];
+        extra_sig_reg_1  <= extra_sig_reg_0 ;
       end
       
       if (bypass_add_reg[1] && reset_acc_reg[1]) begin
@@ -111,12 +110,10 @@ module DSPELogic #(
       end else begin
         acc_reg <= $signed(acc_reg) + $signed(mlt_reg);
       end
-
-      // extra_sig_reg  [2] <= extra_sig_reg [1];
     end
   end
 
-  if (PIPELINE_LEVEL <= 1) begin : do_not_stage_inputs_genblock
+  if (PIPELINE_LEVEL < 2) begin : do_not_stage_inputs_genblock
     always @(*) begin
       op0_reg <= op0;
       op1_reg <= op1;
@@ -126,11 +123,11 @@ module DSPELogic #(
       bypass_add_reg [0] <= bypass_add;
       reset_acc_reg  [0] <= reset_acc;
     
-      extra_sig_reg  [0] = extra_sig_in;
+      extra_sig_reg_0  <= extra_sig_in;
     end
   end
     
-  if (PIPELINE_LEVEL <= 0) begin : do_not_stage_mlt_genblock
+  if (PIPELINE_LEVEL < 1) begin : do_not_stage_mlt_genblock
     always @(*) begin
       if (bypass_mlt_reg) begin
         mlt_reg <= op2_reg;
@@ -140,13 +137,13 @@ module DSPELogic #(
       bypass_add_reg [1] <= bypass_add_reg [0];
       reset_acc_reg  [1] <= reset_acc_reg  [0];
 
-      extra_sig_reg  [1] <= extra_sig_reg [0];
+      extra_sig_reg_1  <= extra_sig_reg_0 ;
     end
   end
 
  endgenerate
 
  assign acc = acc_reg;
- assign extra_sig_out = extra_sig_reg [1];
+ assign extra_sig_out = extra_sig_reg_1 ;
     
 endmodule

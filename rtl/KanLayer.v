@@ -615,49 +615,64 @@ module KanLayer #(
   /*************************************************************************************
    More Local Parameters
   *************************************************************************************/
+ `ifdef DATA_IF_IS_AXIL
+  localparam DATA_ADDR_BYTES = DATA_ADDR;
+ `endif
 
  `ifdef DATA_IF_IS_BRAM
   localparam IN_WORD_DATA = BRAM_CTRL_WIDTH / DATA_WIDTH;
 
-  localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total data ram length
-  localparam DATA_ITRL_ADDR = `LOG2(DATA_ITRL_DEPTH);        // number of input address bits of total data memory
+  localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH * IN_WORD_DATA; // simulated total data ram length
+  localparam DATA_ITRL_ADDR = `LOG2( DATA_ITRL_DEPTH );        // number of input address bits of total data memory
 
+  localparam DATA_ADDR_BYTES = DATA_ITRL_ADDR;
+ `endif
+
+ `ifdef GRID_IF_IS_AXIL
+  localparam GRID_ADDR_BYTES = GRID_ADDR;
  `endif
 
  `ifdef GRID_IF_IS_BRAM
   localparam IN_WORD_GRID = BRAM_CTRL_WIDTH / GRID_WIDTH;
 
-  localparam GRID_ITRL_DEPTH = GRID_BANKS * GRID_BANK_DEPTH; // simulated total data ram length
-  localparam GRID_ITRL_ADDR = `LOG2(GRID_ITRL_DEPTH);        // number of input address bits of total data memory
+  localparam GRID_ITRL_DEPTH = GRID_BANKS * GRID_BANK_DEPTH * IN_WORD_GRID; // simulated total data ram length
+  localparam GRID_ITRL_ADDR = `LOG2( GRID_ITRL_DEPTH );        // number of input address bits of total data memory
 
   localparam GRID_DEPTH_RESOLVED = GRID_ITRL_DEPTH;
 
   localparam GRID_EXTRL_DEPTH = GRID_DEPTH_RESOLVED / IN_WORD_GRID;  // grid depth as seen from external ram control interface
-  localparam GRID_EXTRL_ADDR = `LOG2(GRID_EXTRL_DEPTH);     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
+  localparam GRID_EXTRL_ADDR = `LOG2( GRID_EXTRL_DEPTH );     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
 
-  localparam GRID_ADDR = `LOG2(GRID_DEPTH_RESOLVED);  // number of input address bits of total grid memory
+  localparam GRID_ADDR = `LOG2( GRID_DEPTH_RESOLVED );  // number of input address bits of total grid memory
   localparam GRID_PHYS_DEPTH = GRID_DEPTH_RESOLVED / IN_WORD_GRID;  // effective - physical depth of grid ram
-  localparam GRID_PHYS_ADDR = `LOG2(GRID_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
+  localparam GRID_PHYS_ADDR = `LOG2( GRID_PHYS_DEPTH ); // number of bits to represent actual addresses of grid ram
+
+  localparam GRID_ADDR_BYTES = GRID_ITRL_ADDR;
+ `endif
+
+ `ifdef SCALE_IF_IS_AXIL
+  localparam SCALE_ADDR_BYTES = SCALE_ADDR;
  `endif
 
  `ifdef SCALE_IF_IS_BRAM
   localparam IN_WORD_SCALE = BRAM_CTRL_WIDTH / SCALE_WIDTH;
 
-  localparam SCALE_ITRL_DEPTH = SCALE_BANKS * SCALE_BANK_DEPTH; // simulated total data ram length
-  localparam SCALE_ITRL_ADDR = `LOG2(SCALE_ITRL_DEPTH);        // number of input address bits of total data memory
+  localparam SCALE_ITRL_DEPTH = SCALE_BANKS * SCALE_BANK_DEPTH * IN_WORD_SCALE; // simulated total data ram length
+  localparam SCALE_ITRL_ADDR = `LOG2( SCALE_ITRL_DEPTH );        // number of input address bits of total data memory
 
   localparam SCALE_DEPTH_RESOLVED = SCALE_ITRL_DEPTH;
 
   localparam SCALE_EXTRL_DEPTH = SCALE_DEPTH_RESOLVED / IN_WORD_SCALE;  // grid depth as seen from external ram control interface
-  localparam SCALE_EXTRL_ADDR = `LOG2(SCALE_EXTRL_DEPTH);     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
+  localparam SCALE_EXTRL_ADDR = `LOG2( SCALE_EXTRL_DEPTH );     // number of bits needed for the addressing of the grid ram from the external ram controlm interface
 
-  localparam SCALE_ADDR = `LOG2(SCALE_DEPTH_RESOLVED);  // number of input address bits of total grid memory
+  localparam SCALE_ADDR = `LOG2( SCALE_DEPTH_RESOLVED );  // number of input address bits of total grid memory
   localparam SCALE_PHYS_DEPTH = SCALE_DEPTH_RESOLVED / IN_WORD_SCALE;  // effective - physical depth of grid ram
-  localparam SCALE_PHYS_ADDR = `LOG2(SCALE_PHYS_DEPTH); // number of bits to represent actual addresses of grid ram
- `endif
-  // localparam DATA_WIDTH_GRID = DATA_WIDTH_DATA;
+  localparam SCALE_PHYS_ADDR = `LOG2( SCALE_PHYS_DEPTH ); // number of bits to represent actual addresses of grid ram
 
-  localparam PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR;
+  localparam SCALE_ADDR_BYTES = SCALE_ITRL_ADDR;
+ `endif
+
+  localparam PCKT_SIZE_WIDTH = DATA_ADDR_BYTES + GRID_ADDR_BYTES;
 
   // Number of Independent AXI-Stream Weight Channels
   localparam WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS;
@@ -712,9 +727,12 @@ module KanLayer #(
   *************************************************************************************/
 
   wire                            operation_start;
-  wire [DATA_ADDR:0]              data_size;
-  wire [GRID_ADDR:0]              grid_size;
-  wire [SCALE_ADDR:0]             scle_size;
+  wire [DATA_ADDR_BYTES:0]        data_size;
+  wire [GRID_ADDR_BYTES:0]        grid_size;
+  wire [SCALE_ADDR_BYTES:0]       scle_size;
+  wire [DATA_ADDR:0]              data_size_norm;
+  wire [GRID_ADDR:0]              grid_size_norm;
+  wire [SCALE_ADDR:0]             scle_size_norm;
   wire [PCKT_SIZE_WIDTH-1:0]      pckt_size;
   wire [RSLT_CHANNELS-1:0]        use_channels;
   wire [BATCH_SIZE-1:0]           use_batch;
@@ -871,31 +889,31 @@ module KanLayer #(
   wire [BRAM_CTRL_WIDTH-1:0]              int_trl_data_bram_rddata_i    [0:BATCH_SIZE-1];
   
   wire [DATA_BANKS-1:0]                   int_trl_data_bram_en_o        [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WE)-1:0]         int_trl_data_bram_we_o        [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_trl_data_bram_addr_o      [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_trl_data_bram_wrdata_o    [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_trl_data_bram_rddata_o    [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_WE-1:0]           int_trl_data_bram_we_o        [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_ADDR-1:0]         int_trl_data_bram_addr_o      [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_WIDTH-1:0]        int_trl_data_bram_wrdata_o    [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_WIDTH-1:0]        int_trl_data_bram_rddata_o    [0:BATCH_SIZE-1];
 
   generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: bram_trl_data_genblock
     BramIntrfTranslator # (
-      .IN_WIDTH  (BRAM_CTRL_WIDTH),
-      .OUT_WIDTH (DATA_WIDTH),
-      .BANKS     (DATA_BANKS),
-      .OUT_DEPTH (DATA_BANK_DEPTH),
+      .IN_WIDTH     (BRAM_CTRL_WIDTH),
+      .OUT_WIDTH    (DATA_WIDTH),
+      .BANKS        (DATA_BANKS),
+      .OUT_DEPTH    (DATA_BANK_DEPTH),
       .RD_LATENCY   (1)
     ) bram_trl_data_inst (
-      .clk       (bram_ctrl_data_clk            [BATCH]),
-      .en_i      (int_trl_data_bram_en_i        [BATCH]),
-      .we_i      (int_trl_data_bram_we_i        [BATCH]),
-      .addr_i    (int_trl_data_bram_addr_i      [BATCH]),
-      .wrdata_i  (int_trl_data_bram_wrdata_i    [BATCH]),
-      .rddata_i  (int_trl_data_bram_rddata_i    [BATCH]),
-      .en_o      (int_trl_data_bram_en_o        [BATCH]),
-      .we_o      (int_trl_data_bram_we_o        [BATCH]),
-      .addr_o    (int_trl_data_bram_addr_o      [BATCH]),
-      .wrdata_o  (int_trl_data_bram_wrdata_o    [BATCH]),
-      .rddata_o  (int_trl_data_bram_rddata_o    [BATCH])
+      .clk          (bram_ctrl_data_clk            [BATCH]),
+      .en_i         (int_trl_data_bram_en_i        [BATCH]),
+      .we_i         (int_trl_data_bram_we_i        [BATCH]),
+      .addr_i       (int_trl_data_bram_addr_i      [BATCH]),
+      .wrdata_i     (int_trl_data_bram_wrdata_i    [BATCH]),
+      .rddata_i     (int_trl_data_bram_rddata_i    [BATCH]),
+      .en_o         (int_trl_data_bram_en_o        [BATCH]),
+      .we_o         (int_trl_data_bram_we_o        [BATCH]),
+      .addr_o       (int_trl_data_bram_addr_o      [BATCH]),
+      .wrdata_o     (int_trl_data_bram_wrdata_o    [BATCH]),
+      .rddata_o     (int_trl_data_bram_rddata_o    [BATCH])
     );
   end
   endgenerate
@@ -910,14 +928,14 @@ module KanLayer #(
   *********************************************/
   wire                                    int_ram_data_bram_clk_a       [0:BATCH_SIZE-1];
   wire [DATA_BANKS-1:0]                   int_ram_data_bram_en_a        [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WE)-1:0]         int_ram_data_bram_we_a        [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_ram_data_bram_addr_a      [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_wrdata_a    [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_rddata_a    [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_WE-1:0]           int_ram_data_bram_we_a        [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_ADDR-1:0]         int_ram_data_bram_addr_a      [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_WIDTH-1:0]        int_ram_data_bram_wrdata_a    [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_WIDTH-1:0]        int_ram_data_bram_rddata_a    [0:BATCH_SIZE-1];
 
   wire [DATA_BANKS-1:0]                   int_ram_data_bram_en_b        [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_ADDR)-1:0]       int_ram_data_bram_addr_b      [0:BATCH_SIZE-1];
-  wire [(DATA_BANKS*DATA_WIDTH)-1:0]      int_ram_data_bram_rddata_b    [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_ADDR-1:0]         int_ram_data_bram_addr_b      [0:BATCH_SIZE-1];
+  wire [DATA_BANKS*DATA_WIDTH-1:0]        int_ram_data_bram_rddata_b    [0:BATCH_SIZE-1];
   wire [DATA_BANKS-1:0]                   int_ram_data_bram_rdack_b     [0:BATCH_SIZE-1];
 
   generate
@@ -928,16 +946,16 @@ module KanLayer #(
       .DEPTH  (DATA_BANK_DEPTH),
       .ADDR   (DATA_ADDR)
     ) bram_ram_data_inst (
-      .clk    (int_ram_data_bram_clk_a [BATCH]),
-      .ena    (int_ram_data_bram_en_a [BATCH]),
-      .wea    (int_ram_data_bram_we_a [BATCH]),
-      .addra  (int_ram_data_bram_addr_a [BATCH]),
-      .dina   (int_ram_data_bram_wrdata_a [BATCH]),
-      .douta  (int_ram_data_bram_rddata_a [BATCH]),
-      .enb    (int_ram_data_bram_en_b [BATCH]),
-      .addrb  (int_ram_data_bram_addr_b [BATCH]),
-      .doutb  (int_ram_data_bram_rddata_b [BATCH]),
-      .validb (int_ram_data_bram_rdack_b [BATCH])
+      .clk    (int_ram_data_bram_clk_a      [BATCH]),
+      .ena    (int_ram_data_bram_en_a       [BATCH]),
+      .wea    (int_ram_data_bram_we_a       [BATCH]),
+      .addra  (int_ram_data_bram_addr_a     [BATCH]),
+      .dina   (int_ram_data_bram_wrdata_a   [BATCH]),
+      .douta  (int_ram_data_bram_rddata_a   [BATCH]),
+      .enb    (int_ram_data_bram_en_b       [BATCH]),
+      .addrb  (int_ram_data_bram_addr_b     [BATCH]),
+      .doutb  (int_ram_data_bram_rddata_b   [BATCH]),
+      .validb (int_ram_data_bram_rdack_b    [BATCH])
     );
   end
   endgenerate
@@ -1081,10 +1099,10 @@ module KanLayer #(
   wire [BRAM_CTRL_WIDTH-1:0]              int_trl_grid_bram_rddata_i;
   
   wire [GRID_BANKS-1:0]                   int_trl_grid_bram_en_o;
-  wire [(GRID_BANKS*GRID_WE)-1:0]         int_trl_grid_bram_we_o;
-  wire [(GRID_BANKS*GRID_ADDR)-1:0]       int_trl_grid_bram_addr_o;
-  wire [(GRID_BANKS*GRID_WIDTH)-1:0]      int_trl_grid_bram_wrdata_o;
-  wire [(GRID_BANKS*GRID_WIDTH)-1:0]      int_trl_grid_bram_rddata_o;
+  wire [GRID_BANKS*GRID_WE-1:0]           int_trl_grid_bram_we_o;
+  wire [GRID_BANKS*GRID_ADDR-1:0]         int_trl_grid_bram_addr_o;
+  wire [GRID_BANKS*GRID_WIDTH-1:0]        int_trl_grid_bram_wrdata_o;
+  wire [GRID_BANKS*GRID_WIDTH-1:0]        int_trl_grid_bram_rddata_o;
 
   BramIntrfTranslator # (
     .IN_WIDTH     (BRAM_CTRL_WIDTH),
@@ -1116,14 +1134,14 @@ module KanLayer #(
   *********************************************/
   wire                                    int_ram_grid_bram_clk_a;
   wire [GRID_BANKS-1:0]                   int_ram_grid_bram_en_a;
-  wire [(GRID_BANKS*GRID_WE)-1:0]         int_ram_grid_bram_we_a;
-  wire [(GRID_BANKS*GRID_ADDR)-1:0]       int_ram_grid_bram_addr_a;
-  wire [(GRID_BANKS*GRID_WIDTH)-1:0]      int_ram_grid_bram_wrdata_a;
-  wire [(GRID_BANKS*GRID_WIDTH)-1:0]      int_ram_grid_bram_rddata_a;
+  wire [GRID_BANKS*GRID_WE-1:0]           int_ram_grid_bram_we_a;
+  wire [GRID_BANKS*GRID_ADDR-1:0]         int_ram_grid_bram_addr_a;
+  wire [GRID_BANKS*GRID_WIDTH-1:0]        int_ram_grid_bram_wrdata_a;
+  wire [GRID_BANKS*GRID_WIDTH-1:0]        int_ram_grid_bram_rddata_a;
 
   wire [GRID_BANKS-1:0]                   int_ram_grid_bram_en_b;
-  wire [(GRID_BANKS*GRID_ADDR)-1:0]       int_ram_grid_bram_addr_b;
-  wire [(GRID_BANKS*GRID_WIDTH)-1:0]      int_ram_grid_bram_rddata_b;
+  wire [GRID_BANKS*GRID_ADDR-1:0]         int_ram_grid_bram_addr_b;
+  wire [GRID_BANKS*GRID_WIDTH-1:0]        int_ram_grid_bram_rddata_b;
   wire [GRID_BANKS-1:0]                   int_ram_grid_bram_rdack_b;
 
   MultiBankBram #(
@@ -1283,10 +1301,10 @@ module KanLayer #(
   wire [BRAM_CTRL_WIDTH-1:0]                int_trl_scle_bram_rddata_i;
   
   wire [SCALE_BANKS-1:0]                    int_trl_scle_bram_en_o;
-  wire [(SCALE_BANKS*SCALE_WE)-1:0]         int_trl_scle_bram_we_o;
-  wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_trl_scle_bram_addr_o;
-  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_trl_scle_bram_wrdata_o;
-  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_trl_scle_bram_rddata_o;
+  wire [SCALE_BANKS*SCALE_WE-1:0]           int_trl_scle_bram_we_o;
+  wire [SCALE_BANKS*SCALE_ADDR-1:0]         int_trl_scle_bram_addr_o;
+  wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_trl_scle_bram_wrdata_o;
+  wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_trl_scle_bram_rddata_o;
 
   BramIntrfTranslator # (
     .IN_WIDTH     (BRAM_CTRL_WIDTH),
@@ -1318,14 +1336,14 @@ module KanLayer #(
   *********************************************/
   wire                                      int_ram_scle_bram_clk_a;
   wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_a;
-  wire [(SCALE_BANKS*SCALE_WE)-1:0]         int_ram_scle_bram_we_a;
-  wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_ram_scle_bram_addr_a;
-  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_wrdata_a;
-  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_rddata_a;
+  wire [SCALE_BANKS*SCALE_WE-1:0]           int_ram_scle_bram_we_a;
+  wire [SCALE_BANKS*SCALE_ADDR-1:0]         int_ram_scle_bram_addr_a;
+  wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_ram_scle_bram_wrdata_a;
+  wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_ram_scle_bram_rddata_a;
 
   wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_b;
-  wire [(SCALE_BANKS*SCALE_ADDR)-1:0]       int_ram_scle_bram_addr_b;
-  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]      int_ram_scle_bram_rddata_b;
+  wire [SCALE_BANKS*SCALE_ADDR-1:0]         int_ram_scle_bram_addr_b;
+  wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_ram_scle_bram_rddata_b;
   wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_rdack_b;
 
   MultiBankBram #(
@@ -1386,8 +1404,8 @@ module KanLayer #(
  `elsif DATA_IF_IS_BRAM
   wire [BATCH_SIZE*DATA_BANKS-1:0]                int_mcu_data_bram_clk;
   wire [BATCH_SIZE*DATA_BANKS-1:0]                int_mcu_data_bram_en;
-  wire [BATCH_SIZE*(DATA_BANKS*DATA_ADDR)-1:0]    int_mcu_data_bram_addr;
-  wire [BATCH_SIZE*(DATA_BANKS*DATA_WIDTH)-1:0]   int_mcu_data_bram_rddata;
+  wire [BATCH_SIZE*DATA_BANKS*DATA_ADDR-1:0]      int_mcu_data_bram_addr;
+  wire [BATCH_SIZE*DATA_BANKS*DATA_WIDTH-1:0]     int_mcu_data_bram_rddata;
   wire [BATCH_SIZE*DATA_BANKS-1:0]                int_mcu_data_bram_rdack;
 
  `endif
@@ -1406,8 +1424,8 @@ module KanLayer #(
  `elsif GRID_IF_IS_BRAM
   wire [GRID_BANKS-1:0]                           int_mcu_grid_bram_clk;
   wire [GRID_BANKS-1:0]                           int_mcu_grid_bram_en;
-  wire [(GRID_BANKS*GRID_ADDR)-1:0]               int_mcu_grid_bram_addr;
-  wire [(GRID_BANKS*GRID_WIDTH)-1:0]              int_mcu_grid_bram_rddata;
+  wire [GRID_BANKS*GRID_ADDR-1:0]                 int_mcu_grid_bram_addr;
+  wire [GRID_BANKS*GRID_WIDTH-1:0]                int_mcu_grid_bram_rddata;
   wire [GRID_BANKS-1:0]                           int_mcu_grid_bram_rdack;
 
  `endif
@@ -1425,8 +1443,8 @@ module KanLayer #(
  `elsif SCALE_IF_IS_BRAM
   wire [SCALE_BANKS-1:0]                          int_mcu_scle_bram_clk;
   wire [SCALE_BANKS-1:0]                          int_mcu_scle_bram_en;
-  wire [(SCALE_BANKS*SCALE_ADDR)-1:0]             int_mcu_scle_bram_addr;
-  wire [(SCALE_BANKS*SCALE_WIDTH)-1:0]            int_mcu_scle_bram_rddata;
+  wire [SCALE_BANKS*SCALE_ADDR-1:0]               int_mcu_scle_bram_addr;
+  wire [SCALE_BANKS*SCALE_WIDTH-1:0]              int_mcu_scle_bram_rddata;
   wire [SCALE_BANKS-1:0]                          int_mcu_scle_bram_rdack;
  `endif
 
@@ -1478,11 +1496,11 @@ module KanLayer #(
     .SCALE_FIFO_DEPTH           (SCALE_FIFO_DEPTH)
   ) mcu_inst (
     .fsm_clk                    (fsm_clk),
-    .rst                        (fsm_rst),
+    .rst                        (core_rst),
     .operation_start            (operation_start),
-    .data_size                  (data_size),
-    .grid_size                  (grid_size),
-    .scle_size                  (scle_size),
+    .data_size                  (data_size_norm),
+    .grid_size                  (grid_size_norm),
+    .scle_size                  (scle_size_norm),
     .operation_busy             (mcu_operation_busy),
     .operation_complete         (mcu_operation_complete),
     .operation_error            (mcu_operation_error),
@@ -1592,7 +1610,7 @@ module KanLayer #(
       .USER_WIDTH     (1)
     ) axis_adp_data_inst (
       .s_clk          (int_adp_data_s_axis_aclk   [CHN]),
-      .s_rst          (1'b0),
+      .s_rst          (core_rst),
       .s_axis_tdata   (int_adp_data_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
       .s_axis_tkeep   (1'b1),
       .s_axis_tvalid  (int_adp_data_s_axis_tvalid [CHN]),
@@ -1651,7 +1669,7 @@ module KanLayer #(
       .USER_WIDTH     (1)
     ) axis_adp_grid_inst (
       .s_clk          (int_adp_grid_s_axis_aclk   [CHN]),
-      .s_rst          (1'b0),
+      .s_rst          (core_rst),
       .s_axis_tdata   (int_adp_grid_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
       .s_axis_tkeep   (1'b1),
       .s_axis_tvalid  (int_adp_grid_s_axis_tvalid [CHN]),
@@ -1710,7 +1728,7 @@ module KanLayer #(
       .USER_WIDTH     (1)
     ) axis_adp_scle_inst (
       .s_clk          (int_adp_scle_s_axis_aclk   [CHN]),
-      .s_rst          (1'b0),
+      .s_rst          (core_rst),
       .s_axis_tdata   (int_adp_scle_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
       .s_axis_tkeep   (1'b1),
       .s_axis_tvalid  (int_adp_scle_s_axis_tvalid [CHN]),
@@ -1998,7 +2016,7 @@ module KanLayer #(
     .DEST_WIDTH         (1),
     .USER_ENABLE        (0),
     .USER_WIDTH         (1)
-  ) axis_jnr_rslt_inst (
+  ) axis_jnr_rslt_inst  (
     .clk                (core_clk),
     .rst                (core_rst),
     .operation_start    (operation_start),
@@ -2057,7 +2075,7 @@ module KanLayer #(
     .M_DATA_WIDTH   (DMA_WIDTH),
     .M_KEEP_ENABLE  (DMA_KEEP_ENABLE),
     .M_KEEP_WIDTH   (DMA_KEEP_WIDTH),
-    .ID_ENABLE      (RSLT_ID_ENABLE),
+    .ID_ENABLE      (1),
     .ID_WIDTH       (RSLT_ID_WIDTH),
     .DEST_ENABLE    (0),
     .DEST_WIDTH     (1),
@@ -2157,7 +2175,7 @@ module KanLayer #(
     .OUTPUT_DEST                  (0),
     .OUTPUT_ID                    (0),
     .FIFO_DEPTH                   (0),
-    .PIPELINE_LEVEL               (2)
+    .PIPELINE_LEVEL               (0)
   ) data_processor_inst (
     .clk                          (core_clk),
     .rst                          (fsm_rst || internal_operation_error),
@@ -2207,13 +2225,14 @@ module KanLayer #(
     .BATCH_SIZE                     (BATCH_SIZE),
     .DATA_CHANNELS                  (DATA_CHANNELS),
     .RSLT_CHANNELS                  (RSLT_CHANNELS),
-    .DATA_ADDR                      (DATA_ADDR),
-    .GRID_ADDR                      (GRID_ADDR),
-    .SCALE_ADDR                     (SCALE_ADDR),
+    .DATA_ADDR                      (DATA_ADDR_BYTES),
+    .GRID_ADDR                      (GRID_ADDR_BYTES),
+    .SCALE_ADDR                     (SCALE_ADDR_BYTES),
     .PCKT_SIZE_WIDTH                (PCKT_SIZE_WIDTH)
   ) ccu (
     .fsm_clk                        (fsm_clk),
     .fsm_rst                        (fsm_rst),
+    .core_clk                       (core_clk),
     .core_rst                       (core_rst),
     .operation_start                (operation_start),
     .data_size                      (data_size),
@@ -2302,26 +2321,26 @@ module KanLayer #(
   generate
   for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: bram_if_batch_genblock
     // bram control interface to the data bram translator
-    assign int_trl_data_bram_en_i     [BATCH]                                     = bram_ctrl_data_en [BATCH];
-    assign int_trl_data_bram_we_i     [BATCH]                                     = bram_ctrl_data_we [BATCH*BRAM_CTRL_WE +: BRAM_CTRL_WE];
-    assign int_trl_data_bram_addr_i   [BATCH]                                     = bram_ctrl_data_addr [BATCH*BRAM_CTRL_ADDR +2 +: DATA_ITRL_ADDR];
-    assign int_trl_data_bram_wrdata_i [BATCH]                                     = bram_ctrl_data_din [BATCH*BRAM_CTRL_WIDTH +: BRAM_CTRL_WIDTH];
+    assign int_trl_data_bram_en_i     [BATCH]                                     = bram_ctrl_data_en          [BATCH];
+    assign int_trl_data_bram_we_i     [BATCH]                                     = bram_ctrl_data_we          [BATCH*BRAM_CTRL_WE +: BRAM_CTRL_WE];
+    assign int_trl_data_bram_addr_i   [BATCH]                                     = bram_ctrl_data_addr        [BATCH*BRAM_CTRL_ADDR +: DATA_ITRL_ADDR] >> `RLOG2(IN_WORD_DATA);
+    assign int_trl_data_bram_wrdata_i [BATCH]                                     = bram_ctrl_data_din         [BATCH*BRAM_CTRL_WIDTH +: BRAM_CTRL_WIDTH];
     assign bram_ctrl_data_dout        [BATCH*BRAM_CTRL_WIDTH +: BRAM_CTRL_WIDTH]  = int_trl_data_bram_rddata_i [BATCH];
 
     // data bram translator to data bram port a
-    assign int_ram_data_bram_clk_a    [BATCH] = bram_ctrl_data_clk [BATCH];
-    assign int_ram_data_bram_en_a     [BATCH] = int_trl_data_bram_en_o [BATCH];
-    assign int_ram_data_bram_we_a     [BATCH] = int_trl_data_bram_we_o [BATCH];
-    assign int_ram_data_bram_addr_a   [BATCH] = int_trl_data_bram_addr_o [BATCH];
-    assign int_ram_data_bram_wrdata_a [BATCH] = int_trl_data_bram_wrdata_o [BATCH];
-    assign int_trl_data_bram_rddata_o [BATCH] = int_ram_data_bram_rddata_a [BATCH];
+    assign int_ram_data_bram_clk_a    [BATCH] = bram_ctrl_data_clk          [BATCH];
+    assign int_ram_data_bram_en_a     [BATCH] = int_trl_data_bram_en_o      [BATCH];
+    assign int_ram_data_bram_we_a     [BATCH] = int_trl_data_bram_we_o      [BATCH];
+    assign int_ram_data_bram_addr_a   [BATCH] = int_trl_data_bram_addr_o    [BATCH];
+    assign int_ram_data_bram_wrdata_a [BATCH] = int_trl_data_bram_wrdata_o  [BATCH];
+    assign int_trl_data_bram_rddata_o [BATCH] = int_ram_data_bram_rddata_a  [BATCH];
 
     // data bram port b to memory control unit
-    assign int_mcu_data_bram_clk      [BATCH]                           = int_ram_data_bram_clk_a [BATCH];
-    assign int_ram_data_bram_en_b     [BATCH]                           = int_mcu_data_bram_en [BATCH];
-    assign int_ram_data_bram_addr_b   [BATCH]                           = int_mcu_data_bram_addr [BATCH*DATA_ADDR +: DATA_ADDR];
-    assign int_mcu_data_bram_rddata   [BATCH*DATA_WIDTH +: DATA_WIDTH]  = int_ram_data_bram_rddata_b [BATCH];
-    assign int_mcu_data_bram_rdack    [BATCH]                           = int_ram_data_bram_rdack_b [BATCH];
+    assign int_mcu_data_bram_clk      [BATCH*DATA_CHANNELS +: DATA_CHANNELS]                  = {DATA_CHANNELS{int_ram_data_bram_clk_a[BATCH]}};
+    assign int_ram_data_bram_en_b     [BATCH]                                                 = int_mcu_data_bram_en        [BATCH*DATA_BANKS +: DATA_BANKS];
+    assign int_ram_data_bram_addr_b   [BATCH]                                                 = int_mcu_data_bram_addr      [BATCH*DATA_BANKS*DATA_ADDR +: DATA_BANKS*DATA_ADDR];
+    assign int_mcu_data_bram_rddata   [BATCH*DATA_BANKS*DATA_WIDTH +: DATA_BANKS*DATA_WIDTH]  = int_ram_data_bram_rddata_b  [BATCH];
+    assign int_mcu_data_bram_rdack    [BATCH*DATA_BANKS +: DATA_BANKS]                        = int_ram_data_bram_rdack_b   [BATCH];
   end
   endgenerate
  `endif
@@ -2365,7 +2384,7 @@ module KanLayer #(
   // bram control interface to the data bram translator
   assign int_trl_grid_bram_en_i     = bram_ctrl_grid_en;
   assign int_trl_grid_bram_we_i     = bram_ctrl_grid_we;
-  assign int_trl_grid_bram_addr_i   = bram_ctrl_grid_addr;
+  assign int_trl_grid_bram_addr_i   = bram_ctrl_grid_addr >> `RLOG2(IN_WORD_GRID);
   assign int_trl_grid_bram_wrdata_i = bram_ctrl_grid_din;
   assign bram_ctrl_grid_dout        = int_trl_grid_bram_rddata_i;
 
@@ -2424,7 +2443,7 @@ module KanLayer #(
   // bram control interface to the data bram translator
   assign int_trl_scle_bram_en_i     = bram_ctrl_scle_en;
   assign int_trl_scle_bram_we_i     = bram_ctrl_scle_we;
-  assign int_trl_scle_bram_addr_i   = bram_ctrl_scle_addr;
+  assign int_trl_scle_bram_addr_i   = bram_ctrl_scle_addr >> `RLOG2(IN_WORD_SCALE);
   assign int_trl_scle_bram_wrdata_i = bram_ctrl_scle_din;
   assign bram_ctrl_scle_dout        = int_trl_scle_bram_rddata_i;
 
@@ -2546,11 +2565,30 @@ module KanLayer #(
   assign m_axis_rslt_tvalid          = int_adp_rslt_m_axis_tvalid;
   assign int_adp_rslt_m_axis_tready  = m_axis_rslt_tready;
   assign m_axis_rslt_tlast           = int_adp_rslt_m_axis_tlast;
-  assign m_axis_rslt_tid             = (RSLT_ID_ENABLE) ? {int_adp_rslt_m_axis_tid, ID_OUTPUT[RSLT_ID_WIDTH-`LOG2(BATCH_SIZE):0]} : ID_OUTPUT;
+  assign m_axis_rslt_tid             = (RSLT_ID_ENABLE) ? (
+                                        RSLT_ID_WIDTH == `LOG2( BATCH_SIZE ) ? 
+                                          int_adp_rslt_m_axis_tid : 
+                                          {int_adp_rslt_m_axis_tid, ID_OUTPUT[RSLT_ID_WIDTH-`LOG2( BATCH_SIZE ):0]}
+                                      ) : ID_OUTPUT;
   assign m_axis_rslt_tdest           = (DEST_ENABLE) ? DEST_OUTPUT : 0;
   assign m_axis_rslt_tuser           = (USER_ENABLE) ? USER_OUTPUT : 0;
 
   // connect internal control signals !!!
+  `ifdef DATA_IF_IS_AXIL
+  assign data_size_norm = data_size;
+  `elsif DATA_IF_IS_BRAM
+  assign data_size_norm = data_size >> `RLOG2( DATA_BANKS );
+  `endif 
+  `ifdef GRID_IF_IS_AXIL
+  assign grid_size_norm = grid_size;
+  `elsif GRID_IF_IS_BRAM
+  assign grid_size_norm = grid_size >> `RLOG2( GRID_BANKS );
+  `endif 
+  `ifdef SCALE_IF_IS_AXIL
+  assign scle_size_norm = scle_size;
+  `elsif SCALE_IF_IS_BRAM
+  assign scle_size_norm = scle_size >> `RLOG2( SCLE_BANKS );
+  `endif 
 
   assign peripheral_operation_busy     [PERIPHERAL_MCU] = mcu_operation_busy;
   assign peripheral_operation_complete [PERIPHERAL_MCU] = mcu_operation_complete;
@@ -2572,7 +2610,7 @@ module KanLayer #(
   assign peripheral_operation_error    [PERIPHERAL_JNR] = jnr_operation_error;
   assign peripheral_transmission       [PERIPHERAL_JNR] = jnr_transmission;
 
-  assign rslt_tlast = int_jnr_rslt_m_axis_tlast;
+  assign rslt_tlast = (int_dpu_wght_s_axis_tready[0] && int_dpu_wght_s_axis_tvalid[0]) ? int_dpu_wght_s_axis_tlast[0] : 1'b0;
 endmodule
 
 `resetall

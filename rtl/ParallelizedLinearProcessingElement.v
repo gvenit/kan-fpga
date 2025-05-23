@@ -147,8 +147,7 @@ module ParallelizedLinearProcessingElement #(
   wire export_rslt_last;
   
   // Pipelined Output Signals
-  wire export_rslt_sync;
-  wire export_rslt_last_sync;
+  wire export_rslt_sync, export_rslt_last_sync;
 
   // DataFlow Registers & Wires
   wire [PSUM_WIDTH-1:0]                   partial_sum_reg;
@@ -159,7 +158,7 @@ module ParallelizedLinearProcessingElement #(
     .OP0_SIZE             (OP0_WIDTH + IS_UNSIGNED_OP0),
     .OP1_SIZE             (OP1_WIDTH + IS_UNSIGNED_OP1),
     .ACC_SIZE             (PSUM_WIDTH),
-    .PIPELINE_LEVEL       (1),
+    .PIPELINE_LEVEL       (PIPELINE_LEVEL),
     .EXTRA_SIGNAL_SIZE    (2)
   ) data_processing_inst  (
     .clk                  (clk),
@@ -481,10 +480,10 @@ module ParallelizedLinearProcessingElement #(
   // Output Down AXI-Stream Drivers
   generate
     if (PE_POSITION_J > 0) begin : up_down_connections_genblock
-      assign int_axis_d_tdata   = (export_rslt_sync) ? partial_sum_reg  : int_axis_u_tdata;
-      assign int_axis_d_tvalid  = (export_rslt_sync) ? 1'b1             : int_axis_u_tvalid & forward_u & !drop_u;
-      assign int_axis_u_tready  = (export_rslt_sync) ? 1'b0             : int_axis_d_tready & forward_u |  drop_u;
-      assign int_axis_d_tlast   = export_rslt_last_sync;
+      assign int_axis_d_tdata   = (export_rslt_sync) ? partial_sum_reg       : int_axis_u_tdata;
+      assign int_axis_d_tvalid  = (export_rslt_sync) ? 1'b1                  : int_axis_u_tvalid & forward_u & !drop_u;
+      assign int_axis_u_tready  = (export_rslt_sync) ? 1'b0                  : int_axis_d_tready & forward_u |  drop_u;
+      assign int_axis_d_tlast   = (export_rslt_sync) ? export_rslt_last_sync : export_rslt_last;
     end else begin : down_interface_genblock
       assign int_axis_d_tdata   = partial_sum_reg;
       assign int_axis_d_tvalid  = export_rslt_sync;

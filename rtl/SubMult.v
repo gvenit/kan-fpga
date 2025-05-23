@@ -170,7 +170,7 @@ module SubMult #(
   // Stage 1 Scale Input
   assign stage_1_in_axis_scle_tdata  = (scale_lock) ? stage_1_fb_axis_scle_tdata  : s_axis_scle_tdata;
   assign stage_1_in_axis_scle_tvalid = (scale_lock) ? stage_1_fb_axis_scle_tvalid : s_axis_scle_tvalid;
-  assign s_axis_scle_tready           = (scale_lock) ? stage_1_fb_axis_scle_tready : stage_1_in_axis_scle_tready;
+  assign s_axis_scle_tready          = (scale_lock) ? stage_1_fb_axis_scle_tready : stage_1_in_axis_scle_tready;
   assign stage_1_in_axis_scle_tlast  = (scale_lock) ? stage_1_fb_axis_scle_tlast  : s_axis_scle_tlast;
   assign stage_1_in_axis_scle_tid    = (scale_lock) ? stage_1_fb_axis_scle_tid    : s_axis_scle_tid;
   assign stage_1_in_axis_scle_tdest  = (scale_lock) ? stage_1_fb_axis_scle_tdest  : s_axis_scle_tdest;
@@ -178,7 +178,7 @@ module SubMult #(
 
   // Stage 1 Data Feedback
   assign stage_1_fb_axis_data_tdata   = stage_1_out_axis_data_tdata;
-  assign stage_1_fb_axis_data_tvalid  = stage_1_out_axis_data_tvalid;
+  assign stage_1_fb_axis_data_tvalid  = stage_2_in_handshake;
   assign stage_1_fb_axis_data_tready  = 0;
   assign stage_1_fb_axis_data_tlast   = stage_1_out_axis_data_tlast;
   assign stage_1_fb_axis_data_tid     = stage_1_out_axis_data_tid;
@@ -187,7 +187,7 @@ module SubMult #(
   
   // Stage 1 Grid Feedback  
   assign stage_1_fb_axis_grid_tdata   = stage_1_out_axis_grid_tdata;
-  assign stage_1_fb_axis_grid_tvalid  = stage_1_out_axis_grid_tvalid;
+  assign stage_1_fb_axis_grid_tvalid  = stage_2_in_handshake;
   assign stage_1_fb_axis_grid_tready  = 0;
   assign stage_1_fb_axis_grid_tlast   = stage_1_out_axis_grid_tlast;
   assign stage_1_fb_axis_grid_tid     = stage_1_out_axis_grid_tid;
@@ -196,7 +196,7 @@ module SubMult #(
   
   // Stage 1 Scale Feedback
   assign stage_1_fb_axis_scle_tdata  = stage_1_out_axis_scle_tdata;
-  assign stage_1_fb_axis_scle_tvalid = stage_1_out_axis_scle_tvalid;
+  assign stage_1_fb_axis_scle_tvalid = stage_2_in_handshake;
   assign stage_1_fb_axis_scle_tready = 0;
   assign stage_1_fb_axis_scle_tlast  = stage_1_out_axis_scle_tlast;
   assign stage_1_fb_axis_scle_tid    = stage_1_out_axis_scle_tid;

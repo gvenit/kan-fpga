@@ -221,28 +221,29 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_len = DATA_CHANNELS.value * max(N_in // DATA_CHANNELS.value, 1)
     grid_len = 8
-    scale_len = (1,1,1) if SCALE_SHARE.value else (1,grid_len,data_len)
+    scale_len = (1,1,1) if SCALE_SHARE.value else (1,data_len,grid_len)
     rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
     weight_len = data_len*grid_len
     adder_size = 64
+    # pckt_len = (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value))
     # print(data_len,grid_len,scale_len,rslt_len,weight_len)
     
-    # Create data - size = [BATCH X 1 X DATA]
-    layer_data = torch.randn(K, 1, data_len, device=device)
+    # Create data - size = [BATCH X DATA X 1]
+    layer_data = torch.randn(K, data_len, 1, device=device)
     # Quantize data
     layer_data_q = torch.tensor((layer_data * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'),device=device)
     # Dequantize data
     layer_data = layer_data_qd = layer_data_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
-    # Create grid - size = [1 X GRID X 1]
-    layer_grid = torch.randn(1, grid_len, 1, device=device)
+    # Create grid - size = [1 X 1 X GRID]
+    layer_grid = torch.randn(1, 1, grid_len, device=device)
     # Quantize grid
     layer_grid_q = torch.tensor((layer_grid * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize grid
     layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
-    # Create scale - size = [1 X GRID X DATA] or [1] 
-    layer_scle = torch.rand(*scale_len, device=device) / 2 ** (DATA_WIDTH.value - SCALE_FRACTIONAL_BITS.value)
+    # Create scale - size = [1 X DATA X GRID] or [1] 
+    layer_scle = torch.rand(*scale_len, device=device) * 2
     # Quantize scale
     layer_scle_q = torch.tensor((layer_scle * 2 ** SCALE_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize scale
@@ -258,7 +259,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     layer_exp_actd = torch.tensor((1 - np.tanh(layer_exp_sdff.cpu().numpy().astype('float128'))**2).astype('float32'), device=device)
     # Reshape expected activation data - size = [BATCH X WEIGHT]
     layer_exp_actd = layer_exp_actd.reshape(-1, weight_len)
-    
+
     if True:
         # Perform expected Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
         layer_exp_rslt = layer_exp_actd @ layer_wght
@@ -293,8 +294,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     
     # Create activation data - size = [BATCH X WEIGHT]
     layer_actd = 1 - np.tanh(layer_sdff_qd)**2
-    # Reshape activation data - size = [BATCH X WEIGHT]
-    layer_actd = layer_actd.reshape(-1, weight_len)
     # Quantize activation data
     layer_actd_q = torch.tensor((layer_actd * 2 ** ACT_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Unit correction
@@ -304,6 +303,8 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
             2 ** ACT_FRACTIONAL_BITS.value - 1,
             layer_actd_q
         )
+    # Reshape activation data - size = [BATCH X WEIGHT]
+    layer_actd_q = layer_actd_q.movedim(-1,-2).reshape(-1, weight_len)
     # Dequantize activation data - size = [BATCH X WEIGHT]
     layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACT_FRACTIONAL_BITS.value
     

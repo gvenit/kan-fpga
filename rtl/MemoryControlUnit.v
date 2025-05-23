@@ -231,6 +231,12 @@ module MemoryControlUnit #(
   wire [GRID_CHANNELS_IN-1:0]         grid_op_done_reg_next = grid_op_done_reg | grid_tlast_transmitted;
   wire [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg_next = scle_op_done_reg | scle_tlast_transmitted;
 
+  wire op_valid = (
+    ($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && 
+    ($unsigned(grid_size) <= {1'b1, {GRID_ADDR{1'b0}}}) && (|grid_size) && 
+    ($unsigned(scle_size) <= {1'b1,{SCALE_ADDR{1'b0}}}) && (|scle_size) 
+  );
+
   wire op_done        =  &{data_op_done_reg, grid_op_done_reg, scle_op_done_reg};
   wire internal_error = |{data_error, grid_error, scle_error};
 
@@ -292,11 +298,13 @@ module MemoryControlUnit #(
     end
   end
 
+  wire validate = ($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && 
+          ($unsigned(grid_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|grid_size) && 
+          ($unsigned(scle_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|scle_size);
+
   `define GLO_CHECK_OP_START \
     if (operation_start) begin \
-      if (($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && \
-          ($unsigned(grid_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|grid_size) && \
-          ($unsigned(scle_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|scle_size) ) begin \
+      if (op_valid) begin \
         glo_fsm_state_next <= GLO_FSM_STR; \
       end else begin \
         glo_fsm_state_next <= GLO_FSM_ERR; \
