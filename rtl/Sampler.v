@@ -9,19 +9,31 @@ module Sampler (
   output reg  sampled_signal
 );
 
-  reg captured_signal = 1'b0;
+  reg captured_signal_pos  = 1'b0;
+  reg captured_signal_neg  = 1'b0;
+  reg captured_signal_pos_sampled = 1'b0;
 
   // Output Driver
   always @(posedge sampler_clk ) begin
-    sampled_signal <= captured_signal;
+    sampled_signal <= captured_signal_neg || captured_signal_pos_sampled;
   end
 
-  always @(posedge sampler_clk ) begin
-    captured_signal <= 1'b0;
+  always @(posedge signal_clk or posedge sampler_clk ) begin
+    if (sampler_clk)
+      captured_signal_neg <= 1'b0;
+    else 
+      captured_signal_neg <= captured_signal_neg || signal;
   end
 
-  always @(posedge signal_clk ) begin
-    captured_signal <= captured_signal || signal;
+  always @(posedge signal_clk or negedge sampler_clk ) begin
+    if (~sampler_clk)
+      captured_signal_pos <= 1'b0;
+    else 
+      captured_signal_pos <= captured_signal_pos || signal;
+  end
+
+  always @(negedge sampler_clk ) begin
+    captured_signal_pos_sampled <= captured_signal_pos;
   end
 
 endmodule

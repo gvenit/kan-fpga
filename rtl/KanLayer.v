@@ -2175,7 +2175,7 @@ module KanLayer #(
     .OUTPUT_DEST                  (0),
     .OUTPUT_ID                    (0),
     .FIFO_DEPTH                   (0),
-    .PIPELINE_LEVEL               (0)
+    .PIPELINE_LEVEL               (2)
   ) data_processor_inst (
     .clk                          (core_clk),
     .rst                          (fsm_rst || internal_operation_error),
