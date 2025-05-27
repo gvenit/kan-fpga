@@ -7,6 +7,8 @@
 #include "kan_defines.h"
 #include "kan_interrupts.h"
 
+extern struct XAxiDma;
+
 /*
  * Flags interrupt handlers use to notify the application context the events.
  * They are updated by the attached callback functions.

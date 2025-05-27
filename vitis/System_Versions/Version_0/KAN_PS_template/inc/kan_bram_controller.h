@@ -7,15 +7,16 @@
 
 #include "kan_defines.h"
 
+extern struct XBram;
+
 /**
- * BRAM peripheral configuration and initialization
- * Taken from the provided Xilinx BRAM example
+ * @brief BRAM controller peripheral configuration and initialization
  *
- * @param DeviceId is the XPAR_<BRAM_instance>_DEVICE_ID value from xparameters.h
- * @param Bram is the bram handler
+ * @param bram_controller_id is the controller device ID found in `kan_defines.h`
+ * @param bram_controller_handler is the bram handler
  *
  * @return XST_SUCCESS to indicate success. XST_FAILURE to indicate failure.
  */
-int bram_init(u16 DeviceId, XBram *Bram);
+int bram_init(u16 bram_controller_id, XBram *bram_controller_handler);
 
 #endif

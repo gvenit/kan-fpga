@@ -3313,3 +3313,69 @@ Note: This value must be greater than or equal to the largest expected packet to
 "tz": "",
 },
 }]. Thread: main
+!SESSION 2025-05-27 18:17:29.885 -----------------------------------------------
+eclipse.buildId=2022.2
+java.version=11.0.11
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY org.eclipse.ui 4 4 2025-05-27 18:18:21.987
+!MESSAGE Plug-in 'org.eclipse.ui.editors' contributed an invalid Menu Extension (Path: 'navigate' is invalid): org.eclipse.ui.edit.text.gotoLastEditPosition
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:34.817
+!MESSAGE XSCT Command: [plnx-install-path  ; ::scw::scw_mode gui], Thread: Thread-9
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:34.817
+!MESSAGE XSCT Command: [::hsi::utils::init_repo], Thread: Worker-4: Initializing the platform to enable editing
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:34.828
+!MESSAGE XSCT Command: [set sdk::sdk_chan tcfchan#0], Thread: Thread-26
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:34.850
+!MESSAGE XSCT command with result: [plnx-install-path  ; ::scw::scw_mode gui], Result: [null, ]. Thread: Thread-9
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.339
+!MESSAGE XSCT command with result: [::hsi::utils::init_repo], Result: [null, ]. Thread: Worker-4: Initializing the platform to enable editing
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.339
+!MESSAGE XSCT command with result: [set sdk::sdk_chan tcfchan#0], Result: [null, tcfchan#0]. Thread: Thread-26
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.340
+!MESSAGE XSCT Command: [set query_var1 $::env(RDI_DATADIR)], Thread: Worker-4: Initializing the platform to enable editing
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.341
+!MESSAGE XSCT Command: [setws D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0], Thread: Thread-26
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.341
+!MESSAGE XSCT command with result: [set query_var1 $::env(RDI_DATADIR)], Result: [null, C:/Xilinx/Vitis/2022.2/data]. Thread: Worker-4: Initializing the platform to enable editing
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.343
+!MESSAGE XSCT command with result: [setws D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0], Result: [null, ]. Thread: Thread-26
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.368
+!MESSAGE XSCT Command: [platform read {D:\Yannos\FILES\PROGRAMS\FPGA\SoC\KAN\gvenit_design\kan-fpga\vitis\System_Versions\Version_0\KAN_SoC\platform.spr}], Thread: Worker-4: Initializing the platform to enable editing
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:44.409
+!MESSAGE XSCT Command: [::hsi::utils::openhw D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0/KAN_SoC/hw/KAN_SoC.xsa], Thread: Worker-2: Initializing hardware specification UI...
+
+!ENTRY org.eclipse.launchbar.core 2 0 2025-05-27 18:18:46.682
+!MESSAGE Enablement expression is missing for descriptor type org.eclipse.cdt.debug.core.coreBuildDescriptorType
+
+!ENTRY org.eclipse.launchbar.core 2 0 2025-05-27 18:18:46.691
+!MESSAGE Enablement expression is missing for config provider for org.eclipse.cdt.debug.core.coreBuildDescriptorType
+
+!ENTRY org.eclipse.launchbar.core 2 0 2025-05-27 18:18:46.692
+!MESSAGE Enablement expression is missing for config provider for org.eclipse.cdt.debug.core.coreBuildDescriptorType
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:51.290
+!MESSAGE XSCT command with result: [platform read {D:\Yannos\FILES\PROGRAMS\FPGA\SoC\KAN\gvenit_design\kan-fpga\vitis\System_Versions\Version_0\KAN_SoC\platform.spr}], Result: [null, ]. Thread: Worker-4: Initializing the platform to enable editing
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:51.292
+!MESSAGE XSCT command with result: [::hsi::utils::openhw D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0/KAN_SoC/hw/KAN_SoC.xsa], Result: [null, ]. Thread: Worker-2: Initializing hardware specification UI...
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:51.299
+!MESSAGE XSCT Command: [platform active {KAN_SoC}], Thread: Worker-4: Initializing the platform to enable editing
+
+!ENTRY com.xilinx.sdk.utils 0 0 2025-05-27 18:18:51.304
+!MESSAGE XSCT command with result: [platform active {KAN_SoC}], Result: [null, ]. Thread: Worker-4: Initializing the platform to enable editing

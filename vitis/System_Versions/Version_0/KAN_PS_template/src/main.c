@@ -7,20 +7,12 @@
 #include "kan_build_params.h"
 #include "kan_defines.h"
 #include "kan_status.h"
-
-#include "xparameters.h"
-#include "xil_exception.h"
-#include "xdebug.h"
-
+#include "kan_memory_map.h"
 #include "kan_dataset_data.h"
 #include "kan_dataset_grid.h"
 #include "kan_dataset_scale.h"
-
 #include "kan_interrupts.h"
-#include "xscugic.h"
-
 #include "kan_dma.h"
-#include "xaxidma.h"
 
 #ifdef DEF_VERBOSE
 #include "xil_printf.h"
@@ -28,7 +20,6 @@
 
 #ifdef BRAM_INTRF
 #include "kan_bram_controller.h"
-#include "xbram.h"
 #endif
 
 /********************************************

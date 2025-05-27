@@ -5,6 +5,8 @@
 
 #include "kan_defines.h"
 
+extern struct XScuGic;
+
 /**
  * @brief This function setups the interrupt system so interrupts can occur.
  * It wraps functions from `xscugic.h` which must be included in the project
