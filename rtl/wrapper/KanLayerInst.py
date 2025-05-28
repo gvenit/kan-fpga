@@ -183,9 +183,9 @@ module {{name}} #(
   parameter DATA_CHANNELS = {{data_chn}},
   // Total memory size allocated for Data in words
   parameter DATA_DEPTH = {{data_depth}},
-{% if data_axil %}
   // Data Strobe Width
   parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
+{% if data_axil %}
   // Data Address Width
   parameter DATA_ADDR = `LOG2( DATA_DEPTH * DATA_STRB_WIDTH ),
 {% endif %}

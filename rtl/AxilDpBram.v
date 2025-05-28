@@ -35,8 +35,10 @@ module AxilDpBram #(
   parameter STRB_WIDTH = (DATA_WIDTH/8),
   parameter PIPELINE_OUTPUT = 0
 ) (
-  input  wire                   clk,
-  input  wire                   rst,
+  input  wire                   clka,
+  input  wire                   rsta,
+  input  wire                   clkb,
+  input  wire                   rstb,
 
   /*-----------------------------------------
       Port A AXI-Lite
@@ -175,7 +177,8 @@ module AxilDpBram #(
     .ADDR_WIDTH   (VALID_ADDR_WIDTH),
     .STRB_WIDTH   (STRB_WIDTH)
   ) internal_bram_a_inst (
-    .clk          (clk),
+    .clka        (clka),
+    .clkb        (clkb),
     .rdena        (mem_rd_en_a),
     .wrena        (mem_wr_en_a),
     .wrstrba      (s_axil_a_wstrb),
@@ -228,7 +231,7 @@ module AxilDpBram #(
     end
   end
 
-  always @(posedge clk) begin
+  always @(posedge clka) begin
     last_read_a_reg <= last_read_a_next;
 
     s_axil_a_awready_reg <= s_axil_a_awready_next;
@@ -243,7 +246,7 @@ module AxilDpBram #(
       s_axil_a_rvalid_pipe_reg <= s_axil_a_rvalid_reg;
     end
 
-    if (rst) begin
+    if (rsta) begin
       last_read_a_reg <= 1'b0;
 
       s_axil_a_awready_reg <= 1'b0;
@@ -290,7 +293,7 @@ module AxilDpBram #(
     end
   end
 
-  always @(posedge clk) begin
+  always @(posedge clkb) begin
     last_read_b_reg <= last_read_b_next;
 
     s_axil_b_awready_reg <= s_axil_b_awready_next;
@@ -305,7 +308,7 @@ module AxilDpBram #(
       s_axil_b_rvalid_pipe_reg <= s_axil_b_rvalid_reg;
     end
 
-    if (rst) begin
+    if (rstb) begin
       last_read_b_reg <= 1'b0;
 
       s_axil_b_awready_reg <= 1'b0;

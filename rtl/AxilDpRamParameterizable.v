@@ -27,8 +27,10 @@ module AxilDpRamParameterizable #(
   parameter B_STRB_WIDTH = (B_DATA_WIDTH/8),
   parameter PIPELINE_OUTPUT = 0
 ) (
-  input  wire                             clk,
-  input  wire                             rst,
+  input  wire                             clka,
+  input  wire                             rsta,
+  input  wire                             clkb,
+  input  wire                             rstb,
 
   /*-----------------------------------------
       Port A AXI-Lite : Internal port
@@ -164,7 +166,7 @@ module AxilDpRamParameterizable #(
     end
   end
 
-  always @(posedge clk) begin
+  always @(posedge clka) begin
     last_read_a_reg <= last_read_a_next;
 
     s_axil_a_awready_reg <= s_axil_a_awready_next;
@@ -179,7 +181,7 @@ module AxilDpRamParameterizable #(
       s_axil_a_rvalid_pipe_reg <= s_axil_a_rvalid_reg;
     end
 
-    if (rst) begin
+    if (rsta) begin
       last_read_a_reg <= 1'b0;
 
       s_axil_a_awready_reg <= 1'b0;
@@ -277,7 +279,7 @@ module AxilDpRamParameterizable #(
     end
   end
 
-  always @(posedge clk) begin
+  always @(posedge clkb) begin
     last_read_b_reg <= last_read_b_next;
 
     s_axil_b_awready_reg <= s_axil_b_awready_next;
@@ -292,7 +294,7 @@ module AxilDpRamParameterizable #(
       s_axil_b_rvalid_pipe_reg <= s_axil_b_rvalid_reg;
     end
 
-    if (rst) begin
+    if (rstb) begin
       last_read_b_reg <= 1'b0;
 
       s_axil_b_awready_reg <= 1'b0;
@@ -345,7 +347,7 @@ module AxilDpRamParameterizable #(
   Module instantiations
   ********************************/
 
-  always @(posedge clk ) begin  // Hold Read data in case of handshake delays in read channel
+  always @(posedge clka ) begin  // Hold Read data in case of handshake delays in read channel
     mem_rd_en_a_reg <= mem_rd_en_a;
     if (mem_rd_en_a_reg) 
       s_axil_a_rdata_reg_int_reg <= s_axil_a_rdata_reg_int;
@@ -360,7 +362,7 @@ module AxilDpRamParameterizable #(
     .BANKS        (BANKS),
     .OUT_DEPTH    (2**BANK_VALID_ADDR_WIDTH)
   ) bram_trl_A_inst (
-    .clk          (clk),
+    .clk          (clka),
     .en_i         (mem_rd_en_a || mem_wr_en_a),
     .we_i         (s_axil_a_wstrb),
     .addr_i       ($unsigned(addra)),
@@ -373,7 +375,7 @@ module AxilDpRamParameterizable #(
     .rddata_o     (bram_douta)
   );
 
-  always @(posedge clk ) begin  // Hold Read data in case of handshake delays in read channel
+  always @(posedge clkb ) begin  // Hold Read data in case of handshake delays in read channel
     mem_rd_en_b_reg <= mem_rd_en_b;
     if (mem_rd_en_b_reg) 
       s_axil_b_rdata_reg_int_reg <= s_axil_b_rdata_reg_int;
@@ -389,7 +391,7 @@ module AxilDpRamParameterizable #(
     .OUT_DEPTH    (2**BANK_VALID_ADDR_WIDTH),
     .RD_LATENCY   (1)
   ) bram_trl_B_inst (
-    .clk          (clk),
+    .clk          (clkb),
     .en_i         (mem_wr_en_b),
     .we_i         (s_axil_b_wstrb),
     .addr_i       ($unsigned(addrb)),
@@ -408,7 +410,8 @@ module AxilDpRamParameterizable #(
     .ADDR_WIDTH   (BANK_VALID_ADDR_WIDTH),
     .STRB_WIDTH   (BANK_STRB_WIDTH)
   ) internal_bram_inst (
-    .clk          (clk),
+    .clka        (clka),
+    .clkb        (clkb),
     .rdena        (bram_rdena),
     .wrena        (bram_wrena),
     .wrstrba      (bram_wrstrba),

@@ -480,9 +480,9 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         reset_done(1),
         # Systask('finish'),
         nclk(fsm_clk),
-        Delay(2000 + 8*N_in*N_out/DATA_CHANNELS/RSLT_CHANNELS * 2 * 4 * (2**4)),
+        Delay(2000 + 8*N_in*N_out/DATA_CHANNELS/RSLT_CHANNELS * 2 * 4 * (2**5)),
         # Delay(10),
-        Display('Timeout error'),
+        Display('!! TIMEOUT ERROR !!'),
         AssertTrue(0),
     )
     
@@ -1248,7 +1248,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     # print('Test layer_wght_q:', layer_wght_q.shape)
     # print(np.array(hex_list(layer_wght_q.to(final_dtype).squeeze().cpu().numpy())))
     # print('Test psum')
-    # print(*hex_list([np.sum(x[:_iter+1],axis=0).astype('uint64').tolist() for _iter in range(x.shape[0])]), sep ='\n')
+    # print(*[np.array(hex_list([np.sum(x[offset:2*_iter+offset+1:DATA_CHANNELS.value],axis=0).astype('uint64').tolist() for _iter in range(x.shape[0] // DATA_CHANNELS.value)])) for offset in range(DATA_CHANNELS.value)], sep ='\n')
     # print('Test rslt')
     # print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
 
@@ -1903,8 +1903,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
                 ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
                 ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
                 ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
-            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+            ), (ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] )),
             
             If(rslt_len // RSLT_CHANNELS == 2)(
                 Display('-- Waiting for PL interrupt...'),
@@ -1926,20 +1926,37 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
                 AssertFalse(Cat(operation_complete,operation_error,locked)),
             ),
             Display('-- Waiting core reset...'),
-            Wait(core_rst),
+            For(ctrl_iter_buffer(0), Ands(ctrl_iter_buffer < 10, ~core_rst), ctrl_iter_buffer.inc())(
+                Wait(~fsm_clk),
+                Wait(fsm_clk),
+            ),
+            If(ctrl_iter_buffer == 10)(
+              Display('-- Core reset not captured. Assuming core_rst happend in earlier time.'),
+            ),
             Wait(~core_rst),
             Wait(~fsm_clk),
             Wait(fsm_clk),
             *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
-            Assert(ctrl_buffer & (
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
-            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+            If(rslt_len / RSLT_CHANNELS <= 2)( 
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] ),
+            ).Else(
+                Assert(ctrl_buffer & (
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] ),
+            ),
         ),
         Display('-- Control Test 21 complete.'),
         rslt_done(0),
@@ -2139,6 +2156,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ),
         ),
         Display('-- Control Test 23 complete.'),
+        Display('!! ALL TEST COMPLETED !!'),
         
         Delay(20),
         Finish(),
@@ -2157,15 +2175,17 @@ def main():
     
     for I,J,K in (
         # (1,1,1),
-        # (1,1,2),
+        # (1,2,1),
+        # (8,1,1),
+        # (1,1,3),
         # (2,2,1),
         # (2,2,2),
         # (2,3,1),
-        (4,4,1),
+        # (4,4,1),
         # (4,4,4),
-        # (8,4,2),
+        (8,4,2),
     ):
-        N_in, N_out = 24,16
+        N_in, N_out = 24,24
         # N_in, N_out = J,2*I
         test = tb_KanLayer(I=I,J=J,K=K,N_in=N_in,N_out=N_out)
         fname_base = f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}'

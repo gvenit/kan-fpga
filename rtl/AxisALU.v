@@ -113,8 +113,8 @@ THE SOFTWARE.
 genvar CHN;
 generate
 for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
-  wire [OP0_WIDTH-1:0]  op0_i;
-  wire [OP1_WIDTH-1:0]  op1_i;
+  wire signed [OP0_WIDTH-1:0]  op0_i;
+  wire signed [OP1_WIDTH-1:0]  op1_i;
 
   if (REG_TYPE > 1) begin : skid_buffer_genblock
     // skid buffer, no bubble cycles
@@ -194,10 +194,10 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
 
       if (store_axis_input_to_output || store_axis_temp_to_output) begin
         case (OP_MODE)
-          0 :      m_axis_tdata_reg <= $signed(op0_i) + $signed(op1_i); // ADD : 0
-          1 :      m_axis_tdata_reg <= $signed(op0_i) - $signed(op1_i); // SUB : 1
-          2 :      m_axis_tdata_reg <= $signed(op0_i) * $signed(op1_i); // MLT : 2
-          3 :      m_axis_tdata_reg <= `ABS( op0_i );                   // ABS : 3
+          0 :      m_axis_tdata_reg <= op0_i + op1_i; // ADD : 0
+          1 :      m_axis_tdata_reg <= op0_i - op1_i; // SUB : 1
+          2 :      m_axis_tdata_reg <= op0_i * op1_i; // MLT : 2
+          3 :      m_axis_tdata_reg <= `ABS( op0_i ); // ABS : 3
           default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
         endcase
       end
@@ -291,10 +291,10 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
 
       if (store_axis_input_to_output) begin
         case (OP_MODE)
-          0 :      m_axis_tdata_reg <= $signed(op0_i) + $signed(op1_i); // ADD : 0
-          1 :      m_axis_tdata_reg <= $signed(op0_i) - $signed(op1_i); // SUB : 1
-          2 :      m_axis_tdata_reg <= $signed(op0_i) * $signed(op1_i); // MLT : 2
-          3 :      m_axis_tdata_reg <= `ABS(op0_i);                     // ABS : 3
+          0 :      m_axis_tdata_reg <= op0_i + op1_i; // ADD : 0
+          1 :      m_axis_tdata_reg <= op0_i - op1_i; // SUB : 1
+          2 :      m_axis_tdata_reg <= op0_i * op1_i; // MLT : 2
+          3 :      m_axis_tdata_reg <= `ABS( op0_i ); // ABS : 3
           default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
         endcase
       end
@@ -320,10 +320,10 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
     // bypass
 
     case (OP_MODE)
-      0 :      assign m_axis_tdata = $signed(op0_i) + $signed(op1_i); // ADD : 0
-      1 :      assign m_axis_tdata = $signed(op0_i) - $signed(op1_i); // SUB : 1
-      2 :      assign m_axis_tdata = $signed(op0_i) * $signed(op1_i); // MLT : 2
-      3 :      assign m_axis_tdata = `ABS(op0_i);                     // ABS : 3
+      0 :      assign m_axis_tdata = op0_i + op1_i; // ADD : 0
+      1 :      assign m_axis_tdata = op0_i - op1_i; // SUB : 1
+      2 :      assign m_axis_tdata = op0_i * op1_i; // MLT : 2
+      3 :      assign m_axis_tdata = `ABS( op0_i ); // ABS : 3
       default: assign m_axis_tdata = {RSLT_WIDTH{1'bX}};
     endcase
 

@@ -97,11 +97,11 @@ generate
 
   always @(posedge clk ) begin
     operation_error    <= 1'b0;
-    operation_busy     <= 1'b1;
+    operation_busy     <= operation_start || operation_busy;
     operation_complete <= 1'b0;
     transmission       <= m_axis_tvalid && m_axis_tready;
-    if (s_axis_tvalid && s_axis_tready) begin
-      operation_busy     <= 1'b0;
+    if (s_axis_tvalid && s_axis_tready && s_axis_tlast) begin
+      operation_busy     <= operation_start;
       operation_complete <= 1'b1;
     end
   end

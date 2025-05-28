@@ -11,7 +11,8 @@ module MultiBankBram #(
   parameter ADDR = `LOG2(DEPTH),
   parameter WE = WIDTH / 8
 ) (
-  input  wire                       clk,
+  input  wire                       clka,
+  input  wire                       clkb,
 
   input  wire [BANKS-1:0]           ena,    
   input  wire [BANKS*WE-1:0]        wea,    
@@ -34,7 +35,8 @@ generate
       .DEPTH    (DEPTH),
       .ADDR     (ADDR)
     ) bram_inst (
-      .clk      (clk),
+      .clka     (clka),
+      .clkb     (clkb),
       .ena      (ena    [i]),
       .wea      (wea    [i*WE +: WE]),
       .addra    (addra  [i*ADDR +: ADDR]),

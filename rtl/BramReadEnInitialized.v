@@ -1,22 +1,17 @@
+
 `resetall
 `timescale 1ns / 1ps
 `default_nettype none
 
-/*
-  In this code a BRAM is infered by XST.
-  The main way to infer a BRAM is to make sure that both write and read are synchronous.
-  This example uses parameters to generate the BRAM and
-  it has a similar interface with the Block Memory Generator IP.
-
-  This is a read-first BRAM
-  which means there are registers on the ouput.
-  This might have timing implications.
-*/
-
-module BramReadEn #(
-  parameter DATA_WIDTH = 32,
-  parameter ADDR_WIDTH = 16,
-  parameter STRB_WIDTH = (DATA_WIDTH/8)
+module BramReadEnInitialized #(
+  // Width of AXI stream Input interfaces in bits
+  parameter ADDR_WIDTH = 8,
+  // Width of AXI stream Output interfaces in bits
+  parameter DATA_WIDTH = 8,
+  // Strobe Width of AXI stream Output interfaces in bits
+  parameter STRB_WIDTH = (DATA_WIDTH/8),
+  // Path to ROM Data
+  parameter ROM_DATA_PATH = ""
 ) (
   input  wire                     clka,
   input  wire                     clkb,
@@ -27,13 +22,15 @@ module BramReadEn #(
   input  wire [ADDR_WIDTH-1:0]    addra,
   input  wire [DATA_WIDTH-1:0]    dina,
   output wire [DATA_WIDTH-1:0]    douta,
+  output wire                     racka,
   
   input  wire                     rdenb,
   input  wire                     wrenb,
   input  wire [STRB_WIDTH-1:0]    wrstrbb,
   input  wire [ADDR_WIDTH-1:0]    addrb,
   input  wire [DATA_WIDTH-1:0]    dinb,
-  output wire [DATA_WIDTH-1:0]    doutb
+  output wire [DATA_WIDTH-1:0]    doutb,
+  output wire                     rackb
 );
 
   /********************************
@@ -49,9 +46,16 @@ module BramReadEn #(
 
   integer i, j;
 
+  reg rdack_a;
+  reg rdack_b;
+
   reg [DATA_WIDTH-1:0] rddata_a;
   reg [DATA_WIDTH-1:0] rddata_b;
-  reg [DATA_WIDTH-1:0] ram [0:DEPTH-1];
+  reg [DATA_WIDTH-1:0] ram [DEPTH-1:0];
+
+  initial begin
+    $readmemh( ROM_DATA_PATH, ram, 0, DEPTH-1);
+  end
 
   /********************************
   Always blocks
@@ -66,6 +70,7 @@ module BramReadEn #(
           ram[addra][WORD_SIZE*i +: WORD_SIZE] <= dina[WORD_SIZE*i +: WORD_SIZE];
       end
     end
+    rdack_a <= rdena;
   end
 
   always @ (posedge clkb) begin
@@ -77,14 +82,18 @@ module BramReadEn #(
           ram[addrb][WORD_SIZE*i +: WORD_SIZE] <= dinb[WORD_SIZE*i +: WORD_SIZE];
       end
     end
+    rdack_b <= rdenb;
   end
-
+  
   /********************************
   Direct assignments
   ********************************/
 
   assign douta = rddata_a;
   assign doutb = rddata_b;
+
+  assign racka = rdack_a;
+  assign rackb = rdack_b;
 
 endmodule
 

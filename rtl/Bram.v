@@ -21,7 +21,8 @@ module Bram #(
   parameter ADDR = `LOG2(DEPTH),
   parameter WE = WIDTH / 8
 ) (
-  input wire clk,
+  input  wire            clka,
+  input  wire            clkb,
 
   /*-----------------------------------------
       Port A: read / wite
@@ -61,7 +62,7 @@ module Bram #(
   ********************************/
 
   // port a access
-  always @ (posedge clk) begin
+  always @ (posedge clka) begin
     if (ena) begin
       for (i = 0; i < WE; i = i + 1) begin
         if (wea[i])
@@ -72,7 +73,7 @@ module Bram #(
   end
 
   // port b access
-  always @ (posedge clk) begin
+  always @ (posedge clkb) begin
     rdstrobe_b <= enb;
     if (enb) begin
       rddata_b <= ram[addrb];

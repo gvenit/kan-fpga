@@ -504,8 +504,8 @@ module RSWAFFunction #
     .CHANNELS               (CHANNELS),
     .ROM_DATA_PATH          (ROM_DATA_PATH)
   ) Sech2Lutram_inst (
-    .clk                    (clk),
-    .rst                    (rst),
+    .clk                    ({CHANNELS{clk}}),
+    .rst                    ({CHANNELS{rst}}),
     .s_axis_tdata           (scaled_diff_axis_data_tdata),
     .s_axis_tlast           (scaled_diff_axis_data_tlast),
     .s_axis_tvalid          (scaled_diff_axis_data_tvalid),

@@ -10,7 +10,8 @@ module MultiBankBramReadEn #(
   parameter ADDR_WIDTH = 16,
   parameter STRB_WIDTH = (DATA_WIDTH/8)
 ) (
-  input  wire                           clk,
+  input  wire                           clka,
+  input  wire                           clkb,
 
   input  wire [BANKS-1:0]               rdena,
   input  wire [BANKS-1:0]               wrena,
@@ -36,7 +37,8 @@ generate
       .ADDR_WIDTH (ADDR_WIDTH),
       .STRB_WIDTH (STRB_WIDTH)
     ) bram_inst   (
-      .clk        (clk),
+      .clka       (clka),
+      .clkb       (clkb),
       .rdena      (rdena    [i]),
       .wrena      (wrena    [i]),
       .wrstrba    (wrstrba  [i*STRB_WIDTH +: STRB_WIDTH]),
