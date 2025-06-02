@@ -243,7 +243,7 @@ module ParallelizedLinearProcessingElement #(
         .USER_WIDTH(1),
         // Register type
         // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-        .REG_TYPE(2)
+        .REG_TYPE(0)
       ) axis_register_u_inst (
         .clk              (clk),
         .rst              (rst),
@@ -287,7 +287,7 @@ module ParallelizedLinearProcessingElement #(
     .USER_WIDTH(1),
     // Register type
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-    .REG_TYPE(0)
+    .REG_TYPE((PE_POSITION_J != PE_NUMBER_J-1))
   ) axis_register_d_inst (
     .clk              (clk),
     .rst              (rst),

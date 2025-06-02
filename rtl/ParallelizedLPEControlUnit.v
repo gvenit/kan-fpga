@@ -65,8 +65,8 @@ module ParallelizedLPEControlUnit #(
    */
   input  wire                       int_axis_b_tready,
   
-  input  wire                       export_rslt_sync,
-  input  wire                       export_rslt_last_sync,
+  // input  wire                       export_rslt_sync,
+  // input  wire                       export_rslt_last_sync,
 
   output wire                       store_l,
   output wire                       store_t,

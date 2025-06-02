@@ -39,6 +39,7 @@ def find_strobe(out, address, word_size, clog_num_words, prints=False):
 
 def KanLayer(I=1,J=1,K=1,N_in=256):
     data_width = 16
+    sdff_width = 12
     basename = 'tb_kan_layer_wrapper'
     fname = os.path.join(TOP_DIR,f'rtl/wrapper/{basename}.v')
     exec_str = ' '.join([
@@ -59,8 +60,8 @@ def KanLayer(I=1,J=1,K=1,N_in=256):
         '--wght-width',             data_width,
         '--wght-frac-bits',         data_width,
         '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)),
-        '--sdff-width',             data_width,
-        '--sdff-frac-bits',         data_width-3,
+        '--sdff-width',             sdff_width,
+        '--sdff-frac-bits',         sdff_width-3,
         '--actf-width',             data_width,
         '--actf-frac-bits',         data_width,
         '--rslt-chn',               I,
@@ -146,6 +147,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     params = module.copy_params_as_localparams(kan)
     ports  = module.copy_ports_as_vars(kan)
     data_width = 16
+    sdff_width = 12
     final_dtype = getattr(torch,f'uint{((data_width +7)//8)*8}')
 
     DATA_CHANNELS               : Localparam = params['DATA_CHANNELS']
@@ -157,6 +159,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     DATA_FRACTIONAL_BITS        : Localparam = params['DATA_FRACTIONAL_BITS']
     SCALE_FRACTIONAL_BITS       : Localparam = params['SCALE_FRACTIONAL_BITS']
     WEIGHT_FRACTIONAL_BITS      : Localparam = params['WEIGHT_FRACTIONAL_BITS']
+    SCALED_DIFF_WIDTH           : Localparam = params['SCALED_DIFF_WIDTH']
     SCALED_DIFF_FRACTIONAL_BITS : Localparam = params['SCALED_DIFF_FRACTIONAL_BITS']
     ACT_FRACTIONAL_BITS         : Localparam = params['ACT_FRACTIONAL_BITS']
     RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
@@ -190,7 +193,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     DATA_FRACTIONAL_BITS.value = data_width-1
     SCALE_FRACTIONAL_BITS.value = data_width-2
     WEIGHT_FRACTIONAL_BITS.value = data_width
-    SCALED_DIFF_FRACTIONAL_BITS.value = data_width-3
+    SCALED_DIFF_WIDTH.value = sdff_width
+    SCALED_DIFF_FRACTIONAL_BITS.value = sdff_width-3
     ACT_FRACTIONAL_BITS.value = data_width
     RSLT_FRACTIONAL_BITS.value = data_width-1
     
@@ -540,7 +544,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     
     # Normalize weight - size = [WEIGHT x RESULT] or [1] 
-    layer_wght = layer_wght / weight_scale / 2
+    layer_wght = layer_wght / weight_scale / 8
     # Quantize scale
     layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Dequantize scale
@@ -559,7 +563,10 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     # Create scaled difference - size = [BATCH X GRID X DATA]
     layer_sdff = (layer_scle_qd * layer_diff_qd).abs()
     # Quantize scaled difference
-    layer_sdff_q = torch.tensor((layer_sdff * 2 ** SCALED_DIFF_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{adder_size}'), device=device).abs()
+    layer_sdff_q = torch.tensor((layer_sdff * 2 ** SCALED_DIFF_FRACTIONAL_BITS.value).clamp(
+        min = 0,
+        max = 2 ** SCALED_DIFF_WIDTH.value -1
+    ).cpu().numpy().astype(f'int{adder_size}'), device=device).abs()
     # Dequantize scaled difference
     layer_sdff_qd = layer_sdff_q.cpu().numpy().astype('float128') / 2 ** SCALED_DIFF_FRACTIONAL_BITS.value
     
@@ -1239,7 +1246,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     # print('Test layer_scle_q:', layer_scle_q.shape)
     # print(np.array(hex_list(layer_scle_q.cpu().numpy().astype('uint16').tolist())))
     # print('Test layer_diff_q:', layer_diff_q.shape)
-    # print(np.array(hex_list(layer_diff_q.cpu().numpy().astype('uint16').tolist())))
+    # print(np.array(hex_list(layer_diff_q.cpu().numpy().astype('uint32').tolist())))
     # print('Test layer_sdff_q:', layer_sdff_q.shape)
     # print(np.array(hex_list(layer_sdff_q.cpu().numpy().astype('uint16').tolist())))
     # x = torch.einsum("bw,wr->wbr", layer_actd_q, layer_wght_q).cpu().numpy().astype('int64')
@@ -2175,15 +2182,15 @@ def main():
     
     for I,J,K in (
         # (1,1,1),
-        # (1,2,1),
-        # (8,1,1),
-        # (1,1,3),
+        (1,2,1),
+        (8,1,1),
+        (1,1,3),
         # (2,2,1),
         # (2,2,2),
         # (2,3,1),
         # (4,4,1),
         # (4,4,4),
-        (8,4,2),
+        # (8,4,2),
     ):
         N_in, N_out = 24,24
         # N_in, N_out = J,2*I

@@ -112,7 +112,7 @@ def generate(batch_size=4, name=None, output=None, **kwargs):
     exec_str = ' '.join([
         'python',
         os.path.join(TOP_DIR,'auxiliary/Sech2Lutram.py'),
-        '-I', f'uint{kwargs["sdff_width"]}',
+        '-I', f'{kwargs["sdff_width"]}',
         '-i', f'{kwargs["sdff_fbits"]}',
         '-O', f'uint{kwargs["actf_width"]}',
         '-o', f'{kwargs["actf_fbits"]}',
