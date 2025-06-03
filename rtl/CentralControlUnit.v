@@ -202,12 +202,10 @@ module CentralControlUnit #(
       .sampled_signal   (rslt_tlast_sampled)
     );
   end else begin
-    always @(*) begin
-      peripheral_operation_busy_sampled     <= peripheral_operation_busy;
-      peripheral_operation_complete_sampled <= peripheral_operation_complete;
-      peripheral_operation_error_sampled    <= peripheral_operation_error;
-      rslt_tlast_sampled                    <= rslt_tlast;
-    end
+    assign peripheral_operation_busy_sampled     = peripheral_operation_busy;
+    assign peripheral_operation_complete_sampled = peripheral_operation_complete;
+    assign peripheral_operation_error_sampled    = peripheral_operation_error;
+    assign rslt_tlast_sampled                    = rslt_tlast;
   end
  endgenerate
 
