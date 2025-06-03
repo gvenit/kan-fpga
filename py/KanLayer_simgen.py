@@ -37,9 +37,7 @@ def find_strobe(out, address, word_size, clog_num_words, prints=False):
         )) for bit_i in range(2 ** clog_num_words.value)
     ] # + prints
 
-def KanLayer(I=1,J=1,K=1,N_in=256):
-    data_width = 16
-    sdff_width = 12
+def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, is_async=True):
     basename = 'tb_kan_layer_wrapper'
     fname = os.path.join(TOP_DIR,f'rtl/wrapper/{basename}.v')
     exec_str = ' '.join([
@@ -70,7 +68,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256):
         '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8)),
         '--name',                   basename,
         '--output',                 fname
-    ]])
+    ]] + (['--async'] if is_async else []))
     print(f'-- {exec_str}')
     os.system(exec_str)
     clear_hints(fname)
@@ -143,11 +141,14 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     def RLOG2(signal):
         return EmbeddedNumeric(f'`RLOG2( {signal} )')
     
-    kan = KanLayer(I=I,J=J,K=K,N_in=N_in)
-    params = module.copy_params_as_localparams(kan)
-    ports  = module.copy_ports_as_vars(kan)
     data_width = 16
     sdff_width = 12
+    is_async = True
+    fast_clk_hperiod = 2      # 250 MHz
+    
+    kan = KanLayer(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, is_async=is_async)
+    params = module.copy_params_as_localparams(kan)
+    ports  = module.copy_ports_as_vars(kan)
     final_dtype = getattr(torch,f'uint{((data_width +7)//8)*8}')
 
     DATA_CHANNELS               : Localparam = params['DATA_CHANNELS']
@@ -431,11 +432,13 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         
     reset_stmt.append(s_axis_wght_tvalid(0))
     reset_stmt.append(m_axis_rslt_tready(0))
+    
+    slow_clk_hperiod = fast_clk_hperiod * AXIL_WIDTH / DATA_WIDTH if is_async else fast_clk_hperiod
 
     vcd_name = os.path.join('..','vcd',f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}.vcd')
     simulation.setup_waveform(module, uut, dumpfile=vcd_name)
-    simulation.setup_clock(module, fsm_clk,  hperiod=4)     # 125 MHz
-    simulation.setup_clock(module, core_clk, hperiod=2)     # 250 MHz
+    simulation.setup_clock(module, fsm_clk,  hperiod=slow_clk_hperiod)
+    simulation.setup_clock(module, core_clk, hperiod=fast_clk_hperiod)
     
     # Clock & Reset Configuration
     module.Always()(
@@ -1473,6 +1476,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         AssertTrue(operation_error),
         AssertTrue(locked),
         AssertFalse(Cat(operation_busy,operation_complete)),
+        Wait(fsm_clk),
+        Wait(~fsm_clk),
         *control_rd_seq('CTRL_REG_OPER_STR', ctrl_buffer, 1),   # Register should be null in error state 
         AssertFalse(ctrl_buffer),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
@@ -1481,8 +1486,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK']),
         *control_wr_seq('CTRL_REG_INTR_REG', ctrl_reg['CTRL_REG_INTR_MASK_SFT'], 1),
@@ -1834,6 +1838,9 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
         *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
         AssertFalse(Cat(operation_busy,operation_complete,operation_error,locked)),
+        Wait(~core_rst),
+        Wait(~fsm_clk),
+        Wait(fsm_clk),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -2181,12 +2188,12 @@ def main():
     os.chdir(os.path.join(TOP_DIR,'rtl'))
     
     for I,J,K in (
-        (1,1,1),
-        # (1,2,1),
-        # (8,1,1),
-        # (1,1,3),
-        # (2,2,1),
-        # (2,2,2),
+        # (1,1,1),
+        (1,2,1),
+        (8,1,1),
+        (1,1,3),
+        (2,2,1),
+        (2,2,2),
         # (2,3,1),
         # (4,4,1),
         # (4,4,4),

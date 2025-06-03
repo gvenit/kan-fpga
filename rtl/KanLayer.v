@@ -188,6 +188,8 @@ module KanLayer #(
   parameter EXTRA_CYCLE = 0,
   // Central Control Address Width
   parameter CTRL_ADDR = 6, // 13 
+  // Set to true if fsm_clk and core_clk are driven by different clocks
+  parameter IS_ASYNCHRONOUS = 1,
 
   /*------------------------------------------------------------------
     Input / Output file constants
@@ -2249,8 +2251,9 @@ module KanLayer #(
     .DATA_ADDR                      (DATA_ADDR_BYTES),
     .GRID_ADDR                      (GRID_ADDR_BYTES),
     .SCALE_ADDR                     (SCALE_ADDR_BYTES),
-    .PCKT_SIZE_WIDTH                (PCKT_SIZE_WIDTH)
-  ) ccu (
+    .PCKT_SIZE_WIDTH                (PCKT_SIZE_WIDTH),
+    .IS_ASYNCHRONOUS                (IS_ASYNCHRONOUS)
+  ) ccu_inst (
     .fsm_clk                        (fsm_clk),
     .fsm_rst                        (fsm_rst),
     .core_clk                       (core_clk),

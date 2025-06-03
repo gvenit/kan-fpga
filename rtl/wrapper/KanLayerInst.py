@@ -17,6 +17,9 @@ print(TOP_DIR)
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.strip())
+    
+    parser.add_argument('--async', action='store_true', help='Asynchronous mode', dest='async')
+    
     parser.add_argument('-b', '--batch-size',  type=int, default=1, help="batch size", dest='batch_size')
     parser.add_argument('--dma-width',  type=int, default=64, help="DMA Data Width", dest='dma_width')
     parser.add_argument('--ctrl-addr',  type=int, default=13, help="Control Address Width", dest='ctrl_addr')
@@ -308,6 +311,8 @@ module {{name}} #(
   parameter EXTRA_CYCLE = 0,
   // Central Control Address Width
   parameter CTRL_ADDR = {{ctrl_addr}}, // 13 
+  // Set to true if fsm_clk and core_clk are driven by different clocks
+  parameter IS_ASYNCHRONOUS = {{ async | int }},
 
   /*------------------------------------------------------------------
     Input / Output file constants

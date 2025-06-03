@@ -58,7 +58,9 @@ module CentralControlUnit #(
   // Scale Width of address bus in bits
   parameter SCALE_ADDR = 32,
   // Width of Packet size bus in bits
-  parameter PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR
+  parameter PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR,
+  // Set to true if fsm_clk and core_clk are driven by different clocks
+  parameter IS_ASYNCHRONOUS = 1
 ) (
   input  wire                             fsm_clk,
   input  wire                             fsm_rst,
@@ -167,39 +169,47 @@ module CentralControlUnit #(
 
   // Capture interrupts -- Reset every clock tick
  generate
-  genvar peripheral;
-  for (peripheral = 0; peripheral < NUM_PERIPHERALS; peripheral = peripheral + 1) begin : peripheral_samplers_genblock 
+  if (IS_ASYNCHRONOUS) begin
+    genvar peripheral;
+    for (peripheral = 0; peripheral < NUM_PERIPHERALS; peripheral = peripheral + 1) begin : peripheral_samplers_genblock 
+      Sampler #(
+      ) sampler_peripheral_op_busy_inst (
+        .signal_clk       (core_clk),
+        .sampler_clk      (fsm_clk),
+        .signal           (peripheral_operation_busy[peripheral]),
+        .sampled_signal   (peripheral_operation_busy_sampled[peripheral])
+      );
+      Sampler #(
+      ) sampler_peripheral_op_complete_inst (
+        .signal_clk       (core_clk),
+        .sampler_clk      (fsm_clk),
+        .signal           (peripheral_operation_complete[peripheral]),
+        .sampled_signal   (peripheral_operation_complete_sampled[peripheral])
+      );
+      Sampler #(
+      ) sampler_peripheral_op_error_inst (
+        .signal_clk       (core_clk),
+        .sampler_clk      (fsm_clk),
+        .signal           (peripheral_operation_error[peripheral]),
+        .sampled_signal   (peripheral_operation_error_sampled[peripheral])
+      );
+    end
     Sampler #(
-    ) sampler_peripheral_op_busy_inst (
+    ) sampler_rslt_tlast_inst (
       .signal_clk       (core_clk),
       .sampler_clk      (fsm_clk),
-      .signal           (peripheral_operation_busy[peripheral]),
-      .sampled_signal   (peripheral_operation_busy_sampled[peripheral])
+      .signal           (rslt_tlast),
+      .sampled_signal   (rslt_tlast_sampled)
     );
-    Sampler #(
-    ) sampler_peripheral_op_complete_inst (
-      .signal_clk       (core_clk),
-      .sampler_clk      (fsm_clk),
-      .signal           (peripheral_operation_complete[peripheral]),
-      .sampled_signal   (peripheral_operation_complete_sampled[peripheral])
-    );
-    Sampler #(
-    ) sampler_peripheral_op_error_inst (
-      .signal_clk       (core_clk),
-      .sampler_clk      (fsm_clk),
-      .signal           (peripheral_operation_error[peripheral]),
-      .sampled_signal   (peripheral_operation_error_sampled[peripheral])
-    );
+  end else begin
+    always @(*) begin
+      peripheral_operation_busy_sampled     <= peripheral_operation_busy;
+      peripheral_operation_complete_sampled <= peripheral_operation_complete;
+      peripheral_operation_error_sampled    <= peripheral_operation_error;
+      rslt_tlast_sampled                    <= rslt_tlast;
+    end
   end
  endgenerate
-
-  Sampler #(
-  ) sampler_rslt_tlast_inst (
-    .signal_clk       (core_clk),
-    .sampler_clk      (fsm_clk),
-    .signal           (rslt_tlast),
-    .sampled_signal   (rslt_tlast_sampled)
-  );
 
   // Input PL control signals
   reg         rw_op_str_reg_en;
