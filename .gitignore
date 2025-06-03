@@ -36,3 +36,8 @@ graphs
 dot
 
 temp
+
+#vitis
+*log
+*.metadata
+*logs

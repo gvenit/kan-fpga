@@ -6,17 +6,14 @@
 #include "kan_build_params.h"
 
 /*===========================================================================
-    USED DATATYPE AND SIZE DEFINITIONS
+    Used datatype and size definitions
 ============================================================================*/
 
 #define DATUM_SIZE sizeof(data_t)                     // number if bytes for each datum
 #define DATA_PER_WORD (sizeof(uint32_t) / DATUM_SIZE) // every word is 32 bits and this calculates how many bytes it fits
-#define BYTE_OFFSET 0x04                              // offset of a 32-bit word in memory
-#define HALD_WORD_OFFSET 0x02                         // offset of a 16-bit word in memory
-#define WORD_OFFSET 0x01                              // offset of a 8-bit word in memory
 
 /*===========================================================================
-    FABRIC AND OTHER INTERRUPTS
+    Fabric and other interrupts
 ============================================================================*/
 
 #define INTR_CONTROLLER_DEVICE_ID XPAR_SCUGIC_SINGLE_DEVICE_ID // from Canonical definitions for SCU GIC. It is the ID of the Interrupt Controler (INTC)
@@ -45,7 +42,7 @@
 #define INTR_DEFAULT_PRIORITY 0xA0
 
 /*===========================================================================
-    MEMORY DEFINITIONS
+    Memory definitions
 ============================================================================*/
 
 #ifdef DEF_DATA_BRAM
@@ -95,7 +92,7 @@
 #endif
 
 /*===========================================================================
-    DMA DEFINITIONS AND PARAMETERS
+    DMA definitions and parameters
 ============================================================================*/
 
 #define DMA_DEV_ID XPAR_AXIDMA_0_DEVICE_ID // DMA device ID

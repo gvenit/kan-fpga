@@ -8,10 +8,8 @@
 #include "kan_defines.h"
 #include "kan_status.h"
 #include "kan_memory_map.h"
-#include "kan_dataset_data.h"
-#include "kan_dataset_grid.h"
-#include "kan_dataset_scale.h"
 #include "kan_interrupts.h"
+#include "kan_memory.h"
 #include "kan_dma.h"
 
 #ifdef DEF_VERBOSE
@@ -21,6 +19,10 @@
 #ifdef BRAM_INTRF
 #include "kan_bram_controller.h"
 #endif
+
+#include "dataset_data.h"
+#include "dataset_grid.h"
+#include "dataset_scale.h"
 
 /********************************************
  * Function decleration
@@ -46,12 +48,18 @@ XBram hScaleBramCtr; // scale bram controller handler
 
 int main(void)
 {
+
+#ifdef DEF_VERBOSE
+    xil_printf("=============================================================\r\n");
+    xil_printf("KAN Processing System Bare-Metal Application\r\n");
+#endif
+
     /*----------------------------------------
      Local variables
     ----------------------------------------*/
 
-    kan_status_t status;
-    int i;
+    int i = 0;                            // counter indecing variable
+    kan_status_t status = STATUS_FAILURE; // function return status
 
     /*----------------------------------------
      Initializations

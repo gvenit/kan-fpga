@@ -4,6 +4,7 @@
 #include "xscugic.h"
 
 #include "kan_defines.h"
+#include "kan_status.h"
 
 extern struct XScuGic;
 
@@ -17,11 +18,9 @@ extern struct XScuGic;
  * from `kan_defines.h` like `INTR_CONTROLLER_DEVICE_ID`
  *
  * @return
- * - XST_SUCCESS if successful
- *
- * - XST_FAILURE if not successful
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-static int kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id);
+static kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id);
 
 /**
  * @brief This function attaches interrupts and callbacks
@@ -46,11 +45,9 @@ static int kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id);
  * pointer of the connecting driver. Cast it to `void *`
  *
  * @return
- * - XST_SUCCESS if successful
- *
- * - XST_FAILURE if not successful
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-static int kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver);
+static kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver);
 
 /**
  * This function disables specific interrupts

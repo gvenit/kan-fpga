@@ -1,7 +1,10 @@
 #include "kan_interrupts.h"
 
-static int kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id)
+static kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id)
 {
+    if (intr_handler == NULL)
+        return STATUS_ILLEGAL_ARG;
+
     int status;
 
     XScuGic_Config *intr_config; // pointer to a configuration struct
@@ -13,7 +16,7 @@ static int kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id)
 
     intr_config = XScuGic_LookupConfig(INTR_CONTROLLER_DEVICE_ID);
     if (NULL == intr_config)
-        return XST_FAILURE;
+        return STATUS_NULL_POINTER_REF;
 
     /**
      * Initialize the configuration
@@ -21,8 +24,8 @@ static int kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id)
      */
 
     status = XScuGic_CfgInitialize(intr_handler, intr_config, intr_config->CpuBaseAddress);
-    if (status != XST_SUCCESS)
-        return XST_FAILURE;
+    if ((status != XST_SUCCESS) || (!(intr_handler->IsReady)))
+        return STATUS_INTR_INIT_FAILURE;
 
     /**
      * Exception handling
@@ -37,11 +40,20 @@ static int kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id)
 
     Xil_ExceptionEnable();
 
-    return XST_SUCCESS;
+    return STATUS_OK;
 }
 
-static int kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver)
+static kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver)
 {
+    if ((intr_handler == NULL) || (!(intr_handler->IsReady)))
+        return STATUS_ILLEGAL_ARG;
+
+    if (intr_callback_driver == NULL)
+        return STATUS_ILLEGAL_ARG;
+
+    if (intr_priority > 248)
+        return STATUS_ILLEGAL_ARG;
+
     int status;
 
     /**
@@ -59,16 +71,21 @@ static int kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t intr
 
     status = XScuGic_Connect(intr_handler, intr_id, intr_callback, intr_callback_driver);
     if (status != XST_SUCCESS)
-        return status;
+        return STATUS_INTR_ATTACH_FAILURE;
 
     /**
      * Enables the interrupt you just configured
      */
 
     XScuGic_Enable(intr_handler, intr_id);
+
+    return STATUS_OK;
 }
 
 static void kan_intr_detach(XScuGic *intr_handler, uint16_t intr_id)
 {
+    if ((intr_handler == NULL) || (!(intr_handler->IsReady)))
+        return STATUS_ILLEGAL_ARG;
+
     XScuGic_Disconnect(intr_handler, intr_id);
 }

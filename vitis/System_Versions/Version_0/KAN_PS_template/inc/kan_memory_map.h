@@ -1,6 +1,8 @@
 #ifndef _KAN_MEMORY_MAP_
 #define _KAN_MEMORY_MAP_
 
+#include "xparameters.h"
+
 #include "kan_defines.h"
 
 /*===========================================================================
@@ -8,113 +10,105 @@
 ============================================================================*/
 
 /**
- * Control Data Transfer/Operation Status signals.
- * Nulled from PS at the end of the transaction
+ * @brief Axi-Lite Control Register File base address.
+ * This is used as base address and later in this section
+ * offsets are specified.
+ *
+ * The naming convention is that
+ * control register gets `CTRL_REG` in the macro beggining
+ * and for the offsets that is `CTRL_REG_OFST`
+ * while in the end the number of bytes are specified.
+ * For the masks the macro begins with `CTRL_REG_MASK`
+ * and usually the same name as the control register it reads
+ * while there is again the number of bytes in the end.
+ */
+
+#define CTRL_REG_BASE_ADDRESS 0xFFFFFFFF
+
+/**
+ * @brief Control Data Transfer/Operation Status signals.
+ * Nulled from PS at the end of the transaction.
  *
  * @property READ-WRITE
  */
 
-// Control Register : operation done -- 1B -- locked core in idle state awaiting nulling or soft/hard reset
-#define CTRL_REG_OPER_DNE 52
+#define CTRL_REG_OPER_DNE 52 // operation done. 1B. locked core in idle state awaiting nulling or soft/hard reset
 
-// Number of Control Registers
-#define NUM_CTRL_REGISTERS CTRL_REG_OPER_DNE + 1
+#define NUM_CTRL_REGISTERS CTRL_REG_OPER_DNE + 1 // Number of Control Registers
 
 /**
- * PS to PL
- * Configuration signals.
+ * @brief Configuration signals.
  * Nulled from PL at the end of the operation.
+ * PS to PL
  *
  * @property READ-WRITE
  */
 
-// Control Register : data length -- 4B -- Equals data_len / data_banks
-#define CTRL_REG_DATA_LEN 0
-// Control Register : grid length -- 4B -- Equals grid_len / grid_banks
-#define CTRL_REG_GRID_LEN 4
-// Control Register : scale lengh -- 4B -- Equals scle_len / scale_banks
-#define CTRL_REG_SCLE_LEN 8
-// Control Register : result length -- 4B -- Equals rslt_len
-#define CTRL_REG_RSLT_LEN 12
-// Control Register : packet length -- 4B -- Equals (data_len / data_banks) * (grid_len / grid_banks)
-#define CTRL_REG_PCKT_LEN 16
-// Control Register : batch length -- 1B
-#define CTRL_REG_BTCH_LEN 20
+#define CTRL_REG_OFST_DATA_LEN_4B 0  // Data length. 4B. Equals data_len / data_banks
+#define CTRL_REG_OFST_GRID_LEN_4B 4  // Grid length. 4B. Equals grid_len / grid_banks
+#define CTRL_REG_OFST_SCLE_LEN_4B 8  // Scale lengh. 4B. Equals scle_len / scale_banks
+#define CTRL_REG_OFST_RSLT_LEN_4B 12 // Result length. 4B. Equals rslt_len
+#define CTRL_REG_OFST_PCKT_LEN_4B 16 // Packet length. 4B. Equals (data_len / data_banks) * (grid_len / grid_banks)
+#define CTRL_REG_OFST_BTCH_LEN_1B 20 // Batch length. 1B
 
 /**
- * Control Data Transfer signals.
+ * @brief Control Data Transfer signals.
  * Nulled from PL at the end of the operation
  *
  * @property READ-WRITE
  */
 
-// Control Register : data loaded -- 1B
-#define CTRL_REG_DATA_LDR 21
-// Control Register : grid loaded -- 1B
-#define CTRL_REG_GRID_LDR 22
-// Control Register : scale loaded -- 1B
-#define CTRL_REG_SCLE_LDR 23
-// Control Register : weights loaded -- 1B
-#define CTRL_REG_WGHT_LDR 24
-
-// Control Operation signals -- Nulled from PL at the start of the operation -- READ-WRITE
-// Control Register : operation start -- 1B
-#define CTRL_REG_OPER_STR 25
-
-// Interrupt signals  -- Updated from PS when the status changes -- WRITE-ONLY
-// Control Register : interrupt register -- 1B
-#define CTRL_REG_INTR_REG 26
+#define CTRL_REG_OFST_DATA_LDR_1B 21 // Data loaded. 1B
+#define CTRL_REG_OFST_GRID_LDR_1B 22 // Grid loaded. 1B
+#define CTRL_REG_OFST_SCLE_LDR_1B 23 // Scale loaded. 1B
+#define CTRL_REG_OFST_WGHT_LDR_1B 24 // Weights loaded. 1B
 
 /**
- * PL to PS
- * Control Operation Status signals.
+ * @brief Control Operation signals.
+ * Nulled from PL at the start of the operation
+ *
+ * @property READ-WRITE
+ */
+
+#define CTRL_REG_OFST_OPER_STR_1B 25 // Operation start. 1B
+
+/**
+ * @brief Interrupt signals.
+ * Register offset and register values.
+ * Updated from PS when the status changes.
+ *
+ * @property WRITE-ONLY
+ */
+
+#define CTRL_REG_OFST_INTR_REG_1B 26 // Interrupt register. 1B
+
+#define CTRL_REG_MASK_INTR_SFT_1B 0x01 // Soft interrupt / reset
+#define CTRL_REG_MASK_INTR_ABT_1B 0x02 // Abort start
+#define CTRL_REG_MASK_INTR_ERR_1B 0x04 // External error
+
+/**
+ * @brief Control Operation Status signals.
  * Updated from PL when the status changes.
+ * For the operation status register the masks are laid out too.
+ * PL to PS
  *
  * @property READ-ONLY
  */
 
-// Control Register : operation status -- 1B
-#define CTRL_REG_OPER_STS 27
-// Control Register : operation progress (results produced) -- 4B
-#define CTRL_REG_RSLT_PRG 28
-// Control Register : operation progress (iterations complete) -- 4B
-#define CTRL_REG_ITER_PRG 32
-// Control Register : iteration timer -- 4B
-#define CTRL_REG_ITER_TMR 36
-// Control Register : iteration latency -- 4B
-#define CTRL_REG_ITER_LAT 40
-// Control Register : operation timer -- 4B
-#define CTRL_REG_OPER_TMR 44
-// Control Register : iteration latency -- 4B
-#define CTRL_REG_OPER_LAT 48
+#define CTRL_REG_OFST_OPER_STS_1B 27 // Operation status. 1B
+#define CTRL_REG_OFST_RSLT_PRG_4B 28 // Operation progress (results produced). 4B
+#define CTRL_REG_OFST_ITER_PRG_4B 32 // Operation progress (iterations complete). 4B
+#define CTRL_REG_OFST_ITER_TMR_4B 36 // Iteration timer. 4B
+#define CTRL_REG_OFST_ITER_LAT_4B 40 // Iteration latency. 4B
+#define CTRL_REG_OFST_OPER_TMR_4B 44 // Operation timer. 4B
+#define CTRL_REG_OFST_OPER_LAT_4B 48 // Iteration latency. 4B
 
-/**
- * Masks as enums
- */
-
-// PS Interrupt Register Masks
-
-// Control Register Mask: soft interrupt / reset
-#define CTRL_REG_INTR_MASK_SFT 1
-// Control Register Mask: abort start
-#define CTRL_REG_INTR_MASK_ABT 2
-// Control Register Mask: external error
-#define CTRL_REG_INTR_MASK_ERR 4
-
-// Control Operation Status Flag Masks
-
-// Control Register Mask: operation idle
-#define CTRL_REG_OPER_STS_MASK_IDL 1
-// Control Register Mask: operation busy
-#define CTRL_REG_OPER_STS_MASK_BSY 2
-// Control Register Mask: operation error -- locked core awaiting soft/hard reset
-#define CTRL_REG_OPER_STS_MASK_ERR 4
-// Control Register Mask: locked core -- Nulled from PL when the awaited action is complete
-#define CTRL_REG_OPER_STS_MASK_LCK 8
-// Control Register Mask: valid configuration
-#define CTRL_REG_OPER_STS_MASK_VLD 16
-// Control Register Mask: core reset
-#define CTRL_REG_OPER_STS_MASK_RST 32
+#define CTRL_REG_MASK_OPER_STS_IDL 0x01 // Operation idle
+#define CTRL_REG_MASK_OPER_STS_BSY 0x02 // Operation busy
+#define CTRL_REG_MASK_OPER_STS_ERR 0x04 // Operation error. locked core awaiting soft/hard reset
+#define CTRL_REG_MASK_OPER_STS_LCK 0x08 // Locked core. Nulled from PL when the awaited action is complete
+#define CTRL_REG_MASK_OPER_STS_VLD 0x10 // Valid configuration
+#define CTRL_REG_MASK_OPER_STS_RST 0x20 // Core reset
 
 /*===========================================================================
     Data, Scale and Grid Memory Regions

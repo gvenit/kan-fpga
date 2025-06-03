@@ -21,3 +21,4 @@ domain active {standalone_ps7_cortexa9_0}
 platform generate -quick
 platform active {KAN_SoC}
 platform active {KAN_SoC}
+platform active {KAN_SoC}
