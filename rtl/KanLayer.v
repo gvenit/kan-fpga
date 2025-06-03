@@ -828,11 +828,11 @@ module KanLayer #(
       .B_DATA_WIDTH       (DATA_WIDTH), 
       .B_STRB_WIDTH       (DATA_STRB_WIDTH),
       .PIPELINE_OUTPUT    (DATA_PIPELINE_OUTPUT)
-    ) axil_ram_data_inst (
-      .clka              (int_ram_data_a_axil_aclk       [BATCH]),
-      .rsta              (int_ram_data_a_axil_arst       [BATCH]),
-      .clkb              (int_ram_data_b_axil_aclk       [BATCH]),
-      .rstb              (int_ram_data_b_axil_arst       [BATCH]),
+    ) axil_ram_data_inst  (
+      .clka               (int_ram_data_a_axil_aclk       [BATCH]),
+      .rsta               (int_ram_data_a_axil_arst       [BATCH]),
+      .clkb               (int_ram_data_b_axil_aclk       [BATCH]),
+      .rstb               (int_ram_data_b_axil_arst       [BATCH]),
       .s_axil_a_awaddr    (int_ram_data_a_axil_awaddr     [BATCH]),
       .s_axil_a_awprot    (int_ram_data_a_axil_awprot     [BATCH]),
       .s_axil_a_awvalid   (int_ram_data_a_axil_awvalid    [BATCH]),
@@ -1047,10 +1047,10 @@ module KanLayer #(
     .B_STRB_WIDTH       (GRID_STRB_WIDTH),
     .PIPELINE_OUTPUT    (GRID_PIPELINE_OUTPUT)
   ) axil_ram_grid_inst (
-    .clka              (int_ram_grid_a_axil_aclk),
-    .rsta              (int_ram_grid_a_axil_arst),
-    .clkb              (int_ram_grid_b_axil_aclk),
-    .rstb              (int_ram_grid_b_axil_arst),
+    .clka               (int_ram_grid_a_axil_aclk),
+    .rsta               (int_ram_grid_a_axil_arst),
+    .clkb               (int_ram_grid_b_axil_aclk),
+    .rstb               (int_ram_grid_b_axil_arst),
     .s_axil_a_awaddr    (int_ram_grid_a_axil_awaddr),
     .s_axil_a_awprot    (int_ram_grid_a_axil_awprot),
     .s_axil_a_awvalid   (int_ram_grid_a_axil_awvalid),
@@ -1142,13 +1142,14 @@ module KanLayer #(
     - _a : port a (control port)
     - _b : port b (internal use)
   *********************************************/
-  wire                                    int_ram_grid_bram_clka;
+  wire                                    int_ram_grid_bram_clk_a;
   wire [GRID_BANKS-1:0]                   int_ram_grid_bram_en_a;
   wire [GRID_BANKS*GRID_WE-1:0]           int_ram_grid_bram_we_a;
   wire [GRID_BANKS*GRID_ADDR-1:0]         int_ram_grid_bram_addr_a;
   wire [GRID_BANKS*GRID_WIDTH-1:0]        int_ram_grid_bram_wrdata_a;
   wire [GRID_BANKS*GRID_WIDTH-1:0]        int_ram_grid_bram_rddata_a;
 
+  wire                                    int_ram_grid_bram_clk_b;
   wire [GRID_BANKS-1:0]                   int_ram_grid_bram_en_b;
   wire [GRID_BANKS*GRID_ADDR-1:0]         int_ram_grid_bram_addr_b;
   wire [GRID_BANKS*GRID_WIDTH-1:0]        int_ram_grid_bram_rddata_b;
@@ -1160,7 +1161,8 @@ module KanLayer #(
     .DEPTH  (GRID_BANK_DEPTH),
     .ADDR   (GRID_ADDR)
   ) bram_ram_data_inst (
-    .clk    (int_ram_grid_bram_clka),
+    .clk_a  (int_ram_grid_bram_clk_a),
+    .clk_b  (int_ram_grid_bram_clk_b),
     .ena    (int_ram_grid_bram_en_a),
     .wea    (int_ram_grid_bram_we_a),
     .addra  (int_ram_grid_bram_addr_a),
@@ -1253,10 +1255,10 @@ module KanLayer #(
     .B_STRB_WIDTH       (SCALE_STRB_WIDTH),
     .PIPELINE_OUTPUT    (SCALE_PIPELINE_OUTPUT)
   ) axil_ram_scle_inst (
-    .clka              (int_ram_scle_a_axil_aclk),
-    .rsta              (int_ram_scle_a_axil_arst),
-    .clkb              (int_ram_scle_b_axil_aclk),
-    .rstb              (int_ram_scle_b_axil_arst),
+    .clka               (int_ram_scle_a_axil_aclk),
+    .rsta               (int_ram_scle_a_axil_arst),
+    .clkb               (int_ram_scle_b_axil_aclk),
+    .rstb               (int_ram_scle_b_axil_arst),
     .s_axil_a_awaddr    (int_ram_scle_a_axil_awaddr),
     .s_axil_a_awprot    (int_ram_scle_a_axil_awprot),
     .s_axil_a_awvalid   (int_ram_scle_a_axil_awvalid),
@@ -1348,13 +1350,14 @@ module KanLayer #(
     - _a : port a (control port)
     - _b : port b (internal use)
   *********************************************/
-  wire                                      int_ram_scle_bram_clka;
+  wire                                      int_ram_scle_bram_clk_a;
   wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_a;
   wire [SCALE_BANKS*SCALE_WE-1:0]           int_ram_scle_bram_we_a;
   wire [SCALE_BANKS*SCALE_ADDR-1:0]         int_ram_scle_bram_addr_a;
   wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_ram_scle_bram_wrdata_a;
   wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_ram_scle_bram_rddata_a;
 
+  wire                                      int_ram_scle_bram_clk_b;
   wire [SCALE_BANKS-1:0]                    int_ram_scle_bram_en_b;
   wire [SCALE_BANKS*SCALE_ADDR-1:0]         int_ram_scle_bram_addr_b;
   wire [SCALE_BANKS*SCALE_WIDTH-1:0]        int_ram_scle_bram_rddata_b;
@@ -1366,7 +1369,8 @@ module KanLayer #(
     .DEPTH  (DATA_BANK_DEPTH),
     .ADDR   (SCALE_ADDR)
   ) bram_ram_scle_inst (
-    .clk    (int_ram_scle_bram_clka),
+    .clk_a  (int_ram_scle_bram_clk_a),
+    .clk_b  (int_ram_scle_bram_clk_b),
     .ena    (int_ram_scle_bram_en_a),
     .wea    (int_ram_scle_bram_we_a),
     .addra  (int_ram_scle_bram_addr_a),
@@ -1379,7 +1383,7 @@ module KanLayer #(
   );
   
   // bram control interface to the scle bram port a
-  assign int_ram_scle_bram_clka    = bram_ctrl_scle_clk;
+  assign int_ram_scle_bram_clk_a    = bram_ctrl_scle_clk;
   assign int_ram_scle_bram_en_a     = bram_ctrl_scle_en;
   assign int_ram_scle_bram_we_a     = bram_ctrl_scle_we;
   assign int_ram_scle_bram_addr_a   = bram_ctrl_scle_addr[2 +: SCALE_EXTRL_ADDR];
@@ -2411,7 +2415,7 @@ module KanLayer #(
   assign bram_ctrl_grid_dout        = int_trl_grid_bram_rddata_i;
 
   // bram control interface to the grid bram port a
-  assign int_ram_grid_bram_clka     = bram_ctrl_grid_clk;
+  assign int_ram_grid_bram_clk_a     = bram_ctrl_grid_clk;
   assign int_ram_grid_bram_en_a      = int_trl_grid_bram_en_o;
   assign int_ram_grid_bram_we_a      = int_trl_grid_bram_we_o;
   assign int_ram_grid_bram_addr_a    = int_trl_grid_bram_addr_o;
@@ -2420,7 +2424,7 @@ module KanLayer #(
 
   // grid bram port b to memory control unit
   assign int_mcu_grid_bram_clk       = core_clk;
-  assign int_ram_grid_bram_clkb     = core_clk;
+  assign int_ram_grid_bram_clk_b     = core_clk;
   assign int_ram_grid_bram_en_b      = int_mcu_grid_bram_en;
   assign int_ram_grid_bram_addr_b    = int_mcu_grid_bram_addr;
   assign int_mcu_grid_bram_rddata    = int_ram_grid_bram_rddata_b;
@@ -2473,7 +2477,7 @@ module KanLayer #(
   assign bram_ctrl_scle_dout        = int_trl_scle_bram_rddata_i;
 
   // bram control interface to the grid bram port a
-  assign int_ram_scle_bram_clka     = bram_ctrl_scle_clk;
+  assign int_ram_scle_bram_clk_a     = bram_ctrl_scle_clk;
   assign int_ram_scle_bram_en_a      = int_trl_scle_bram_en_o;
   assign int_ram_scle_bram_we_a      = int_trl_scle_bram_we_o;
   assign int_ram_scle_bram_addr_a    = int_trl_scle_bram_addr_o;
@@ -2482,7 +2486,7 @@ module KanLayer #(
 
   // grid bram port b to memory control unit
   assign int_mcu_scle_bram_clk       = core_clk;
-  assign int_ram_scle_bram_clkb     = core_clk;
+  assign int_ram_scle_bram_clk_b     = core_clk;
   assign int_ram_scle_bram_en_b      = int_mcu_scle_bram_en;
   assign int_ram_scle_bram_addr_b    = int_mcu_scle_bram_addr;
   assign int_mcu_scle_bram_rddata    = int_ram_scle_bram_rddata_b;

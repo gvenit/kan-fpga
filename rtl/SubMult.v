@@ -397,6 +397,8 @@ module SubMult #(
   // Stage 3 Skid Register
   axis_register #(
     .DATA_WIDTH       (MTL_WIDTH),
+    .KEEP_ENABLE      (0),
+    .KEEP_WIDTH       (1),
     .LAST_ENABLE      (1),
     .ID_ENABLE        (ID_ENABLE),
     .ID_WIDTH         (ID_WIDTH),
@@ -409,6 +411,7 @@ module SubMult #(
     .clk              (clk),
     .rst              (rst),
     .s_axis_tdata     (stage_3_in_axis_data_tdata),
+    .s_axis_tkeep     (1'b1),
     .s_axis_tvalid    (stage_3_in_axis_data_tvalid),
     .s_axis_tready    (stage_3_in_axis_data_tready),
     .s_axis_tlast     (stage_3_in_axis_data_tlast),

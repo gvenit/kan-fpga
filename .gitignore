@@ -25,13 +25,15 @@ test
 
 # vivado
 
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.cache
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.hw
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.ip_user_files
-vivado/vivado_22.2/KAN_SoC/KAN_SoC.sim
+*.cache
+*.hw
+*.ip_user_files
+*.sim
+*.runs
 
 test
 log
-vivado
 graphs
 dot
+
+temp
