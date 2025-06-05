@@ -169,7 +169,7 @@ module CentralControlUnit #(
 
   // Capture interrupts -- Reset every clock tick
  generate
-  if (IS_ASYNCHRONOUS) begin
+  if (IS_ASYNCHRONOUS > 0) begin : use_samplers_genblock
     genvar peripheral;
     for (peripheral = 0; peripheral < NUM_PERIPHERALS; peripheral = peripheral + 1) begin : peripheral_samplers_genblock 
       Sampler #(
@@ -201,7 +201,7 @@ module CentralControlUnit #(
       .signal           (rslt_tlast),
       .sampled_signal   (rslt_tlast_sampled)
     );
-  end else begin
+  end else begin : skip_samplers_genblock
     assign peripheral_operation_busy_sampled     = peripheral_operation_busy;
     assign peripheral_operation_complete_sampled = peripheral_operation_complete;
     assign peripheral_operation_error_sampled    = peripheral_operation_error;
@@ -364,12 +364,12 @@ module CentralControlUnit #(
   assign operation_status_locked_wr = locked_next;
 
   // Check results exported -- Contain information about the next iteration
-  reg  [31:0] results_left_reg;
-  reg  [31:0] results_exported_reg;
+  reg  [23:0] results_left_reg;
+  reg  [23:0] results_exported_reg;
 
-  wire [31:0] results_iter_size         = (results_left_reg > RSLT_CHANNELS) ? RSLT_CHANNELS : results_left_reg;
-  wire [31:0] results_left_reg_next     = results_left_reg - results_iter_size;
-  wire [31:0] results_exported_reg_next = results_exported_reg + results_iter_size;
+  wire [23:0] results_iter_size         = (results_left_reg > RSLT_CHANNELS) ? RSLT_CHANNELS : results_left_reg;
+  wire [23:0] results_left_reg_next     = results_left_reg - results_iter_size;
+  wire [23:0] results_exported_reg_next = results_exported_reg + results_iter_size;
 
   wire [RSLT_CHANNELS-1:0] use_channels_next;
   wire [BATCH_SIZE-1:0]    use_batch_next;
@@ -385,13 +385,13 @@ module CentralControlUnit #(
     end
   endgenerate
 
-  assign operation_progress_rslt_wr = results_exported_reg;
+  assign operation_progress_rslt_wr = $unsigned(results_exported_reg);
 
   // Check iteration
-  reg  [31:0] iteration_reg;
-  wire [31:0] iteration_reg_next = iteration_reg + 1;
+  reg  [23:0] iteration_reg;
+  wire [23:0] iteration_reg_next = iteration_reg + 1;
 
-  assign operation_progress_iter_wr = iteration_reg;
+  assign operation_progress_iter_wr = $unsigned(iteration_reg);
 
   // Check if last iteration
   wire last_iteration = (results_left_reg == 0);
@@ -419,8 +419,10 @@ module CentralControlUnit #(
       operation_complete    <= 1'b0;
       operation_error       <= 1'b0;
 
-      results_left_reg      <= {32{1'b0}};
-      results_exported_reg  <= {32{1'b0}};
+      results_left_reg      <= {24{1'b0}};
+      results_exported_reg  <= {24{1'b0}};
+
+      iteration_reg         <= {24{1'b0}};
 
       locked      <= 1'b0;
       pl2ps_intr  <= 1'b0;
@@ -458,8 +460,10 @@ module CentralControlUnit #(
 
       case (fsm_state_next)
         FSM_ST0: begin
-          results_left_reg      <= {32{1'b0}};
-          results_exported_reg  <= {32{1'b0}};
+          results_left_reg      <= {24{1'b0}};
+          results_exported_reg  <= {24{1'b0}};
+          
+          iteration_reg         <= {24{1'b0}};
 
           interrupt_soft_reg        <= 1'b0;
           interrupt_soft_reg_early  <= 1'b0;
@@ -476,9 +480,9 @@ module CentralControlUnit #(
           use_batch       <= use_batch_next;
 
           results_left_reg      <= rslt_size_rd;
-          results_exported_reg  <= {32{1'b0}};
+          results_exported_reg  <= {24{1'b0}};
 
-          iteration_reg         <= {32{1'b0}};
+          iteration_reg         <= {24{1'b0}};
 
           operation_busy  <= 1'b1;
 

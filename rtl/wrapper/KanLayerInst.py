@@ -712,6 +712,7 @@ module {{name}} #(
     .USER_WIDTH                     (USER_WIDTH),
     .USER_OUTPUT                    (USER_OUTPUT),
     .EXTRA_CYCLE                    (EXTRA_CYCLE),
+    .IS_ASYNCHRONOUS                (IS_ASYNCHRONOUS),
     .ROM_DATA_PATH                  (ROM_DATA_PATH)
   ) wrapper (
     .fsm_clk                        (fsm_clk),

@@ -624,7 +624,7 @@ module KanLayer #(
  `ifdef DATA_IF_IS_BRAM
   localparam IN_WORD_DATA = BRAM_CTRL_WIDTH / DATA_WIDTH;
 
-  localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH * IN_WORD_DATA; // simulated total data ram length
+  localparam DATA_ITRL_DEPTH = DATA_BANKS * DATA_BANK_DEPTH; // simulated total data ram length
   localparam DATA_ITRL_ADDR = `LOG2( DATA_ITRL_DEPTH );        // number of input address bits of total data memory
 
   localparam DATA_ADDR_BYTES = DATA_ITRL_ADDR;
@@ -637,7 +637,7 @@ module KanLayer #(
  `ifdef GRID_IF_IS_BRAM
   localparam IN_WORD_GRID = BRAM_CTRL_WIDTH / GRID_WIDTH;
 
-  localparam GRID_ITRL_DEPTH = GRID_BANKS * GRID_BANK_DEPTH * IN_WORD_GRID; // simulated total data ram length
+  localparam GRID_ITRL_DEPTH = GRID_BANKS * GRID_BANK_DEPTH; // simulated total data ram length
   localparam GRID_ITRL_ADDR = `LOG2( GRID_ITRL_DEPTH );        // number of input address bits of total data memory
 
   localparam GRID_DEPTH_RESOLVED = GRID_ITRL_DEPTH;
@@ -659,7 +659,7 @@ module KanLayer #(
  `ifdef SCALE_IF_IS_BRAM
   localparam IN_WORD_SCALE = BRAM_CTRL_WIDTH / SCALE_WIDTH;
 
-  localparam SCALE_ITRL_DEPTH = SCALE_BANKS * SCALE_BANK_DEPTH * IN_WORD_SCALE; // simulated total data ram length
+  localparam SCALE_ITRL_DEPTH = SCALE_BANKS * SCALE_BANK_DEPTH; // simulated total data ram length
   localparam SCALE_ITRL_ADDR = `LOG2( SCALE_ITRL_DEPTH );        // number of input address bits of total data memory
 
   localparam SCALE_DEPTH_RESOLVED = SCALE_ITRL_DEPTH;
@@ -2297,6 +2297,21 @@ module KanLayer #(
     .s_axil_rready                  (s_axil_ctrl_rready)
   );
 
+  Pipeline #(
+    .DATA_WIDTH (1 + 4 * NUM_PERIPHERALS),
+    .LEVEL      (2)
+  ) ccu_pipeline_inst (
+    .clk        (core_clk),
+    .rst        (core_rst),
+    .din        ({jnr_operation_complete,
+                  jnr_operation_busy,      aps_operation_busy,     dpu_operation_busy,     mcu_operation_busy,     
+                  jnr_operation_complete,  aps_operation_complete, dpu_operation_complete, mcu_operation_complete, 
+                  jnr_operation_error,     aps_operation_error,    dpu_operation_error,    mcu_operation_error,    
+                  jnr_transmission,       |aps_transmission,       dpu_transmission,       mcu_transmission       
+                }),
+    .dout       ({rslt_tlast, peripheral_operation_busy, peripheral_operation_complete, peripheral_operation_error, peripheral_transmission})
+  );
+
   /*************************************************************************************
    Internal Sinals Connections and Direct Assignments
   *************************************************************************************/
@@ -2641,27 +2656,27 @@ module KanLayer #(
   assign scle_size_norm = scle_size >> `RLOG2( SCLE_BANKS );
   `endif 
 
-  assign peripheral_operation_busy     [PERIPHERAL_MCU] = mcu_operation_busy;
-  assign peripheral_operation_complete [PERIPHERAL_MCU] = mcu_operation_complete;
-  assign peripheral_operation_error    [PERIPHERAL_MCU] = mcu_operation_error;
-  assign peripheral_transmission       [PERIPHERAL_MCU] = mcu_transmission;
+  // assign peripheral_operation_busy     [PERIPHERAL_MCU] = mcu_operation_busy;
+  // assign peripheral_operation_complete [PERIPHERAL_MCU] = mcu_operation_complete;
+  // assign peripheral_operation_error    [PERIPHERAL_MCU] = mcu_operation_error;
+  // assign peripheral_transmission       [PERIPHERAL_MCU] = mcu_transmission;
 
-  assign peripheral_operation_busy     [PERIPHERAL_DPU] = dpu_operation_busy;
-  assign peripheral_operation_complete [PERIPHERAL_DPU] = dpu_operation_complete;
-  assign peripheral_operation_error    [PERIPHERAL_DPU] = dpu_operation_error;
-  assign peripheral_transmission       [PERIPHERAL_DPU] = dpu_transmission;
+  // assign peripheral_operation_busy     [PERIPHERAL_DPU] = dpu_operation_busy;
+  // assign peripheral_operation_complete [PERIPHERAL_DPU] = dpu_operation_complete;
+  // assign peripheral_operation_error    [PERIPHERAL_DPU] = dpu_operation_error;
+  // assign peripheral_transmission       [PERIPHERAL_DPU] = dpu_transmission;
 
-  assign peripheral_operation_busy     [PERIPHERAL_APS] = aps_operation_busy;
-  assign peripheral_operation_complete [PERIPHERAL_APS] = aps_operation_complete;
-  assign peripheral_operation_error    [PERIPHERAL_APS] = aps_operation_error;
-  assign peripheral_transmission       [PERIPHERAL_APS] = aps_transmission;
+  // assign peripheral_operation_busy     [PERIPHERAL_APS] = aps_operation_busy;
+  // assign peripheral_operation_complete [PERIPHERAL_APS] = aps_operation_complete;
+  // assign peripheral_operation_error    [PERIPHERAL_APS] = aps_operation_error;
+  // assign peripheral_transmission       [PERIPHERAL_APS] = aps_transmission;
 
-  assign peripheral_operation_busy     [PERIPHERAL_JNR] = jnr_operation_busy;
-  assign peripheral_operation_complete [PERIPHERAL_JNR] = jnr_operation_complete;
-  assign peripheral_operation_error    [PERIPHERAL_JNR] = jnr_operation_error;
-  assign peripheral_transmission       [PERIPHERAL_JNR] = jnr_transmission;
+  // assign peripheral_operation_busy     [PERIPHERAL_JNR] = jnr_operation_busy;
+  // assign peripheral_operation_complete [PERIPHERAL_JNR] = jnr_operation_complete;
+  // assign peripheral_operation_error    [PERIPHERAL_JNR] = jnr_operation_error;
+  // assign peripheral_transmission       [PERIPHERAL_JNR] = jnr_transmission;
 
-  assign rslt_tlast = jnr_operation_complete;
+  // assign rslt_tlast = jnr_operation_complete;
 endmodule
 
 `resetall

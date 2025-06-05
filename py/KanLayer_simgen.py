@@ -46,7 +46,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, is_async=True):
         '--batch-size',             K,
         '--data-axil' if J == 1 else '--data-bram',              
         '--data-width',             data_width,
-        '--data-frac-bits',         data_width-1,
+        '--data-frac-bits',         data_width-5,
         '--data-chn',               J,
         '--data-depth',             J * max(N_in // J, 1),
         '--grid-depth',             8,
@@ -56,7 +56,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, is_async=True):
         '--scle-depth',             1,
         '--scle-share',             
         '--wght-width',             data_width,
-        '--wght-frac-bits',         data_width,
+        '--wght-frac-bits',         data_width-5,
         '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)),
         '--sdff-width',             sdff_width,
         '--sdff-frac-bits',         sdff_width-3,
@@ -64,7 +64,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, is_async=True):
         '--actf-frac-bits',         data_width,
         '--rslt-chn',               I,
         '--rslt-width',             data_width,
-        '--rslt-frac-bits',         data_width-1,
+        '--rslt-frac-bits',         data_width-5,
         '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8)),
         '--name',                   basename,
         '--output',                 fname
@@ -143,7 +143,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     data_width = 16
     sdff_width = 12
-    is_async = True
+    is_async = False
     fast_clk_hperiod = 2      # 250 MHz
     
     kan = KanLayer(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, is_async=is_async)
@@ -191,13 +191,13 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     BATCH_SIZE.value  = K
     DATA_WIDTH.value = data_width
     DATA_STRB_WIDTH.value = data_width // 8
-    DATA_FRACTIONAL_BITS.value = data_width-1
+    DATA_FRACTIONAL_BITS.value = data_width-5
     SCALE_FRACTIONAL_BITS.value = data_width-2
-    WEIGHT_FRACTIONAL_BITS.value = data_width
+    WEIGHT_FRACTIONAL_BITS.value = data_width-5
     SCALED_DIFF_WIDTH.value = sdff_width
     SCALED_DIFF_FRACTIONAL_BITS.value = sdff_width-3
     ACT_FRACTIONAL_BITS.value = data_width
-    RSLT_FRACTIONAL_BITS.value = data_width-1
+    RSLT_FRACTIONAL_BITS.value = data_width-5
     
     DMA_WIDTH.value = 64
     DMA_STRB_WIDTH.value = 64 // 8
@@ -521,7 +521,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
     # Create scale - size = [1 X DATA X GRID] or [1] 
-    layer_scle = torch.rand(*scale_len, device=device) * 2
+    layer_scle = torch.rand(*scale_len, device=device) * 2 ** (DATA_WIDTH.value - SCALE_FRACTIONAL_BITS.value-1)
     # Quantize scale
     layer_scle_q = torch.tensor((layer_scle * 2 ** SCALE_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize scale
@@ -543,13 +543,13 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         layer_exp_rslt = layer_exp_actd @ layer_wght
         
         # Normalize weights
-        weight_scale = layer_exp_rslt.abs().max()
+        weight_scale = 1. / layer_exp_rslt.abs().max()
     
     
     # Normalize weight - size = [WEIGHT x RESULT] or [1] 
-    layer_wght = layer_wght / weight_scale / 8
+    layer_wght = layer_wght * weight_scale * 2 ** (DATA_WIDTH.value - WEIGHT_FRACTIONAL_BITS.value-1)
     # Quantize scale
-    layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{2*DATA_WIDTH.value}'), device=device)
+    layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{4*DATA_WIDTH.value}'), device=device)
     # Dequantize scale
     layer_wght = layer_wght_qd = layer_wght_q.to(torch.float32) / 2 ** WEIGHT_FRACTIONAL_BITS.value
     # print(layer_wght_q,layer_wght)
@@ -2188,7 +2188,7 @@ def main():
     os.chdir(os.path.join(TOP_DIR,'rtl'))
     
     for I,J,K in (
-        # (1,1,1),
+        (1,1,1),
         (1,2,1),
         (8,1,1),
         (1,1,3),

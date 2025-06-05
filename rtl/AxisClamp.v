@@ -126,13 +126,14 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
   wire [RSLT_WIDTH + UNSIGNED_RSLT-1:0]   dout_i;
 
   if (USE_INFINITY >0 && (MSB > OUT_MSB)) begin : use_infinity_genblock
-    if (UNSIGNED_RSLT) begin
-      wire overflow = ~|(data_slice_i[MSB:OUT_MSB]);
+    if (UNSIGNED_RSLT) begin : use_unsigned_genblock
+      wire [MSB:OUT_MSB+1] tmp = data_slice_i[MSB:OUT_MSB+1];
+      wire overflow = |(data_slice_i[MSB:OUT_MSB+1]);
 
       assign dout_i = (overflow) ? {(RSLT_WIDTH + UNSIGNED_RSLT){1'b1}} : data_slice_i[OUT_MSB:OUT_LSB];
 
-    end else begin
-      wire overflow = ~&(data_slice_i[MSB:OUT_MSB]) || |(~data_slice_i[MSB:OUT_MSB]);
+    end else begin : use_signed_genblock
+      wire overflow = ~&(data_slice_i[MSB:OUT_MSB+1]) || |(~data_slice_i[MSB:OUT_MSB+1]);
       
       assign dout_i = (overflow) ? {sign, {(RSLT_WIDTH-1){~sign}}} : data_slice_i[OUT_MSB:OUT_LSB];
 
