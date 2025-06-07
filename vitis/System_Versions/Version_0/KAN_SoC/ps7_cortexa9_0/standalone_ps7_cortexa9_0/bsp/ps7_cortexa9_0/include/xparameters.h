@@ -5,13 +5,13 @@
 #define XPAR_CPU_ID 0U
 
 /* Definitions for peripheral PS7_CORTEXA9_0 */
-#define XPAR_PS7_CORTEXA9_0_CPU_CLK_FREQ_HZ 650000000
+#define XPAR_PS7_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
 
 
 /******************************************************************/
 
 /* Canonical definitions for peripheral PS7_CORTEXA9_0 */
-#define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 650000000
+#define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
 
 
 /******************************************************************/
@@ -45,15 +45,15 @@
 #define XPAR_AXI_DMA_0_INCLUDE_S2MM 1
 #define XPAR_AXI_DMA_0_M_AXI_MM2S_DATA_WIDTH 64
 #define XPAR_AXI_DMA_0_M_AXI_S2MM_DATA_WIDTH 64
-#define XPAR_AXI_DMA_0_INCLUDE_SG 0
+#define XPAR_AXI_DMA_0_INCLUDE_SG 1
 #define XPAR_AXI_DMA_0_ENABLE_MULTI_CHANNEL 0
 #define XPAR_AXI_DMA_0_NUM_MM2S_CHANNELS 1
 #define XPAR_AXI_DMA_0_NUM_S2MM_CHANNELS 1
-#define XPAR_AXI_DMA_0_MM2S_BURST_SIZE 16
+#define XPAR_AXI_DMA_0_MM2S_BURST_SIZE 64
 #define XPAR_AXI_DMA_0_S2MM_BURST_SIZE 16
 #define XPAR_AXI_DMA_0_MICRO_DMA 1
 #define XPAR_AXI_DMA_0_ADDR_WIDTH 32
-#define XPAR_AXI_DMA_0_SG_LENGTH_WIDTH 14
+#define XPAR_AXI_DMA_0_SG_LENGTH_WIDTH 11
 
 
 /******************************************************************/
@@ -68,15 +68,15 @@
 #define XPAR_AXIDMA_0_INCLUDE_S2MM 1
 #define XPAR_AXIDMA_0_INCLUDE_S2MM_DRE 0
 #define XPAR_AXIDMA_0_M_AXI_S2MM_DATA_WIDTH 64
-#define XPAR_AXIDMA_0_INCLUDE_SG 0
+#define XPAR_AXIDMA_0_INCLUDE_SG 1
 #define XPAR_AXIDMA_0_ENABLE_MULTI_CHANNEL 0
 #define XPAR_AXIDMA_0_NUM_MM2S_CHANNELS 1
 #define XPAR_AXIDMA_0_NUM_S2MM_CHANNELS 1
-#define XPAR_AXIDMA_0_MM2S_BURST_SIZE 16
+#define XPAR_AXIDMA_0_MM2S_BURST_SIZE 64
 #define XPAR_AXIDMA_0_S2MM_BURST_SIZE 16
 #define XPAR_AXIDMA_0_MICRO_DMA 1
 #define XPAR_AXIDMA_0_c_addr_width 32
-#define XPAR_AXIDMA_0_c_sg_length_width 14
+#define XPAR_AXIDMA_0_c_sg_length_width 11
 
 
 /******************************************************************/
@@ -96,8 +96,8 @@
 #define XPAR_AXI_BRAM_CTRL_0_ECC_ONOFF_REGISTER 0U
 #define XPAR_AXI_BRAM_CTRL_0_ECC_ONOFF_RESET_VALUE 0U
 #define XPAR_AXI_BRAM_CTRL_0_WRITE_ACCESS 0U
-#define XPAR_AXI_BRAM_CTRL_0_S_AXI_BASEADDR 0x80000000U
-#define XPAR_AXI_BRAM_CTRL_0_S_AXI_HIGHADDR 0x80001FFFU
+#define XPAR_AXI_BRAM_CTRL_0_S_AXI_BASEADDR 0x42000000U
+#define XPAR_AXI_BRAM_CTRL_0_S_AXI_HIGHADDR 0x42001FFFU
 #define XPAR_AXI_BRAM_CTRL_0_S_AXI_CTRL_BASEADDR 0xFFFFFFFFU  
 #define XPAR_AXI_BRAM_CTRL_0_S_AXI_CTRL_HIGHADDR 0xFFFFFFFFU  
 
@@ -116,8 +116,8 @@
 #define XPAR_BRAM_0_ECC_ONOFF_REGISTER 0U
 #define XPAR_BRAM_0_ECC_ONOFF_RESET_VALUE 0U
 #define XPAR_BRAM_0_WRITE_ACCESS 0U
-#define XPAR_BRAM_0_BASEADDR 0x80000000U
-#define XPAR_BRAM_0_HIGHADDR 0x80001FFFU
+#define XPAR_BRAM_0_BASEADDR 0x42000000U
+#define XPAR_BRAM_0_HIGHADDR 0x42001FFFU
 #define XPAR_BRAM_0_CTRL_BASEADDR 0xFFFFFFFFU  
 #define XPAR_BRAM_0_CTRL_HIGHADDR 0xFFFFFFFEU  
 
@@ -219,11 +219,6 @@
 /******************************************************************/
 
 
-/* Peripheral Definitions for peripheral KANLAYERINST_0 */
-#define XPAR_KANLAYERINST_0_BASEADDR 0x80002800
-#define XPAR_KANLAYERINST_0_HIGHADDR 0x80002FFF
-
-
 /* Peripheral Definitions for peripheral PS7_AFI_0 */
 #define XPAR_PS7_AFI_0_S_AXI_BASEADDR 0xF8008000
 #define XPAR_PS7_AFI_0_S_AXI_HIGHADDR 0xF8008FFF
@@ -311,6 +306,11 @@
 #define XPAR_PS7_SLCR_0_S_AXI_HIGHADDR 0xF8000FFF
 
 
+/* Peripheral Definitions for peripheral KANLAYERINSTWRAPPER1_0 */
+#define XPAR_KANLAYERINSTWRAPPER1_0_BASEADDR 0x40002800
+#define XPAR_KANLAYERINSTWRAPPER1_0_HIGHADDR 0x40002FFF
+
+
 /******************************************************************/
 
 
@@ -372,7 +372,7 @@
 /******************************************************************/
 
 /* Definitions for Fabric interrupts connected to ps7_scugic_0 */
-#define XPAR_FABRIC_KANLAYERINST_0_PL2PS_INTR_INTR 61U
+#define XPAR_FABRIC_KANLAYERINSTWRAPPER1_0_PL2PS_INTR_INTR 61U
 #define XPAR_FABRIC_AXI_DMA_0_MM2S_INTROUT_INTR 62U
 #define XPAR_FABRIC_AXI_DMA_0_S2MM_INTROUT_INTR 63U
 

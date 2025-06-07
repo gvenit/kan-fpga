@@ -1,6 +1,8 @@
 #ifndef _KAN_MEMORY_H_
 #define _KAN_MEMORY_H_
 
+#include <stdint.h>
+
 #include "kan_defines.h"
 #include "kan_status.h"
 

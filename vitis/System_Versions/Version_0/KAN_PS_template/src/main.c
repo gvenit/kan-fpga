@@ -1,28 +1,33 @@
-#include <stdlib.h>
-
 /********************************************
- * Local Includes
+ * Includes
  *******************************************/
 
+// global includes
+
+#include <stdint.h>
+
+#include "xparameters.h"
+
+// kan header files
+
 #include "kan_build_params.h"
+#include "kan_config.h"
 #include "kan_defines.h"
-#include "kan_status.h"
-#include "kan_memory_map.h"
+#include "kan_dma.h"
 #include "kan_interrupts.h"
 #include "kan_memory.h"
-#include "kan_dma.h"
+#include "kan_memory_map.h"
+#include "kan_status.h"
+
+#ifdef BRAM_CTR
+#include "kan_bram_controller.h"
+#endif
+
+// xilinx vitis sdk header files
 
 #ifdef DEF_VERBOSE
 #include "xil_printf.h"
 #endif
-
-#ifdef BRAM_INTRF
-#include "kan_bram_controller.h"
-#endif
-
-#include "dataset_data.h"
-#include "dataset_grid.h"
-#include "dataset_scale.h"
 
 /********************************************
  * Function decleration
@@ -31,6 +36,10 @@
 /********************************************
  * Global instances
  *******************************************/
+
+kan_network_handler_t hKan;                     // handler of the entire KAN network
+kan_layer_handler_t hKanLayers[KAN_LAYERS_NUM]; // array of handlers for each of the networks layers
+kan_data_buff_t data_buffer = NULL;             // buffer that will hold the data packets and the results of each layer
 
 XScuGic hIntrCtr; // interrupt controller handler
 
@@ -58,25 +67,28 @@ int main(void)
      Local variables
     ----------------------------------------*/
 
-    int i = 0;                            // counter indecing variable
     kan_status_t status = STATUS_FAILURE; // function return status
 
     /*----------------------------------------
      Initializations
     ----------------------------------------*/
 
+    status = kan_config_init(&hKan, hKanLayers, &data_buffer);
+    if (status != STATUS_OK)
+        kan_error_handler(status, "Network configuration failed");
+
     status = kan_intr_init(&hIntrCtr, INTR_CONTROLLER_DEVICE_ID);
     if (status != STATUS_OK)
-        kan_error_handler(status, "");
+        kan_error_handler(status, "Interrupts configuration failed");
 
     status = kan_dma_init_irq(&hDma, DMA_DEV_ID, &hIntrCtr);
     if (status != STATUS_OK)
-        kan_error_handler(status, "");
+        kan_error_handler(status, "DMA with interrupts initialization failed");
 
 #ifdef DATA_BRAM
-    status = bram_init(DATA_BRAM_CONTROLLER_ID, &hDataBramCtr);
+    status = kan_bram_ctr_init(DATA_BRAM_CONTROLLER_ID, &hDataBramCtr);
     if (status != STATUS_OK)
-        kan_error_handler(status, "");
+        kan_error_handler(status, "BRAM controller initialization failed");
 #endif
 #ifdef GRID_BRAM
     status = bram_init(GRID_BRAM_CONTROLLER_ID, &hGridBramCtr);
@@ -201,5 +213,5 @@ int main(void)
     //     xil_printf("\t END OF EXAMPLE \r\n");
     //     xil_printf("-----------------------------------------------------------------------\r\n");
 
-    //     return XST_SUCCESS;
+    return STATUS_OK;
 }

@@ -5,7 +5,7 @@ static kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controlle
     if (intr_handler == NULL)
         return STATUS_ILLEGAL_ARG;
 
-    int status;
+    kan_status_t status;
 
     XScuGic_Config *intr_config; // pointer to a configuration struct
 
@@ -24,7 +24,7 @@ static kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controlle
      */
 
     status = XScuGic_CfgInitialize(intr_handler, intr_config, intr_config->CpuBaseAddress);
-    if ((status != XST_SUCCESS) || (!(intr_handler->IsReady)))
+    if ((status != STATUS_OK) || (!(intr_handler->IsReady)))
         return STATUS_INTR_INIT_FAILURE;
 
     /**
@@ -54,7 +54,7 @@ static kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uin
     if (intr_priority > 248)
         return STATUS_ILLEGAL_ARG;
 
-    int status;
+    kan_status_t status;
 
     /**
      * Set the priority of the interrupt
@@ -70,7 +70,7 @@ static kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uin
      */
 
     status = XScuGic_Connect(intr_handler, intr_id, intr_callback, intr_callback_driver);
-    if (status != XST_SUCCESS)
+    if (status != STATUS_OK)
         return STATUS_INTR_ATTACH_FAILURE;
 
     /**

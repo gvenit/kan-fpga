@@ -1,9 +1,10 @@
-#ifndef _KAN_BUILD_DEFINES_H_
-#define _KAN_BUILD_DEFINES_H_
+#ifndef SRC_KAN_DEFINES_H_
+#define SRC_KAN_DEFINES_H_
 
-#include "xparameters.h"
+#include <stdint.h>
 
 #include "kan_build_params.h"
+#include "xparameters.h"
 
 /*===========================================================================
     Used datatype and size definitions
@@ -45,26 +46,26 @@
     Memory definitions
 ============================================================================*/
 
-#ifdef DEF_DATA_BRAM
+#ifdef DEF_DATA_BRAM_CTR
 #define DATA_BRAM
 #else
 #define DATA_AXIL
 #endif
 
-#ifdef DEF_SCALE_IS_SHARED
-#define SCALE_AXIL
-#else
+#ifdef DEF_SCALE_BRAM_CTR
 #define SCALE_BRAM
+#else
+#define SCALE_AXIL
 #endif
 
-#ifdef DEF_GRID_IS_SHARED
-#define GRID_AXIL
-#else
+#ifdef DEF_GRID_BRAM_CTR
 #define GRID_BRAM
+#else
+#define GRID_AXIL
 #endif
 
 #if defined(DATA_BRAM) || defined(SCALE_BRAM) || defined(GRID_BRAM)
-#define BRAM_INTRF
+#define BRAM_CTR
 #endif
 
 /**

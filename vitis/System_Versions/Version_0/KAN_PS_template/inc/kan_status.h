@@ -2,7 +2,6 @@
 #define _KAN_STATUS_H_
 
 #include "kan_defines.h"
-
 #include "xstatus.h"
 
 #ifdef DEF_VERBOSE
@@ -43,25 +42,65 @@ typedef enum Kan_Status
     STATUS_NULL_POINTER_REF,
     STATUS_MALLOC_FAIL,
     STATUS_INTR_INIT_FAILURE,
-    STATUS_INTR_ATTACH_FAILURE
+    STATUS_INTR_ATTACH_FAILURE,
+    STATUS_DMA_INIT_FAILURE,
+    STATUS_DMA_TX_FAILURE,
+    STATUS_DMA_RX_FAILURE,
+    STATUS_BRAMC_INIT_FAILURE
 } kan_status_t;
 
 #ifdef DEF_VERBOSE
-#define kan_error_handler(code, msg)                              \
-    do                                                            \
-    {                                                             \
-        switch (code)                                             \
-        {                                                         \
-        case STATUS_OK:                                           \
-            xil_printf("Call returned error: %d\r\n", STATUS_OK); \
-            xil_printf("%s\r\n", msg);                            \
-            break;                                                \
-        default:                                                  \
-            xil_printf("Unhandled error code: %d\r\n", code);     \
-            xil_printf("%s\r\n", msg);                            \
-            break;                                                \
-        }                                                         \
-        return code;                                              \
+#define kan_error_handler(code, msg)                                           \
+    do                                                                         \
+    {                                                                          \
+        switch (code)                                                          \
+        {                                                                      \
+        case STATUS_FAILURE:                                                   \
+            xil_printf("Call returned error: STATUS_FAILURE\r\n");             \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_ILLEGAL_ARG:                                               \
+            xil_printf("Call returned error: STATUS_ILLEGAL_ARG\r\n");         \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_NULL_POINTER_REF:                                          \
+            xil_printf("Call returned error: STATUS_NULL_POINTER_REF\r\n");    \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_MALLOC_FAIL:                                               \
+            xil_printf("Call returned error: STATUS_MALLOC_FAIL\r\n");         \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_INTR_INIT_FAILURE:                                         \
+            xil_printf("Call returned error: STATUS_INTR_INIT_FAILURE\r\n");   \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_INTR_ATTACH_FAILURE:                                       \
+            xil_printf("Call returned error: STATUS_INTR_ATTACH_FAILURE\r\n"); \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_DMA_INIT_FAILURE:                                          \
+            xil_printf("Call returned error: STATUS_DMA_INIT_FAILURE\r\n");    \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_DMA_TX_FAILURE:                                            \
+            xil_printf("Call returned error: STATUS_DMA_TX_FAILURE\r\n");      \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_DMA_RX_FAILURE:                                            \
+            xil_printf("Call returned error: STATUS_DMA_RX_FAILURE\r\n");      \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_BRAMC_INIT_FAILURE:                                        \
+            xil_printf("Call returned error: STATUS_BRAMC_INIT_FAILURE\r\n");  \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        default:                                                               \
+            xil_printf("Unhandled error code: %d\r\n", code);                  \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        }                                                                      \
+        return code;                                                           \
     } while (0)
 #else
 #define kan_error_handler(code, msg) return code;

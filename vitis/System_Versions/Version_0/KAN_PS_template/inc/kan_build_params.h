@@ -1,6 +1,8 @@
 #ifndef _KAN_BUILD_PARAMS_H_
 #define _KAN_BUILD_PARAMS_H_
 
+#include <stdint.h>
+
 /*==============================================================================
     Application parameters of the executions
  ==============================================================================*/
@@ -21,21 +23,21 @@
  *
  * Commentout `DATA_BRAM` if the data are stored in a single bank Axil RAM
  */
-#define DEF_DATA_BRAM
+#define DEF_DATA_BRAM_CTR
 
 /**
- * Uncomment `SCALE_IS_SHARED` for a scale RAM using an Axil interface
+ * Uncomment `DEF_SCALE_BRAM_CTR` for a scale RAM using a Bram controller and multiple banks
  *
- * Comment-out `SCALE_IS_SHARED` for a scale RAM using a Bram controller and multiple banks
+ * Comment-out `DEF_SCALE_BRAM_CTR` for a scale RAM using an Axil interface
  */
-#define DEF_SCALE_IS_SHARED
+// #define DEF_SCALE_BRAM_CTR
 
 /**
- * Uncomment `SCALE_IS_SHARED` for a scale RAM using an Axil interface
+ * Uncomment `DEF_GRID_BRAM_CTR` for a scale RAM using a Bram controller and multiple banks
  *
- * Comment-out `SCALE_IS_SHARED` for a scale RAM using a Bram controller and multiple banks
+ * Comment-out `DEF_GRID_BRAM_CTR` for a scale RAM using an Axil interface
  */
-#define DEF_GRID_IS_SHARED
+// #define DEF_GRID_BRAM_CTR
 
 /*==============================================================================
     Network parameters and type definitions
@@ -58,6 +60,12 @@
 #define KAN_LAYERS_NUM 4
 
 /**
+ * @brief Number of result packets.
+ * Define how many data the final layer produces
+ */
+#define KAN_RESULT_FEATURES 8
+
+/**
  * @brief the number of data on each KAN layer
  *
  * @warning
@@ -67,7 +75,7 @@
  * - They also define the size of results. Every layers result
  * are the data of the next one
  *
- * - They must strictly adhere to the `DEF_DATA_BRAM` macro.
+ * - They must strictly adhere to the `DEF_DATA_BRAM_CTR` macro.
  */
 static uint8_t sizes_array_data[KAN_LAYERS_NUM] = {2, 4, 3, 2};
 
@@ -78,7 +86,7 @@ static uint8_t sizes_array_data[KAN_LAYERS_NUM] = {2, 4, 3, 2};
  * - Must be explicitly defined in the `kan_build_params.h` by the user
  * and the array size must strictly match the `KAN_LAYERS_NUM`
  *
- * - They must strictly adhere to the `DEF_SCALE_IS_SHARED` macro.
+ * - They must strictly adhere to the `DEF_SCALE_BRAM_CTR` macro.
  */
 static uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
 
@@ -89,7 +97,7 @@ static uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
  * - Must be explicitly defined in the `kan_build_params.h` by the user
  * and the array size must strictly match the `KAN_LAYERS_NUM`
  *
- * - They must strictly adhere to the `DEF_GRID_IS_SHARED` macro.
+ * - They must strictly adhere to the `DEF_GRID_BRAM_CTR` macro.
  */
 static uint8_t sizes_array_grid[KAN_LAYERS_NUM] = {1, 1, 1, 1};
 

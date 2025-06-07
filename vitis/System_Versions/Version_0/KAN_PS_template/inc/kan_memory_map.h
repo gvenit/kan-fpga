@@ -1,9 +1,8 @@
 #ifndef _KAN_MEMORY_MAP_
 #define _KAN_MEMORY_MAP_
 
-#include "xparameters.h"
-
 #include "kan_defines.h"
+#include "xparameters.h"
 
 /*===========================================================================
     Control Registers address mapping and masks as enums

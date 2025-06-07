@@ -1,10 +1,11 @@
 #ifndef _KAN_INTERRUPTS_H_
 #define _KAN_INTERRUPTS_H_
 
-#include "xscugic.h"
+#include <stdint.h>
 
 #include "kan_defines.h"
 #include "kan_status.h"
+#include "xscugic.h"
 
 extern struct XScuGic;
 

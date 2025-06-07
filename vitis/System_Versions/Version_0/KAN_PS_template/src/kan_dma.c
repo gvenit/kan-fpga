@@ -1,5 +1,9 @@
 #include "kan_dma.h"
 
+volatile int dma_tx_done_flag; // DMA transmit complete
+volatile int dma_rx_done_flag; // DMA receive complete
+volatile int dma_error_flag;   // error in DMA transaction
+
 /**
  * This is the DMA TX Interrupt handler function.
  * In other words this is the callback of all the interrupts in DMA TX.
@@ -144,66 +148,51 @@ static void callback_dma_rx(void *dma_handler)
         dma_tx_done_flag = 1;
 }
 
-int kan_dma_init_irq(XAxiDma *dma_handler, uint16_t dma_id, XScuGic *intr_handler)
+kan_status_t kan_dma_init_irq(XAxiDma *dma_handler, uint16_t dma_id, XScuGic *intr_handler)
 {
-    int status;
+    kan_status_t status;
+
+    if (dma_handler == NULL || intr_handler == NULL || (!(intr_handler->IsReady)))
+        return STATUS_ILLEGAL_ARG;
+
     XAxiDma_Config *dma_config;
 
     /**
-     * Fill-up configuration struct
-     * - the define can be found in:
-     *    + xparameters.h
-     *    + "Hardware Platform Specification" GUI
+     * Find the correct config struct
      */
 
     dma_config = XAxiDma_LookupConfig(dma_id);
-    if (!dma_config)
-    {
-        xil_printf("No config found for %d\r\n", dma_id);
-        return XST_FAILURE;
-    }
+    if (dma_config == NULL)
+        return STATUS_NULL_POINTER_REF;
 
     /**
-     * Initialize the DMA Engine with
-     * the handler and the
-     * the configuration struct
+     * Init the config struct along with the handler
      */
 
     status = XAxiDma_CfgInitialize(dma_handler, dma_config);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("Initialization failed %d\r\n", status);
-        return XST_FAILURE;
-    }
+    if (status != STATUS_OK)
+        return STATUS_DMA_INIT_FAILURE;
 
     /**
      * Make sure you have no scatter gather
      */
 
     if (XAxiDma_HasSg(dma_handler))
-    {
-        xil_printf("Device configured as SG mode \r\n");
-        return XST_FAILURE;
-    }
+        return STATUS_DMA_INIT_FAILURE;
 
     /**
      * Set up Interrupt system
-     * - must already be initialized - add check
+     *
+     * @warning Must already be initialized!
      */
 
     status = kan_intr_attach(intr_handler, TX_INTR_ID, TX_INTR_PRIORITY, TX_INTR_TRIGGER_TYPE, (Xil_InterruptHandler)callback_dma_tx, (void *)dma_handler);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("Failed intr setup\r\n");
-        return XST_FAILURE;
-    }
+    if (status != STATUS_OK)
+        return STATUS_INTR_ATTACH_FAILURE;
 
     status = kan_intr_attach(intr_handler, RX_INTR_ID, RX_INTR_PRIORITY, RX_INTR_TRIGGER_TYPE, (Xil_InterruptHandler)callback_dma_rx, (void *)dma_handler);
-    if (status != XST_SUCCESS)
-    {
-        xil_printf("Failed intr setup\r\n");
-        return XST_FAILURE;
-    }
+    if (status != STATUS_OK)
+        return STATUS_INTR_ATTACH_FAILURE;
 
     /**
      * Disable and then enable all interrupts
@@ -215,7 +204,37 @@ int kan_dma_init_irq(XAxiDma *dma_handler, uint16_t dma_id, XScuGic *intr_handle
     XAxiDma_IntrEnable(dma_handler, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DMA_TO_DEVICE);
     XAxiDma_IntrEnable(dma_handler, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DEVICE_TO_DMA);
 
-    return XST_SUCCESS;
+    return STATUS_OK;
+}
+
+kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t packets)
+{
+    if (dma_handler == NULL || tx_buff == NULL)
+        return STATUS_ILLEGAL_ARG;
+
+    kan_status_t status = STATUS_FAILURE;
+
+    status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)tx_buff, packets * sizeof(data_t), XAXIDMA_DEVICE_TO_DMA);
+
+    if (status != STATUS_OK)
+        return STATUS_DMA_TX_FAILURE;
+
+    return STATUS_OK;
+}
+
+kan_status_t kan_dma_rx(XAxiDma *dma_handler, data_t *rx_buff, size_t packets)
+{
+    if (dma_handler == NULL || rx_buff == NULL)
+        return STATUS_ILLEGAL_ARG;
+
+    kan_status_t status = STATUS_FAILURE;
+
+    status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)rx_buff, packets * sizeof(data_t), XAXIDMA_DMA_TO_DEVICE);
+
+    if (status != STATUS_OK)
+        return STATUS_DMA_TX_FAILURE;
+
+    return STATUS_OK;
 }
 
 #ifdef DEPRECATED

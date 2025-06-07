@@ -22,3 +22,21 @@ platform generate -quick
 platform active {KAN_SoC}
 platform active {KAN_SoC}
 platform active {KAN_SoC}
+platform active {KAN_SoC}
+platform config -updatehw {C:/Users/giann/Downloads/kan-2x2x1-80MHz-160MHz.xsa}
+platform generate
+platform active {KAN_SoC}
+platform generate -domains 
+platform clean
+platform generate
+platform clean
+platform generate
+platform active {KAN_SoC}
+platform generate -domains 
+platform generate -domains 
+platform generate -domains 
+platform active {KAN_SoC}
+platform generate -domains 
+platform clean
+platform config -updatehw {C:/Users/giann/Downloads/kan-2x2x1-80MHz-160MHz.xsa}
+platform generate

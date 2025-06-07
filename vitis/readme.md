@@ -33,6 +33,7 @@ First these headers act as ma
 - **kan_config.h** : configures the network parameters based mainly on the datasets and the `kan_build_params.h`
   - Custom type for whole network handler struct
   - Custom type for single layer handler struct
+  - Custom type for data and resultsn buffer
   - initialization and destruction functions
 - **kan_memory.h** : wrapper for memory operations
   - register read
@@ -45,20 +46,27 @@ First these headers act as ma
 
 - [ ] have the list of [header files](#headers) completed and working
 - [ ] memory wrapper functions
-- [ ] you need an invalid argument error return type
+- [x] you need an invalid argument error return type
 - [ ] add arguments check for register writes with half-words (almost unused) but it is dangerous for spillage in neighbouring words
-- [ ] whatever you do with the banks do it in kan_build_params.h and add checks.
+- [x] whatever you do with the banks do it in kan_build_params.h and add checks.
 - [ ] whatever you add in the build_params must be reflected in the nextwork handler types in kan_config.h
-- [ ] layer config structs might need to remain only in .c and not public in the kan_config.h
-- [ ] the kan_config.h functions are missing stuff. See them to it (see comments in source)
+- [x] layer config structs might need to remain only in .c and not public in the kan_config.h
+- [x] the kan_config.h functions are missing stuff. See them to it (see comments in source)
+- [x] change names for GRID_IS_SHARED and such
+- [x] add final layer result features
+- [ ] add volatile wherever it is needed
+- [x] data and results do not need strides and they are not knownn from the beggining
+- [ ] old dma examples had cache flushes that need to be imlpemented somehow
+- [ ] having status variable be `kan_status_t` in the source code might pose problems even if it is compatible with the defines in `xstatus.h`
+- [ ] not sure if deallocation function are needed (for example in the `kan_config.h`)
 
 <br>
 
 ## Inquiries
 
 - [ ] is `static` in functions (say interrupts) really needed?
-- [ ] What was the region that was supposedly the same and had to loop back data with the DMA? If it is reasults, isn't there mismatch with width?
-- [ ] does the final layer produce a single result or not?
-- [ ] do I have to deal with the banks? The only thing I can thing of is that they must divide the number of transfered packets. But it is something the PL deals with.
-- [ ] is it better have the network and layer handlers which are statically defined and decalred in kan_config.h b dynamically configured in main? If you end up with the dynamic add free functions too.
-- [ ] should I do the packet displacements in `kan_config_init` with strided indexes using `data_t` or should I do it with defines of byet sizes using their base addresses?
+- [x] What was the region that was supposedly the same and had to loop back data with the DMA? If it is reasults, isn't there mismatch with width?
+- [x] does the final layer produce a single result or not?
+- [x] do I have to deal with the banks? The only thing I can thing of is that they must divide the number of transfered packets. But it is something the PL deals with.
+- [x] is it better have the network and layer handlers which are statically defined and decalred in kan_config.h b dynamically configured in main? If you end up with the dynamic add free functions too.
+- [x] should I do the packet displacements in `kan_config_init` with strided indexes using `data_t` or should I do it with defines of byet sizes using their base addresses?
