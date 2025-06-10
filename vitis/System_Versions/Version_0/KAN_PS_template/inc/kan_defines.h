@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "kan_build_params.h"
-#include "xparameters.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xparameters.h"
 
 /*===========================================================================
     Used datatype and size definitions

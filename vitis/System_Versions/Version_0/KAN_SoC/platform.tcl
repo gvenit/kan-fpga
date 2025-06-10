@@ -40,3 +40,13 @@ platform generate -domains
 platform clean
 platform config -updatehw {C:/Users/giann/Downloads/kan-2x2x1-80MHz-160MHz.xsa}
 platform generate
+platform generate
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate
+platform clean
+platform generate

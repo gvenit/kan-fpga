@@ -6,9 +6,9 @@
 #include "kan_defines.h"
 #include "kan_status.h"
 
-#include "xbram.h"
-#include "xparameters.h"
-#include "xil_mem.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xbram.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xparameters.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xil_mem.h"
 
 // #include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/libsrc/bram_v4_8/src/xbram.h"
 

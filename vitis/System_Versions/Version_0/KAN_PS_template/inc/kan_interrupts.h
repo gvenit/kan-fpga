@@ -5,7 +5,8 @@
 
 #include "kan_defines.h"
 #include "kan_status.h"
-#include "xscugic.h"
+
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xscugic.h"
 
 extern struct XScuGic;
 

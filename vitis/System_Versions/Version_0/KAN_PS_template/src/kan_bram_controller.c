@@ -1,5 +1,9 @@
 #include "kan_bram_controller.h"
 
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xbram.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xparameters.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xil_mem.h"
+
 /**
  * This function ensures that ECC in the BRAM is initialized if no hardware
  * initialization is available. The ECC bits are initialized by reading and

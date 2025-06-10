@@ -6,8 +6,6 @@
 
 #include <stdint.h>
 
-#include "xparameters.h"
-
 // kan header files
 
 #include "kan_build_params.h"
@@ -26,7 +24,7 @@
 // xilinx vitis sdk header files
 
 #ifdef DEF_VERBOSE
-#include "xil_printf.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xil_printf.h"
 #endif
 
 /********************************************

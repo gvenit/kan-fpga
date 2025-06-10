@@ -2,10 +2,11 @@
 #define _KAN_STATUS_H_
 
 #include "kan_defines.h"
-#include "xstatus.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xstatus.h"
 
 #ifdef DEF_VERBOSE
-#include "xil_printf.h"
+//#include "xil_printf.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xil_printf.h"
 #endif
 
 /*===========================================================================

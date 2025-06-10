@@ -2,7 +2,7 @@
 #define _KAN_MEMORY_MAP_
 
 #include "kan_defines.h"
-#include "xparameters.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xparameters.h"
 
 /*===========================================================================
     Control Registers address mapping and masks as enums

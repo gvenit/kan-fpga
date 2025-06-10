@@ -5,8 +5,9 @@
 
 #include "kan_defines.h"
 #include "kan_interrupts.h"
-#include "xaxidma.h"
-#include "xscugic.h"
+
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xaxidma.h"
+#include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/include/xscugic.h"
 
 extern struct XAxiDma;
 

@@ -3,7 +3,6 @@
 	<name>KAN_PS_template</name>
 	<comment>Created by Vitis v2022.2</comment>
 	<projects>
-		<project>KAN_SoC</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -24,4 +23,26 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>axidma_v9_15</name>
+			<type>2</type>
+			<location>D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0/KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/libsrc/axidma_v9_15</location>
+		</link>
+		<link>
+			<name>bram_v4_8</name>
+			<type>2</type>
+			<location>D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0/KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/libsrc/bram_v4_8</location>
+		</link>
+		<link>
+			<name>scugic_v5_0</name>
+			<type>2</type>
+			<location>D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0/KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/libsrc/scugic_v5_0</location>
+		</link>
+		<link>
+			<name>standalone_v8_0</name>
+			<type>2</type>
+			<location>D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/System_Versions/Version_0/KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/libsrc/standalone_v8_0</location>
+		</link>
+	</linkedResources>
 </projectDescription>
