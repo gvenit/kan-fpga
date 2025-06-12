@@ -23,13 +23,17 @@
 
 // xilinx vitis sdk header files
 
+#include "xil_cache.h"
+
 #ifdef DEF_VERBOSE
 #include "xil_printf.h"
 #endif
 
 /********************************************
- * Function decleration
+ * Local defines
  *******************************************/
+
+#define LOADED_VAL 0x01
 
 /********************************************
  * Global instances
@@ -67,6 +71,17 @@ int main(void)
 
     kan_status_t status = STATUS_FAILURE; // function return status
 
+    kan_layer_handler_t *layer_handler_p = NULL;
+
+    uint32_t reg_rd_val = 0;
+
+    /*----------------------------------------
+     Disable cache
+    ----------------------------------------*/
+
+    Xil_DCacheDisable();
+    Xil_ICacheDisable();
+
     /*----------------------------------------
      Initializations
     ----------------------------------------*/
@@ -99,49 +114,53 @@ int main(void)
         kan_error_handler(status, "");
 #endif
 
-    //     /*--------------------------------------------
-    //      Variables and buffers initialization
-    //     ---------------------------------------------*/
+    /*----------------------------------------
+     Downloading data to layer
+    ----------------------------------------*/
 
-    //     // !!!!!!!!!!!!
+    // reset the PL - soft reset
 
-    //     TxDone = 0;
-    //     dma_rx_done_flag = 0;
-    //     dma_error_flag = 0;
+    kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_REG_1B, CTRL_REG_MASK_INTR_SFT_1B, BYTE);
 
-    //     txBuff = (int32_t *)calloc(sizeof(int32_t), PKT_ELEMENTS);
-    //     if (txBuff == NULL)
-    //     {
-    //         xil_printf("Memory allocation for tx buffer failed\r\n");
-    //         return XST_FAILURE;
-    //     }
+    // iterating over all layers
 
-    //     rxBuff = (int32_t *)calloc(sizeof(int32_t), PKT_ELEMENTS);
-    //     if (rxBuff == NULL)
-    //     {
-    //         xil_printf("Memory allocation for rx buffer failed\r\n");
-    //         return XST_FAILURE;
-    //     }
-    //     value = TEST_START_VALUE;
+    for (uint8_t layer = 0; layer < hKan.layers_num; layer++)
+    {
+        // configuring PL registers
 
-    //     for (i = 0; i < PKT_ELEMENTS; i++)
-    //     {
-    //         txBuff[i] = value;
+        layer_handler_p = (hKan.kan_layers_handlers + layer);
 
-    //         value = value + INCR;
-    //     }
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LEN_4B, (uint32_t)(layer_handler_p->data_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LEN_4B, (uint32_t)(layer_handler_p->grid_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LEN_4B, (uint32_t)(layer_handler_p->scale_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_RSLT_LEN_4B, (uint32_t)(layer_handler_p->result_num), WORD);
 
-    //     xil_printf("\r\nRx Buffer before DMA:\r\n");
-    //     for (i = 0; i < PKT_ELEMENTS; i++)
-    //         xil_printf("Rx[%d] = %d\r\n", i, (int)(rxBuff[i]));
-    //     xil_printf("\r\n\r\n");
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_PCKT_LEN_4B, (uint32_t)(layer_handler_p->data_num * layer_handler_p->grid_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_BTCH_LEN_1B, 0xFFFFFFFF, BYTE); // !!!!!!!! not sure what goes here
 
-    //     /*--------------------------------------------
-    //      Flush the cache
-    //     ---------------------------------------------*/
+        kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_OPER_STS_1B, &reg_rd_val, BYTE);
+        if (reg_rd_val != CTRL_REG_MASK_OPER_STS_VLD)
+            kan_error_handler(666, "The configuration was rejected by the PL");
 
-    //     Xil_DCacheFlushRange((UINTPTR)txBuff, sizeof(int32_t) * PKT_ELEMENTS);
-    //     Xil_DCacheFlushRange((UINTPTR)rxBuff, sizeof(int32_t) * PKT_ELEMENTS);
+        // dwonloading data, grid and scale
+
+        do
+        {
+            kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LDR_1B, &reg_rd_val, BYTE);
+        } while (reg_rd_val != LOADED_VAL);
+
+        do
+        {
+            kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LDR_1B, &reg_rd_val, BYTE);
+        } while (reg_rd_val != LOADED_VAL);
+
+        do
+        {
+            kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LDR_1B, &reg_rd_val, BYTE);
+        } while (reg_rd_val != LOADED_VAL);
+
+        // strating the DMA transfer of weights (RX) and results (TX)
+    }
 
     //     /*--------------------------------------------
     //      Start the DMA transfer

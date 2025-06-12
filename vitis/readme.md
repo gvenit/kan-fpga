@@ -70,3 +70,5 @@ First these headers act as ma
 - [x] do I have to deal with the banks? The only thing I can thing of is that they must divide the number of transfered packets. But it is something the PL deals with.
 - [x] is it better have the network and layer handlers which are statically defined and decalred in kan_config.h b dynamically configured in main? If you end up with the dynamic add free functions too.
 - [x] should I do the packet displacements in `kan_config_init` with strided indexes using `data_t` or should I do it with defines of byet sizes using their base addresses?
+- [ ] do we need to know the banks after all? see the configuration via the regfile
+- [ ] some values of registers are unkonwn (what to expect) so I have them as defines in the main and they should gradually be removed

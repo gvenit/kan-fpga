@@ -5,7 +5,7 @@
 #include "xparameters.h"
 
 /*===========================================================================
-    Control Registers address mapping and masks as enums
+    Control Registers address mapping and masks
 ============================================================================*/
 
 /**
@@ -21,7 +21,6 @@
  * and usually the same name as the control register it reads
  * while there is again the number of bytes in the end.
  */
-
 #define CTRL_REG_BASE_ADDRESS 0xFFFFFFFF
 
 /**
