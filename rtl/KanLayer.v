@@ -2197,8 +2197,7 @@ module KanLayer #(
     .ROM_DATA_PATH                (ROM_DATA_PATH),
     .OUTPUT_DEST                  (0),
     .OUTPUT_ID                    (0),
-    .FIFO_DEPTH                   (0),
-    .PIPELINE_LEVEL               (2)
+    .FIFO_DEPTH                   (0)
   ) data_processor_inst (
     .clk                          (core_clk),
     .rst                          (fsm_rst || internal_operation_error),

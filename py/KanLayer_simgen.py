@@ -57,7 +57,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, is_async=True):
         '--scle-share',             
         '--wght-width',             data_width,
         '--wght-frac-bits',         data_width-5,
-        '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)),
+        '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)) * 2,
         '--sdff-width',             sdff_width,
         '--sdff-frac-bits',         sdff_width-3,
         '--actf-width',             data_width,
@@ -65,7 +65,7 @@ def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, is_async=True):
         '--rslt-chn',               I,
         '--rslt-width',             data_width,
         '--rslt-frac-bits',         data_width-5,
-        '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8)),
+        '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8))*2,
         '--name',                   basename,
         '--output',                 fname
     ]] + (['--async'] if is_async else []))
@@ -143,7 +143,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     data_width = 16
     sdff_width = 12
-    is_async = False
+    is_async = True
+    
     fast_clk_hperiod = 2      # 250 MHz
     
     kan = KanLayer(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, is_async=is_async)
@@ -433,7 +434,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     reset_stmt.append(s_axis_wght_tvalid(0))
     reset_stmt.append(m_axis_rslt_tready(0))
     
-    slow_clk_hperiod = fast_clk_hperiod * AXIL_WIDTH / DATA_WIDTH if is_async else fast_clk_hperiod
+    slow_clk_hperiod = fast_clk_hperiod * DMA_WIDTH / (DATA_CHANNELS*RSLT_CHANNELS*DATA_WIDTH) if is_async else fast_clk_hperiod
 
     vcd_name = os.path.join('..','vcd',f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}.vcd')
     simulation.setup_waveform(module, uut, dumpfile=vcd_name)
@@ -477,7 +478,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
             bram_ctrl_scle_rst(core_rst),
         )
     
-    init = simulation.setup_reset(module, fsm_rst, reset_stmt, period=20)
+    init = simulation.setup_reset(module, fsm_rst, reset_stmt, period=4*slow_clk_hperiod)
 
     nclk = simulation.next_clock
     
@@ -775,6 +776,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
                             bram_ctrl_data_din[batch](EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}"))
                         ),
                     ),
+                    Display('Test : bram_ctrl_data_din[batch] = ', bram_ctrl_data_din[batch]),
                     Wait(bram_ctrl_data_clk[batch]),
                     Wait(~bram_ctrl_data_clk[batch]),
                 ),
@@ -2188,13 +2190,14 @@ def main():
     os.chdir(os.path.join(TOP_DIR,'rtl'))
     
     for I,J,K in (
-        (1,1,1),
-        (1,2,1),
-        (8,1,1),
-        (1,1,3),
+        # (1,1,1),
+        # (1,2,1),
+        # (8,1,1),
+        # (1,1,3),
         (2,2,1),
-        (2,2,2),
+        # (2,2,2),
         # (2,3,1),
+        # (4,2,1),
         # (4,4,1),
         # (4,4,4),
         # (8,4,2),

@@ -60,9 +60,7 @@ module ParallelizedLinearProcessingArray #(
   // Output Destination 
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 
-  parameter OUTPUT_ID = 0,
-  // Pipeline Level to use for dsp
-  parameter PIPELINE_LEVEL = 0
+  parameter OUTPUT_ID = 0
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -195,8 +193,7 @@ module ParallelizedLinearProcessingArray #(
             .IS_UNSIGNED_OP0        (IS_UNSIGNED_OP0),
             .OP1_WIDTH              (OP1_WIDTH),
             .IS_UNSIGNED_OP1        (IS_UNSIGNED_OP1),
-            .PSUM_WIDTH             (PSUM_WIDTH),
-            .PIPELINE_LEVEL         (PIPELINE_LEVEL)
+            .PSUM_WIDTH             (PSUM_WIDTH)
           ) parallelized_lpe_ijk (
             .clk                    (clk),
             .rst                    (rst_int),

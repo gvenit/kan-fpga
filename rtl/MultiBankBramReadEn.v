@@ -31,7 +31,7 @@ module MultiBankBramReadEn #(
 genvar i;
 
 generate
-  for (i = 0; i < BANKS; i = i + 1) begin
+  for (i = 0; i < BANKS; i = i + 1) begin : bram_read_en_genblock
     BramReadEn #(
       .DATA_WIDTH (DATA_WIDTH),
       .ADDR_WIDTH (ADDR_WIDTH),

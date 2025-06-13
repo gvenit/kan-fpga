@@ -68,9 +68,7 @@ module ParallelizedDataProcessor #(
   // Output Thread ID 
   parameter OUTPUT_ID = 1,
   // Input FIFO size
-  parameter FIFO_DEPTH = 0,
-  // Pipeline Level to use for dsp
-  parameter PIPELINE_LEVEL = 0
+  parameter FIFO_DEPTH = 0
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -324,9 +322,7 @@ module ParallelizedDataProcessor #(
     // Output Destination 
     .OUTPUT_DEST(OUTPUT_DEST),
     // Output Thread ID 
-    .OUTPUT_ID(OUTPUT_ID),
-    // Pipeline Level to use for dsp
-    .PIPELINE_LEVEL(PIPELINE_LEVEL)
+    .OUTPUT_ID(OUTPUT_ID)
   ) parallelized_lpa_inst (
     .clk                    (clk),
     .rst                    (rst),

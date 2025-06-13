@@ -44,7 +44,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
     ROM_DATA_PATH               : Localparam = params['ROM_DATA_PATH']
     FIFO_DEPTH                  : Localparam = params['FIFO_DEPTH']
-    PIPELINE_LEVEL              : Localparam = params['PIPELINE_LEVEL']
 
     RSLT_CHANNELS.value = I
     DATA_CHANNELS.value = J
@@ -61,7 +60,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # RSLT_FRACTIONAL_BITS.value = 15
     # ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
     # FIFO_DEPTH.value = 0
-    # PIPELINE_LEVEL.value = 2
     SCALE_SHARE.value = 1
     GRID_SHARE.value = 1
     DATA_WIDTH.value = 16
@@ -73,7 +71,6 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     RSLT_FRACTIONAL_BITS.value = DATA_WIDTH.value-1
     ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
     FIFO_DEPTH.value = 0
-    PIPELINE_LEVEL.value = 2
     
     os.system(' '.join([
         'python',

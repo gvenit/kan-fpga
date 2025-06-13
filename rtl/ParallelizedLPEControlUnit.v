@@ -287,7 +287,8 @@ module ParallelizedLPEControlUnit #(
           // partial_sum_last_reg <= partial_sum_last_reg_next; 
 
           // Accumulate Partial Sums
-          acc_res_reg      <= 1'b1;
+          // acc_res_reg      <= 1'b1;
+          acc_res_reg      <= (PE_POSITION_J == PE_NUMBER_J-1);
 
           if (int_axis_d_tready) begin
             export_rslt_reg <= export_rslt_reg_next && (PE_POSITION_J != 0);

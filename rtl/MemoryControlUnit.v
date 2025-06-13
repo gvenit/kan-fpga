@@ -222,9 +222,9 @@ module MemoryControlUnit #(
 
   // Global FSM output signals
   reg  [GLO_FSM_WIDTH-1:0]            glo_fsm_state, glo_fsm_state_next;
-  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg;
-  reg  [GRID_CHANNELS_IN-1:0]         grid_op_done_reg;
-  reg  [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg;
+  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg = 0;
+  reg  [GRID_CHANNELS_IN-1:0]         grid_op_done_reg = 0;
+  reg  [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg = 0;
 
   // Global FSM input signals
   wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg_next = data_op_done_reg | data_tlast_transmitted;
@@ -238,6 +238,17 @@ module MemoryControlUnit #(
   );
 
   wire op_done        =  &{data_op_done_reg, grid_op_done_reg, scle_op_done_reg};
+
+  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_error_reg = 0;
+  reg  [GRID_CHANNELS_IN-1:0]         grid_error_reg = 0;
+  reg  [SCALE_CHANNELS_IN-1:0]        scle_error_reg = 0;
+
+  always @(posedge fsm_clk ) begin
+    data_error_reg <= data_error;
+    grid_error_reg <= grid_error;
+    scle_error_reg <= scle_error;
+  end
+
   wire internal_error = |{data_error, grid_error, scle_error};
 
   // Global FSM state logic
@@ -245,8 +256,13 @@ module MemoryControlUnit #(
     if (rst) begin
       glo_fsm_state <= GLO_FSM_ST0;
 
-      data_op_done_reg <= {(BATCH_SIZE*DATA_CHANNELS){1'b0}};
-      grid_op_done_reg <= 1'b0;
+      data_op_done_reg <= 0;
+      grid_op_done_reg <= 0;
+      scle_op_done_reg <= 0;
+
+      data_error_reg   <= 0;
+      grid_error_reg   <= 0;
+      scle_error_reg   <= 0;
 
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
@@ -259,6 +275,10 @@ module MemoryControlUnit #(
       grid_op_done_reg <= {GRID_CHANNELS_IN{1'b0}};
       scle_op_done_reg <= {SCALE_CHANNELS_IN{1'b0}};
 
+      data_error_reg  <= data_error;
+      grid_error_reg  <= grid_error;
+      scle_error_reg  <= scle_error;
+
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
       operation_error       <= 1'b0;
@@ -268,11 +288,11 @@ module MemoryControlUnit #(
 
         end
         GLO_FSM_STR: begin
-          operation_busy <= 1'b1;
-
           data_size_reg <= data_size;
           grid_size_reg <= grid_size;
           scle_size_reg <= scle_size;
+
+          operation_busy <= 1'b1;
 
         end
         GLO_FSM_OPE: begin
@@ -290,6 +310,9 @@ module MemoryControlUnit #(
         GLO_FSM_ERR: begin
           operation_error <= 1'b1;
 
+          data_error_reg  <= 0;
+          grid_error_reg  <= 0;
+          scle_error_reg  <= 0;
         end
         default: begin
           

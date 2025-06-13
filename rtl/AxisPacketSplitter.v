@@ -110,6 +110,10 @@ module AxisPacketSplitter #(
   always @(posedge clk ) begin
     if (rst) begin
       fsm_state <= FSM_STR;
+      
+      operation_busy        <= 1'b0;
+      operation_complete    <= 1'b0;
+      operation_error       <= 1'b0;
 
     end else begin
       fsm_state <= fsm_state_next;

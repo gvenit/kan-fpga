@@ -29,7 +29,7 @@ module MultiBankBram #(
 genvar i;
 
 generate
-  for (i = 0; i < BANKS; i = i + 1) begin
+  for (i = 0; i < BANKS; i = i + 1) begin : bram_genblock
     Bram #(
       .WIDTH    (WIDTH),
       .DEPTH    (DEPTH),
