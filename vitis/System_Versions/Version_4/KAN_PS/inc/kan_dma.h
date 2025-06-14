@@ -49,12 +49,12 @@ kan_status_t kan_dma_init_irq(XAxiDma *dma_handler, uint16_t dma_id, XScuGic *in
  * @param dma_handler pointer to the dma handler struct that
  * must have been initialized by a call to `kan_dma_init_irq`
  * @param tx_buff the transmit buffer that contains the packets to be trasmitted
- * @param packets the number of packets (not their size in bytes - their discrete count)
+ * @param size the size in bytes of the packets to be transmittede
  *
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t packets);
+kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t size);
 
 /**
  * @brief Begin a dma transmission from the PS to the PL.
@@ -66,11 +66,11 @@ kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t packets);
  * @param dma_handler pointer to the dma handler struct that
  * must have been initialized by a call to `kan_dma_init_irq`
  * @param rx_buff the receive buffer that will store the packets coming from the PL
- * @param packets the number of packets (not their size in bytes - their discrete count)
+ * @param size the size in bytes of the packets to be transmitted
  *
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_dma_rx(XAxiDma *dma_handler, data_t *rx_buff, size_t packets);
+kan_status_t kan_dma_rx(XAxiDma *dma_handler, data_t *rx_buff, size_t size);
 
 #endif

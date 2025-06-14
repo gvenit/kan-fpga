@@ -78,7 +78,7 @@
  * @property WRITE-ONLY
  */
 
-#define CTRL_REG_OFST_INTR_REG_1B 26 // Interrupt register. 1B
+#define CTRL_REG_OFST_INTR_1B 26 // Interrupt register. 1B
 
 #define CTRL_REG_MASK_INTR_SFT_1B 0x01 // Soft interrupt / reset
 #define CTRL_REG_MASK_INTR_ABT_1B 0x02 // Abort start

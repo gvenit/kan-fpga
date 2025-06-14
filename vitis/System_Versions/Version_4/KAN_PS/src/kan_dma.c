@@ -1,8 +1,8 @@
 #include "kan_dma.h"
 
-volatile int dma_tx_done_flag; // DMA transmit complete
-volatile int dma_rx_done_flag; // DMA receive complete
-volatile int dma_error_flag;   // error in DMA transaction
+volatile int dma_tx_done_flag = 0; // DMA transmit complete. If not complete it is zero
+volatile int dma_rx_done_flag = 0; // DMA receive complete. If not complete it is zero
+volatile int dma_error_flag = 0;   // error in DMA transaction. It is zero if no error
 
 /**
  * This is the DMA TX Interrupt handler function.
@@ -207,14 +207,14 @@ kan_status_t kan_dma_init_irq(XAxiDma *dma_handler, uint16_t dma_id, XScuGic *in
     return STATUS_OK;
 }
 
-kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t packets)
+kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t size)
 {
     if (dma_handler == NULL || tx_buff == NULL)
         return STATUS_ILLEGAL_ARG;
 
     kan_status_t status = STATUS_FAILURE;
 
-    status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)tx_buff, packets * sizeof(data_t), XAXIDMA_DEVICE_TO_DMA);
+    status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)tx_buff, size, XAXIDMA_DEVICE_TO_DMA);
 
     if (status != STATUS_OK)
         return STATUS_DMA_TX_FAILURE;
@@ -222,14 +222,14 @@ kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t packets)
     return STATUS_OK;
 }
 
-kan_status_t kan_dma_rx(XAxiDma *dma_handler, data_t *rx_buff, size_t packets)
+kan_status_t kan_dma_rx(XAxiDma *dma_handler, data_t *rx_buff, size_t size)
 {
     if (dma_handler == NULL || rx_buff == NULL)
         return STATUS_ILLEGAL_ARG;
 
     kan_status_t status = STATUS_FAILURE;
 
-    status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)rx_buff, packets * sizeof(data_t), XAXIDMA_DMA_TO_DEVICE);
+    status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)rx_buff, size, XAXIDMA_DMA_TO_DEVICE);
 
     if (status != STATUS_OK)
         return STATUS_DMA_TX_FAILURE;

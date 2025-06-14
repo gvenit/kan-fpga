@@ -34,6 +34,7 @@
  *******************************************/
 
 #define LOADED_VAL 0x01
+#define OPERATION_DONE_VAL 0x01
 
 /********************************************
  * Global instances
@@ -71,44 +72,71 @@ int main(void)
 
     kan_status_t status = STATUS_FAILURE; // function return status
 
-    kan_layer_handler_t *layer_handler_p = NULL;
+    kan_layer_handler_t *hLayer_p = NULL;
 
     uint32_t reg_rd_val = 0;
 
     /*----------------------------------------
-     Disable cache
+     Disable cache - only data
     ----------------------------------------*/
 
+#ifdef DEF_VERBOSE
+    xil_printf("Disable cache\r\n");
+#endif
+
     Xil_DCacheDisable();
-    Xil_ICacheDisable();
 
     /*----------------------------------------
      Initializations
     ----------------------------------------*/
 
+#ifdef DEF_VERBOSE
+    xil_printf("Initialize network parameters\r\n");
+#endif
+
     status = kan_config_init(&hKan, hKanLayers, &data_buffer);
     if (status != STATUS_OK)
         kan_error_handler(status, "Network configuration failed");
 
+#ifdef DEF_VERBOSE
+    xil_printf("Initialize interrupts\r\n");
+#endif
+
     status = kan_intr_init(&hIntrCtr, INTR_CONTROLLER_DEVICE_ID);
     if (status != STATUS_OK)
         kan_error_handler(status, "Interrupts configuration failed");
+
+#ifdef DEF_VERBOSE
+    xil_printf("Initialize dma engine\r\n");
+#endif
 
     status = kan_dma_init_irq(&hDma, DMA_DEV_ID, &hIntrCtr);
     if (status != STATUS_OK)
         kan_error_handler(status, "DMA with interrupts initialization failed");
 
 #ifdef DATA_BRAM
+#ifdef DEF_VERBOSE
+    xil_printf("Initialize data bram controller\r\n");
+#endif
+
     status = kan_bram_ctr_init(DATA_BRAM_CONTROLLER_ID, &hDataBramCtr);
     if (status != STATUS_OK)
         kan_error_handler(status, "BRAM controller initialization failed");
 #endif
 #ifdef GRID_BRAM
+#ifdef DEF_VERBOSE
+    xil_printf("Initialize grid bram controller\r\n");
+#endif
+
     status = bram_init(GRID_BRAM_CONTROLLER_ID, &hGridBramCtr);
     if (status != STATUS_OK)
         kan_error_handler(status, "");
 #endif
 #ifdef SCALE_BRAM
+#ifdef DEF_VERBOSE
+    xil_printf("Initialize scale bram controller\r\n");
+#endif
+
     status = bram_init(SCALE_BRAM_CONTROLLER_ID, &hScaleBramCtr);
     if (status != STATUS_OK)
         kan_error_handler(status, "");
@@ -120,115 +148,142 @@ int main(void)
 
     // reset the PL - soft reset
 
-    kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_REG_1B, CTRL_REG_MASK_INTR_SFT_1B, BYTE);
+#ifdef DEF_VERBOSE
+    xil_printf("Soft reset the core before execution\r\n");
+#endif
+
+    kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_1B, CTRL_REG_MASK_INTR_SFT_1B, BYTE);
 
     // iterating over all layers
 
     for (uint8_t layer = 0; layer < hKan.layers_num; layer++)
     {
+#ifdef DEF_VERBOSE
+        xil_printf("---\r\n");
+        xil_printf("Layer %d\r\n", (int)layer);
+#endif
+
         // configuring PL registers
 
-        layer_handler_p = (hKan.kan_layers_handlers + layer);
+#ifdef DEF_VERBOSE
+        xil_printf("Configure PL registers\r\n");
+#endif
 
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LEN_4B, (uint32_t)(layer_handler_p->data_num), WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LEN_4B, (uint32_t)(layer_handler_p->grid_num), WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LEN_4B, (uint32_t)(layer_handler_p->scale_num), WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_RSLT_LEN_4B, (uint32_t)(layer_handler_p->result_num), WORD);
+        hLayer_p = (hKan.kan_layers_handlers + layer);
 
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_PCKT_LEN_4B, (uint32_t)(layer_handler_p->data_num * layer_handler_p->grid_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LEN_4B, (uint32_t)(hLayer_p->data_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LEN_4B, (uint32_t)(hLayer_p->grid_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LEN_4B, (uint32_t)(hLayer_p->scale_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_RSLT_LEN_4B, (uint32_t)(hLayer_p->result_num), WORD);
+
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_PCKT_LEN_4B, (uint32_t)(hLayer_p->data_num * hLayer_p->grid_num), WORD);
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_BTCH_LEN_1B, 0xFFFFFFFF, BYTE); // !!!!!!!! not sure what goes here
 
         kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_OPER_STS_1B, &reg_rd_val, BYTE);
         if (reg_rd_val != CTRL_REG_MASK_OPER_STS_VLD)
-            kan_error_handler(666, "The configuration was rejected by the PL");
+            kan_error_handler(STATUS_PL_ERROR, "The configuration was rejected by the PL");
 
         // dwonloading data, grid and scale
 
+#ifdef DEF_VERBOSE
+        xil_printf("Download data, grid and scale\r\n");
+#endif
+
+        kan_mem_cpy((void *)(hLayer_p->data_ps_src_addr), (void *)(hKan.data_pl_base_addr), (hLayer_p->data_num) * sizeof(data_t));
         do
         {
             kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LDR_1B, &reg_rd_val, BYTE);
         } while (reg_rd_val != LOADED_VAL);
 
+        kan_mem_cpy((void *)(hLayer_p->grid_ps_src_addr), (void *)(hKan.grid_pl_base_addr), (hLayer_p->grid_num) * sizeof(data_t));
         do
         {
             kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LDR_1B, &reg_rd_val, BYTE);
         } while (reg_rd_val != LOADED_VAL);
 
+        kan_mem_cpy((void *)(hLayer_p->scale_ps_src_addr), (void *)(hKan.scale_pl_base_addr), (hLayer_p->scale_num) * sizeof(data_t));
         do
         {
             kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LDR_1B, &reg_rd_val, BYTE);
         } while (reg_rd_val != LOADED_VAL);
 
         // strating the DMA transfer of weights (RX) and results (TX)
+
+#ifdef DEF_VERBOSE
+        xil_printf("Start DMA transfer of weights and results\r\n");
+#endif
+
+        status = kan_dma_rx(&hDma, data_buffer, (hLayer_p->result_num) * sizeof(data_t));
+        if (status != STATUS_OK)
+            kan_error_handler(status, "DMA rx process of results failed");
+
+        status = kan_dma_tx(&hDma, data_buffer, (hLayer_p->weight_num) * sizeof(data_t));
+        if (status != STATUS_OK)
+            kan_error_handler(status, "DMA tx process of weights failed");
+
+        // monitoring the PL and the DMA
+
+#ifdef DEF_VERBOSE
+        xil_printf("Monitor the core...\r\n");
+#endif
+
+        while (!dma_rx_done_flag && !dma_rx_done_flag)
+        {
+            if (dma_error_flag)
+                kan_error_handler(STATUS_DMA_ERROR_INTR, "DMA interrupt error flag was raised");
+
+            kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_OPER_STS_1B, &reg_rd_val, BYTE);
+
+            switch (reg_rd_val)
+            {
+            case CTRL_REG_MASK_OPER_STS_IDL:
+                break;
+
+            case CTRL_REG_MASK_OPER_STS_BSY:
+                break;
+
+            case CTRL_REG_MASK_OPER_STS_LCK:
+                break;
+
+            case CTRL_REG_MASK_OPER_STS_VLD:
+                break;
+
+            case CTRL_REG_MASK_OPER_STS_ERR:
+                kan_error_handler(STATUS_PL_ERROR, "Operation error. locked core awaiting soft/hard reset");
+                break;
+
+            case CTRL_REG_MASK_OPER_STS_RST:
+                kan_error_handler(STATUS_PL_ERROR, "PL reset on its own");
+                break;
+
+            default:
+                kan_error_handler(reg_rd_val, "Unkown value ont the operation status register. It is the one returned above");
+                break;
+            }
+        }
+
+        kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OPER_DNE, &reg_rd_val, BYTE);
+        if (reg_rd_val != OPERATION_DONE_VAL)
+            kan_error_handler(STATUS_PL_ERROR, "DMA transfer complete but the core is not ready");
+
+        // report metrics
+
+        // null the core after completion
+
+#ifdef DEF_VERBOSE
+        xil_printf("Layer done, resetting core\r\n");
+#endif
+
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_1B, CTRL_REG_MASK_INTR_SFT_1B, BYTE);
     }
 
-    //     /*--------------------------------------------
-    //      Start the DMA transfer
-    //     ---------------------------------------------*/
+    // deallocation and ternimation
 
-    //     // /* Send a packet */
-    //     // for (i = 0; i < NUMBER_OF_TRANSFERS; i++)
-    //     // {
-
-    //     status = XAxiDma_SimpleTransfer(&hDma, (UINTPTR)rxBuff, PKT_ELEMENTS * sizeof(int33_t), XAXIDMA_DEVICE_TO_DMA);
-    //     if (status != XST_SUCCESS)
-    //     {
-    //         xil_printf("DMA transmission failed: %d\r\n", status);
-    //         return status;
-    //     }
-
-    //     status = XAxiDma_SimpleTransfer(&hDma, (UINTPTR)txBuff, PKT_ELEMENTS * sizeof(int32_t), XAXIDMA_DMA_TO_DEVICE);
-    //     if (status != XST_SUCCESS)
-    //     {
-    //         xil_printf("DMA reception failed: %d\r\n", status);
-    //         return status;
-    //     }
-
-    //     while (!TxDone && !dma_rx_done_flag && !dma_error_flag)
-    //     {
-    //         /* NOP */
-    //     }
-
-    //     if (dma_error_flag)
-    //     {
-    //         xil_printf("Either transmit or receive failed:\r\n");
-    //         xil_printf("receive%s done\r\n",
-    //                    TxDone ? "" : " not",
-    //                    dma_rx_done_flag ? "" : " not");
-    //         return XST_FAILURE; // maybe this is too much - in the next iteration it might get it right
-    //     }
-
-    //     // status = CheckData(rxBuff, PKT_ELEMENTS, TEST_START_VALUE);
-    //     // if (status != XST_SUCCESS)
-    //     // {
-    //     //     xil_printf("Data check failed\r\n");
-    //     //     return status;
-    //     // }
-    //     // }
-
-    //     // xil_printf("Successfully ran AXI DMA interrupt Example\r\n");
-
-    //     xil_printf("\r\nRx Buffer after DMA:\r\n");
-    //     for (i = 0; i < PKT_ELEMENTS; i++)
-    //         xil_printf("Rx[%d] = %d\r\n", i, (int)(rxBuff[i]));
-    //     xil_printf("\r\n\r\n");
-
-    //     /*--------------------------------------------
-    //      Disable DMA interrupts
-    //     ---------------------------------------------*/
-
-    //     intr_disable(&hIntrCtr, TX_INTR_ID, RX_INTR_ID);
-
-    //     /*--------------------------------------------
-    //      Memory deallocation
-    //     ---------------------------------------------*/
-
-    //     free(txBuff);
-    //     free(rxBuff);
-
-    //     xil_printf("\r\n-----------------------------------------------------------------------\r\n");
-    //     xil_printf("\t END OF EXAMPLE \r\n");
-    //     xil_printf("-----------------------------------------------------------------------\r\n");
+#ifdef DEF_VERBOSE
+    xil_printf("---\r\n");
+    xil_printf("Application termination\r\n");
+    xil_printf("=============================================================\r\n");
+#endif
 
     return STATUS_OK;
 }

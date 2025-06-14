@@ -74,3 +74,19 @@ static inline kan_status_t kan_mem_reg_write(uint32_t base_addr, uint32_t offset
 
     return STATUS_OK;
 }
+
+kan_status_t kan_mem_cpy(void *src, const void *dest, uint32_t size)
+{
+    if (src == NULL || dest == NULL || size == 0)
+        return STATUS_ILLEGAL_ARG;
+
+    const uint8_t *s = (const uint8_t *)src;
+    uint8_t *d = (uint8_t *)size;
+
+    while (size--)
+    {
+        *d++ = *s++;
+    }
+
+    return STATUS_OK;
+}

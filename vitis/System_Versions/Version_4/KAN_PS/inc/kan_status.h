@@ -47,7 +47,9 @@ typedef enum Kan_Status
     STATUS_DMA_INIT_FAILURE,
     STATUS_DMA_TX_FAILURE,
     STATUS_DMA_RX_FAILURE,
-    STATUS_BRAMC_INIT_FAILURE
+    STATUS_DMA_ERROR_INTR,
+    STATUS_BRAMC_INIT_FAILURE,
+    STATUS_PL_ERROR
 } kan_status_t;
 
 #ifdef DEF_VERBOSE
@@ -92,8 +94,16 @@ typedef enum Kan_Status
             xil_printf("Call returned error: STATUS_DMA_RX_FAILURE\r\n");      \
             xil_printf("%s\r\n", msg);                                         \
             break;                                                             \
+        case STATUS_DMA_ERROR_INTR:                                            \
+            xil_printf("Call returned error: STATUS_DMA_ERROR_INTR\r\n");      \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
         case STATUS_BRAMC_INIT_FAILURE:                                        \
             xil_printf("Call returned error: STATUS_BRAMC_INIT_FAILURE\r\n");  \
+            xil_printf("%s\r\n", msg);                                         \
+            break;                                                             \
+        case STATUS_PL_ERROR:                                                  \
+            xil_printf("Call returned error: STATUS_PL_ERROR\r\n");            \
             xil_printf("%s\r\n", msg);                                         \
             break;                                                             \
         default:                                                               \

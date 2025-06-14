@@ -59,6 +59,10 @@ First these headers act as ma
 - [ ] old dma examples had cache flushes that need to be imlpemented somehow
 - [ ] having status variable be `kan_status_t` in the source code might pose problems even if it is compatible with the defines in `xstatus.h`
 - [ ] not sure if deallocation function are needed (for example in the `kan_config.h`)
+- [ ] I do not have status everywhere. Should I check it more?
+- [ ] Dma examples had a number of transfers, something like a for loop to attempt to do the dma transaction multiple times. I am not sure if it is needed. I have the macro for it in `kan_defines.h` commented out and not no such implementation in the main code.
+- [ ] No monitoring of timing registers in main function yet (like `CTRL_REG_OFST_OPER_TMR_4B`)
+- [ ] While waiting for reports to end I do not report on normal operation. Only errors that shut down the core.
 
 <br>
 
@@ -72,3 +76,7 @@ First these headers act as ma
 - [x] should I do the packet displacements in `kan_config_init` with strided indexes using `data_t` or should I do it with defines of byet sizes using their base addresses?
 - [ ] do we need to know the banks after all? see the configuration via the regfile
 - [ ] some values of registers are unkonwn (what to expect) so I have them as defines in the main and they should gradually be removed
+- [ ] I do not remember what I have to do with the interrupts other than dma
+- [ ] not sure I handle the operation done reg `CTRL_REG_OPER_DNE` correctly
+- [ ] there are not deinit functions. Are they needed?
+- [ ] Should I disable both data and instruction cache? I only disable data cache for now. Instruction might be good for memory operations

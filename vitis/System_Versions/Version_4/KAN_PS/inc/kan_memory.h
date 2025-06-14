@@ -44,4 +44,16 @@ static inline kan_status_t kan_mem_reg_read(uint32_t base_addr, uint32_t offset,
  */
 static inline kan_status_t kan_mem_reg_write(uint32_t base_addr, uint32_t offset, uint32_t value, kan_size_t size);
 
+/**
+ * @brief Copy a contiguous chunk of memory from a source pointer to a destination pointer
+ *
+ * @param src pointer to the memory source to be copied
+ * @param dest pointer to the destination memory location
+ * @param size the size of the chunk measured in bytes
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
+kan_status_t kan_mem_cpy(void *src, const void *dest, uint32_t size);
+
 #endif
