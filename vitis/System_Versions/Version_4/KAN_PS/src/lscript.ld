@@ -24,9 +24,13 @@ _UNDEF_STACK_SIZE = DEFINED(_UNDEF_STACK_SIZE) ? _UNDEF_STACK_SIZE : 1024;
 MEMORY
 {
    axi_bram_ctrl_0_Mem0 : ORIGIN = 0x42000000, LENGTH = 0x2000
-   ps7_ddr_0 : ORIGIN = 0x100000, LENGTH = 0x1FF00000
+   ps7_ddr_0 : ORIGIN = 0x100800, LENGTH = 0x1FEFF800 /* original size was x1FF0_0000 */
    ps7_ram_0 : ORIGIN = 0x0, LENGTH = 0x30000
    ps7_ram_1 : ORIGIN = 0xFFFF0000, LENGTH = 0xFE00
+   dataset_data   : ORIGIN = 0x100000, LENGTH = 0x200
+   dataset_grid   : ORIGIN = 0x100200, LENGTH = 0x200
+   dataset_scale  : ORIGIN = 0x100400, LENGTH = 0x200
+   dataset_weight : ORIGIN = 0x100600, LENGTH = 0x200
 }
 
 /* Specify the default entry point to the program */
@@ -110,6 +114,22 @@ SECTIONS
    *(.data1.*)
    __data1_end = .;
 } > ps7_ddr_0
+
+.dataset_data : ALIGN(32) {
+    KEEP(*(.dataset_data))
+} > dataset_data
+
+.dataset_grid : ALIGN(32) {
+    KEEP(*(.dataset_grid))
+} > dataset_grid
+
+.dataset_scale : ALIGN(32) {
+    KEEP(*(.dataset_scale))
+} > dataset_scale
+
+.dataset_weight : ALIGN(32) {
+    KEEP(*(.dataset_weight))
+} > dataset_weight
 
 .got : {
    *(.got)

@@ -20,8 +20,12 @@
  * For the masks the macro begins with `CTRL_REG_MASK`
  * and usually the same name as the control register it reads
  * while there is again the number of bytes in the end.
+ *
+ * @warning
+ * You have to find it from Hardware Platform Specification GUI
+ * in Vitis, or in address editor in Vivado
  */
-#define CTRL_REG_BASE_ADDRESS 0xFFFFFFFF
+#define CTRL_REG_BASE_ADDRESS 0x40000000
 
 /**
  * @brief Control Data Transfer/Operation Status signals.
@@ -114,11 +118,16 @@
 
 /**
  * Data BRAM parameters
+ *
+ * @warning
+ * If they are DATA_AXIL you have to find
+ * its value from Hardware Platform Specification GUI
+ * in Vitis, or in address editor in Vivado
  */
 
 #ifdef DATA_BRAM
-#define DATA_BRAM_CONTROLLER_BASE_ADDR 0xFFFFFFFF
-#define DATA_BRAM_CONTROLLER_HIGH_ADDR 0xFFFFFFFF
+#define DATA_BRAM_CONTROLLER_BASE_ADDR XPAR_BRAM_0_BASEADDR
+#define DATA_BRAM_CONTROLLER_HIGH_ADDR XPAR_BRAM_0_HIGHADDR
 #else
 #define DATA_AXIL_BRAM_BASE_ADDR 0xFFFFFFFF
 #define DATA_AXIL_BRAM_HIGH_ADDR 0xFFFFFFFF
@@ -135,11 +144,11 @@
  */
 
 #ifdef GRID_BRAM
-#define GRID_BRAM_CONTROLLER_BASE_ADDR 0xFFFFFFFF
-#define GRID_BRAM_CONTROLLER_HIGH_ADDR 0xFFFFFFFF
+#define GRID_BRAM_CONTROLLER_BASE_ADDR XPAR_BRAM_1_BASEADDR
+#define GRID_BRAM_CONTROLLER_HIGH_ADDR XPAR_BRAM_1_HIGHADDR
 #else
-#define GRID_AXIL_BRAM_BASE_ADDR 0xFFFFFFFF
-#define GRID_AXIL_BRAM_HIGH_ADDR 0xFFFFFFFF
+#define GRID_AXIL_BRAM_BASE_ADDR 0x40002000
+#define GRID_AXIL_BRAM_HIGH_ADDR 0x400027ff
 #endif
 
 #ifdef GRID_BRAM
@@ -153,11 +162,11 @@
  */
 
 #ifdef SCALE_BRAM
-#define SCALE_BRAM_CONTROLLER_BASE_ADDR 0xFFFFFFFF
-#define SCALE_BRAM_CONTROLLER_HIGH_ADDR 0xFFFFFFFF
+#define SCALE_BRAM_CONTROLLER_BASE_ADDR XPAR_BRAM_2_BASEADDR
+#define SCALE_BRAM_CONTROLLER_HIGH_ADDR XPAR_BRAM_2_HIGHADDR
 #else
-#define SCALE_AXIL_BRAM_BASE_ADDR 0xFFFFFFFF
-#define SCALE_AXIL_BRAM_HIGH_ADDR 0xFFFFFFFF
+#define SCALE_AXIL_BRAM_BASE_ADDR 0x40002800
+#define SCALE_AXIL_BRAM_HIGH_ADDR 0x40002fff
 #endif
 
 #ifdef SCALE_BRAM

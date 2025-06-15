@@ -1,6 +1,6 @@
 #include "kan_memory.h"
 
-static inline kan_status_t kan_mem_reg_read(uint32_t base_addr, uint32_t offset, uint32_t *value, kan_size_t size)
+kan_status_t kan_mem_reg_read(uint32_t base_addr, uint32_t offset, uint32_t *value, kan_size_t size)
 {
     uint32_t offset_inword = offset % WORD;
     uint32_t offset_words = offset - offset_inword;
@@ -31,7 +31,7 @@ static inline kan_status_t kan_mem_reg_read(uint32_t base_addr, uint32_t offset,
     return STATUS_OK;
 }
 
-static inline kan_status_t kan_mem_reg_write(uint32_t base_addr, uint32_t offset, uint32_t value, kan_size_t size)
+kan_status_t kan_mem_reg_write(uint32_t base_addr, uint32_t offset, uint32_t value, kan_size_t size)
 {
     uint32_t offset_inword = offset % WORD;
     uint32_t offset_words = offset - offset_inword;

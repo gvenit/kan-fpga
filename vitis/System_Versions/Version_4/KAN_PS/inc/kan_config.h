@@ -2,6 +2,7 @@
 #define _KAN_CONFIG_H_
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "dataset_data.h"
 #include "dataset_grid.h"
@@ -73,14 +74,6 @@ struct Kan_Network_Config_Struct
 
     uint8_t layers_num;
 
-    // pointers to arrays of sizes
-
-    uint8_t *data_sizes_array;
-    uint8_t *grid_sizes_array;
-    uint8_t *scale_sizes_array;
-    uint8_t *weight_sizes_array;
-    uint8_t *result_sizes_array;
-
     // pointers to target base addresses in PS memory space
 
     data_t *data_ps_base_addr;
@@ -120,7 +113,7 @@ struct Kan_Layer_Config_Struct
     data_t *grid_ps_src_addr;
     data_t *scale_ps_src_addr;
     data_t *weight_ps_src_addr;
-    data_t *result_ps_dest_addr;
+    kan_data_buff_t result_ps_dest_addr;
 };
 
 #ifdef DEF_DEPRECATED
@@ -137,6 +130,7 @@ static kan_layer_handler_t kan_layer_handlers_array[KAN_LAYERS_NUM];
     Function prototypes of the header
  ===========================================================================*/
 
-kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, kan_data_buff_t *kan_data_buff);
+// kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, kan_data_buff_t *kan_data_buff_p);
+kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p);
 
 #endif

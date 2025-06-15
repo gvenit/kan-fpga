@@ -31,7 +31,7 @@ void InitializeECC(XBram_Config *bram_config, uint32_t effetive_addr)
     }
 }
 
-kan_status_t kan_bram_ctr_init(uint16_t bram_controller_id, XBram *bram_controller_handler)
+kan_status_t kan_bram_ctr_init(uint16_t bram_controller_id, kan_bramc_handler_t *bram_controller_handler)
 {
     kan_status_t status;
 

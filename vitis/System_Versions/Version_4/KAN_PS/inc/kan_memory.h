@@ -25,7 +25,7 @@
  * @warning
  * the pointer to the value is zeroed in the beginning of the call
  */
-static inline kan_status_t kan_mem_reg_read(uint32_t base_addr, uint32_t offset, uint32_t *value, kan_size_t size);
+kan_status_t kan_mem_reg_read(uint32_t base_addr, uint32_t offset, uint32_t *value, kan_size_t size);
 
 /**
  * @brief Writes a value to the 32 bit register, usually from the memory mapped devices.
@@ -42,7 +42,7 @@ static inline kan_status_t kan_mem_reg_read(uint32_t base_addr, uint32_t offset,
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-static inline kan_status_t kan_mem_reg_write(uint32_t base_addr, uint32_t offset, uint32_t value, kan_size_t size);
+kan_status_t kan_mem_reg_write(uint32_t base_addr, uint32_t offset, uint32_t value, kan_size_t size);
 
 /**
  * @brief Copy a contiguous chunk of memory from a source pointer to a destination pointer

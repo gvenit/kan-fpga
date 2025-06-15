@@ -73,7 +73,7 @@
  */
 
 #ifdef DATA_BRAM
-#define DATA_BRAM_CONTROLLER_ID 0xFFFF
+#define DATA_BRAM_CONTROLLER_ID XPAR_BRAM_0_DEVICE_ID
 #endif
 
 /**
@@ -81,7 +81,7 @@
  */
 
 #ifdef GRID_BRAM
-#define GRID_BRAM_CONTROLLER_ID 0xFFFF
+#define GRID_BRAM_CONTROLLER_ID XPAR_BRAM_1_DEVICE_ID
 #endif
 
 /**
@@ -89,7 +89,7 @@
  */
 
 #ifdef SCALE_BRAM
-#define SCALE_BRAM_CONTROLLER_ID 0xFFFF
+#define SCALE_BRAM_CONTROLLER_ID XPAR_BRAM_2_DEVICE_ID
 #endif
 
 /*===========================================================================

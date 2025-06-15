@@ -8,7 +8,7 @@
 
 #include "xscugic.h"
 
-extern struct XScuGic;
+typedef XScuGic kan_intr_handler_t;
 
 /**
  * @brief This function setups the interrupt system so interrupts can occur.
@@ -22,7 +22,7 @@ extern struct XScuGic;
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id);
+kan_status_t kan_intr_init(kan_intr_handler_t *intr_handler, uint16_t intr_controller_id);
 
 /**
  * @brief This function attaches interrupts and callbacks
@@ -49,7 +49,7 @@ kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id);
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver);
+kan_status_t kan_intr_attach(kan_intr_handler_t *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver);
 
 /**
  * This function disables specific interrupts
@@ -58,7 +58,10 @@ kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t in
  *
  * @param intr_handler is a pointer to the interrupt controller handler
  * @param intr_id is the interrupt's source device ID
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-void kan_intr_detach(XScuGic *intr_handler, uint16_t intr_id);
+kan_status_t kan_intr_detach(kan_intr_handler_t *intr_handler, uint16_t intr_id);
 
 #endif

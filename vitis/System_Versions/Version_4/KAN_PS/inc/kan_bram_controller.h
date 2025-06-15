@@ -10,9 +10,7 @@
 #include "xparameters.h"
 #include "xil_mem.h"
 
-// #include "../../KAN_SoC/ps7_cortexa9_0/standalone_ps7_cortexa9_0/bsp/ps7_cortexa9_0/libsrc/bram_v4_8/src/xbram.h"
-
-extern struct XBram;
+typedef XBram kan_bramc_handler_t;
 
 /**
  * @brief BRAM controller peripheral configuration and initialization
@@ -23,6 +21,6 @@ extern struct XBram;
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_bram_ctr_init(uint16_t bram_controller_id, XBram *bram_controller_handler);
+kan_status_t kan_bram_ctr_init(uint16_t bram_controller_id, kan_bramc_handler_t *bram_controller_handler);
 
 #endif

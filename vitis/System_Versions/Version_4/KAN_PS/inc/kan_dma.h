@@ -9,7 +9,7 @@
 #include "xaxidma.h"
 #include "xscugic.h"
 
-extern struct XAxiDma;
+typedef XAxiDma kan_dma_handler_t;
 
 /*
  * Flags interrupt handlers use to notify the application context the events.
@@ -37,7 +37,7 @@ extern volatile int dma_error_flag;   // error in DMA transaction
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_dma_init_irq(XAxiDma *dma_handler, uint16_t dma_id, XScuGic *intr_handler);
+kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, XScuGic *intr_handler);
 
 /**
  * @brief Begin a dma transmission from the PL to the PS.
@@ -54,7 +54,7 @@ kan_status_t kan_dma_init_irq(XAxiDma *dma_handler, uint16_t dma_id, XScuGic *in
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t size);
+kan_status_t kan_dma_tx(kan_dma_handler_t *dma_handler, volatile data_t *tx_buff, size_t size);
 
 /**
  * @brief Begin a dma transmission from the PS to the PL.
@@ -71,6 +71,6 @@ kan_status_t kan_dma_tx(XAxiDma *dma_handler, data_t *tx_buff, size_t size);
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_dma_rx(XAxiDma *dma_handler, data_t *rx_buff, size_t size);
+kan_status_t kan_dma_rx(kan_dma_handler_t *dma_handler, volatile data_t *rx_buff, size_t size);
 
 #endif

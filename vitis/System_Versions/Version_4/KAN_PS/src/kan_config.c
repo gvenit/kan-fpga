@@ -1,6 +1,7 @@
 #include "kan_config.h"
 
-kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, kan_data_buff_t *kan_data_buff)
+// kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, kan_data_buff_t *kan_data_buff_p)
+kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p)
 {
     if (kan_handler == NULL || kan_layers_array == NULL)
         return STATUS_ILLEGAL_ARG;
@@ -14,12 +15,6 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
     // general network params - kan nextwork handler
 
     kan_handler->layers_num = KAN_LAYERS_NUM;
-
-    kan_handler->data_sizes_array = sizes_array_data;
-    kan_handler->grid_sizes_array = sizes_array_grid;
-    kan_handler->scale_sizes_array = sizes_array_scale;
-    kan_handler->weight_sizes_array = sizes_array_weight;
-    kan_handler->result_sizes_array = sizes_array_result;
 
     kan_handler->data_ps_base_addr = dataArray;
     kan_handler->grid_ps_base_addr = gridArray;
@@ -35,18 +30,18 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
     for (int i = 0; i < KAN_LAYERS_NUM; i++)
     {
         if (i + 1 < KAN_LAYERS_NUM)
-            sizes_array_result[i] = sizes_array_data[i + 1];
+            kan_layers_array[i].result_num = sizes_array_data[i + 1];
         else
-            sizes_array_result[i] = KAN_RESULT_FEATURES;
+            kan_layers_array[i].result_num = KAN_RESULT_FEATURES;
 
-        sizes_array_weight[i] = sizes_array_data[i] * sizes_array_weight[i] * sizes_array_result[i];
+        kan_layers_array[i].weight_num = sizes_array_data[i] * sizes_array_grid[i] * kan_layers_array[i].result_num;
 
         if (max_data < sizes_array_data[i])
-            max_data = sizes_array_data;
+            max_data = sizes_array_data[i];
     }
 
-    (*kan_data_buff) = (kan_data_buff_t)calloc(sizeof(data_t), max_data);
-    if ((*kan_data_buff) == NULL)
+    (*kan_data_buff_p) = (kan_data_buff_t)calloc(sizeof(data_t), max_data);
+    if ((*kan_data_buff_p) == NULL)
         return STATUS_MALLOC_FAIL;
 
     // layer params - kan layer handlers
@@ -58,17 +53,15 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
         kan_layers_array[i].data_num = sizes_array_data[i];
         kan_layers_array[i].scale_num = sizes_array_scale[i];
         kan_layers_array[i].grid_num = sizes_array_grid[i];
-        kan_layers_array[i].weight_num = sizes_array_weight[i];
-        kan_layers_array[i].result_num = sizes_array_result[i];
 
         if (i == 0)
             kan_layers_array[i].data_ps_src_addr = kan_handler->data_ps_base_addr;
         else
-            kan_layers_array[i].data_ps_src_addr = (*kan_data_buff);
+            kan_layers_array[i].data_ps_src_addr = (data_t *)(*kan_data_buff_p);
         kan_layers_array[i].grid_ps_src_addr = (kan_handler->data_ps_base_addr) + grid_block_stride;
         kan_layers_array[i].scale_ps_src_addr = (kan_handler->data_ps_base_addr) + scale_block_stride;
         kan_layers_array[i].weight_ps_src_addr = (kan_handler->data_ps_base_addr) + weight_block_stride;
-        kan_layers_array[i].result_ps_dest_addr = (*kan_data_buff);
+        kan_layers_array[i].result_ps_dest_addr = (*kan_data_buff_p);
 
         grid_block_stride += kan_layers_array[i].grid_num;
         scale_block_stride += kan_layers_array[i].scale_num;
@@ -77,7 +70,7 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
 
     // final params
 
-    kan_handler->result_ps_base_addr = (*kan_data_buff);
+    kan_handler->result_ps_base_addr = (*kan_data_buff_p);
 
     kan_handler->kan_layers_handlers = kan_layers_array;
 

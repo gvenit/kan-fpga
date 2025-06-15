@@ -77,7 +77,7 @@
  *
  * - They must strictly adhere to the `DEF_DATA_BRAM_CTR` macro.
  */
-static uint8_t sizes_array_data[KAN_LAYERS_NUM] = {2, 4, 3, 2};
+static const uint8_t sizes_array_data[KAN_LAYERS_NUM] = {2, 4, 3, 2};
 
 /**
  * @brief the number of scale on each KAN layer
@@ -88,7 +88,7 @@ static uint8_t sizes_array_data[KAN_LAYERS_NUM] = {2, 4, 3, 2};
  *
  * - They must strictly adhere to the `DEF_SCALE_BRAM_CTR` macro.
  */
-static uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
+static const uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
 
 /**
  * @brief the number of grid on each KAN layer
@@ -99,29 +99,7 @@ static uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
  *
  * - They must strictly adhere to the `DEF_GRID_BRAM_CTR` macro.
  */
-static uint8_t sizes_array_grid[KAN_LAYERS_NUM] = {1, 1, 1, 1};
-
-/**
- * @brief the number of weights on each KAN layer.
- * Each size is the multiple of the number of data and results
- * on the current layer.
- *
- * @warning Not initialized statically and must not be
- * done by the user. It is done automatically
- * by calls in the `kan_config.h` header
- */
-static uint8_t sizes_array_weight[KAN_LAYERS_NUM];
-
-/**
- * @brief the number of results on each KAN layer.
- * Each size is the multiple of the number of data and results
- * on the current layer.
- *
- * @warning Not initialized statically and must not be
- * done by the user. It is done automatically
- * by calls in the `kan_config.h` header
- */
-static uint8_t sizes_array_result[KAN_LAYERS_NUM];
+static const uint8_t sizes_array_grid[KAN_LAYERS_NUM] = {1, 1, 1, 1};
 
 /**
  * used datatype

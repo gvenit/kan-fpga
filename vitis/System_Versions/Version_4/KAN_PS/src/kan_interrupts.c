@@ -1,6 +1,6 @@
 #include "kan_interrupts.h"
 
-kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id)
+kan_status_t kan_intr_init(kan_intr_handler_t *intr_handler, uint16_t intr_controller_id)
 {
     if (intr_handler == NULL)
         return STATUS_ILLEGAL_ARG;
@@ -43,7 +43,7 @@ kan_status_t kan_intr_init(XScuGic *intr_handler, uint16_t intr_controller_id)
     return STATUS_OK;
 }
 
-kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver)
+kan_status_t kan_intr_attach(kan_intr_handler_t *intr_handler, uint16_t intr_id, uint8_t intr_priority, uint8_t intr_trigger, Xil_InterruptHandler intr_callback, void *intr_callback_driver)
 {
     if ((intr_handler == NULL) || (!(intr_handler->IsReady)))
         return STATUS_ILLEGAL_ARG;
@@ -82,10 +82,12 @@ kan_status_t kan_intr_attach(XScuGic *intr_handler, uint16_t intr_id, uint8_t in
     return STATUS_OK;
 }
 
-void kan_intr_detach(XScuGic *intr_handler, uint16_t intr_id)
+kan_status_t kan_intr_detach(kan_intr_handler_t *intr_handler, uint16_t intr_id)
 {
     if ((intr_handler == NULL) || (!(intr_handler->IsReady)))
         return STATUS_ILLEGAL_ARG;
 
     XScuGic_Disconnect(intr_handler, intr_id);
+
+    return STATUS_OK;
 }

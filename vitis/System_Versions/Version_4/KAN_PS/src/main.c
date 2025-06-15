@@ -24,10 +24,7 @@
 // xilinx vitis sdk header files
 
 #include "xil_cache.h"
-
-#ifdef DEF_VERBOSE
 #include "xil_printf.h"
-#endif
 
 /********************************************
  * Local defines
@@ -44,27 +41,25 @@ kan_network_handler_t hKan;                     // handler of the entire KAN net
 kan_layer_handler_t hKanLayers[KAN_LAYERS_NUM]; // array of handlers for each of the networks layers
 kan_data_buff_t data_buffer = NULL;             // buffer that will hold the data packets and the results of each layer
 
-XScuGic hIntrCtr; // interrupt controller handler
+kan_intr_handler_t hIntrCtr; // interrupt controller handler
 
-XAxiDma hDma; // DMA handler for DMA engine
+kan_dma_handler_t hDma; // DMA handler for DMA engine
 
 #ifdef DATA_BRAM
-XBram hDataBramCtr; // data bram controller handler
+kan_bramc_handler_t hDataBramCtr; // data bram controller handler
 #endif
 #ifdef GRID_BRAM
-XBram hGridBramCtr; // grid bram controller handler;
+kan_bramc_handler_t hGridBramCtr; // grid bram controller handler;
 #endif
 #ifdef SCALE_BRAM
-XBram hScaleBramCtr; // scale bram controller handler
+kan_bramc_handler_t hScaleBramCtr; // scale bram controller handler
 #endif
 
 int main(void)
 {
 
-#ifdef DEF_VERBOSE
     xil_printf("=============================================================\r\n");
     xil_printf("KAN Processing System Bare-Metal Application\r\n");
-#endif
 
     /*----------------------------------------
      Local variables
@@ -279,11 +274,9 @@ int main(void)
 
     // deallocation and ternimation
 
-#ifdef DEF_VERBOSE
     xil_printf("---\r\n");
     xil_printf("Application termination\r\n");
     xil_printf("=============================================================\r\n");
-#endif
 
     return STATUS_OK;
 }
