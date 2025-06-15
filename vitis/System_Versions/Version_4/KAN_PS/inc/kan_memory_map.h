@@ -56,6 +56,7 @@
 /**
  * @brief Control Data Transfer signals.
  * Nulled from PL at the end of the operation
+ * PS to PL
  *
  * @property READ-WRITE
  */

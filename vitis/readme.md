@@ -74,9 +74,24 @@ First these headers act as ma
 - [x] do I have to deal with the banks? The only thing I can thing of is that they must divide the number of transfered packets. But it is something the PL deals with.
 - [x] is it better have the network and layer handlers which are statically defined and decalred in kan_config.h b dynamically configured in main? If you end up with the dynamic add free functions too.
 - [x] should I do the packet displacements in `kan_config_init` with strided indexes using `data_t` or should I do it with defines of byet sizes using their base addresses?
-- [ ] do we need to know the banks after all? see the configuration via the regfile
+- [x] do we need to know the banks after all? see the configuration via the regfile
 - [ ] some values of registers are unkonwn (what to expect) so I have them as defines in the main and they should gradually be removed
 - [ ] I do not remember what I have to do with the interrupts other than dma
-- [ ] not sure I handle the operation done reg `CTRL_REG_OPER_DNE` correctly
+- [x] not sure I handle the operation done reg `CTRL_REG_OPER_DNE` correctly
 - [ ] there are not deinit functions. Are they needed?
-- [ ] Should I disable both data and instruction cache? I only disable data cache for now. Instruction might be good for memory operations
+- [x] Should I disable both data and instruction cache? I only disable data cache for now. Instruction might be good for memory operations
+
+
+- [ ] change size arrays type to uint16_t 
+- [ ] loaded register are PS to PL not the other way around
+- [ ] length are in packets
+- [ ] batch is 1
+- [ ] first download the packets then update the configuration
+- [ ] when in locked state check that operation is done else error handler
+- [ ] null CTRL_REG_OPER_DNE at the end of each layer
+- [ ] time everything
+  - [ ] all ASW (with inits)
+  - [ ] all layers
+  - [ ] every layer
+  - [ ] _hardware metrics_
+- [ ] grid and scale have banks 4 

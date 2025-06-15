@@ -77,7 +77,7 @@
  *
  * - They must strictly adhere to the `DEF_DATA_BRAM_CTR` macro.
  */
-static const uint8_t sizes_array_data[KAN_LAYERS_NUM] = {2, 4, 3, 2};
+static const uint8_t sizes_array_data[KAN_LAYERS_NUM] = {12288, 1024, 1024, 1024};
 
 /**
  * @brief the number of scale on each KAN layer
@@ -99,7 +99,7 @@ static const uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
  *
  * - They must strictly adhere to the `DEF_GRID_BRAM_CTR` macro.
  */
-static const uint8_t sizes_array_grid[KAN_LAYERS_NUM] = {1, 1, 1, 1};
+static const uint8_t sizes_array_grid[KAN_LAYERS_NUM] = {2, 8, 8, 8};
 
 /**
  * used datatype
