@@ -222,7 +222,7 @@ int main(void)
         xil_printf("Monitor the core...\r\n");
 #endif
 
-        while (!dma_rx_done_flag && !dma_rx_done_flag)
+        while (!dma_rx_done_flag && !dma_tx_done_flag)
         {
             if (dma_error_flag)
                 kan_error_handler(STATUS_DMA_ERROR_INTR, "DMA interrupt error flag was raised");

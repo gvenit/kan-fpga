@@ -45,24 +45,24 @@ First these headers act as ma
 ## To-Do
 
 - [ ] have the list of [header files](#headers) completed and working
-- [ ] memory wrapper functions
+- [x] memory wrapper functions
 - [x] you need an invalid argument error return type
 - [ ] add arguments check for register writes with half-words (almost unused) but it is dangerous for spillage in neighbouring words
 - [x] whatever you do with the banks do it in kan_build_params.h and add checks.
-- [ ] whatever you add in the build_params must be reflected in the nextwork handler types in kan_config.h
+- [x] whatever you add in the build_params must be reflected in the nextwork handler types in kan_config.h
 - [x] layer config structs might need to remain only in .c and not public in the kan_config.h
 - [x] the kan_config.h functions are missing stuff. See them to it (see comments in source)
 - [x] change names for GRID_IS_SHARED and such
 - [x] add final layer result features
-- [ ] add volatile wherever it is needed
+- [x] add volatile wherever it is needed
 - [x] data and results do not need strides and they are not knownn from the beggining
-- [ ] old dma examples had cache flushes that need to be imlpemented somehow
+- [x] old dma examples had cache flushes that need to be imlpemented somehow
 - [ ] having status variable be `kan_status_t` in the source code might pose problems even if it is compatible with the defines in `xstatus.h`
 - [ ] not sure if deallocation function are needed (for example in the `kan_config.h`)
 - [ ] I do not have status everywhere. Should I check it more?
 - [ ] Dma examples had a number of transfers, something like a for loop to attempt to do the dma transaction multiple times. I am not sure if it is needed. I have the macro for it in `kan_defines.h` commented out and not no such implementation in the main code.
 - [ ] No monitoring of timing registers in main function yet (like `CTRL_REG_OFST_OPER_TMR_4B`)
-- [ ] While waiting for reports to end I do not report on normal operation. Only errors that shut down the core.
+- [x] While waiting for reports to end I do not report on normal operation. Only errors that shut down the core.
 
 <br>
 
