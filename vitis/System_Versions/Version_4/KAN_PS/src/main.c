@@ -158,6 +158,16 @@ int main(void)
         xil_printf("Layer %d\r\n", (int)layer);
 #endif
 
+        // dwonloading data, grid and scale
+
+#ifdef DEF_VERBOSE
+        xil_printf("Download data, grid and scale\r\n");
+#endif
+
+        kan_mem_cpy((void *)(hLayer_p->data_ps_src_addr), (void *)(hKan.data_pl_base_addr), (hLayer_p->data_num) * sizeof(data_t));
+        kan_mem_cpy((void *)(hLayer_p->grid_ps_src_addr), (void *)(hKan.grid_pl_base_addr), (hLayer_p->grid_num) * sizeof(data_t));
+        kan_mem_cpy((void *)(hLayer_p->scale_ps_src_addr), (void *)(hKan.scale_pl_base_addr), (hLayer_p->scale_num) * sizeof(data_t));
+
         // configuring PL registers
 
 #ifdef DEF_VERBOSE
@@ -166,41 +176,22 @@ int main(void)
 
         hLayer_p = (hKan.kan_layers_handlers + layer);
 
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LEN_4B, (uint32_t)(hLayer_p->data_num), WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LEN_4B, (uint32_t)(hLayer_p->grid_num), WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LEN_4B, (uint32_t)(hLayer_p->scale_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LEN_4B, (uint32_t)(hLayer_p->data_num) * KAN_BANKS_DATA, WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LEN_4B, (uint32_t)(hLayer_p->grid_num) * KAN_BANKS_GRID, WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LEN_4B, (uint32_t)(hLayer_p->scale_num) * KAN_BANKS_SCALE, WORD);
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_RSLT_LEN_4B, (uint32_t)(hLayer_p->result_num), WORD);
 
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_PCKT_LEN_4B, (uint32_t)(hLayer_p->data_num * hLayer_p->grid_num), WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_BTCH_LEN_1B, 0xFFFFFFFF, BYTE); // !!!!!!!! not sure what goes here
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_BTCH_LEN_1B, 0x00000001, BYTE);
+
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LDR_1B, LOADED_VAL, BYTE);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LDR_1B, LOADED_VAL, BYTE);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LDR_1B, LOADED_VAL, BYTE);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_WGHT_LDR_1B, LOADED_VAL, BYTE);
 
         kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_OPER_STS_1B, &reg_rd_val, BYTE);
         if (reg_rd_val != CTRL_REG_MASK_OPER_STS_VLD)
             kan_error_handler(STATUS_PL_ERROR, "The configuration was rejected by the PL");
-
-        // dwonloading data, grid and scale
-
-#ifdef DEF_VERBOSE
-        xil_printf("Download data, grid and scale\r\n");
-#endif
-
-        kan_mem_cpy((void *)(hLayer_p->data_ps_src_addr), (void *)(hKan.data_pl_base_addr), (hLayer_p->data_num) * sizeof(data_t));
-        do
-        {
-            kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LDR_1B, &reg_rd_val, BYTE);
-        } while (reg_rd_val != LOADED_VAL);
-
-        kan_mem_cpy((void *)(hLayer_p->grid_ps_src_addr), (void *)(hKan.grid_pl_base_addr), (hLayer_p->grid_num) * sizeof(data_t));
-        do
-        {
-            kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LDR_1B, &reg_rd_val, BYTE);
-        } while (reg_rd_val != LOADED_VAL);
-
-        kan_mem_cpy((void *)(hLayer_p->scale_ps_src_addr), (void *)(hKan.scale_pl_base_addr), (hLayer_p->scale_num) * sizeof(data_t));
-        do
-        {
-            kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LDR_1B, &reg_rd_val, BYTE);
-        } while (reg_rd_val != LOADED_VAL);
 
         // strating the DMA transfer of weights (RX) and results (TX)
 
@@ -238,6 +229,9 @@ int main(void)
                 break;
 
             case CTRL_REG_MASK_OPER_STS_LCK:
+                kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OPER_DNE, &reg_rd_val, BYTE);
+                if (reg_rd_val != OPERATION_DONE_VAL)
+                    kan_error_handler(STATUS_PL_ERROR, "Core locked but operation not done");
                 break;
 
             case CTRL_REG_MASK_OPER_STS_VLD:
@@ -263,16 +257,20 @@ int main(void)
 
         // report metrics
 
-        // null the core after completion
+        // null the core after completion (soft reset and null operation done reg)
 
 #ifdef DEF_VERBOSE
         xil_printf("Layer done, resetting core\r\n");
 #endif
 
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_1B, CTRL_REG_MASK_INTR_SFT_1B, BYTE);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OPER_DNE, 0x00000000, BYTE);
     }
 
     // deallocation and ternimation
+
+#ifdef DEF_DEBUG
+#endif
 
     xil_printf("---\r\n");
     xil_printf("Application termination\r\n");

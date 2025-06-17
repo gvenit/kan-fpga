@@ -30,3 +30,13 @@ platform generate
 platform clean
 platform generate
 platform active {smaller_name}
+platform generate
+platform active {smaller_name}
+domain active {zynq_fsbl}
+bsp reload
+domain active {standalone_ps7_cortexa9_0}
+bsp reload
+platform generate -domains 
+bsp reload
+bsp reload
+platform generate -domains 

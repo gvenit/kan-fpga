@@ -101,11 +101,11 @@ struct Kan_Layer_Config_Struct
 
     // numbers of packets in the network
 
-    uint8_t data_num;
-    uint8_t grid_num;
-    uint8_t scale_num;
-    uint8_t weight_num;
-    uint8_t result_num;
+    uint16_t data_num;
+    uint16_t grid_num;
+    uint16_t scale_num;
+    uint16_t weight_num;
+    uint16_t result_num;
 
     // pointers to target addresses in PS memory space
 
@@ -116,21 +116,10 @@ struct Kan_Layer_Config_Struct
     kan_data_buff_t result_ps_dest_addr;
 };
 
-#ifdef DEF_DEPRECATED
-/*===========================================================================
-    Global variables of the network and layer handlers
- ===========================================================================*/
-
-static kan_network_handler_t kan_handler;
-
-static kan_layer_handler_t kan_layer_handlers_array[KAN_LAYERS_NUM];
-#endif
-
 /*===========================================================================
     Function prototypes of the header
  ===========================================================================*/
 
-// kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, kan_data_buff_t *kan_data_buff_p);
 kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p);
 
 #endif

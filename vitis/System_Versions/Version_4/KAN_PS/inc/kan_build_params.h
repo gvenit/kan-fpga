@@ -66,6 +66,24 @@
 #define KAN_RESULT_FEATURES 8
 
 /**
+ * @brief Number of banks in the data
+ * bram in the PL
+ */
+#define KAN_BANKS_DATA 4
+
+/**
+ * @brief Number of banks in the grid
+ * bram in the PL
+ */
+#define KAN_BANKS_GRID 1
+
+/**
+ * @brief Number of banks in the scale
+ * bram in the PL
+ */
+#define KAN_BANKS_SCALE 1
+
+/**
  * @brief the number of data on each KAN layer
  *
  * @warning
@@ -77,7 +95,7 @@
  *
  * - They must strictly adhere to the `DEF_DATA_BRAM_CTR` macro.
  */
-static const uint8_t sizes_array_data[KAN_LAYERS_NUM] = {12288, 1024, 1024, 1024};
+static const uint16_t sizes_array_data[KAN_LAYERS_NUM] = {12288, 1024, 1024, 1024};
 
 /**
  * @brief the number of scale on each KAN layer
@@ -88,7 +106,7 @@ static const uint8_t sizes_array_data[KAN_LAYERS_NUM] = {12288, 1024, 1024, 1024
  *
  * - They must strictly adhere to the `DEF_SCALE_BRAM_CTR` macro.
  */
-static const uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
+static const uint16_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
 
 /**
  * @brief the number of grid on each KAN layer
@@ -99,7 +117,7 @@ static const uint8_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1, 1, 1};
  *
  * - They must strictly adhere to the `DEF_GRID_BRAM_CTR` macro.
  */
-static const uint8_t sizes_array_grid[KAN_LAYERS_NUM] = {2, 8, 8, 8};
+static const uint16_t sizes_array_grid[KAN_LAYERS_NUM] = {2, 8, 8, 8};
 
 /**
  * used datatype

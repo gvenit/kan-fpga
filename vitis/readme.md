@@ -63,6 +63,20 @@ First these headers act as ma
 - [ ] Dma examples had a number of transfers, something like a for loop to attempt to do the dma transaction multiple times. I am not sure if it is needed. I have the macro for it in `kan_defines.h` commented out and not no such implementation in the main code.
 - [ ] No monitoring of timing registers in main function yet (like `CTRL_REG_OFST_OPER_TMR_4B`)
 - [x] While waiting for reports to end I do not report on normal operation. Only errors that shut down the core.
+- [x] change size arrays type to uint16_t 
+- [x] loaded register are PS to PL not the other way around
+- [x] length are in packets
+- [x] batch is 1
+- [x] first download the packets then update the configuration
+- [x] when in locked state check that operation is done else error handler
+- [x] null CTRL_REG_OPER_DNE at the end of each layer
+- [ ] time everything
+  - [ ] all ASW (with inits)
+  - [ ] all layers
+  - [ ] every layer
+  - [ ] _hardware metrics_
+- [x] grid and scale have banks 4
+- [ ] change the linker script too and the datasets I think ***this is the reason why the memcpys fail as of now***
 
 <br>
 
@@ -80,18 +94,8 @@ First these headers act as ma
 - [x] not sure I handle the operation done reg `CTRL_REG_OPER_DNE` correctly
 - [ ] there are not deinit functions. Are they needed?
 - [x] Should I disable both data and instruction cache? I only disable data cache for now. Instruction might be good for memory operations
+- [ ] weight loaded reg should not exist
 
 
-- [ ] change size arrays type to uint16_t 
-- [ ] loaded register are PS to PL not the other way around
-- [ ] length are in packets
-- [ ] batch is 1
-- [ ] first download the packets then update the configuration
-- [ ] when in locked state check that operation is done else error handler
-- [ ] null CTRL_REG_OPER_DNE at the end of each layer
-- [ ] time everything
-  - [ ] all ASW (with inits)
-  - [ ] all layers
-  - [ ] every layer
-  - [ ] _hardware metrics_
-- [ ] grid and scale have banks 4 
+
+
