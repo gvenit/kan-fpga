@@ -410,8 +410,8 @@ module AxilDpRamParameterizable #(
     .ADDR_WIDTH   (BANK_VALID_ADDR_WIDTH),
     .STRB_WIDTH   (BANK_STRB_WIDTH)
   ) internal_bram_inst (
-    .clka        (clka),
-    .clkb        (clkb),
+    .clka         ({BANKS{clka}}),
+    .clkb         ({BANKS{clkb}}),
     .rdena        (bram_rdena),
     .wrena        (bram_wrena),
     .wrstrba      (bram_wrstrba),
@@ -427,3 +427,5 @@ module AxilDpRamParameterizable #(
   );
 
 endmodule
+
+`resetall

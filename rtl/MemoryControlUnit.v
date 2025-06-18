@@ -12,16 +12,23 @@
  *      clock drivers. The global FSM is expected to work with
  *      the slowest clock of the module.
  * 
+ *    ** As of 2025/06/18, MemoryControlUnit will operate using
+ *        only BRAM-Controller Interface.
  */
 
-`include "header_IFOptions.vh"
+`undef  DATA_IF_IS_AXIL
+`define DATA_IF_IS_BRAM
+
+`undef  GRID_IF_IS_AXIL
+`define GRID_IF_IS_BRAM
+
+`undef  SCALE_IF_IS_AXIL
+`define SCALE_IF_IS_BRAM
 
 module MemoryControlUnit #(
  `include "header_MCUGlobalFSMParameters.vh"
- `ifdef BRAM_ACK_SIG_OPTION
   // BRAM control has ack signal
   parameter BRAM_ACK_SIG = 1,
- `endif 
   // Number of batches per run
   parameter BATCH_SIZE = 1,
   // Width of AXI stream Input Data interfaces in bits

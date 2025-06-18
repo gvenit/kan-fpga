@@ -37,35 +37,34 @@ def find_strobe(out, address, word_size, clog_num_words, prints=False):
         )) for bit_i in range(2 ** clog_num_words.value)
     ] # + prints
 
-def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, is_async=True):
+def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_width=16, is_async=True):
     basename = 'tb_kan_layer_wrapper'
     fname = os.path.join(TOP_DIR,f'rtl/wrapper/{basename}.v')
     exec_str = ' '.join([
         str(_) for _ in [
         os.path.join(TOP_DIR,'rtl/wrapper/KanLayerInst.py'),
         '--batch-size',             K,
-        '--data-axil' if J == 1 else '--data-bram',              
         '--data-width',             data_width,
-        '--data-frac-bits',         data_width-5,
+        '--data-frac-bits',         data_width-3,
         '--data-chn',               J,
-        '--data-depth',             J * max(N_in // J, 1),
+        '--data-depth',             2**14,
+        # '--data-depth',             J * max(N_in // J, 1),
         '--grid-depth',             8,
-        '--grid-share',             
         '--scle-width',             data_width,
         '--scle-frac-bits',         data_width-2,
         '--scle-depth',             1,
-        '--scle-share',             
         '--wght-width',             data_width,
         '--wght-frac-bits',         data_width-5,
         '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)) * 2,
         '--sdff-width',             sdff_width,
         '--sdff-frac-bits',         sdff_width-3,
-        '--actf-width',             data_width,
-        '--actf-frac-bits',         data_width,
+        '--actf-width',             actf_width,
+        '--actf-frac-bits',         actf_width,
         '--rslt-chn',               I,
         '--rslt-width',             data_width,
         '--rslt-frac-bits',         data_width-5,
         '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8))*2,
+        '--bram-addr',              14,
         '--name',                   basename,
         '--output',                 fname
     ]] + (['--async'] if is_async else []))
@@ -79,14 +78,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     module.EmbeddedCode(
     f'''
-`ifdef IF_OPTIONS_INST_H
-`undef IF_OPTIONS_INST_H
-`endif
-`define {"DATA_IF_IS_AXIL" if J == 1 else "DATA_IF_IS_BRAM"}
-`define GRID_IS_SHARED
-`define SCALE_IS_SHARED
 `include "header_utils.vh"
-`include "header_IFOptions.vh"
 `define assert(signal, value) \
     if (signal !== value) begin \
         $display("ASSERTION FAILED in %m:"); \
@@ -143,11 +135,12 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     data_width = 16
     sdff_width = 12
+    actf_width = 16
     is_async = True
     
     fast_clk_hperiod = 2      # 250 MHz
     
-    kan = KanLayer(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, is_async=is_async)
+    kan = KanLayer(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, actf_width=actf_width, is_async=is_async)
     params = module.copy_params_as_localparams(kan)
     ports  = module.copy_ports_as_vars(kan)
     final_dtype = getattr(torch,f'uint{((data_width +7)//8)*8}')
@@ -175,10 +168,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     BRAM_WIDTH                  : Localparam = params['BRAM_CTRL_WIDTH']
     BRAM_STRB_WIDTH             : Localparam = params['BRAM_CTRL_WE']
     
-    if (J == 1):
-        DATA_ADDR                   : Localparam = params['DATA_ADDR']
-    else :
-        DATA_ADDR               = module.Localparam('DATA_ADDR', LOG2(params['DATA_DEPTH']))
+    DATA_ADDR                   : Localparam = params['DATA_ADDR']
     GRID_ADDR                   : Localparam = params['GRID_ADDR']
     SCALE_ADDR                  : Localparam = params['SCALE_ADDR']
     
@@ -192,7 +182,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     BATCH_SIZE.value  = K
     DATA_WIDTH.value = data_width
     DATA_STRB_WIDTH.value = data_width // 8
-    DATA_FRACTIONAL_BITS.value = data_width-5
+    DATA_FRACTIONAL_BITS.value = data_width-3
     SCALE_FRACTIONAL_BITS.value = data_width-2
     WEIGHT_FRACTIONAL_BITS.value = data_width-5
     SCALED_DIFF_WIDTH.value = sdff_width
@@ -227,200 +217,150 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         ports
     )
     
-    fsm_clk                     = ports['fsm_clk']
-    fsm_rst                     = ports['fsm_rst']
-    core_clk                    = ports['core_clk']
-    core_rst                    = ports['core_rst']
-    dma_clk                     = ports['dma_clk']
-    dma_rst                     = ports['dma_rst']
+    fsm_clk                 = ports['fsm_clk']
+    fsm_rst                 = ports['fsm_rst']
+    core_clk                = ports['core_clk']
+    core_rst                = ports['core_rst']
     
-    operation_busy              = ports['operation_busy']
-    operation_complete          = ports['operation_complete']
-    operation_error             = ports['operation_error']
-    locked                      = ports['locked']
-    pl2ps_intr                  = ports['pl2ps_intr']
+    operation_busy          = ports['operation_busy']
+    operation_complete      = ports['operation_complete']
+    operation_error         = ports['operation_error']
+    locked                  = ports['locked']
+    pl2ps_intr              = ports['pl2ps_intr']
     
-    if (DATA_CHANNELS.value == 1):
-        s_axil_data_aclk      = [ports[f's{str(batch).zfill(2)}_axil_data_aclk']    for batch in range(K) ]
-        s_axil_data_areset    = [ports[f's{str(batch).zfill(2)}_axil_data_areset']  for batch in range(K) ]
-        s_axil_data_awaddr    = [ports[f's{str(batch).zfill(2)}_axil_data_awaddr']  for batch in range(K) ]
-        s_axil_data_awprot    = [ports[f's{str(batch).zfill(2)}_axil_data_awprot']  for batch in range(K) ]
-        s_axil_data_awvalid   = [ports[f's{str(batch).zfill(2)}_axil_data_awvalid'] for batch in range(K) ]
-        s_axil_data_awready   = [ports[f's{str(batch).zfill(2)}_axil_data_awready'] for batch in range(K) ]
-        s_axil_data_wdata     = [ports[f's{str(batch).zfill(2)}_axil_data_wdata']   for batch in range(K) ]
-        s_axil_data_wstrb     = [ports[f's{str(batch).zfill(2)}_axil_data_wstrb']   for batch in range(K) ]
-        s_axil_data_wvalid    = [ports[f's{str(batch).zfill(2)}_axil_data_wvalid']  for batch in range(K) ]
-        s_axil_data_wready    = [ports[f's{str(batch).zfill(2)}_axil_data_wready']  for batch in range(K) ]
-        s_axil_data_bresp     = [ports[f's{str(batch).zfill(2)}_axil_data_bresp']   for batch in range(K) ]
-        s_axil_data_bvalid    = [ports[f's{str(batch).zfill(2)}_axil_data_bvalid']  for batch in range(K) ]
-        s_axil_data_bready    = [ports[f's{str(batch).zfill(2)}_axil_data_bready']  for batch in range(K) ]
-        s_axil_data_araddr    = [ports[f's{str(batch).zfill(2)}_axil_data_araddr']  for batch in range(K) ]
-        s_axil_data_arprot    = [ports[f's{str(batch).zfill(2)}_axil_data_arprot']  for batch in range(K) ]
-        s_axil_data_arvalid   = [ports[f's{str(batch).zfill(2)}_axil_data_arvalid'] for batch in range(K) ]
-        s_axil_data_arready   = [ports[f's{str(batch).zfill(2)}_axil_data_arready'] for batch in range(K) ]
-        s_axil_data_rdata     = [ports[f's{str(batch).zfill(2)}_axil_data_rdata']   for batch in range(K) ]
-        s_axil_data_rresp     = [ports[f's{str(batch).zfill(2)}_axil_data_rresp']   for batch in range(K) ]
-        s_axil_data_rvalid    = [ports[f's{str(batch).zfill(2)}_axil_data_rvalid']  for batch in range(K) ]
-        s_axil_data_rready    = [ports[f's{str(batch).zfill(2)}_axil_data_rready']  for batch in range(K) ]
-        
-        DATA_ADDR_BYTES = module.Localparam('DATA_ADDR_BYTES', DATA_ADDR)
-    else :
-        bram_ctrl_data_clk    = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_clk']  for batch in range(K) ]
-        bram_ctrl_data_rst    = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_rst']  for batch in range(K) ]
-        bram_ctrl_data_en     = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_en']   for batch in range(K) ]
-        bram_ctrl_data_we     = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_we']   for batch in range(K) ]
-        bram_ctrl_data_addr   = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_addr'] for batch in range(K) ]
-        bram_ctrl_data_din    = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_din']  for batch in range(K) ]
-        bram_ctrl_data_dout   = [ports[f'bram{str(batch).zfill(2)}_ctrl_data_dout'] for batch in range(K) ]
+    s_axil_data_aclk        = [ports[f's{str(batch).zfill(2)}_axil_data_aclk']    for batch in range(K) ]
+    s_axil_data_areset      = [ports[f's{str(batch).zfill(2)}_axil_data_areset']  for batch in range(K) ]
+    s_axil_data_awaddr      = [ports[f's{str(batch).zfill(2)}_axil_data_awaddr']  for batch in range(K) ]
+    s_axil_data_awprot      = [ports[f's{str(batch).zfill(2)}_axil_data_awprot']  for batch in range(K) ]
+    s_axil_data_awvalid     = [ports[f's{str(batch).zfill(2)}_axil_data_awvalid'] for batch in range(K) ]
+    s_axil_data_awready     = [ports[f's{str(batch).zfill(2)}_axil_data_awready'] for batch in range(K) ]
+    s_axil_data_wdata       = [ports[f's{str(batch).zfill(2)}_axil_data_wdata']   for batch in range(K) ]
+    s_axil_data_wstrb       = [ports[f's{str(batch).zfill(2)}_axil_data_wstrb']   for batch in range(K) ]
+    s_axil_data_wvalid      = [ports[f's{str(batch).zfill(2)}_axil_data_wvalid']  for batch in range(K) ]
+    s_axil_data_wready      = [ports[f's{str(batch).zfill(2)}_axil_data_wready']  for batch in range(K) ]
+    s_axil_data_bresp       = [ports[f's{str(batch).zfill(2)}_axil_data_bresp']   for batch in range(K) ]
+    s_axil_data_bvalid      = [ports[f's{str(batch).zfill(2)}_axil_data_bvalid']  for batch in range(K) ]
+    s_axil_data_bready      = [ports[f's{str(batch).zfill(2)}_axil_data_bready']  for batch in range(K) ]
+    s_axil_data_araddr      = [ports[f's{str(batch).zfill(2)}_axil_data_araddr']  for batch in range(K) ]
+    s_axil_data_arprot      = [ports[f's{str(batch).zfill(2)}_axil_data_arprot']  for batch in range(K) ]
+    s_axil_data_arvalid     = [ports[f's{str(batch).zfill(2)}_axil_data_arvalid'] for batch in range(K) ]
+    s_axil_data_arready     = [ports[f's{str(batch).zfill(2)}_axil_data_arready'] for batch in range(K) ]
+    s_axil_data_rdata       = [ports[f's{str(batch).zfill(2)}_axil_data_rdata']   for batch in range(K) ]
+    s_axil_data_rresp       = [ports[f's{str(batch).zfill(2)}_axil_data_rresp']   for batch in range(K) ]
+    s_axil_data_rvalid      = [ports[f's{str(batch).zfill(2)}_axil_data_rvalid']  for batch in range(K) ]
+    s_axil_data_rready      = [ports[f's{str(batch).zfill(2)}_axil_data_rready']  for batch in range(K) ]
     
-        DATA_ADDR_BYTES = module.Localparam('DATA_ADDR_BYTES', DATA_ADDR + RLOG2(DATA_STRB_WIDTH) )
+    s_axil_grid_aclk        = ports['s_axil_grid_aclk']
+    s_axil_grid_areset      = ports['s_axil_grid_areset']
+    s_axil_grid_awaddr      = ports['s_axil_grid_awaddr']
+    s_axil_grid_awprot      = ports['s_axil_grid_awprot']
+    s_axil_grid_awvalid     = ports['s_axil_grid_awvalid']
+    s_axil_grid_awready     = ports['s_axil_grid_awready']
+    s_axil_grid_wdata       = ports['s_axil_grid_wdata']
+    s_axil_grid_wstrb       = ports['s_axil_grid_wstrb']
+    s_axil_grid_wvalid      = ports['s_axil_grid_wvalid']
+    s_axil_grid_wready      = ports['s_axil_grid_wready']
+    s_axil_grid_bresp       = ports['s_axil_grid_bresp']
+    s_axil_grid_bvalid      = ports['s_axil_grid_bvalid']
+    s_axil_grid_bready      = ports['s_axil_grid_bready']
+    s_axil_grid_araddr      = ports['s_axil_grid_araddr']
+    s_axil_grid_arprot      = ports['s_axil_grid_arprot']
+    s_axil_grid_arvalid     = ports['s_axil_grid_arvalid']
+    s_axil_grid_arready     = ports['s_axil_grid_arready']
+    s_axil_grid_rdata       = ports['s_axil_grid_rdata']
+    s_axil_grid_rresp       = ports['s_axil_grid_rresp']
+    s_axil_grid_rvalid      = ports['s_axil_grid_rvalid']
+    s_axil_grid_rready      = ports['s_axil_grid_rready']
         
-    if (GRID_SHARE.value):
-        s_axil_grid_aclk        = ports['s_axil_grid_aclk']
-        s_axil_grid_areset      = ports['s_axil_grid_areset']
-        s_axil_grid_awaddr      = ports['s_axil_grid_awaddr']
-        s_axil_grid_awprot      = ports['s_axil_grid_awprot']
-        s_axil_grid_awvalid     = ports['s_axil_grid_awvalid']
-        s_axil_grid_awready     = ports['s_axil_grid_awready']
-        s_axil_grid_wdata       = ports['s_axil_grid_wdata']
-        s_axil_grid_wstrb       = ports['s_axil_grid_wstrb']
-        s_axil_grid_wvalid      = ports['s_axil_grid_wvalid']
-        s_axil_grid_wready      = ports['s_axil_grid_wready']
-        s_axil_grid_bresp       = ports['s_axil_grid_bresp']
-        s_axil_grid_bvalid      = ports['s_axil_grid_bvalid']
-        s_axil_grid_bready      = ports['s_axil_grid_bready']
-        s_axil_grid_araddr      = ports['s_axil_grid_araddr']
-        s_axil_grid_arprot      = ports['s_axil_grid_arprot']
-        s_axil_grid_arvalid     = ports['s_axil_grid_arvalid']
-        s_axil_grid_arready     = ports['s_axil_grid_arready']
-        s_axil_grid_rdata       = ports['s_axil_grid_rdata']
-        s_axil_grid_rresp       = ports['s_axil_grid_rresp']
-        s_axil_grid_rvalid      = ports['s_axil_grid_rvalid']
-        s_axil_grid_rready      = ports['s_axil_grid_rready']
+    s_axil_scle_aclk        = ports['s_axil_scle_aclk']
+    s_axil_scle_areset      = ports['s_axil_scle_areset']
+    s_axil_scle_awaddr      = ports['s_axil_scle_awaddr']
+    s_axil_scle_awprot      = ports['s_axil_scle_awprot']
+    s_axil_scle_awvalid     = ports['s_axil_scle_awvalid']
+    s_axil_scle_awready     = ports['s_axil_scle_awready']
+    s_axil_scle_wdata       = ports['s_axil_scle_wdata']
+    s_axil_scle_wstrb       = ports['s_axil_scle_wstrb']
+    s_axil_scle_wvalid      = ports['s_axil_scle_wvalid']
+    s_axil_scle_wready      = ports['s_axil_scle_wready']
+    s_axil_scle_bresp       = ports['s_axil_scle_bresp']
+    s_axil_scle_bvalid      = ports['s_axil_scle_bvalid']
+    s_axil_scle_bready      = ports['s_axil_scle_bready']
+    s_axil_scle_araddr      = ports['s_axil_scle_araddr']
+    s_axil_scle_arprot      = ports['s_axil_scle_arprot']
+    s_axil_scle_arvalid     = ports['s_axil_scle_arvalid']
+    s_axil_scle_arready     = ports['s_axil_scle_arready']
+    s_axil_scle_rdata       = ports['s_axil_scle_rdata']
+    s_axil_scle_rresp       = ports['s_axil_scle_rresp']
+    s_axil_scle_rvalid      = ports['s_axil_scle_rvalid']
+    s_axil_scle_rready      = ports['s_axil_scle_rready']
         
-        GRID_ADDR_BYTES = module.Localparam('GRID_ADDR_BYTES', GRID_ADDR)
-    else :
-        bram_ctrl_grid_clk      = ports['bram_ctrl_grid_clk']
-        bram_ctrl_grid_rst      = ports['bram_ctrl_grid_rst']
-        bram_ctrl_grid_en       = ports['bram_ctrl_grid_en']
-        bram_ctrl_grid_we       = ports['bram_ctrl_grid_we']
-        bram_ctrl_grid_addr     = ports['bram_ctrl_grid_addr']
-        bram_ctrl_grid_din      = ports['bram_ctrl_grid_din']
-        bram_ctrl_grid_dout     = ports['bram_ctrl_grid_dout']
-    
-        GRID_ADDR_BYTES = module.Localparam('GRID_ADDR_BYTES', GRID_ADDR + RLOG2(DATA_STRB_WIDTH))
-        
-    if (SCALE_SHARE.value):
-        s_axil_scle_aclk        = ports['s_axil_scle_aclk']
-        s_axil_scle_areset      = ports['s_axil_scle_areset']
-        s_axil_scle_awaddr      = ports['s_axil_scle_awaddr']
-        s_axil_scle_awprot      = ports['s_axil_scle_awprot']
-        s_axil_scle_awvalid     = ports['s_axil_scle_awvalid']
-        s_axil_scle_awready     = ports['s_axil_scle_awready']
-        s_axil_scle_wdata       = ports['s_axil_scle_wdata']
-        s_axil_scle_wstrb       = ports['s_axil_scle_wstrb']
-        s_axil_scle_wvalid      = ports['s_axil_scle_wvalid']
-        s_axil_scle_wready      = ports['s_axil_scle_wready']
-        s_axil_scle_bresp       = ports['s_axil_scle_bresp']
-        s_axil_scle_bvalid      = ports['s_axil_scle_bvalid']
-        s_axil_scle_bready      = ports['s_axil_scle_bready']
-        s_axil_scle_araddr      = ports['s_axil_scle_araddr']
-        s_axil_scle_arprot      = ports['s_axil_scle_arprot']
-        s_axil_scle_arvalid     = ports['s_axil_scle_arvalid']
-        s_axil_scle_arready     = ports['s_axil_scle_arready']
-        s_axil_scle_rdata       = ports['s_axil_scle_rdata']
-        s_axil_scle_rresp       = ports['s_axil_scle_rresp']
-        s_axil_scle_rvalid      = ports['s_axil_scle_rvalid']
-        s_axil_scle_rready      = ports['s_axil_scle_rready']
-        
-        SCALE_ADDR_BYTES = module.Localparam('SCALE_ADDR_BYTES', SCALE_ADDR)
-    else :
-        bram_ctrl_scle_clk      = ports['bram_ctrl_scle_clk']
-        bram_ctrl_scle_rst      = ports['bram_ctrl_scle_rst']
-        bram_ctrl_scle_en       = ports['bram_ctrl_scle_en']
-        bram_ctrl_scle_we       = ports['bram_ctrl_scle_we']
-        bram_ctrl_scle_addr     = ports['bram_ctrl_scle_addr']
-        bram_ctrl_scle_din      = ports['bram_ctrl_scle_din']
-        bram_ctrl_scle_dout     = ports['bram_ctrl_scle_dout']
-        
-        SCALE_ADDR_BYTES = module.Localparam('SCALE_ADDR_BYTES', SCALE_ADDR + RLOG2(DATA_STRB_WIDTH))
-    
-    s_axil_ctrl_awaddr          = ports['s_axil_ctrl_awaddr']
-    s_axil_ctrl_awprot          = ports['s_axil_ctrl_awprot']
-    s_axil_ctrl_awvalid         = ports['s_axil_ctrl_awvalid']
-    s_axil_ctrl_awready         = ports['s_axil_ctrl_awready']
-    s_axil_ctrl_wdata           = ports['s_axil_ctrl_wdata']
-    s_axil_ctrl_wstrb           = ports['s_axil_ctrl_wstrb']
-    s_axil_ctrl_wvalid          = ports['s_axil_ctrl_wvalid']
-    s_axil_ctrl_wready          = ports['s_axil_ctrl_wready']
-    s_axil_ctrl_bresp           = ports['s_axil_ctrl_bresp']
-    s_axil_ctrl_bvalid          = ports['s_axil_ctrl_bvalid']
-    s_axil_ctrl_bready          = ports['s_axil_ctrl_bready']
-    s_axil_ctrl_araddr          = ports['s_axil_ctrl_araddr']
-    s_axil_ctrl_arprot          = ports['s_axil_ctrl_arprot']
-    s_axil_ctrl_arvalid         = ports['s_axil_ctrl_arvalid']
-    s_axil_ctrl_arready         = ports['s_axil_ctrl_arready']
-    s_axil_ctrl_rdata           = ports['s_axil_ctrl_rdata']
-    s_axil_ctrl_rresp           = ports['s_axil_ctrl_rresp']
-    s_axil_ctrl_rvalid          = ports['s_axil_ctrl_rvalid']
-    s_axil_ctrl_rready          = ports['s_axil_ctrl_rready']
+    s_axil_ctrl_awaddr      = ports['s_axil_ctrl_awaddr']
+    s_axil_ctrl_awprot      = ports['s_axil_ctrl_awprot']
+    s_axil_ctrl_awvalid     = ports['s_axil_ctrl_awvalid']
+    s_axil_ctrl_awready     = ports['s_axil_ctrl_awready']
+    s_axil_ctrl_wdata       = ports['s_axil_ctrl_wdata']
+    s_axil_ctrl_wstrb       = ports['s_axil_ctrl_wstrb']
+    s_axil_ctrl_wvalid      = ports['s_axil_ctrl_wvalid']
+    s_axil_ctrl_wready      = ports['s_axil_ctrl_wready']
+    s_axil_ctrl_bresp       = ports['s_axil_ctrl_bresp']
+    s_axil_ctrl_bvalid      = ports['s_axil_ctrl_bvalid']
+    s_axil_ctrl_bready      = ports['s_axil_ctrl_bready']
+    s_axil_ctrl_araddr      = ports['s_axil_ctrl_araddr']
+    s_axil_ctrl_arprot      = ports['s_axil_ctrl_arprot']
+    s_axil_ctrl_arvalid     = ports['s_axil_ctrl_arvalid']
+    s_axil_ctrl_arready     = ports['s_axil_ctrl_arready']
+    s_axil_ctrl_rdata       = ports['s_axil_ctrl_rdata']
+    s_axil_ctrl_rresp       = ports['s_axil_ctrl_rresp']
+    s_axil_ctrl_rvalid      = ports['s_axil_ctrl_rvalid']
+    s_axil_ctrl_rready      = ports['s_axil_ctrl_rready']
 
-    s_axis_wght_tdata           = ports['s_axis_wght_tdata']
-    s_axis_wght_tkeep           = ports['s_axis_wght_tkeep']
-    s_axis_wght_tlast           = ports['s_axis_wght_tlast']
-    s_axis_wght_tvalid          = ports['s_axis_wght_tvalid']
-    s_axis_wght_tready          = ports['s_axis_wght_tready']
+    s_axis_wght_aclk        = ports['s_axis_wght_aclk']
+    s_axis_wght_areset      = ports['s_axis_wght_areset']
+    s_axis_wght_tdata       = ports['s_axis_wght_tdata']
+    s_axis_wght_tkeep       = ports['s_axis_wght_tkeep']
+    s_axis_wght_tlast       = ports['s_axis_wght_tlast']
+    s_axis_wght_tvalid      = ports['s_axis_wght_tvalid']
+    s_axis_wght_tready      = ports['s_axis_wght_tready']
     
-    m_axis_rslt_tdata           = ports['m_axis_rslt_tdata']
-    m_axis_rslt_tkeep           = ports['m_axis_rslt_tkeep']
-    m_axis_rslt_tlast           = ports['m_axis_rslt_tlast']
-    m_axis_rslt_tvalid          = ports['m_axis_rslt_tvalid']
-    m_axis_rslt_tready          = ports['m_axis_rslt_tready']
-    m_axis_rslt_tid             = ports['m_axis_rslt_tid']
+    m_axis_rslt_aclk        = ports['m_axis_rslt_aclk']
+    m_axis_rslt_areset      = ports['m_axis_rslt_areset']
+    m_axis_rslt_tdata       = ports['m_axis_rslt_tdata']
+    m_axis_rslt_tkeep       = ports['m_axis_rslt_tkeep']
+    m_axis_rslt_tlast       = ports['m_axis_rslt_tlast']
+    m_axis_rslt_tvalid      = ports['m_axis_rslt_tvalid']
+    m_axis_rslt_tready      = ports['m_axis_rslt_tready']
+    m_axis_rslt_tid         = ports['m_axis_rslt_tid']
     
     reset_stmt = []
     reset_stmt.append(reset_done(0))
     
     for batch in range(K):
-        if (DATA_CHANNELS.value == 1):
-            reset_stmt.append(s_axil_data_awvalid   [batch] (0))
-            reset_stmt.append(s_axil_data_wvalid    [batch] (0))
-            reset_stmt.append(s_axil_data_bready    [batch] (0))
-            reset_stmt.append(s_axil_data_arvalid   [batch] (0))
-            reset_stmt.append(s_axil_data_rready    [batch] (0))
-            
-            reset_stmt.append(s_axil_data_awprot    [batch](0))
-            reset_stmt.append(s_axil_data_arprot    [batch](0))
-        else :
-            reset_stmt.append(bram_ctrl_data_en     [batch](0))
-            reset_stmt.append(bram_ctrl_data_we     [batch](0))
+        reset_stmt.append(s_axil_data_awvalid   [batch] (0))
+        reset_stmt.append(s_axil_data_wvalid    [batch] (0))
+        reset_stmt.append(s_axil_data_bready    [batch] (0))
+        reset_stmt.append(s_axil_data_arvalid   [batch] (0))
+        reset_stmt.append(s_axil_data_rready    [batch] (0))
         
-    if (GRID_SHARE.value):
-        reset_stmt.append(s_axil_grid_awvalid(0))
-        reset_stmt.append(s_axil_grid_wvalid(0))
-        reset_stmt.append(s_axil_grid_bready(0))
-        reset_stmt.append(s_axil_grid_arvalid(0))
-        reset_stmt.append(s_axil_grid_rready(0))
+        reset_stmt.append(s_axil_data_awprot    [batch](0))
+        reset_stmt.append(s_axil_data_arprot    [batch](0))
+    
+    reset_stmt.append(s_axil_grid_awvalid(0))
+    reset_stmt.append(s_axil_grid_wvalid(0))
+    reset_stmt.append(s_axil_grid_bready(0))
+    reset_stmt.append(s_axil_grid_arvalid(0))
+    reset_stmt.append(s_axil_grid_rready(0))
+    
+    reset_stmt.append(s_axil_grid_awprot(0))
+    reset_stmt.append(s_axil_grid_arprot(0))
         
-        reset_stmt.append(s_axil_grid_awprot(0))
-        reset_stmt.append(s_axil_grid_arprot(0))
-    else :
-        reset_stmt.append(bram_ctrl_grid_en(0))
-        reset_stmt.append(bram_ctrl_grid_we(0))
-        
-    if (SCALE_SHARE.value):
-        reset_stmt.append(s_axil_scle_awvalid(0))
-        reset_stmt.append(s_axil_scle_wvalid(0))
-        reset_stmt.append(s_axil_scle_bready(0))
-        reset_stmt.append(s_axil_scle_arvalid(0))
-        reset_stmt.append(s_axil_scle_rready(0))
-        
-        reset_stmt.append(s_axil_scle_awprot(0))
-        reset_stmt.append(s_axil_scle_arprot(0))
-    else :
-        reset_stmt.append(bram_ctrl_scle_en(0))
-        reset_stmt.append(bram_ctrl_scle_we(0))
-        
+    reset_stmt.append(s_axil_scle_awvalid(0))
+    reset_stmt.append(s_axil_scle_wvalid(0))
+    reset_stmt.append(s_axil_scle_bready(0))
+    reset_stmt.append(s_axil_scle_arvalid(0))
+    reset_stmt.append(s_axil_scle_rready(0))
+    
+    reset_stmt.append(s_axil_scle_awprot(0))
+    reset_stmt.append(s_axil_scle_arprot(0))
     
     reset_stmt.append(s_axil_ctrl_awvalid(0))
     reset_stmt.append(s_axil_ctrl_wvalid(0))
@@ -434,49 +374,34 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     reset_stmt.append(s_axis_wght_tvalid(0))
     reset_stmt.append(m_axis_rslt_tready(0))
     
-    slow_clk_hperiod = fast_clk_hperiod * DMA_WIDTH / (DATA_CHANNELS*RSLT_CHANNELS*DATA_WIDTH) if is_async else fast_clk_hperiod
+    slow_clk_hperiod = fast_clk_hperiod * 2  if is_async else fast_clk_hperiod
+    dma_hperiod = max(int(fast_clk_hperiod * DMA_WIDTH.value / (DATA_CHANNELS.value*RSLT_CHANNELS.value*DATA_WIDTH.value)), 1)
 
     vcd_name = os.path.join('..','vcd',f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}.vcd')
     simulation.setup_waveform(module, uut, dumpfile=vcd_name)
     simulation.setup_clock(module, fsm_clk,  hperiod=slow_clk_hperiod)
     simulation.setup_clock(module, core_clk, hperiod=fast_clk_hperiod)
+    simulation.setup_clock(module, s_axis_wght_aclk, hperiod=dma_hperiod)
+    simulation.setup_clock(module, m_axis_rslt_aclk, hperiod=10)
+    simulation.setup_clock(module, s_axil_grid_aclk, hperiod=dma_hperiod*2)
+    simulation.setup_clock(module, s_axil_scle_aclk, hperiod=dma_hperiod*5)
     
     # Clock & Reset Configuration
     module.Always()(
-        dma_clk(fsm_clk),
-        dma_rst(core_rst),
+        s_axis_wght_areset(core_rst),
+        m_axis_rslt_areset(core_rst),
     )
     for batch in range(K):
-        if(DATA_CHANNELS.value == 1):
-            module.Always()(
-                s_axil_data_aclk[batch](core_clk),
-                s_axil_data_areset[batch](core_rst),
-            )
-        else:
-            module.Always()(
-                bram_ctrl_data_clk[batch](core_clk),
-                bram_ctrl_data_rst[batch](core_rst),
-            )
-    if(GRID_SHARE.value):
+        simulation.setup_clock(module, s_axil_data_aclk[batch], hperiod=dma_hperiod+batch+1)
         module.Always()(
-            s_axil_grid_aclk(core_clk),
-            s_axil_grid_areset(core_rst),
+            s_axil_data_areset[batch](core_rst),
         )
-    else:
-        module.Always()(
-            bram_ctrl_grid_clk(core_clk),
-            bram_ctrl_grid_rst(core_rst),
-        )
-    if(SCALE_SHARE.value):
-        module.Always()(
-            s_axil_scle_aclk(core_clk),
-            s_axil_scle_areset(core_rst),
-        )
-    else:
-        module.Always()(
-            bram_ctrl_scle_clk(core_clk),
-            bram_ctrl_scle_rst(core_rst),
-        )
+    module.Always()(
+        s_axil_grid_areset(core_rst),
+    )
+    module.Always()(
+        s_axil_scle_areset(core_rst),
+    )
     
     init = simulation.setup_reset(module, fsm_rst, reset_stmt, period=4*slow_clk_hperiod)
 
@@ -636,183 +561,107 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     for batch, test_data_batch in enumerate(test_data):
         ## Data AXI-Lite Driver
-        if (DATA_CHANNELS.value == 1):
-            data_axil_gen = module.GenerateIf(DATA_CHANNELS == 1)
+        module.Initial(
+            data_loaded[batch](0),
+            Wait(reset_done),
+            Wait(s_axil_data_aclk[batch]),
             
-            data_axil_gen.Initial(
-                data_loaded[batch](0),
-                Wait(reset_done),
-                Wait(s_axil_data_aclk[batch]),
+            Wait(~s_axil_data_aclk[batch]),
+            Wait(s_axil_data_aclk[batch]),
+            
+            # Test 0 : Write Data
+            Wait(~s_axil_data_aclk[batch]),
+            s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
+            For(addr_data[batch](0), addr_data[batch] < len(test_data_batch), addr_data[batch].inc())(
                 
-                Wait(~s_axil_data_aclk[batch]),
-                Wait(s_axil_data_aclk[batch]),
+                s_axil_data_awvalid[batch](1),
+                s_axil_data_awaddr[batch](addr_data[batch] * DATA_STRB_WIDTH),
                 
-                # Test 0 : Write Data
+                s_axil_data_wvalid[batch](1),
+                *find_strobe(s_axil_data_wstrb[batch], s_axil_data_awaddr[batch], DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH),
+                
+                Case(addr_data[batch])(
+                    *[
+                        When(i)(
+                            s_axil_data_wdata[batch].slice(
+                                msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
+                                lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
+                            )(test_data_batch_i)
+                        ) for i, test_data_batch_i in enumerate(test_data_batch)
+                    ],
+                    When( )(
+                        s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
+                    ),
+                ),
+                
+                While(~s_axil_data_awready[batch])(
+                    Wait(s_axil_data_aclk[batch]),
+                    Wait(~s_axil_data_aclk[batch]),
+                ),
+                s_axil_data_awvalid[batch](0),
+                
+                While(~s_axil_data_wready[batch])(
+                    Wait(s_axil_data_aclk[batch]),
+                    Wait(~s_axil_data_aclk[batch]),
+                ),
+                s_axil_data_wvalid[batch](0),
+                
+                s_axil_data_bready[batch](1),
+                While(~s_axil_data_bvalid[batch])(
+                    Wait(s_axil_data_aclk[batch]),
+                    Wait(~s_axil_data_aclk[batch]),
+                ),
+                AssertFalse(s_axil_data_bresp[batch]),
+                
+                Wait(s_axil_data_aclk[batch]),
                 Wait(~s_axil_data_aclk[batch]),
-                s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
-                For(addr_data[batch](0), addr_data[batch] < len(test_data_batch), addr_data[batch].inc())(
-                    
-                    s_axil_data_awvalid[batch](1),
-                    s_axil_data_awaddr[batch](addr_data[batch] * DATA_STRB_WIDTH),
-                    
-                    s_axil_data_wvalid[batch](1),
-                    *find_strobe(s_axil_data_wstrb[batch], s_axil_data_awaddr[batch], DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH),
-                    
-                    Case(addr_data[batch])(
-                        *[
-                            When(i)(
-                                s_axil_data_wdata[batch].slice(
+                s_axil_data_bready[batch](0),
+            ),
+            Wait(s_axil_data_aclk[batch]),
+            
+            # Test 1 : Read & Verify Data
+            Wait(~s_axil_data_aclk[batch]),
+            s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
+            For(addr_data[batch](0), addr_data[batch] < len(test_data_batch), addr_data[batch].inc())(
+                Wait(~s_axil_data_aclk[batch]),
+                
+                s_axil_data_arvalid[batch](1),
+                s_axil_data_araddr[batch](addr_data[batch] * DATA_STRB_WIDTH),
+                
+                While(~s_axil_data_arready[batch])(
+                    Wait(s_axil_data_aclk[batch]),
+                    Wait(~s_axil_data_aclk[batch]),
+                ),
+                s_axil_data_arvalid[batch](0),
+                s_axil_data_rready[batch](1),
+                
+                While(~s_axil_data_rvalid[batch])(
+                    Wait(s_axil_data_aclk[batch]),
+                    Wait(~s_axil_data_aclk[batch]),
+                ),
+                AssertFalse(s_axil_data_rresp[batch]),
+                Case(addr_data[batch])(
+                    *[
+                        When(i)(
+                            Assert(
+                                s_axil_data_rdata[batch].slice(
                                     msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
                                     lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                )(test_data_batch_i)
-                            ) for i, test_data_batch_i in enumerate(test_data_batch)
-                        ],
-                        When( )(
-                            s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
-                        ),
-                    ),
-                    
-                    While(~s_axil_data_awready[batch])(
-                        Wait(s_axil_data_aclk[batch]),
-                        Wait(~s_axil_data_aclk[batch]),
-                    ),
-                    s_axil_data_awvalid[batch](0),
-                    
-                    While(~s_axil_data_wready[batch])(
-                        Wait(s_axil_data_aclk[batch]),
-                        Wait(~s_axil_data_aclk[batch]),
-                    ),
-                    s_axil_data_wvalid[batch](0),
-                    
-                    s_axil_data_bready[batch](1),
-                    While(~s_axil_data_bvalid[batch])(
-                        Wait(s_axil_data_aclk[batch]),
-                        Wait(~s_axil_data_aclk[batch]),
-                    ),
-                    AssertFalse(s_axil_data_bresp[batch]),
-                    
-                    Wait(s_axil_data_aclk[batch]),
-                    Wait(~s_axil_data_aclk[batch]),
-                    s_axil_data_bready[batch](0),
+                                ),
+                                test_data_batch_i
+                            )
+                        ) for i, test_data_batch_i in enumerate(test_data_batch)
+                    ],
+                    When( )(AssertTrue(0)),
                 ),
                 Wait(s_axil_data_aclk[batch]),
-                
-                # Test 1 : Read & Verify Data
                 Wait(~s_axil_data_aclk[batch]),
-                s_axil_data_wdata[batch](EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
-                For(addr_data[batch](0), addr_data[batch] < len(test_data_batch), addr_data[batch].inc())(
-                    Wait(~s_axil_data_aclk[batch]),
-                    
-                    s_axil_data_arvalid[batch](1),
-                    s_axil_data_araddr[batch](addr_data[batch] * DATA_STRB_WIDTH),
-                    
-                    While(~s_axil_data_arready[batch])(
-                        Wait(s_axil_data_aclk[batch]),
-                        Wait(~s_axil_data_aclk[batch]),
-                    ),
-                    s_axil_data_arvalid[batch](0),
-                    s_axil_data_rready[batch](1),
-                    
-                    While(~s_axil_data_rvalid[batch])(
-                        Wait(s_axil_data_aclk[batch]),
-                        Wait(~s_axil_data_aclk[batch]),
-                    ),
-                    AssertFalse(s_axil_data_rresp[batch]),
-                    Case(addr_data[batch])(
-                        *[
-                            When(i)(
-                                Assert(
-                                    s_axil_data_rdata[batch].slice(
-                                        msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
-                                        lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                    ),
-                                    test_data_batch_i
-                                )
-                            ) for i, test_data_batch_i in enumerate(test_data_batch)
-                        ],
-                        When( )(AssertTrue(0)),
-                    ),
-                    Wait(s_axil_data_aclk[batch]),
-                    Wait(~s_axil_data_aclk[batch]),
-                    s_axil_data_rready[batch](0),
-                ),
-                Wait(~s_axil_data_aclk[batch]),
-                data_loaded[batch](1),
-            )
-        
-        ## Data Bram Driver
-        else :
-            data_bram_gen = module.GenerateIf(DATA_CHANNELS > 1)
-            
-            data_bram_gen.Initial(
-                data_loaded[batch](0),
-                Wait(reset_done),
-                Wait(bram_ctrl_data_clk[batch]),
-                
-                Wait(~bram_ctrl_data_clk[batch]),
-                Wait(bram_ctrl_data_clk[batch]),
-                
-                # Test 0 : Write Data
-                Wait(~bram_ctrl_data_clk[batch]),
-                bram_ctrl_data_en[batch](1),
-                bram_ctrl_data_din[batch](EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}")),
-                For(addr_data[batch](0), Ands(addr_data[batch] < len(test_data_batch),~bram_ctrl_data_rst[batch]), addr_data[batch].inc())(
-                    
-                    bram_ctrl_data_addr[batch](addr_data[batch] * (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)),
-                    
-                    *find_strobe(bram_ctrl_data_we[batch], bram_ctrl_data_addr[batch], DATA_STRB_WIDTH, CLOG_BRAM_STRB_WIDTH),
-                    bram_ctrl_data_addr[batch](addr_data[batch]),
-                    
-                    Case(addr_data[batch])(
-                        *[
-                            When(i)(
-                                bram_ctrl_data_din[batch].slice(
-                                    msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
-                                    lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                )(test_data_batch_i)
-                            ) for i, test_data_batch_i in enumerate(test_data_batch)
-                        ],
-                        When( )(
-                            bram_ctrl_data_din[batch](EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}"))
-                        ),
-                    ),
-                    Display('Test : bram_ctrl_data_din[batch] = ', bram_ctrl_data_din[batch]),
-                    Wait(bram_ctrl_data_clk[batch]),
-                    Wait(~bram_ctrl_data_clk[batch]),
-                ),
-                bram_ctrl_data_en[batch](0),
-                Wait(bram_ctrl_data_clk[batch]),
-                
-                # Test 1 : Read & Verify Data
-                Wait(~bram_ctrl_data_clk[batch]),
-                bram_ctrl_data_en[batch](1),
-                bram_ctrl_data_we[batch](0),
-                bram_ctrl_data_din[batch](EmbeddedNumeric("{" f"{BRAM_WIDTH.value}" r"{1'bX}}")),
-                For(addr_data[batch](0), Ands(addr_data[batch] < len(test_data_batch),~bram_ctrl_data_rst[batch]), addr_data[batch].inc())(
-
-                    bram_ctrl_data_addr[batch](addr_data[batch]),
-                    Wait(bram_ctrl_data_clk[batch]),
-                    Wait(~bram_ctrl_data_clk[batch]),
-
-                    Case(addr_data[batch])(
-                        *[
-                            When(i)(
-                                Assert(
-                                    bram_ctrl_data_dout[batch].slice(
-                                        msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
-                                        lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                    ),
-                                    test_data_batch_i
-                                )
-                            ) for i, test_data_batch_i in enumerate(test_data_batch)
-                        ],
-                        When( )(AssertTrue(0)),
-                    ),
-                ),
-                bram_ctrl_data_en[batch](0),
-                Wait(~bram_ctrl_data_clk[batch]),
-                data_loaded[batch](1),
-            )
+                s_axil_data_rready[batch](0),
+            ),
+            Wait(~s_axil_data_aclk[batch]),
+            data_loaded[batch](1),
+        )
+    
             
     data_loaded_int = module.Wire('data_loaded')
     data_loaded_int.assign(Ors(*data_loaded))
@@ -823,362 +672,212 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     grid_loaded = module.Reg('grid_loaded')
     
     ## Grid AXI-Lite Driver
-    if (GRID_SHARE.value):
-        grid_axil_gen = module.GenerateIf(GRID_SHARE)
+    module.Initial(
+        grid_loaded(0),
+        Wait(reset_done),
+        Wait(s_axil_grid_aclk),
         
-        grid_axil_gen.Initial(
-            grid_loaded(0),
-            Wait(reset_done),
-            Wait(s_axil_grid_aclk),
+        Wait(~s_axil_grid_aclk),
+        Wait(s_axil_grid_aclk),
+        
+        # Test 0 : Write Data
+        Wait(~s_axil_grid_aclk),
+        s_axil_grid_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
+        For(addr_grid(0), Ands(addr_grid < len(test_grid),~s_axil_grid_areset), addr_grid.inc())(
             
-            Wait(~s_axil_grid_aclk),
-            Wait(s_axil_grid_aclk),
+            s_axil_grid_awvalid(1),
+            s_axil_grid_awaddr(addr_grid * DATA_STRB_WIDTH),
             
-            # Test 0 : Write Data
+            s_axil_grid_wvalid(1),
+            *find_strobe(s_axil_grid_wstrb, s_axil_grid_awaddr, DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH, True),
+            
+            Case(addr_grid)(
+                *[
+                    When(i)(
+                        s_axil_grid_wdata.slice(
+                            msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
+                            lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
+                        )(test_grid_i)
+                    ) for i, test_grid_i in enumerate(test_grid)
+                ],
+                When( )(
+                    s_axil_grid_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
+                ),
+            ),
+            
+            While(Ands(~s_axil_grid_awready,~s_axil_grid_areset))(
+                Wait(s_axil_grid_aclk),
+                Wait(~s_axil_grid_aclk),
+            ),
+            s_axil_grid_awvalid(0),
+            
+            While(Ands(~s_axil_grid_wready,~s_axil_grid_areset))(
+                Wait(s_axil_grid_aclk),
+                Wait(~s_axil_grid_aclk),
+            ),
+            s_axil_grid_wvalid(0),
+            
+            s_axil_grid_bready(1),
+            While(Ands(~s_axil_grid_bvalid,~s_axil_grid_areset))(
+                Wait(s_axil_grid_aclk),
+                Wait(~s_axil_grid_aclk),
+            ),
+            AssertFalse(s_axil_grid_bresp),
+            
+            Wait(s_axil_grid_aclk),
             Wait(~s_axil_grid_aclk),
-            s_axil_grid_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
-            For(addr_grid(0), Ands(addr_grid < len(test_grid),~s_axil_grid_areset), addr_grid.inc())(
-                
-                s_axil_grid_awvalid(1),
-                s_axil_grid_awaddr(addr_grid * DATA_STRB_WIDTH),
-                
-                s_axil_grid_wvalid(1),
-                *find_strobe(s_axil_grid_wstrb, s_axil_grid_awaddr, DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH, True),
-                
-                Case(addr_grid)(
-                    *[
-                        When(i)(
-                            s_axil_grid_wdata.slice(
+            s_axil_grid_bready(0),
+        ),
+        Wait(s_axil_grid_aclk),
+        
+        # Test 1 : Read & Verify Data
+        Wait(~s_axil_grid_aclk),
+        s_axil_grid_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
+        For(addr_grid(0), Ands(addr_grid < len(test_grid),~s_axil_grid_areset), addr_grid.inc())(
+            Wait(~s_axil_grid_aclk),
+            
+            s_axil_grid_arvalid(1),
+            s_axil_grid_araddr(addr_grid * DATA_STRB_WIDTH),
+            
+            While(Ands(~s_axil_grid_arready,~s_axil_grid_areset))(
+                Wait(s_axil_grid_aclk),
+                Wait(~s_axil_grid_aclk),
+            ),
+            s_axil_grid_arvalid(0),
+            s_axil_grid_rready(1),
+            
+            While(Ands(~s_axil_grid_rvalid,~s_axil_grid_areset))(
+                Wait(s_axil_grid_aclk),
+                Wait(~s_axil_grid_aclk),
+            ),
+            AssertFalse(s_axil_grid_rresp),
+            Case(addr_grid)(
+                *[
+                    When(i)(
+                        Assert(
+                            s_axil_grid_rdata.slice(
                                 msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
                                 lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                            )(test_grid_i)
-                        ) for i, test_grid_i in enumerate(test_grid)
-                    ],
-                    When( )(
-                        s_axil_grid_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
-                    ),
-                ),
-                
-                While(Ands(~s_axil_grid_awready,~s_axil_grid_areset))(
-                    Wait(s_axil_grid_aclk),
-                    Wait(~s_axil_grid_aclk),
-                ),
-                s_axil_grid_awvalid(0),
-                
-                While(Ands(~s_axil_grid_wready,~s_axil_grid_areset))(
-                    Wait(s_axil_grid_aclk),
-                    Wait(~s_axil_grid_aclk),
-                ),
-                s_axil_grid_wvalid(0),
-                
-                s_axil_grid_bready(1),
-                While(Ands(~s_axil_grid_bvalid,~s_axil_grid_areset))(
-                    Wait(s_axil_grid_aclk),
-                    Wait(~s_axil_grid_aclk),
-                ),
-                AssertFalse(s_axil_grid_bresp),
-                
-                Wait(s_axil_grid_aclk),
-                Wait(~s_axil_grid_aclk),
-                s_axil_grid_bready(0),
+                            ),
+                            test_grid_i
+                        )
+                    ) for i, test_grid_i in enumerate(test_grid)
+                ],
+                When( )(AssertTrue(0)),
             ),
             Wait(s_axil_grid_aclk),
-            
-            # Test 1 : Read & Verify Data
             Wait(~s_axil_grid_aclk),
-            s_axil_grid_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
-            For(addr_grid(0), Ands(addr_grid < len(test_grid),~s_axil_grid_areset), addr_grid.inc())(
-                Wait(~s_axil_grid_aclk),
-                
-                s_axil_grid_arvalid(1),
-                s_axil_grid_araddr(addr_grid * DATA_STRB_WIDTH),
-                
-                While(Ands(~s_axil_grid_arready,~s_axil_grid_areset))(
-                    Wait(s_axil_grid_aclk),
-                    Wait(~s_axil_grid_aclk),
-                ),
-                s_axil_grid_arvalid(0),
-                s_axil_grid_rready(1),
-                
-                While(Ands(~s_axil_grid_rvalid,~s_axil_grid_areset))(
-                    Wait(s_axil_grid_aclk),
-                    Wait(~s_axil_grid_aclk),
-                ),
-                AssertFalse(s_axil_grid_rresp),
-                Case(addr_grid)(
-                    *[
-                        When(i)(
-                            Assert(
-                                s_axil_grid_rdata.slice(
-                                    msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
-                                    lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                ),
-                                test_grid_i
-                            )
-                        ) for i, test_grid_i in enumerate(test_grid)
-                    ],
-                    When( )(AssertTrue(0)),
-                ),
-                Wait(s_axil_grid_aclk),
-                Wait(~s_axil_grid_aclk),
-                s_axil_grid_rready(0),
-            ),
-            Wait(~s_axil_grid_aclk),
-            grid_loaded(1),
-        )
+            s_axil_grid_rready(0),
+        ),
+        Wait(~s_axil_grid_aclk),
+        grid_loaded(1),
+    )
     
-    ## Grid Bram Driver
-    else :
-        grid_bram_gen = module.GenerateIf(~GRID_SHARE)
-        
-        grid_bram_gen.Initial(
-            grid_loaded(0),
-            Wait(reset_done),
-            Wait(bram_ctrl_grid_clk),
-            
-            Wait(~bram_ctrl_grid_clk),
-            Wait(bram_ctrl_grid_clk),
-            
-            # Test 0 : Write Data
-            Wait(~bram_ctrl_grid_clk),
-            bram_ctrl_grid_en(1),
-            bram_ctrl_grid_din(EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}")),
-            For(addr_grid(0), Ands(addr_grid < len(test_grid),~bram_ctrl_grid_rst), addr_grid.inc())(
-                
-                bram_ctrl_grid_addr(addr_grid),
-                
-                *find_strobe(bram_ctrl_grid_we, bram_ctrl_grid_addr, DATA_STRB_WIDTH, CLOG_BRAM_STRB_WIDTH),
-                
-                Case(addr_grid)(
-                    *[
-                        When(i)(
-                            bram_ctrl_grid_din.slice(
-                                msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
-                                lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                            )(test_grid_i)
-                        ) for i, test_grid_i in enumerate(test_grid)
-                    ],
-                    When( )(
-                        bram_ctrl_grid_din(EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}"))
-                    ),
-                ),
-                Wait(bram_ctrl_grid_clk),
-                Wait(~bram_ctrl_grid_clk),
-            ),
-            bram_ctrl_grid_en(0),
-            Wait(bram_ctrl_grid_clk),
-            
-            # Test 1 : Read & Verify Data
-            Wait(~bram_ctrl_grid_clk),
-            bram_ctrl_grid_en(1),
-            bram_ctrl_grid_we(0),
-            bram_ctrl_grid_din(EmbeddedNumeric("{" f"{BRAM_WIDTH.value}" r"{1'bX}}")),
-            For(addr_grid(0), Ands(addr_grid < len(test_grid),~bram_ctrl_grid_rst), addr_grid.inc())(
-
-                bram_ctrl_grid_addr(addr_grid * DATA_STRB_WIDTH),
-                Wait(bram_ctrl_grid_clk),
-                Wait(~bram_ctrl_grid_clk),
-
-                Case(addr_grid)(
-                    *[
-                        When(i)(
-                            Assert(
-                                bram_ctrl_grid_dout.slice(
-                                    msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
-                                    lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                ),
-                                test_grid_i
-                            )
-                        ) for i, test_grid_i in enumerate(test_grid)
-                    ],
-                    When( )(AssertTrue(0)),
-                ),
-            ),
-            bram_ctrl_grid_en(0),
-            Wait(~bram_ctrl_grid_clk),
-            grid_loaded(1),
-        )
-        
     # Scale Driver
     addr_scle = module.Integer('addr_scle')
     scle_loaded = module.Reg('scle_loaded')
     
     ## Scale AXI-Lite Driver
-    if (SCALE_SHARE.value):
-        scle_axil_gen = module.GenerateIf(SCALE_SHARE)
+    module.Initial(
+        scle_loaded(0),
+        Wait(reset_done),
+        Wait(s_axil_scle_aclk),
         
-        scle_axil_gen.Initial(
-            scle_loaded(0),
-            Wait(reset_done),
-            Wait(s_axil_scle_aclk),
+        Wait(~s_axil_scle_aclk),
+        Wait(s_axil_scle_aclk),
+        
+        # Test 0 : Write Data
+        Wait(~s_axil_scle_aclk),
+        s_axil_scle_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
+        For(addr_scle(0), Ands(addr_scle < len(test_scle),~s_axil_scle_areset), addr_scle.inc())(
             
-            Wait(~s_axil_scle_aclk),
-            Wait(s_axil_scle_aclk),
+            s_axil_scle_awvalid(1),
+            s_axil_scle_awaddr(addr_scle * DATA_STRB_WIDTH),
             
-            # Test 0 : Write Data
+            s_axil_scle_wvalid(1),
+            *find_strobe(s_axil_scle_wstrb, s_axil_scle_awaddr, DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH),
+            
+            Case(addr_scle)(
+                *[
+                    When(i)(
+                        s_axil_scle_wdata.slice(
+                            msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
+                            lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
+                        )(test_scle_i)
+                    ) for i, test_scle_i in enumerate(test_scle)
+                ],
+                When( )(
+                    s_axil_scle_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
+                ),
+            ),
+            
+            While(Ands(~s_axil_scle_awready,~s_axil_scle_areset))(
+                Wait(s_axil_scle_aclk),
+                Wait(~s_axil_scle_aclk),
+            ),
+            s_axil_scle_awvalid(0),
+            
+            While(Ands(~s_axil_scle_wready,~s_axil_scle_areset))(
+                Wait(s_axil_scle_aclk),
+                Wait(~s_axil_scle_aclk),
+            ),
+            s_axil_scle_wvalid(0),
+            
+            s_axil_scle_bready(1),
+            While(Ands(~s_axil_scle_bvalid,~s_axil_scle_areset))(
+                Wait(s_axil_scle_aclk),
+                Wait(~s_axil_scle_aclk),
+            ),
+            AssertFalse(s_axil_scle_bresp),
+            
+            Wait(s_axil_scle_aclk),
             Wait(~s_axil_scle_aclk),
-            s_axil_scle_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}")),
-            For(addr_scle(0), Ands(addr_scle < len(test_scle),~s_axil_scle_areset), addr_scle.inc())(
-                
-                s_axil_scle_awvalid(1),
-                s_axil_scle_awaddr(addr_scle * DATA_STRB_WIDTH),
-                
-                s_axil_scle_wvalid(1),
-                *find_strobe(s_axil_scle_wstrb, s_axil_scle_awaddr, DATA_STRB_WIDTH, CLOG_AXIL_STRB_WIDTH),
-                
-                Case(addr_scle)(
-                    *[
-                        When(i)(
-                            s_axil_scle_wdata.slice(
+            s_axil_scle_bready(0),
+        ),
+        Wait(s_axil_scle_aclk),
+        
+        # Test 1 : Read & Verify Data
+        Wait(~s_axil_scle_aclk),
+        s_axil_scle_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
+        For(addr_scle(0), Ands(addr_scle < len(test_scle),~s_axil_scle_areset), addr_scle.inc())(
+            Wait(~s_axil_scle_aclk),
+            
+            s_axil_scle_arvalid(1),
+            s_axil_scle_araddr(addr_scle * DATA_STRB_WIDTH),
+            
+            While(Ands(~s_axil_scle_arready,~s_axil_scle_areset))(
+                Wait(s_axil_scle_aclk),
+                Wait(~s_axil_scle_aclk),
+            ),
+            s_axil_scle_arvalid(0),
+            s_axil_scle_rready(1),
+            
+            While(Ands(~s_axil_scle_rvalid,~s_axil_scle_areset))(
+                Wait(s_axil_scle_aclk),
+                Wait(~s_axil_scle_aclk),
+            ),
+            AssertFalse(s_axil_scle_rresp),
+            Case(addr_scle)(
+                *[
+                    When(i)(
+                        Assert(
+                            s_axil_scle_rdata.slice(
                                 msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
                                 lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                            )(test_scle_i)
-                        ) for i, test_scle_i in enumerate(test_scle)
-                    ],
-                    When( )(
-                        s_axil_scle_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH}" r"{1'bX}}"))
-                    ),
-                ),
-                
-                While(Ands(~s_axil_scle_awready,~s_axil_scle_areset))(
-                    Wait(s_axil_scle_aclk),
-                    Wait(~s_axil_scle_aclk),
-                ),
-                s_axil_scle_awvalid(0),
-                
-                While(Ands(~s_axil_scle_wready,~s_axil_scle_areset))(
-                    Wait(s_axil_scle_aclk),
-                    Wait(~s_axil_scle_aclk),
-                ),
-                s_axil_scle_wvalid(0),
-                
-                s_axil_scle_bready(1),
-                While(Ands(~s_axil_scle_bvalid,~s_axil_scle_areset))(
-                    Wait(s_axil_scle_aclk),
-                    Wait(~s_axil_scle_aclk),
-                ),
-                AssertFalse(s_axil_scle_bresp),
-                
-                Wait(s_axil_scle_aclk),
-                Wait(~s_axil_scle_aclk),
-                s_axil_scle_bready(0),
+                            ),
+                            test_scle_i
+                        )
+                    ) for i, test_scle_i in enumerate(test_scle)
+                ],
+                When( )(AssertTrue(0)),
             ),
             Wait(s_axil_scle_aclk),
-            
-            # Test 1 : Read & Verify Data
             Wait(~s_axil_scle_aclk),
-            s_axil_scle_wdata(EmbeddedNumeric("{" f"{AXIL_WIDTH.value}" r"{1'bX}}")),
-            For(addr_scle(0), Ands(addr_scle < len(test_scle),~s_axil_scle_areset), addr_scle.inc())(
-                Wait(~s_axil_scle_aclk),
-                
-                s_axil_scle_arvalid(1),
-                s_axil_scle_araddr(addr_scle * DATA_STRB_WIDTH),
-                
-                While(Ands(~s_axil_scle_arready,~s_axil_scle_areset))(
-                    Wait(s_axil_scle_aclk),
-                    Wait(~s_axil_scle_aclk),
-                ),
-                s_axil_scle_arvalid(0),
-                s_axil_scle_rready(1),
-                
-                While(Ands(~s_axil_scle_rvalid,~s_axil_scle_areset))(
-                    Wait(s_axil_scle_aclk),
-                    Wait(~s_axil_scle_aclk),
-                ),
-                AssertFalse(s_axil_scle_rresp),
-                Case(addr_scle)(
-                    *[
-                        When(i)(
-                            Assert(
-                                s_axil_scle_rdata.slice(
-                                    msb = ((i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH-1,
-                                    lsb =  (i % (AXIL_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                ),
-                                test_scle_i
-                            )
-                        ) for i, test_scle_i in enumerate(test_scle)
-                    ],
-                    When( )(AssertTrue(0)),
-                ),
-                Wait(s_axil_scle_aclk),
-                Wait(~s_axil_scle_aclk),
-                s_axil_scle_rready(0),
-            ),
-            Wait(~s_axil_scle_aclk),
-            scle_loaded(1),
-        )
-    
-    ## Scale Bram Driver
-    else :
-        scle_bram_gen = module.GenerateIf(~SCALE_SHARE)
-        
-        scle_bram_gen.Initial(
-            scle_loaded(0),
-            Wait(reset_done),
-            Wait(bram_ctrl_scle_clk),
-            
-            Wait(~bram_ctrl_scle_clk),
-            Wait(bram_ctrl_scle_clk),
-            
-            # Test 0 : Write Data
-            Wait(~bram_ctrl_scle_clk),
-            bram_ctrl_scle_en(1),
-            bram_ctrl_scle_din(EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}")),
-            For(addr_scle(0), Ands(addr_scle < len(test_scle),~bram_ctrl_scle_rst), addr_scle.inc())(
-                
-                bram_ctrl_scle_addr(addr_scle),
-                
-                *find_strobe(bram_ctrl_scle_we, bram_ctrl_scle_addr, DATA_STRB_WIDTH, CLOG_BRAM_STRB_WIDTH),
-                
-                Case(addr_scle)(
-                    *[
-                        When(i)(
-                            bram_ctrl_scle_din.slice(
-                                msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
-                                lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                            )(test_scle_i)
-                        ) for i, test_scle_i in enumerate(test_scle)
-                    ],
-                    When( )(
-                        bram_ctrl_scle_din(EmbeddedNumeric("{" f"{BRAM_WIDTH}" r"{1'bX}}"))
-                    ),
-                ),
-                Wait(bram_ctrl_scle_clk),
-                Wait(~bram_ctrl_scle_clk),
-            ),
-            bram_ctrl_scle_en(0),
-            Wait(bram_ctrl_scle_clk),
-            
-            # Test 1 : Read & Verify Data
-            Wait(~bram_ctrl_scle_clk),
-            bram_ctrl_scle_en(1),
-            bram_ctrl_scle_we(0),
-            bram_ctrl_scle_din(EmbeddedNumeric("{" f"{BRAM_WIDTH.value}" r"{1'bX}}")),
-            For(addr_scle(0), Ands(addr_scle < len(test_scle),~bram_ctrl_scle_rst), addr_scle.inc())(
-
-                bram_ctrl_scle_addr(addr_scle * DATA_STRB_WIDTH),
-                Wait(bram_ctrl_scle_clk),
-                Wait(~bram_ctrl_scle_clk),
-
-                Case(addr_scle)(
-                    *[
-                        When(i)(
-                            Assert(
-                                bram_ctrl_scle_dout.slice(
-                                    msb = ((i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) + 1) * DATA_WIDTH -1,
-                                    lsb =  (i % (BRAM_STRB_WIDTH / DATA_STRB_WIDTH)) * DATA_WIDTH
-                                ),
-                                test_scle_i
-                            )
-                        ) for i, test_scle_i in enumerate(test_scle)
-                    ],
-                    When( )(AssertTrue(0)),
-                ),
-            ),
-            bram_ctrl_scle_en(0),
-            Wait(~bram_ctrl_scle_clk),
-            scle_loaded(1),
-        )
+            s_axil_scle_rready(0),
+        ),
+        Wait(~s_axil_scle_aclk),
+        scle_loaded(1),
+    )
         
     # Weight coordinator
     test_wght = torch.stack( torch.split(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)), DATA_CHANNELS.value,0) ).cpu().to(final_dtype).reshape(-1).tolist()
@@ -1191,22 +890,22 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     module.Initial(
         wght_global_stage(0),
         Wait(reset_done),
-        Wait(dma_clk),
+        Wait(s_axis_wght_aclk),
         
         Wait(wght_global_stage != global_stage_counter),
-        Wait(~dma_clk),
-        Wait(dma_clk),
+        Wait(~s_axis_wght_aclk),
+        Wait(s_axis_wght_aclk),
         
         # Test 0 : Load Weights
         While(1)(
             wght_global_stage(global_stage_counter),
-            Wait(~dma_clk),
+            Wait(~s_axis_wght_aclk),
             total_wght(0),
             s_axis_wght_tvalid(1),
-            While(Ands(total_wght < len(test_wght), ~dma_rst, wght_global_stage == global_stage_counter))(
-                Wait(~dma_clk),
+            While(Ands(total_wght < len(test_wght), ~s_axis_wght_areset, wght_global_stage == global_stage_counter))(
+                Wait(~s_axis_wght_aclk),
                 s_axis_wght_tkeep(0),
-                For(intra_wght(0), Ands(intra_wght < (DMA_WIDTH / DATA_WIDTH), total_wght < len(test_wght),~dma_rst, wght_global_stage == global_stage_counter), intra_wght.inc())(
+                For(intra_wght(0), Ands(intra_wght < (DMA_WIDTH / DATA_WIDTH), total_wght < len(test_wght),~s_axis_wght_areset, wght_global_stage == global_stage_counter), intra_wght.inc())(
                     Case(total_wght)(
                         *[
                             When(_iter)(
@@ -1225,20 +924,20 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
                     total_wght.inc(),
                 ),
                 s_axis_wght_tlast(total_wght == len(test_wght)-1),
-                While(Ands(~s_axis_wght_tready, ~dma_rst, wght_global_stage == global_stage_counter))(
-                    Wait(dma_clk),
-                    Wait(~dma_clk),
+                While(Ands(~s_axis_wght_tready, ~s_axis_wght_areset, wght_global_stage == global_stage_counter))(
+                    Wait(s_axis_wght_aclk),
+                    Wait(~s_axis_wght_aclk),
                 ),
-                Wait(dma_clk),
+                Wait(s_axis_wght_aclk),
             ),
-            Wait(~dma_clk),
+            Wait(~s_axis_wght_aclk),
             s_axis_wght_tvalid(0),
             s_axis_wght_tlast(0),
-            Wait(dma_clk),
-            Wait(~dma_rst),
+            Wait(s_axis_wght_aclk),
+            Wait(~s_axis_wght_areset),
             Wait(wght_global_stage != global_stage_counter),
-            Wait(~dma_clk),
-            Wait(dma_clk),
+            Wait(~s_axis_wght_aclk),
+            Wait(s_axis_wght_aclk),
         ),
     )
     
@@ -1277,20 +976,20 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         rslt_global_stage(0),
         rslt_done(0),
         Wait(reset_done),
-        Wait(~dma_clk),
+        Wait(~m_axis_rslt_aclk),
         
         While(1)(
             *[total_rslt_i(0) for total_rslt_i in total_rslt],
-            Wait(dma_clk),
-            Wait(~dma_clk),
-            While(Ands(~rslt_done, ~dma_rst, rslt_global_stage == global_stage_counter))(
+            Wait(m_axis_rslt_aclk),
+            Wait(~m_axis_rslt_aclk),
+            While(Ands(~rslt_done, ~m_axis_rslt_areset, rslt_global_stage == global_stage_counter))(
                 m_axis_rslt_tready(1),
-                While(Ands(~m_axis_rslt_tvalid, ~dma_rst, rslt_global_stage == global_stage_counter))(
-                    Wait(dma_clk),
-                    Wait(~dma_clk),
+                While(Ands(~m_axis_rslt_tvalid, ~m_axis_rslt_areset, rslt_global_stage == global_stage_counter))(
+                    Wait(m_axis_rslt_aclk),
+                    Wait(~m_axis_rslt_aclk),
                 ),
                 AssertTrue(m_axis_rslt_tkeep != 0),
-                If(And(~dma_rst, rslt_global_stage == global_stage_counter))(
+                If(And(~m_axis_rslt_areset, rslt_global_stage == global_stage_counter))(
                     
                     Display('Rslt -- Caught batch %2d (%0t)', m_axis_rslt_tid, SystemTask('time')),
                     AssertTrue(m_axis_rslt_tid < K),
@@ -1343,15 +1042,15 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
                     ], When()(AssertTrue(0))
                     ),
                 ),
-                Wait(dma_clk),
-                Wait(~dma_clk),
+                Wait(m_axis_rslt_aclk),
+                Wait(~m_axis_rslt_aclk),
                 If(Ands(*[total_rslt_i == rslt_len for total_rslt_i in total_rslt]))(
                     rslt_done(1),
                     m_axis_rslt_tready(0),
                 ),
             ),
             Wait(~rslt_done),
-            Wait(~dma_rst),
+            Wait(~m_axis_rslt_areset),
             Wait(rslt_global_stage != global_stage_counter),
             rslt_global_stage(global_stage_counter),
         )
@@ -1507,8 +1206,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
         Display('-- Control Test 3 complete.'),
         
-        # Test 4: Check invalid configuration -- Data len = 2**DATA_ADDR_BYTES+1
-        *control_wr_seq('CTRL_REG_DATA_LEN', 2**DATA_ADDR_BYTES+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 4: Check invalid configuration -- Data len = 2**DATA_ADDR+1
+        *control_wr_seq('CTRL_REG_DATA_LEN', 2**DATA_ADDR+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -1534,8 +1233,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 5 complete.'),
         
-        # Test 6: Check invalid configuration -- Grid len = 2**GRID_ADDR_BYTES+1
-        *control_wr_seq('CTRL_REG_GRID_LEN', 2**GRID_ADDR_BYTES+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 6: Check invalid configuration -- Grid len = 2**GRID_ADDR+1
+        *control_wr_seq('CTRL_REG_GRID_LEN', 2**GRID_ADDR+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -1561,8 +1260,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 7 complete.'),
         
-        # Test 8: Check invalid configuration -- Scale len = 2**SCALE_ADDR_BYTES+1
-        *control_wr_seq('CTRL_REG_SCLE_LEN', 2**SCALE_ADDR_BYTES+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 8: Check invalid configuration -- Scale len = 2**SCALE_ADDR+1
+        *control_wr_seq('CTRL_REG_SCLE_LEN', 2**SCALE_ADDR+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -1588,8 +1287,8 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 9 complete.'),
         
-        # Test 10: Check invalid configuration -- Packet len = 2**(DATA_ADDR_BYTES + GRID_ADDR_BYTES)+1
-        *control_wr_seq('CTRL_REG_PCKT_LEN', 2**(DATA_ADDR_BYTES + GRID_ADDR_BYTES)+1, AXIL_CTRL_STRB_WIDTH),
+        # Test 10: Check invalid configuration -- Packet len = 2**(DATA_ADDR + GRID_ADDR)+1
+        *control_wr_seq('CTRL_REG_PCKT_LEN', 2**(DATA_ADDR + GRID_ADDR)+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -2189,19 +1888,22 @@ def main():
     
     os.chdir(os.path.join(TOP_DIR,'rtl'))
     
+    ## I = Results, J = Data, K = Batch
+    
     for I,J,K in (
-        # (1,1,1),
-        # (1,2,1),
-        # (8,1,1),
-        # (1,1,3),
+        (1,1,1),
+        (1,2,1),
+        (8,1,1),
+        (1,1,3),
         (2,2,1),
-        # (2,2,2),
+        (2,2,2),
         # (2,3,1),
         # (4,2,1),
         # (4,4,1),
         # (4,4,4),
         # (8,4,2),
     ):
+        # N_in, N_out = 2**10,2**10
         N_in, N_out = 24,24
         # N_in, N_out = J,2*I
         test = tb_KanLayer(I=I,J=J,K=K,N_in=N_in,N_out=N_out)
