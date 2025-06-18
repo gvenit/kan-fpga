@@ -37,12 +37,12 @@ def find_strobe(out, address, word_size, clog_num_words, prints=False):
         )) for bit_i in range(2 ** clog_num_words.value)
     ] # + prints
 
-def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_width=16, is_async=True):
-    basename = 'tb_kan_layer_wrapper'
+def KanAccelerator(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_width=16, is_async=True):
+    basename = 'tb_kan_accelerator_wrapper'
     fname = os.path.join(TOP_DIR,f'rtl/wrapper/{basename}.v')
     exec_str = ' '.join([
         str(_) for _ in [
-        os.path.join(TOP_DIR,'rtl/wrapper/KanLayerInst.py'),
+        os.path.join(TOP_DIR,'rtl/wrapper/KanAcceleratorInst.py'),
         '--batch-size',             K,
         '--data-width',             data_width,
         '--data-frac-bits',         data_width-3,
@@ -64,7 +64,6 @@ def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_width=16, 
         '--rslt-width',             data_width,
         '--rslt-frac-bits',         data_width-5,
         '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8))*2,
-        '--bram-addr',              14,
         '--name',                   basename,
         '--output',                 fname
     ]] + (['--async'] if is_async else []))
@@ -73,8 +72,8 @@ def KanLayer(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_width=16, 
     clear_hints(fname)
     return verilog.from_verilog.read_verilog_module(fname)[basename] 
 
-def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
-    module = Module(f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}')
+def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
+    module = Module(f'tb_KanAccelerator_{I}_{J}_{K}_{N_in}_{N_out}')
     
     module.EmbeddedCode(
     f'''
@@ -140,7 +139,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     fast_clk_hperiod = 2      # 250 MHz
     
-    kan = KanLayer(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, actf_width=actf_width, is_async=is_async)
+    kan = KanAccelerator(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, actf_width=actf_width, is_async=is_async)
     params = module.copy_params_as_localparams(kan)
     ports  = module.copy_ports_as_vars(kan)
     final_dtype = getattr(torch,f'uint{((data_width +7)//8)*8}')
@@ -164,9 +163,6 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     
     AXIL_WIDTH                  : Localparam = params['AXIL_WIDTH']
     AXIL_STRB_WIDTH             : Localparam = params['AXIL_STRB_WIDTH']
-    
-    BRAM_WIDTH                  : Localparam = params['BRAM_CTRL_WIDTH']
-    BRAM_STRB_WIDTH             : Localparam = params['BRAM_CTRL_WE']
     
     DATA_ADDR                   : Localparam = params['DATA_ADDR']
     GRID_ADDR                   : Localparam = params['GRID_ADDR']
@@ -196,10 +192,6 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     AXIL_WIDTH.value = 32
     AXIL_STRB_WIDTH.value = 32 // 8
     CLOG_AXIL_STRB_WIDTH = module.Localparam('CLOG_AXIL_STRB_WIDTH', 2)
-    
-    BRAM_WIDTH.value = 32
-    BRAM_STRB_WIDTH.value = 32 // 8 
-    CLOG_BRAM_STRB_WIDTH = module.Localparam('CLOG_BRAM_STRB_WIDTH', 2)
     
     AXIL_CTRL_WIDTH =  module.Localparam('AXIL_CTRL_WIDTH',32)
     AXIL_CTRL_STRB_WIDTH =  module.Localparam('AXIL_CTRL_STRB_WIDTH',4)
@@ -377,7 +369,7 @@ def tb_KanLayer(I=1,J=1,K=1,N_in=256,N_out=256):
     slow_clk_hperiod = fast_clk_hperiod * 2  if is_async else fast_clk_hperiod
     dma_hperiod = max(int(fast_clk_hperiod * DMA_WIDTH.value / (DATA_CHANNELS.value*RSLT_CHANNELS.value*DATA_WIDTH.value)), 1)
 
-    vcd_name = os.path.join('..','vcd',f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}.vcd')
+    vcd_name = os.path.join('..','vcd',f'tb_KanAccelerator_{I}_{J}_{K}_{N_in}_{N_out}.vcd')
     simulation.setup_waveform(module, uut, dumpfile=vcd_name)
     simulation.setup_clock(module, fsm_clk,  hperiod=slow_clk_hperiod)
     simulation.setup_clock(module, core_clk, hperiod=fast_clk_hperiod)
@@ -1906,11 +1898,11 @@ def main():
         # N_in, N_out = 2**10,2**10
         N_in, N_out = 24,24
         # N_in, N_out = J,2*I
-        test = tb_KanLayer(I=I,J=J,K=K,N_in=N_in,N_out=N_out)
-        fname_base = f'tb_KanLayer_{I}_{J}_{K}_{N_in}_{N_out}'
+        test = tb_KanAccelerator(I=I,J=J,K=K,N_in=N_in,N_out=N_out)
+        fname_base = f'tb_KanAccelerator_{I}_{J}_{K}_{N_in}_{N_out}'
         fname = os.path.join(TOP_DIR,f'tb/{fname_base}.v')
         verilog_test = test.to_verilog(fname)
-        stripModule(fname, 'tb_kan_layer_wrapper')
+        stripModule(fname, 'tb_kan_accelerator_wrapper')
         addTimeScale(fname)
         # exit()
 

@@ -3,7 +3,7 @@
 `default_nettype none
 
 /* 
- * CentralControlUnit : The high level Controller for KanLayer.
+ * CentralControlUnit : The high level Controller for KanAccelerator.
  *    The module consists of an FSM that handles requests and interrupts
  *        from both the Processing System and the Programmable Logic.
  *        The core also updates the PS with the core status and 
@@ -11,7 +11,7 @@
  * 
  *    Signals :
  *        fsm_clk -- The FSM Clock domain. It is expected to be the 
- *            slowest clock of the KanLayer
+ *            slowest clock of the KanAccelerator
  *        fsm_rst -- The reset signal assosiated with the fsm_clk
  *        operation_start -- An internal control signal for peripheral
  *            initialization and for signaling the start of 
@@ -25,14 +25,14 @@
  *            Signal may have different clock domains than the module.
  *        peripheral_operation_error -- Status ERROR signal from peripherals.
  *            Signal may have different clock domains than the module.
- *        operation_busy -- Status BUSY signal for KanLayer in general.
+ *        operation_busy -- Status BUSY signal for KanAccelerator in general.
  *            Signal operates on the FSM clock domain.
- *        operation_complete -- Status COMPLETE signal for KanLayer in general.
+ *        operation_complete -- Status COMPLETE signal for KanAccelerator in general.
  *            Signal operates on the FSM clock domain.
- *        operation_error -- Status ERROR signal for KanLayer in general.
+ *        operation_error -- Status ERROR signal for KanAccelerator in general.
  *            Signal operates on the FSM clock domain.
- *        internal_operation_error -- Status ERROR signal for KanLayer in general.
- *            Signal operates on the FSM clock domain. For KanLayer internal use only.
+ *        internal_operation_error -- Status ERROR signal for KanAccelerator in general.
+ *            Signal operates on the FSM clock domain. For KanAccelerator internal use only.
  *        locked -- Core is locked and awaiting actions from PS. Signal operates  
  *            on the FSM clock domain.
  *        pl2ps_intr -- Interrupt signal for PS. Signals PS for register updates

@@ -1,20 +1,16 @@
+/* This script was generating by the following command:
+                 
+python wrapper/KanAcceleratorInst.py --dma-width 64 --data-width 16 --data-frac-bits 11 --data-chn 4 --data-depth 16384 --grid-depth 16 --scle-width 16 --scle-frac-bits 14 --scle-depth 2 --wght-width 16 --wght-frac-bits 16 --wght-depth 1024 --sdff-width 12 --sdff-frac-bits 9 --actf-width 16 --actf-frac-bits 16 --rslt-chn 2 --rslt-width 16 --rslt-frac-bits 11 --rslt-depth 32 -n KanAcceleratorWrapper -o wrapper/KanAcceleratorWrapper.v
 
+*/
+                 
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
 
-`ifdef IF_OPTIONS_INST_H
-`undef IF_OPTIONS_INST_H
-`endif
-
-`define DATA_IF_IS_BRAM
-`define GRID_IS_SHARED
-`define SCALE_IS_SHARED
-
 `include "header_utils.vh"
-`include "header_IFOptions.vh"
 
-module KanLayerWrapper #(
+module KanAcceleratorWrapper #(
   /*------------------------------------------------------------------
     Genreal parameters of the architecture
   ------------------------------------------------------------------*/
@@ -41,14 +37,6 @@ module KanLayerWrapper #(
   parameter AXIL_STRB_WIDTH = (AXIL_WIDTH / 8),
 
   /*------------------------------------------------------------------
-    Bram controller mem interface parameters
-  ------------------------------------------------------------------*/
-
-  parameter BRAM_CTRL_WIDTH = 32,
-  parameter BRAM_CTRL_WE = 4,
-  parameter BRAM_CTRL_ADDR = 13,
-
-  /*------------------------------------------------------------------
     DATA parameters for AXI stream and BRAM interface
   ------------------------------------------------------------------*/
 
@@ -62,7 +50,8 @@ module KanLayerWrapper #(
   parameter DATA_DEPTH = 16384,
   // Data Strobe Width
   parameter DATA_STRB_WIDTH = DATA_WIDTH / 8,
-
+  // Data Address Width
+  parameter DATA_ADDR = `LOG2( DATA_DEPTH * DATA_STRB_WIDTH ),
 
   /*------------------------------------------------------------------
     GRID parameters for AXI stream and BRAM interface
@@ -71,11 +60,9 @@ module KanLayerWrapper #(
   // Use Common Grid Channel 
   parameter GRID_SHARE = 1, 
   // Total memory size allocated for Grid in words
-  parameter GRID_DEPTH = 8,
-
+  parameter GRID_DEPTH = 16,
   // Grid Address Width
   parameter GRID_ADDR = `LOG2( GRID_DEPTH * DATA_STRB_WIDTH ),
-
 
   /*------------------------------------------------------------------
     SCALE streams parameters
@@ -88,14 +75,14 @@ module KanLayerWrapper #(
   // Fractional bits of input scle
   parameter SCALE_FRACTIONAL_BITS = 14,
   // Total memory size allocated for Data in words
-  parameter SCALE_DEPTH = 1,
+  parameter SCALE_DEPTH = 2,
 
   /*------------------------------------------------------------------
     RESULT / OUTPUT parameters
   ------------------------------------------------------------------*/
 
   // Number of Independent AXI-Stream Result Channels per Batch
-  parameter RSLT_CHANNELS = 4,
+  parameter RSLT_CHANNELS = 2,
   // Width of AXI stream Output Data interface in bits
   parameter RSLT_WIDTH = 16,
   // Fractional bits of output data
@@ -104,12 +91,10 @@ module KanLayerWrapper #(
   parameter RSLT_KEEP_WIDTH = ((RSLT_WIDTH + 7) / 8),
   // FIFO Depth for results
   parameter RSLT_FIFO_DEPTH = 32,
-
   // Scale Strobe Width
   parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
   // Scale Address Width
   parameter SCALE_ADDR = `MAX( `LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ), SCALE_STRB_WIDTH),
-
 
   /*------------------------------------------------------------------
     WEIGHT streams parameters
@@ -118,13 +103,13 @@ module KanLayerWrapper #(
   // Width of input wght word
   parameter WEIGHT_WIDTH = 16,
   // Fractional bits of wght data
-  parameter WEIGHT_FRACTIONAL_BITS = 11,
+  parameter WEIGHT_FRACTIONAL_BITS = 16,
   // Propagate tkeep signal
   parameter WEIGHT_KEEP_ENABLE = (WEIGHT_WIDTH > 8),
   // tkeep signal width (words per cycle)
   parameter WEIGHT_KEEP_WIDTH = (WEIGHT_KEEP_ENABLE) ? ((WEIGHT_WIDTH + 7) / 8) : 1,
   // FIFO Depth for WEIGHT parameters
-  parameter WEIGHT_FIFO_DEPTH = 512,
+  parameter WEIGHT_FIFO_DEPTH = 1024,
 
   /*------------------------------------------------------------------
     SCALED_DIFF parameters
@@ -183,7 +168,7 @@ module KanLayerWrapper #(
   // Central Control Address Width
   parameter CTRL_ADDR = 13, // 13 
   // Set to true if fsm_clk and core_clk are driven by different clocks
-  parameter IS_ASYNCHRONOUS = 1,
+  parameter IS_ASYNCHRONOUS = 0,
 
   /*------------------------------------------------------------------
     Input / Output file constants
@@ -205,13 +190,6 @@ module KanLayerWrapper #(
   (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 core_rst RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
   output wire                                       core_rst,
-
-  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 dma_clk CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axis_wght:m_axis_rslt, ASSOCIATED_RESET dma_rst" *)
-  input  wire                                       dma_clk,
-  (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 dma_rst RST" *)
-    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
-  input  wire                                       dma_rst,
 
   /*------------------------------------------------------------------
       Generated Interrupts & Resets
@@ -269,27 +247,52 @@ module KanLayerWrapper #(
   /*------------------------------------------------------------------
       BRAM Data Control interface
   ------------------------------------------------------------------*/
-
-
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data CLK" *)
-    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF bram00_ctrl_data, ASSOCIATED_RESET bram00_ctrl_data_rst" *)
-  input  wire                                       bram00_ctrl_data_clk,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data RST" *)
-  input  wire                                       bram00_ctrl_data_rst,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data EN" *)
-    (* X_INTERFACE_PARAMETER = "MASTER_TYPE BRAM_CTRL , READ_WRITE_MODE READ_WRITE" *)
-  input  wire                                       bram00_ctrl_data_en,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data WE" *)
-  input  wire [BRAM_CTRL_WE-1:0]                    bram00_ctrl_data_we,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data ADDR" *)
-  input  wire [BRAM_CTRL_ADDR-1:0]                  bram00_ctrl_data_addr,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data DIN" *)
-  input  wire [BRAM_CTRL_WIDTH-1:0]                 bram00_ctrl_data_din,
-  (* X_INTERFACE_INFO = "xilinx.com:interface:bram:1.0 bram00_ctrl_data DOUT" *)
-  output wire [BRAM_CTRL_WIDTH-1:0]                 bram00_ctrl_data_dout,
-
-
-  /*------------------------------------------------------------------
+  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s00_axil_data_aclk CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s00_axil_data, ASSOCIATED_RESET s00_axil_data_areset" *)
+  input  wire                                       s00_axil_data_aclk,
+  (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 s00_axil_data_areset RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
+  input  wire                                       s00_axil_data_areset,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data AWADDR" *)
+    (* X_INTERFACE_PARAMETER = "READ_WRITE_MODE READ_WRITE,PROTOCOL AXI4LITE" *)
+  input  wire [DATA_ADDR-1:0]                       s00_axil_data_awaddr,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data AWPROT" *)
+  input  wire [2:0]                                 s00_axil_data_awprot,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data AWVALID" *)
+  input  wire                                       s00_axil_data_awvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data AWREADY" *)
+  output wire                                       s00_axil_data_awready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data WDATA" *)
+  input  wire [AXIL_WIDTH-1:0]                      s00_axil_data_wdata,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data WSTRB" *)
+  input  wire [AXIL_STRB_WIDTH-1:0]                 s00_axil_data_wstrb,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data WVALID" *)
+  input  wire                                       s00_axil_data_wvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data WREADY" *)
+  output wire                                       s00_axil_data_wready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data BRESP" *)
+  output wire [1:0]                                 s00_axil_data_bresp,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data BVALID" *)
+  output wire                                       s00_axil_data_bvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data BREADY" *)
+  input  wire                                       s00_axil_data_bready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data ARADDR" *)
+  input  wire [DATA_ADDR-1:0]                       s00_axil_data_araddr,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data ARPROT" *)
+  input  wire [2:0]                                 s00_axil_data_arprot,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data ARVALID" *)
+  input  wire                                       s00_axil_data_arvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data ARREADY" *)
+  output wire                                       s00_axil_data_arready,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data RDATA" *)
+  output wire [AXIL_WIDTH-1:0]                      s00_axil_data_rdata,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data RRESP" *)
+  output wire [1:0]                                 s00_axil_data_rresp,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data RVALID" *)
+  output wire                                       s00_axil_data_rvalid,
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s00_axil_data RREADY" *)
+  input  wire                                       s00_axil_data_rready,
+/*------------------------------------------------------------------
       BRAM Grid Control interface
   ------------------------------------------------------------------*/
 
@@ -339,12 +342,9 @@ module KanLayerWrapper #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_grid RREADY" *)
   input  wire                                       s_axil_grid_rready,
 
-
-
-    /*------------------------------------------------------------------
-        BRAM Scale Control interface
-    ------------------------------------------------------------------*/
-
+  /*------------------------------------------------------------------
+      BRAM Scale Control interface
+  ------------------------------------------------------------------*/
 
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axil_scle_aclk CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_scle, ASSOCIATED_RESET s_axil_scle_areset" *)
@@ -391,13 +391,17 @@ module KanLayerWrapper #(
   output wire                                       s_axil_scle_rvalid,
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil_scle RREADY" *)
   input  wire                                       s_axil_scle_rready,
-
-
  
   /*------------------------------------------------------------------
       AXI-Stream Weight Slave interface
   ------------------------------------------------------------------*/
 
+  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 s_axis_wght_aclk CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axis_wght, ASSOCIATED_RESET s_axis_wght_areset" *)
+  input  wire                                       s_axis_wght_aclk,
+  (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 s_axis_wght_areset RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
+  input  wire                                       s_axis_wght_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
   input  wire [DMA_WIDTH-1:0]                       s_axis_wght_tdata,
@@ -420,6 +424,12 @@ module KanLayerWrapper #(
         AXI-Stream Results / Output Master interface
     ------------------------------------------------------------------*/
 
+  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 m_axis_rslt_aclk CLK" *)
+    (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF m_axis_rslt, ASSOCIATED_RESET m_axis_rslt_areset" *)
+  input  wire                                       m_axis_rslt_aclk,
+  (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 m_axis_rslt_areset RST" *)
+    (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
+  input  wire                                       m_axis_rslt_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
   output wire [DMA_WIDTH-1:0]                       m_axis_rslt_tdata,
@@ -444,36 +454,29 @@ module KanLayerWrapper #(
   // Grid Strobe Width
   localparam GRID_STRB_WIDTH = GRID_WIDTH / 8;
   
-
-  KanLayer #(
+  KanAccelerator #(
     .BATCH_SIZE                     (BATCH_SIZE),
     .DMA_WIDTH                      (DMA_WIDTH),
     .DMA_KEEP_ENABLE                (DMA_KEEP_ENABLE),
     .DMA_KEEP_WIDTH                 (DMA_KEEP_WIDTH),
     .AXIL_WIDTH                     (AXIL_WIDTH),
     .AXIL_STRB_WIDTH                (AXIL_STRB_WIDTH),
-    .BRAM_CTRL_WIDTH                (BRAM_CTRL_WIDTH),
-    .BRAM_CTRL_WE                   (BRAM_CTRL_WE),
-    .BRAM_CTRL_ADDR                 (BRAM_CTRL_ADDR),
     .DATA_WIDTH                     (DATA_WIDTH),
     .DATA_FRACTIONAL_BITS           (DATA_FRACTIONAL_BITS),
     .DATA_CHANNELS                  (DATA_CHANNELS),
     .DATA_DEPTH                     (DATA_DEPTH),
-
+    .DATA_ADDR                      (DATA_ADDR),
+    .DATA_STRB_WIDTH                (DATA_STRB_WIDTH),
     .GRID_SHARE                     (GRID_SHARE), 
     .GRID_DEPTH                     (GRID_DEPTH),
-
 //    .GRID_ADDR                      (GRID_ADDR),
 //    .GRID_STRB_WIDTH                (GRID_STRB_WIDTH),
-
     .SCALE_SHARE                    (SCALE_SHARE),
     .SCALE_WIDTH                    (SCALE_WIDTH),
     .SCALE_FRACTIONAL_BITS          (SCALE_FRACTIONAL_BITS),
     .SCALE_DEPTH                    (SCALE_DEPTH),
-
 //    .SCALE_ADDR                     (SCALE_ADDR),
 //    .SCALE_STRB_WIDTH               (SCALE_STRB_WIDTH),
-
     .RSLT_CHANNELS                  (RSLT_CHANNELS),
     .RSLT_WIDTH                     (RSLT_WIDTH),
     .RSLT_FRACTIONAL_BITS           (RSLT_FRACTIONAL_BITS),
@@ -509,12 +512,10 @@ module KanLayerWrapper #(
     .core_clk                       (core_clk),
     .core_rst                       (core_rst),
 
-    .dma_clk                        (dma_clk),
-    .dma_rst                        (dma_rst),
-
     /*------------------------------------------------------------------
         Generated Interrupts & Resets
     ------------------------------------------------------------------*/
+
     .operation_busy                 (operation_busy),
     .operation_complete             (operation_complete),
     .operation_error                (operation_error),
@@ -522,18 +523,54 @@ module KanLayerWrapper #(
     .pl2ps_intr                     (pl2ps_intr),
 
     /*------------------------------------------------------------------
+        AXI-Lite Control Slave interface
+    ------------------------------------------------------------------*/
+
+    .s_axil_ctrl_awaddr             (s_axil_ctrl_awaddr[5:0]),
+    .s_axil_ctrl_awprot             (s_axil_ctrl_awprot),
+    .s_axil_ctrl_awvalid            (s_axil_ctrl_awvalid),
+    .s_axil_ctrl_awready            (s_axil_ctrl_awready),
+    .s_axil_ctrl_wdata              (s_axil_ctrl_wdata),
+    .s_axil_ctrl_wstrb              (s_axil_ctrl_wstrb),
+    .s_axil_ctrl_wvalid             (s_axil_ctrl_wvalid),
+    .s_axil_ctrl_wready             (s_axil_ctrl_wready),
+    .s_axil_ctrl_bresp              (s_axil_ctrl_bresp),
+    .s_axil_ctrl_bvalid             (s_axil_ctrl_bvalid),
+    .s_axil_ctrl_bready             (s_axil_ctrl_bready),
+    .s_axil_ctrl_araddr             (s_axil_ctrl_araddr[5:0]),
+    .s_axil_ctrl_arprot             (s_axil_ctrl_arprot),
+    .s_axil_ctrl_arvalid            (s_axil_ctrl_arvalid),
+    .s_axil_ctrl_arready            (s_axil_ctrl_arready),
+    .s_axil_ctrl_rdata              (s_axil_ctrl_rdata),
+    .s_axil_ctrl_rresp              (s_axil_ctrl_rresp),
+    .s_axil_ctrl_rvalid             (s_axil_ctrl_rvalid),
+    .s_axil_ctrl_rready             (s_axil_ctrl_rready),
+
+    /*------------------------------------------------------------------
         BRAM Data Control interface
     ------------------------------------------------------------------*/
 
-
-    .bram_ctrl_data_clk             ({ bram00_ctrl_data_clk }),
-    .bram_ctrl_data_rst             ({ bram00_ctrl_data_rst }),
-    .bram_ctrl_data_en              ({ bram00_ctrl_data_en }),
-    .bram_ctrl_data_we              ({ bram00_ctrl_data_we }),
-    .bram_ctrl_data_addr            ({ bram00_ctrl_data_addr }),
-    .bram_ctrl_data_din             ({ bram00_ctrl_data_din }),
-    .bram_ctrl_data_dout            ({ bram00_ctrl_data_dout }),
-
+    .s_axil_data_aclk               ({ s00_axil_data_aclk }),
+    .s_axil_data_areset             ({ s00_axil_data_areset }),
+    .s_axil_data_awaddr             ({ s00_axil_data_awaddr }),
+    .s_axil_data_awprot             ({ s00_axil_data_awprot }),
+    .s_axil_data_awvalid            ({ s00_axil_data_awvalid }),
+    .s_axil_data_awready            ({ s00_axil_data_awready }),
+    .s_axil_data_wdata              ({ s00_axil_data_wdata }),
+    .s_axil_data_wstrb              ({ s00_axil_data_wstrb }),
+    .s_axil_data_wvalid             ({ s00_axil_data_wvalid }),
+    .s_axil_data_wready             ({ s00_axil_data_wready }),
+    .s_axil_data_bresp              ({ s00_axil_data_bresp }),
+    .s_axil_data_bvalid             ({ s00_axil_data_bvalid }),
+    .s_axil_data_bready             ({ s00_axil_data_bready }),
+    .s_axil_data_araddr             ({ s00_axil_data_araddr }),
+    .s_axil_data_arprot             ({ s00_axil_data_arprot }),
+    .s_axil_data_arvalid            ({ s00_axil_data_arvalid }),
+    .s_axil_data_arready            ({ s00_axil_data_arready }),
+    .s_axil_data_rdata              ({ s00_axil_data_rdata }),
+    .s_axil_data_rresp              ({ s00_axil_data_rresp }),
+    .s_axil_data_rvalid             ({ s00_axil_data_rvalid }),
+    .s_axil_data_rready             ({ s00_axil_data_rready }),
 
     /*------------------------------------------------------------------
         BRAM Grid Control interface
@@ -560,13 +597,9 @@ module KanLayerWrapper #(
     .s_axil_grid_rresp              (s_axil_grid_rresp),
     .s_axil_grid_rvalid             (s_axil_grid_rvalid),
     .s_axil_grid_rready             (s_axil_grid_rready),
-
-
-
     /*------------------------------------------------------------------
         BRAM Scale Control interface
     ------------------------------------------------------------------*/
-
 
     .s_axil_scle_aclk               (s_axil_scle_aclk),
     .s_axil_scle_areset             (s_axil_scle_areset),
@@ -589,37 +622,13 @@ module KanLayerWrapper #(
     .s_axil_scle_rresp              (s_axil_scle_rresp),
     .s_axil_scle_rvalid             (s_axil_scle_rvalid),
     .s_axil_scle_rready             (s_axil_scle_rready),
-
-
-  
-    /*------------------------------------------------------------------
-        AXI-Lite Control Slave interface
-    ------------------------------------------------------------------*/
-
-    .s_axil_ctrl_awaddr             (s_axil_ctrl_awaddr[5:0]),
-    .s_axil_ctrl_awprot             (s_axil_ctrl_awprot),
-    .s_axil_ctrl_awvalid            (s_axil_ctrl_awvalid),
-    .s_axil_ctrl_awready            (s_axil_ctrl_awready),
-    .s_axil_ctrl_wdata              (s_axil_ctrl_wdata),
-    .s_axil_ctrl_wstrb              (s_axil_ctrl_wstrb),
-    .s_axil_ctrl_wvalid             (s_axil_ctrl_wvalid),
-    .s_axil_ctrl_wready             (s_axil_ctrl_wready),
-    .s_axil_ctrl_bresp              (s_axil_ctrl_bresp),
-    .s_axil_ctrl_bvalid             (s_axil_ctrl_bvalid),
-    .s_axil_ctrl_bready             (s_axil_ctrl_bready),
-    .s_axil_ctrl_araddr             (s_axil_ctrl_araddr[5:0]),
-    .s_axil_ctrl_arprot             (s_axil_ctrl_arprot),
-    .s_axil_ctrl_arvalid            (s_axil_ctrl_arvalid),
-    .s_axil_ctrl_arready            (s_axil_ctrl_arready),
-    .s_axil_ctrl_rdata              (s_axil_ctrl_rdata),
-    .s_axil_ctrl_rresp              (s_axil_ctrl_rresp),
-    .s_axil_ctrl_rvalid             (s_axil_ctrl_rvalid),
-    .s_axil_ctrl_rready             (s_axil_ctrl_rready),
-
+    
     /*------------------------------------------------------------------
         AXI-Stream WEIGHT Slave interface
     ------------------------------------------------------------------*/
 
+    .s_axis_wght_aclk               (s_axis_wght_aclk),
+    .s_axis_wght_areset             (s_axis_wght_areset),
     .s_axis_wght_tdata              (s_axis_wght_tdata),
     .s_axis_wght_tkeep              (s_axis_wght_tkeep),
     .s_axis_wght_tvalid             (s_axis_wght_tvalid),  
@@ -633,6 +642,8 @@ module KanLayerWrapper #(
         AXI-Stream Results / Output Master interface
     ------------------------------------------------------------------*/
 
+    .m_axis_rslt_aclk               (m_axis_rslt_aclk),
+    .m_axis_rslt_areset             (m_axis_rslt_areset),
     .m_axis_rslt_tdata              (m_axis_rslt_tdata),
     .m_axis_rslt_tkeep              (m_axis_rslt_tkeep),
     .m_axis_rslt_tvalid             (m_axis_rslt_tvalid),  

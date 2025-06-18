@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
-Generates an KanLayer wrapper with the specified batch size and other system parameters.
+Generates an KanAccelerator wrapper with the specified batch size and other system parameters.
 """
 import argparse
+import sys
 import os
 from jinja2 import Template
 
@@ -50,17 +51,13 @@ def main():
     parser.add_argument('--result-frac-bits', '--rslt-frac-bits', type=int, default=12, help="Result Fractional Bits", dest='rslt_fbits')
     parser.add_argument('--result-depth',     '--rslt-depth',     type=int, default=8, help="Result Depth", dest='rslt_depth')
     
-    parser.add_argument('--bram-width', type=int, default=32, help="batch size", dest='bram_width')
-    parser.add_argument('--bram-we',    type=int, default=4, help="batch size",  dest='bram_we')
-    parser.add_argument('--bram-addr',  type=int, default=13, help="batch size", dest='bram_addr')
-    
     parser.add_argument('-n', '--name',   type=str, help="module name")
     parser.add_argument('-o', '--output', type=str, help="output file name")
 
     args = parser.parse_args()
-    
+        
     try:
-        generate(**args.__dict__)
+        generate(**args.__dict__, generation_str = ' '.join(['python', *sys.argv]))
     except IOError as ex:
         print(ex)
         exit(1)
@@ -70,7 +67,7 @@ def generate(batch_size=4, name=None, output=None, **kwargs):
     n = batch_size
 
     if name is None:
-        name = "KanLayerInstWrapper{0}".format(n)
+        name = "KanAcceleratorInstWrapper{0}".format(n)
 
     if output is None:
         output = os.path.join(TOP_DIR, 'rtl', 'wrapper', name + ".v")
@@ -92,7 +89,12 @@ def generate(batch_size=4, name=None, output=None, **kwargs):
     print(exec_str)
     os.system(exec_str)
         
-    t = Template(u"""
+    t = Template(u"""/* This script was generating by the following command:
+                 
+{{generation_str}}
+
+*/
+                 
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -124,14 +126,6 @@ module {{name}} #(
 
   parameter AXIL_WIDTH = 32,
   parameter AXIL_STRB_WIDTH = (AXIL_WIDTH / 8),
-
-  /*------------------------------------------------------------------
-    Bram controller mem interface parameters
-  ------------------------------------------------------------------*/
-
-  parameter BRAM_CTRL_WIDTH = {{bram_width}},
-  parameter BRAM_CTRL_WE = {{bram_we}},
-  parameter BRAM_CTRL_ADDR = {{bram_addr}},
 
   /*------------------------------------------------------------------
     DATA parameters for AXI stream and BRAM interface
@@ -554,16 +548,13 @@ module {{name}} #(
   // Grid Strobe Width
   localparam GRID_STRB_WIDTH = GRID_WIDTH / 8;
   
-  KanLayer #(
+  KanAccelerator #(
     .BATCH_SIZE                     (BATCH_SIZE),
     .DMA_WIDTH                      (DMA_WIDTH),
     .DMA_KEEP_ENABLE                (DMA_KEEP_ENABLE),
     .DMA_KEEP_WIDTH                 (DMA_KEEP_WIDTH),
     .AXIL_WIDTH                     (AXIL_WIDTH),
     .AXIL_STRB_WIDTH                (AXIL_STRB_WIDTH),
-    .BRAM_CTRL_WIDTH                (BRAM_CTRL_WIDTH),
-    .BRAM_CTRL_WE                   (BRAM_CTRL_WE),
-    .BRAM_CTRL_ADDR                 (BRAM_CTRL_ADDR),
     .DATA_WIDTH                     (DATA_WIDTH),
     .DATA_FRACTIONAL_BITS           (DATA_FRACTIONAL_BITS),
     .DATA_CHANNELS                  (DATA_CHANNELS),

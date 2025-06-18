@@ -7,7 +7,7 @@ A complete engine for accelerating Kolmogorov-Arnold Networks (KAN) in FPGAs. Th
 
 $$RSWAF_i(x) = 1 - \tanh^2\left(scale\times(x-grid_i)\right)$$
 
-rather than the more complex B-spline basis. A FasterKANLayer consist of a BatchNorm Layer,the RSWAF and a Linear layer. The input feature map of the layer is forwarded to the BatchNorm Layer. Then, a matrix is formed from the equation:
+rather than the more complex B-spline basis. A FasterKanAccelerator consist of a BatchNorm Layer,the RSWAF and a Linear layer. The input feature map of the layer is forwarded to the BatchNorm Layer. Then, a matrix is formed from the equation:
 
 $$ y_{ij} = RSWAF_i(x_j) $$
 
@@ -114,6 +114,12 @@ the result stream makes use of the TID flag to indicate the corresponding batch.
 - In synchronous mode, core and fsm clocks are expected to be driven by the same clock.
 - In asynchronous mode, it is recommended that the core clock speed is an integer multiple of the fsm closk speed, and the two clocks are phase-aligned.
 
+# Important
+- This repo is designed to produce files and run tests in linux systems. 
+    If you want to use in windows (for example to use Vivado and Vitis) on a Windows environment, 
+    it is highly recommended to clone this repo in the desired windows path using WSL.
+
+
 # To-Do (Important)
 - [ ] Most python tests are old or have low coverage of the UUT's functionality and need to be updated. 
 - [ ] Integrate dataset and KAN model to the repository
@@ -124,4 +130,4 @@ the result stream makes use of the TID flag to indicate the corresponding batch.
 # To-Do (Secondary)
 - [ ] Upgrade to / add option for AXI interfaces for data, grid and scale on-chip memory storage.
 - [ ] Option to use Distributed RAM instead of Block Ram for small memory depths.
-- [ ] Update `KanLayer_simgen.py` to use actual data instead of randomly generated ones.
+- [ ] Update `KanAccelerator_simgen.py` to use actual data instead of randomly generated ones.

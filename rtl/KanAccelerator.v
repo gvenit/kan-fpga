@@ -3,7 +3,7 @@
 `default_nettype none
 
 /*
- * KanLayer: This acts as the top level hdl module
+ * KanAccelerator: This acts as the top level hdl module
  *   of the KAN SoC design.
  *   The endgoal is that this particular module
  *   be drag-and-dropped in the Vivado Block Design.
@@ -11,7 +11,7 @@
 
 `include "header_utils.vh"
 
-module KanLayer #(
+module KanAccelerator #(
   /*------------------------------------------------------------------
     Genreal parameters of the architecture
   ------------------------------------------------------------------*/
@@ -36,14 +36,6 @@ module KanLayer #(
 
   parameter AXIL_WIDTH = 32,
   parameter AXIL_STRB_WIDTH = (AXIL_WIDTH / 8),
-
-  /*------------------------------------------------------------------
-    Bram controller mem interface parameters
-  ------------------------------------------------------------------*/
-
-  parameter BRAM_CTRL_WIDTH = 32,
-  parameter BRAM_CTRL_WE = 4,
-  parameter BRAM_CTRL_ADDR = 13,
 
   /*------------------------------------------------------------------
     DATA parameters for AXI stream and BRAM interface
