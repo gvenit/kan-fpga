@@ -38,3 +38,12 @@ graphs
 dot
 
 temp
+
+#vitis
+vitis/System_Versions/Version_0/RemoteSystemsTempFiles
+*log
+*.metadata
+*logs
+*_temp
+*.analytics
+*Packages

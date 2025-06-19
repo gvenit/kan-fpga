@@ -1,1 +1,0 @@
-This directory is now deprecated and the testing resumed in the [Version 0](../../System_Versions/Version_0/) directory
