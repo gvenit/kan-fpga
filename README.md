@@ -15,7 +15,6 @@ with size $len(x) \times len(grid)$. The matrix is flattened and forwarded to th
 
 $$ N_{total} = N_{grid} + 1 + N_{in} \times N_{grid} \times N_{out} = N_{grid} (N_{in}\times N_{out}+1) +1 $$
 
-
 ## Mapping to FPGA
 In this project, the data processor does not normalize the input data 
 and only performs the activation function and the linear layer.
@@ -43,9 +42,12 @@ $N \times M$ the size of output data matrix from the down face of the LPC.
 In order to calculate the MMM, 
 we split the matrices in sizes $\frac{A}{N} \times K$ and $K \times \frac{B}{M}$, 
 resulting in matrices:
-$$A_n = a_{ic} \ , \ nN \le i \lt (n+1)N, \ 0 \le c \lt C$$
+
+$$A_n = a_{ic} \ , \ nN \le i \lt (n+1)N, \ 0 \le c \lt C$$ 
 $$B_m = b_{cj} \ , \ mM \le j \lt (m+1)M, \ 0 \le c \lt C$$
+
 Then, these matrices are converted to 3D Tensors using the following transform:
+
 $$T(A)^n_{lik} = (A_n)_{i,(lK+k)} \ , \ nN \le i \lt (l+1)N, \ 0 \le l \lt \frac{C}{K}, \ 0 \le k \lt K$$
 $$T(B)^m_{lkj} = (B_m)_{(lK+k),j} \ , \ mM \le j \lt (m+1)M, \ 0 \le l \lt \frac{C}{K}, \ 0 \le k \lt K$$
 
