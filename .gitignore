@@ -25,6 +25,7 @@ test
 
 # vivado
 
+vivado_22.2/KAN_SoC/*
 *.cache
 *.hw
 *.ip_user_files

@@ -1,6 +1,6 @@
 /* This script was generating by the following command:
                  
-python wrapper/KanAcceleratorInst.py --dma-width 64 --data-width 16 --data-frac-bits 11 --data-chn 4 --data-depth 16384 --grid-depth 16 --scle-width 16 --scle-frac-bits 14 --scle-depth 2 --wght-width 16 --wght-frac-bits 16 --wght-depth 1024 --sdff-width 12 --sdff-frac-bits 9 --actf-width 16 --actf-frac-bits 16 --rslt-chn 2 --rslt-width 16 --rslt-frac-bits 11 --rslt-depth 32 -n KanAcceleratorWrapper -o wrapper/KanAcceleratorWrapper.v
+python wrapper/KanAcceleratorInst.py --dma-width 64 --data-width 16 --data-frac-bits 11 --data-chn 4 --data-depth 16384 --grid-depth 16 --scle-width 16 --scle-frac-bits 14 --scle-depth 2 --wght-width 16 --wght-frac-bits 16 --wght-depth 1024 --sdff-width 12 --sdff-frac-bits 9 --actf-width 16 --actf-frac-bits 16 --rslt-chn 2 --rslt-width 16 --rslt-frac-bits 11 --rslt-depth 32 --async -n KanAcceleratorWrapper -o wrapper/KanAcceleratorWrapper.v
 
 */
                  
@@ -168,7 +168,7 @@ module KanAcceleratorWrapper #(
   // Central Control Address Width
   parameter CTRL_ADDR = 13, // 13 
   // Set to true if fsm_clk and core_clk are driven by different clocks
-  parameter IS_ASYNCHRONOUS = 0,
+  parameter IS_ASYNCHRONOUS = 1,
 
   /*------------------------------------------------------------------
     Input / Output file constants

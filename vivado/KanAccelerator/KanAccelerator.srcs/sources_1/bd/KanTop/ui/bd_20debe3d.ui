@@ -1,0 +1,67 @@
+{
+   "ActiveEmotionalView":"Default View",
+   "Default View_ScaleFactor":"0.803419",
+   "Default View_TopLeft":"490,289",
+   "ExpandedHierarchyInLayout":"",
+   "guistr":"# # String gsaved with Nlview 7.0r6  2020-01-29 bk=1.5227 VDI=41 GEI=36 GUI=JA:10.0 non-TLS-threadsafe
+#  -string -flagsOSRD
+preplace port DDR -pg 1 -lvl 8 -x 2900 -y 530 -defaultsOSRD
+preplace port FIXED_IO -pg 1 -lvl 8 -x 2900 -y 550 -defaultsOSRD
+preplace inst processing_system7 -pg 1 -lvl 7 -x 2610 -y 600 -defaultsOSRD
+preplace inst axi_dma -pg 1 -lvl 5 -x 1820 -y 340 -defaultsOSRD
+preplace inst ps7_axi_periph -pg 1 -lvl 2 -x 580 -y 1030 -defaultsOSRD
+preplace inst rst_ps7_mem_clk -pg 1 -lvl 2 -x 580 -y 380 -defaultsOSRD
+preplace inst axi_mem_intercon -pg 1 -lvl 6 -x 2190 -y 370 -defaultsOSRD
+preplace inst dma_reset_reverse -pg 1 -lvl 2 -x 580 -y 550 -defaultsOSRD
+preplace inst dma_reset_concat -pg 1 -lvl 1 -x 200 -y 560 -defaultsOSRD
+preplace inst mm2s_prmry_reset_out -pg 1 -lvl 3 -x 990 -y 380 -defaultsOSRD
+preplace inst s2mm_prmry_reset_out -pg 1 -lvl 3 -x 990 -y 480 -defaultsOSRD
+preplace inst rst_ps7_fsm_rst -pg 1 -lvl 2 -x 580 -y 180 -defaultsOSRD
+preplace inst dma_reset_concat1 -pg 1 -lvl 6 -x 2190 -y 610 -defaultsOSRD
+preplace inst axi_interconnect_ctrl -pg 1 -lvl 3 -x 990 -y 140 -defaultsOSRD
+preplace inst axi_interconnect_mem -pg 1 -lvl 3 -x 990 -y 730 -defaultsOSRD
+preplace inst rst_ps7_125M -pg 1 -lvl 1 -x 200 -y 730 -defaultsOSRD
+preplace inst KanAccelerator -pg 1 -lvl 4 -x 1440 -y 480 -defaultsOSRD
+preplace netloc KanAccelerator_pl2ps_intr 1 4 2 1630 590 NJ
+preplace netloc axi_dma_mm2s_introut 1 5 1 2000 380n
+preplace netloc axi_dma_mm2s_prmry_reset_out_n 1 0 6 20 60 NJ 60 750J 300 1170J 200 NJ 200 2000
+preplace netloc axi_dma_s2mm_introut 1 5 1 1990 400n
+preplace netloc axi_dma_s2mm_prmry_reset_out_n 1 0 6 30 70 NJ 70 830J 290 1180J 220 NJ 220 1990
+preplace netloc dma_reset_concat1_dout 1 6 1 2340 610n
+preplace netloc processing_system7_0_FCLK_CLK0 1 1 7 410 480 800 550 1150 240 1630 470 2020 520 2350 730 2860
+preplace netloc processing_system7_0_FCLK_CLK1 1 0 8 30 830 370 840 770 560 1160 170 NJ 170 NJ 170 2360 740 2850
+preplace netloc processing_system7_0_FCLK_CLK2 1 1 7 410 80 790 310 1220 180 NJ 180 NJ 180 NJ 180 2870
+preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 8 20 630 390 820 750J 890 NJ 890 NJ 890 NJ 890 NJ 890 2840
+preplace netloc rst_ps7_0_50M_peripheral_aresetn 1 2 4 840 540 1200J 250 1620 460 2010
+preplace netloc rst_ps7_0_62M_peripheral_reset 1 2 2 780 320 1180J
+preplace netloc rst_ps7_125M_peripheral_aresetn 1 1 2 380 830 820
+preplace netloc rst_ps7_125M_peripheral_reset 1 1 3 370J 490 750J 570 1250
+preplace netloc rst_ps7_fsm_rst_peripheral_aresetn 1 2 1 N 220
+preplace netloc util_vector_logic_0_Res 1 2 1 810 380n
+preplace netloc xlconcat_0_dout 1 1 1 380J 550n
+preplace netloc xlslice_0_Dout 1 3 1 1170J 380n
+preplace netloc xlslice_1_Dout 1 3 1 1140J 480n
+preplace netloc KanAccelerator_m_axis_rslt 1 4 1 1640 310n
+preplace netloc axi_dma_M_AXIS_MM2S 1 3 3 1250 190 NJ 190 2010
+preplace netloc axi_dma_M_AXI_MM2S 1 5 1 N 280
+preplace netloc axi_dma_M_AXI_S2MM 1 5 1 N 300
+preplace netloc axi_interconnect_0_M00_AXI 1 3 2 1250 160 1640J
+preplace netloc axi_interconnect_0_M01_AXI 1 3 1 1240 150n
+preplace netloc axi_interconnect_ctrl1_M00_AXI 1 3 1 1210 330n
+preplace netloc axi_interconnect_ctrl1_M01_AXI 1 3 1 1230 350n
+preplace netloc axi_interconnect_ctrl1_M02_AXI 1 3 1 1240 370n
+preplace netloc axi_mem_intercon_M00_AXI 1 6 1 2370 370n
+preplace netloc processing_system7_0_DDR 1 7 1 NJ 530
+preplace netloc processing_system7_0_FIXED_IO 1 7 1 NJ 550
+preplace netloc processing_system7_0_M_AXI_GP0 1 1 7 400 280 NJ 280 1190J 230 1620J 210 NJ 210 NJ 210 2860
+preplace netloc ps7_axi_periph_M00_AXI 1 2 1 760 60n
+preplace netloc ps7_axi_periph_M01_AXI 1 2 1 840 630n
+levelinfo -pg 1 0 200 580 990 1440 1820 2190 2610 2900
+pagesize -pg 1 -db -bbox -sgen 0 0 3020 1170
+"
+}
+{
+   "da_axi4_cnt":"7",
+   "da_clkrst_cnt":"30",
+   "da_ps7_cnt":"1"
+}
