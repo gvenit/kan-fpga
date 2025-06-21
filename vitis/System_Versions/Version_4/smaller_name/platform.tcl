@@ -40,3 +40,5 @@ platform generate -domains
 bsp reload
 bsp reload
 platform generate -domains 
+platform clean
+platform generate
