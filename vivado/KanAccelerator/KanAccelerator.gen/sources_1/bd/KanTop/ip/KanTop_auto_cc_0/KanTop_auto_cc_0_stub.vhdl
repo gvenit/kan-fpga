@@ -1,10 +1,10 @@
 -- Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
--- Date        : Thu Jun 19 22:04:34 2025
+-- Date        : Mon Jun 23 20:31:41 2025
 -- Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
--- Command     : write_vhdl -force -mode synth_stub
---               c:/Users/gvenit/Projects/PhD/kan-fpga/vivado/KanAccelerator/KanAccelerator.gen/sources_1/bd/KanTop/ip/KanTop_auto_cc_0/KanTop_auto_cc_0_stub.vhdl
+-- Command     : write_vhdl -force -mode synth_stub -rename_top KanTop_auto_cc_0 -prefix
+--               KanTop_auto_cc_0_ KanTop_auto_cc_0_stub.vhdl
 -- Design      : KanTop_auto_cc_0
 -- Purpose     : Stub declaration of top-level module interface
 -- Device      : xc7z007sclg400-1

@@ -35,8 +35,12 @@ module AxilDpBram #(
   parameter STRB_WIDTH = (DATA_WIDTH/8),
   parameter PIPELINE_OUTPUT = 0
 ) (
+(* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clka CLK" *)
+(* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_a, ASSOCIATED_RESET rsta" *)
   input  wire                   clka,
   input  wire                   rsta,
+(* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clkb CLK" *)
+  (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF s_axil_b, ASSOCIATED_RESET rstb" *)
   input  wire                   clkb,
   input  wire                   rstb,
 

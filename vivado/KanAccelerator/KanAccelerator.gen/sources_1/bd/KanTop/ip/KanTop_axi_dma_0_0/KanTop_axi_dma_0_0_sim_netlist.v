@@ -1,10 +1,10 @@
 // Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-// Date        : Thu Jun 19 20:39:00 2025
+// Date        : Mon Jun 23 20:31:55 2025
 // Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
-// Command     : write_verilog -force -mode funcsim -rename_top KanTop_axi_dma_0_0 -prefix
-//               KanTop_axi_dma_0_0_ KanTop_axi_dma_0_0_sim_netlist.v
+// Command     : write_verilog -force -mode funcsim
+//               c:/Users/gvenit/Projects/PhD/kan-fpga/vivado/KanAccelerator/KanAccelerator.gen/sources_1/bd/KanTop/ip/KanTop_axi_dma_0_0/KanTop_axi_dma_0_0_sim_netlist.v
 // Design      : KanTop_axi_dma_0_0
 // Purpose     : This verilog netlist is a functional simulation representation of the design and should not be modified
 //               or synthesized. This netlist cannot be used for SDF annotated simulation.
@@ -79,11 +79,11 @@ module KanTop_axi_dma_0_0
     mm2s_introut,
     s2mm_introut,
     axi_dma_tstvec);
-  (* x_interface_info = "xilinx.com:signal:clock:1.0 S_AXI_LITE_ACLK CLK" *) (* x_interface_parameter = "XIL_INTERFACENAME S_AXI_LITE_ACLK, ASSOCIATED_BUSIF S_AXI_LITE:M_AXI, ASSOCIATED_RESET axi_resetn, FREQ_HZ 2.5e+08, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, INSERT_VIP 0" *) input s_axi_lite_aclk;
-  (* x_interface_info = "xilinx.com:signal:clock:1.0 M_AXI_MM2S_CLK CLK" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_MM2S_CLK, ASSOCIATED_BUSIF M_AXI_MM2S:M_AXIS_MM2S:M_AXIS_CNTRL, ASSOCIATED_RESET mm2s_prmry_reset_out_n:mm2s_cntrl_reset_out_n, FREQ_HZ 2.5e+08, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, INSERT_VIP 0" *) input m_axi_mm2s_aclk;
-  (* x_interface_info = "xilinx.com:signal:clock:1.0 M_AXI_S2MM_CLK CLK" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_S2MM_CLK, ASSOCIATED_BUSIF M_AXI_S2MM:S_AXIS_S2MM:S_AXIS_STS, ASSOCIATED_RESET s2mm_prmry_reset_out_n:s2mm_sts_reset_out_n, FREQ_HZ 2.5e+08, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, INSERT_VIP 0" *) input m_axi_s2mm_aclk;
+  (* x_interface_info = "xilinx.com:signal:clock:1.0 S_AXI_LITE_ACLK CLK" *) (* x_interface_parameter = "XIL_INTERFACENAME S_AXI_LITE_ACLK, ASSOCIATED_BUSIF S_AXI_LITE:M_AXI, ASSOCIATED_RESET axi_resetn, FREQ_HZ 250000000, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, INSERT_VIP 0" *) input s_axi_lite_aclk;
+  (* x_interface_info = "xilinx.com:signal:clock:1.0 M_AXI_MM2S_CLK CLK" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_MM2S_CLK, ASSOCIATED_BUSIF M_AXI_MM2S:M_AXIS_MM2S:M_AXIS_CNTRL, ASSOCIATED_RESET mm2s_prmry_reset_out_n:mm2s_cntrl_reset_out_n, FREQ_HZ 250000000, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, INSERT_VIP 0" *) input m_axi_mm2s_aclk;
+  (* x_interface_info = "xilinx.com:signal:clock:1.0 M_AXI_S2MM_CLK CLK" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_S2MM_CLK, ASSOCIATED_BUSIF M_AXI_S2MM:S_AXIS_S2MM:S_AXIS_STS, ASSOCIATED_RESET s2mm_prmry_reset_out_n:s2mm_sts_reset_out_n, FREQ_HZ 250000000, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, INSERT_VIP 0" *) input m_axi_s2mm_aclk;
   (* x_interface_info = "xilinx.com:signal:reset:1.0 AXI_RESETN RST" *) (* x_interface_parameter = "XIL_INTERFACENAME AXI_RESETN, POLARITY ACTIVE_LOW, INSERT_VIP 0" *) input axi_resetn;
-  (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE AWVALID" *) (* x_interface_parameter = "XIL_INTERFACENAME S_AXI_LITE, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 2.5e+08, ID_WIDTH 0, ADDR_WIDTH 10, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 0, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 0, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) input s_axi_lite_awvalid;
+  (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE AWVALID" *) (* x_interface_parameter = "XIL_INTERFACENAME S_AXI_LITE, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 250000000, ID_WIDTH 0, ADDR_WIDTH 10, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 0, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 0, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) input s_axi_lite_awvalid;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE AWREADY" *) output s_axi_lite_awready;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE AWADDR" *) input [9:0]s_axi_lite_awaddr;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE WVALID" *) input s_axi_lite_wvalid;
@@ -99,7 +99,7 @@ module KanTop_axi_dma_0_0
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE RREADY" *) input s_axi_lite_rready;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE RDATA" *) output [31:0]s_axi_lite_rdata;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 S_AXI_LITE RRESP" *) output [1:0]s_axi_lite_rresp;
-  (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_MM2S ARADDR" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_MM2S, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 16, DATA_WIDTH 64, PROTOCOL AXI4, FREQ_HZ 2.5e+08, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_ONLY, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 1, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 0, HAS_BRESP 0, HAS_RRESP 1, NUM_WRITE_OUTSTANDING 2, MAX_BURST_LENGTH 64, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) output [31:0]m_axi_mm2s_araddr;
+  (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_MM2S ARADDR" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_MM2S, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 16, DATA_WIDTH 64, PROTOCOL AXI4, FREQ_HZ 250000000, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_ONLY, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 1, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 0, HAS_BRESP 0, HAS_RRESP 1, NUM_WRITE_OUTSTANDING 2, MAX_BURST_LENGTH 64, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) output [31:0]m_axi_mm2s_araddr;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_MM2S ARLEN" *) output [7:0]m_axi_mm2s_arlen;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_MM2S ARSIZE" *) output [2:0]m_axi_mm2s_arsize;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_MM2S ARBURST" *) output [1:0]m_axi_mm2s_arburst;
@@ -113,12 +113,12 @@ module KanTop_axi_dma_0_0
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_MM2S RVALID" *) input m_axi_mm2s_rvalid;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_MM2S RREADY" *) output m_axi_mm2s_rready;
   (* x_interface_info = "xilinx.com:signal:reset:1.0 MM2S_PRMRY_RESET_OUT_N RST" *) (* x_interface_parameter = "XIL_INTERFACENAME MM2S_PRMRY_RESET_OUT_N, POLARITY ACTIVE_LOW, INSERT_VIP 0" *) output mm2s_prmry_reset_out_n;
-  (* x_interface_info = "xilinx.com:interface:axis:1.0 M_AXIS_MM2S TDATA" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXIS_MM2S, TDATA_NUM_BYTES 8, TDEST_WIDTH 0, TID_WIDTH 0, TUSER_WIDTH 0, HAS_TREADY 1, HAS_TSTRB 0, HAS_TKEEP 1, HAS_TLAST 1, FREQ_HZ 2.5e+08, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, LAYERED_METADATA undef, INSERT_VIP 0, HAS_BURST 0" *) output [63:0]m_axis_mm2s_tdata;
+  (* x_interface_info = "xilinx.com:interface:axis:1.0 M_AXIS_MM2S TDATA" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXIS_MM2S, TDATA_NUM_BYTES 8, TDEST_WIDTH 0, TID_WIDTH 0, TUSER_WIDTH 0, HAS_TREADY 1, HAS_TSTRB 0, HAS_TKEEP 1, HAS_TLAST 1, FREQ_HZ 250000000, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, LAYERED_METADATA undef, INSERT_VIP 0, HAS_BURST 0" *) output [63:0]m_axis_mm2s_tdata;
   (* x_interface_info = "xilinx.com:interface:axis:1.0 M_AXIS_MM2S TKEEP" *) output [7:0]m_axis_mm2s_tkeep;
   (* x_interface_info = "xilinx.com:interface:axis:1.0 M_AXIS_MM2S TVALID" *) output m_axis_mm2s_tvalid;
   (* x_interface_info = "xilinx.com:interface:axis:1.0 M_AXIS_MM2S TREADY" *) input m_axis_mm2s_tready;
   (* x_interface_info = "xilinx.com:interface:axis:1.0 M_AXIS_MM2S TLAST" *) output m_axis_mm2s_tlast;
-  (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_S2MM AWADDR" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_S2MM, SUPPORTS_NARROW_BURST 0, NUM_WRITE_OUTSTANDING 16, DATA_WIDTH 64, PROTOCOL AXI4, FREQ_HZ 2.5e+08, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE WRITE_ONLY, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 1, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 0, NUM_READ_OUTSTANDING 2, MAX_BURST_LENGTH 16, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) output [31:0]m_axi_s2mm_awaddr;
+  (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_S2MM AWADDR" *) (* x_interface_parameter = "XIL_INTERFACENAME M_AXI_S2MM, SUPPORTS_NARROW_BURST 0, NUM_WRITE_OUTSTANDING 16, DATA_WIDTH 64, PROTOCOL AXI4, FREQ_HZ 250000000, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE WRITE_ONLY, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 1, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 0, NUM_READ_OUTSTANDING 2, MAX_BURST_LENGTH 16, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) output [31:0]m_axi_s2mm_awaddr;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_S2MM AWLEN" *) output [7:0]m_axi_s2mm_awlen;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_S2MM AWSIZE" *) output [2:0]m_axi_s2mm_awsize;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_S2MM AWBURST" *) output [1:0]m_axi_s2mm_awburst;
@@ -135,7 +135,7 @@ module KanTop_axi_dma_0_0
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_S2MM BVALID" *) input m_axi_s2mm_bvalid;
   (* x_interface_info = "xilinx.com:interface:aximm:1.0 M_AXI_S2MM BREADY" *) output m_axi_s2mm_bready;
   (* x_interface_info = "xilinx.com:signal:reset:1.0 S2MM_PRMRY_RESET_OUT_N RST" *) (* x_interface_parameter = "XIL_INTERFACENAME S2MM_PRMRY_RESET_OUT_N, POLARITY ACTIVE_LOW, INSERT_VIP 0" *) output s2mm_prmry_reset_out_n;
-  (* x_interface_info = "xilinx.com:interface:axis:1.0 S_AXIS_S2MM TDATA" *) (* x_interface_parameter = "XIL_INTERFACENAME S_AXIS_S2MM, TDATA_NUM_BYTES 8, TDEST_WIDTH 0, TID_WIDTH 0, TUSER_WIDTH 0, HAS_TREADY 1, HAS_TSTRB 0, HAS_TKEEP 1, HAS_TLAST 1, FREQ_HZ 2.5e+08, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK0, LAYERED_METADATA undef, INSERT_VIP 0" *) input [63:0]s_axis_s2mm_tdata;
+  (* x_interface_info = "xilinx.com:interface:axis:1.0 S_AXIS_S2MM TDATA" *) (* x_interface_parameter = "XIL_INTERFACENAME S_AXIS_S2MM, TDATA_NUM_BYTES 8, TDEST_WIDTH 0, TID_WIDTH 0, TUSER_WIDTH 0, HAS_TREADY 1, HAS_TSTRB 0, HAS_TKEEP 1, HAS_TLAST 1, FREQ_HZ 250000000, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK2, LAYERED_METADATA undef, INSERT_VIP 0" *) input [63:0]s_axis_s2mm_tdata;
   (* x_interface_info = "xilinx.com:interface:axis:1.0 S_AXIS_S2MM TKEEP" *) input [7:0]s_axis_s2mm_tkeep;
   (* x_interface_info = "xilinx.com:interface:axis:1.0 S_AXIS_S2MM TVALID" *) input s_axis_s2mm_tvalid;
   (* x_interface_info = "xilinx.com:interface:axis:1.0 S_AXIS_S2MM TREADY" *) output s_axis_s2mm_tready;
@@ -468,6 +468,7 @@ module KanTop_axi_dma_0_0
        (.P(\<const1> ));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover" *) 
 module KanTop_axi_dma_0_0_axi_datamover
    (m_axis_mm2s_tvalid,
     s_axis_s2mm_tready,
@@ -738,6 +739,7 @@ module KanTop_axi_dma_0_0_axi_datamover
         .sig_s_h_halt_reg_reg(sig_s_h_halt_reg_reg_0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_addr_cntl" *) 
 module KanTop_axi_dma_0_0_axi_datamover_addr_cntl
    (out,
     sig_addr_reg_empty,
@@ -1680,6 +1682,7 @@ module KanTop_axi_dma_0_0_axi_datamover_addr_cntl__parameterized0
         .R(sig_stream_rst));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_cmd_status" *) 
 module KanTop_axi_dma_0_0_axi_datamover_cmd_status
    (sig_reset_reg,
     sig_cmd2mstr_cmd_valid,
@@ -1949,6 +1952,7 @@ module KanTop_axi_dma_0_0_axi_datamover_cmd_status_6
         .sm_scc_sm_ready(sm_scc_sm_ready));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_fifo" *) 
 module KanTop_axi_dma_0_0_axi_datamover_fifo
    (sig_init_reg_reg_0,
     sig_cmd2mstr_cmd_valid,
@@ -4092,6 +4096,7 @@ module KanTop_axi_dma_0_0_axi_datamover_fifo__parameterized5
         .R(1'b0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_mm2s_basic_wrap" *) 
 module KanTop_axi_dma_0_0_axi_datamover_mm2s_basic_wrap
    (m_axis_mm2s_tvalid,
     sig_rst2all_stop_request,
@@ -4440,6 +4445,7 @@ module KanTop_axi_dma_0_0_axi_datamover_mm2s_basic_wrap
         .sig_s_h_halt_reg_reg_0(sig_s_h_halt_reg_reg));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_rd_status_cntl" *) 
 module KanTop_axi_dma_0_0_axi_datamover_rd_status_cntl
    (sig_rsc2stat_status,
     sig_rsc2stat_status_valid,
@@ -4526,6 +4532,7 @@ module KanTop_axi_dma_0_0_axi_datamover_rd_status_cntl
         .R(sig_rd_sts_tag_reg0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_rddata_cntl" *) 
 module KanTop_axi_dma_0_0_axi_datamover_rddata_cntl
    (sig_data2addr_stop_req,
     sig_halt_reg_dly2,
@@ -5535,6 +5542,7 @@ module KanTop_axi_dma_0_0_axi_datamover_rddata_cntl
         .O(D[7]));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_reset" *) 
 module KanTop_axi_dma_0_0_axi_datamover_reset
    (sig_cmd_stat_rst_user_reg_n_cdc_from_reg_0,
     sig_s_h_halt_reg,
@@ -5694,6 +5702,7 @@ module KanTop_axi_dma_0_0_axi_datamover_reset_7
         .R(SR));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_s2mm_basic_wrap" *) 
 module KanTop_axi_dma_0_0_axi_datamover_s2mm_basic_wrap
    (s_axis_s2mm_tready,
     m_axi_s2mm_wvalid,
@@ -6137,6 +6146,7 @@ module KanTop_axi_dma_0_0_axi_datamover_s2mm_basic_wrap
         .sig_wsc2stat_status_valid(sig_wsc2stat_status_valid));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_scc" *) 
 module KanTop_axi_dma_0_0_axi_datamover_scc
    (sm_scc_sm_ready,
     sig_cmd_reg_empty,
@@ -7645,6 +7655,7 @@ module KanTop_axi_dma_0_0_axi_datamover_scc__parameterized0
         .R(sig_stream_rst));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_skid2mm_buf" *) 
 module KanTop_axi_dma_0_0_axi_datamover_skid2mm_buf
    (out,
     sig_s_ready_out_reg_0,
@@ -9523,6 +9534,7 @@ module KanTop_axi_dma_0_0_axi_datamover_skid2mm_buf
         .R(sig_stream_rst));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_skid_buf" *) 
 module KanTop_axi_dma_0_0_axi_datamover_skid_buf
    (out,
     s_axis_s2mm_tready,
@@ -13483,6 +13495,7 @@ module KanTop_axi_dma_0_0_axi_datamover_skid_buf_5
         .R(SR));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_wr_status_cntl" *) 
 module KanTop_axi_dma_0_0_axi_datamover_wr_status_cntl
    (sig_wsc2stat_status,
     FIFO_Full_reg,
@@ -13859,6 +13872,7 @@ module KanTop_axi_dma_0_0_axi_datamover_wr_status_cntl
         .R(sig_stream_rst));
 endmodule
 
+(* ORIG_REF_NAME = "axi_datamover_wrdata_cntl" *) 
 module KanTop_axi_dma_0_0_axi_datamover_wrdata_cntl
    (sig_next_eof_reg,
     sig_push_to_wsc,
@@ -14827,7 +14841,7 @@ endmodule
 (* C_PRMRY_IS_ACLK_ASYNC = "0" *) (* C_S2MM_BURST_SIZE = "16" *) (* C_SG_INCLUDE_STSCNTRL_STRM = "0" *) 
 (* C_SG_LENGTH_WIDTH = "12" *) (* C_SG_USE_STSAPP_LENGTH = "0" *) (* C_S_AXIS_S2MM_STS_TDATA_WIDTH = "32" *) 
 (* C_S_AXIS_S2MM_TDATA_WIDTH = "64" *) (* C_S_AXI_LITE_ADDR_WIDTH = "10" *) (* C_S_AXI_LITE_DATA_WIDTH = "32" *) 
-(* downgradeipidentifiedwarnings = "yes" *) 
+(* ORIG_REF_NAME = "axi_dma" *) (* downgradeipidentifiedwarnings = "yes" *) 
 module KanTop_axi_dma_0_0_axi_dma
    (s_axi_lite_aclk,
     m_axi_sg_aclk,
@@ -15782,6 +15796,7 @@ module KanTop_axi_dma_0_0_axi_dma
         .threshold_is_zero(\GEN_MM2S_REGISTERS.I_MM2S_DMA_REGISTER/threshold_is_zero ));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_lite_if" *) 
 module KanTop_axi_dma_0_0_axi_dma_lite_if
    (s_axi_lite_wready,
     s_axi_lite_arready,
@@ -17581,6 +17596,7 @@ module KanTop_axi_dma_0_0_axi_dma_lite_if
         .R(SR));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_mm2s_cmdsts_if" *) 
 module KanTop_axi_dma_0_0_axi_dma_mm2s_cmdsts_if
    (s_axis_mm2s_cmd_tvalid_split,
     mm2s_sts_received,
@@ -17748,6 +17764,7 @@ module KanTop_axi_dma_0_0_axi_dma_mm2s_cmdsts_if
         .R(1'b0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_mm2s_mngr" *) 
 module KanTop_axi_dma_0_0_axi_dma_mm2s_mngr
    (mm2s_halted_clr,
     mm2s_halted_set,
@@ -17926,6 +17943,7 @@ module KanTop_axi_dma_0_0_axi_dma_mm2s_mngr
         .R(mm2s_halted_set_reg));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_mm2s_sts_mngr" *) 
 module KanTop_axi_dma_0_0_axi_dma_mm2s_sts_mngr
    (mm2s_halted_clr,
     mm2s_halted_set,
@@ -18012,6 +18030,7 @@ module KanTop_axi_dma_0_0_axi_dma_mm2s_sts_mngr
         .R(mm2s_halted_set_reg_0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_reg_module" *) 
 module KanTop_axi_dma_0_0_axi_dma_reg_module
    (s_axi_lite_wready,
     s_axi_lite_arready,
@@ -18510,6 +18529,7 @@ module KanTop_axi_dma_0_0_axi_dma_reg_module
         .O(strm_valid_int_cdc_to));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_register" *) 
 module KanTop_axi_dma_0_0_axi_dma_register
    (dma_interr_reg_0,
     dma_slverr_reg_0,
@@ -19427,6 +19447,7 @@ module KanTop_axi_dma_0_0_axi_dma_register
         .O(soft_reset));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_register_s2mm" *) 
 module KanTop_axi_dma_0_0_axi_dma_register_s2mm
    (dma_interr_reg_0,
     dma_slverr_reg_0,
@@ -20431,6 +20452,7 @@ module KanTop_axi_dma_0_0_axi_dma_register_s2mm
         .O(soft_reset_re0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_reset" *) 
 module KanTop_axi_dma_0_0_axi_dma_reset
    (out,
     \GNE_SYNC_RESET.prmry_resetn_reg_0 ,
@@ -21116,6 +21138,7 @@ module KanTop_axi_dma_0_0_axi_dma_reset_1
         .R(1'b0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_rst_module" *) 
 module KanTop_axi_dma_0_0_axi_dma_rst_module
    (out,
     \GNE_SYNC_RESET.prmry_resetn_reg ,
@@ -21356,6 +21379,7 @@ module KanTop_axi_dma_0_0_axi_dma_rst_module
         .O(SR));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_s2mm_cmdsts_if" *) 
 module KanTop_axi_dma_0_0_axi_dma_s2mm_cmdsts_if
    (s_axis_s2mm_cmd_tvalid_split,
     s2mm_sts_received,
@@ -21523,6 +21547,7 @@ module KanTop_axi_dma_0_0_axi_dma_s2mm_cmdsts_if
         .R(1'b0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_s2mm_mngr" *) 
 module KanTop_axi_dma_0_0_axi_dma_s2mm_mngr
    (s2mm_halted_clr,
     s2mm_halted_set,
@@ -21701,6 +21726,7 @@ module KanTop_axi_dma_0_0_axi_dma_s2mm_mngr
         .R(s2mm_halted_set_reg));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_s2mm_sts_mngr" *) 
 module KanTop_axi_dma_0_0_axi_dma_s2mm_sts_mngr
    (s2mm_halted_clr,
     s2mm_halted_set,
@@ -21787,6 +21813,7 @@ module KanTop_axi_dma_0_0_axi_dma_s2mm_sts_mngr
         .R(s2mm_halted_set_reg_0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_smple_sm" *) 
 module KanTop_axi_dma_0_0_axi_dma_smple_sm
    (s2mm_sts_received_clr,
     s2mm_all_idle,
@@ -22716,6 +22743,7 @@ module KanTop_axi_dma_0_0_axi_dma_smple_sm_16
         .O(sts_received_clr_reg_0));
 endmodule
 
+(* ORIG_REF_NAME = "axi_dma_sofeof_gen" *) 
 module KanTop_axi_dma_0_0_axi_dma_sofeof_gen
    (axi_dma_tstvec,
     \GEN_FOR_SYNC.s_sof_d1_cdc_tig_reg_0 ,
@@ -22989,6 +23017,7 @@ module KanTop_axi_dma_0_0_axi_dma_sofeof_gen_0
         .O(axi_dma_tstvec[1]));
 endmodule
 
+(* ORIG_REF_NAME = "cdc_sync" *) 
 module KanTop_axi_dma_0_0_cdc_sync
    (scndry_out,
     axi_resetn,
@@ -23120,6 +23149,7 @@ module KanTop_axi_dma_0_0_cdc_sync_2
         .R(1'b0));
 endmodule
 
+(* ORIG_REF_NAME = "cntr_incr_decr_addn_f" *) 
 module KanTop_axi_dma_0_0_cntr_incr_decr_addn_f
    (SR,
     \GEN_OMIT_INDET_BTT.sig_coelsc_reg_full_reg ,
@@ -24076,6 +24106,7 @@ module KanTop_axi_dma_0_0_cntr_incr_decr_addn_f__parameterized0_3
         .S(sig_stream_rst));
 endmodule
 
+(* ORIG_REF_NAME = "dynshreg_f" *) 
 module KanTop_axi_dma_0_0_dynshreg_f
    (FIFO_Full_reg,
     sm_set_error_reg,
@@ -26405,6 +26436,7 @@ module KanTop_axi_dma_0_0_dynshreg_f__parameterized3
         .O(sig_last_dbeat3_out));
 endmodule
 
+(* ORIG_REF_NAME = "srl_fifo_f" *) 
 module KanTop_axi_dma_0_0_srl_fifo_f
    (\INFERRED_GEN.cnt_i_reg[2] ,
     FIFO_Full_reg,
@@ -26950,6 +26982,7 @@ module KanTop_axi_dma_0_0_srl_fifo_f__parameterized3
         .sig_wsc2stat_status_valid(sig_wsc2stat_status_valid));
 endmodule
 
+(* ORIG_REF_NAME = "srl_fifo_rbu_f" *) 
 module KanTop_axi_dma_0_0_srl_fifo_rbu_f
    (\INFERRED_GEN.cnt_i_reg[2] ,
     sel,

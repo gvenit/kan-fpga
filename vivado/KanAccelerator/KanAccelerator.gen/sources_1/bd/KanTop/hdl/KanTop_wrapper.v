@@ -1,7 +1,7 @@
 //Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 //--------------------------------------------------------------------------------
 //Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-//Date        : Thu Jun 19 22:02:26 2025
+//Date        : Mon Jun 23 22:04:22 2025
 //Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
 //Command     : generate_target KanTop_wrapper.bd
 //Design      : KanTop_wrapper

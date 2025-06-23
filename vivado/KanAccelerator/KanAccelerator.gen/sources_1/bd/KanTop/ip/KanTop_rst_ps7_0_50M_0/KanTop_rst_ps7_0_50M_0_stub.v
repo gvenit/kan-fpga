@@ -1,7 +1,7 @@
 // Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-// Date        : Thu Jun 19 19:11:15 2025
+// Date        : Wed Jun 18 23:01:45 2025
 // Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
 // Command     : write_verilog -force -mode synth_stub -rename_top KanTop_rst_ps7_0_50M_0 -prefix
 //               KanTop_rst_ps7_0_50M_0_ KanTop_rst_ps7_0_50M_0_stub.v

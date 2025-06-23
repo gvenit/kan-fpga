@@ -1,7 +1,7 @@
 -- Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
--- Date        : Thu Jun 19 19:12:50 2025
+-- Date        : Wed Jun 18 23:04:03 2025
 -- Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
 -- Command     : write_vhdl -force -mode funcsim -rename_top KanTop_rst_ps7_0_62M_0 -prefix
 --               KanTop_rst_ps7_0_62M_0_ KanTop_rst_ps7_0_62M_0_sim_netlist.vhdl
@@ -1098,7 +1098,7 @@ architecture STRUCTURE of KanTop_rst_ps7_0_62M_0 is
   attribute x_interface_info of mb_reset : signal is "xilinx.com:signal:reset:1.0 mb_rst RST";
   attribute x_interface_parameter of mb_reset : signal is "XIL_INTERFACENAME mb_rst, POLARITY ACTIVE_HIGH, TYPE PROCESSOR, INSERT_VIP 0";
   attribute x_interface_info of slowest_sync_clk : signal is "xilinx.com:signal:clock:1.0 clock CLK";
-  attribute x_interface_parameter of slowest_sync_clk : signal is "XIL_INTERFACENAME clock, ASSOCIATED_RESET mb_reset:bus_struct_reset:interconnect_aresetn:peripheral_aresetn:peripheral_reset, FREQ_HZ 6.25e+07, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK2, INSERT_VIP 0";
+  attribute x_interface_parameter of slowest_sync_clk : signal is "XIL_INTERFACENAME clock, ASSOCIATED_RESET mb_reset:bus_struct_reset:interconnect_aresetn:peripheral_aresetn:peripheral_reset, FREQ_HZ 62500000, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK2, INSERT_VIP 0";
   attribute x_interface_info of bus_struct_reset : signal is "xilinx.com:signal:reset:1.0 bus_struct_reset RST";
   attribute x_interface_parameter of bus_struct_reset : signal is "XIL_INTERFACENAME bus_struct_reset, POLARITY ACTIVE_HIGH, TYPE INTERCONNECT, INSERT_VIP 0";
   attribute x_interface_info of interconnect_aresetn : signal is "xilinx.com:signal:reset:1.0 interconnect_low_rst RST";

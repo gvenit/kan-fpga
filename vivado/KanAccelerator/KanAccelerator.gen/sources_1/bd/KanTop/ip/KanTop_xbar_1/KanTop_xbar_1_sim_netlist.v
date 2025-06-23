@@ -1,10 +1,10 @@
 // Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-// Date        : Thu Jun 19 19:10:32 2025
+// Date        : Mon Jun 23 20:31:37 2025
 // Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
-// Command     : write_verilog -force -mode funcsim -rename_top KanTop_xbar_1 -prefix
-//               KanTop_xbar_1_ KanTop_xbar_1_sim_netlist.v
+// Command     : write_verilog -force -mode funcsim
+//               c:/Users/gvenit/Projects/PhD/kan-fpga/vivado/KanAccelerator/KanAccelerator.gen/sources_1/bd/KanTop/ip/KanTop_xbar_1/KanTop_xbar_1_sim_netlist.v
 // Design      : KanTop_xbar_1
 // Purpose     : This verilog netlist is a functional simulation representation of the design and should not be modified
 //               or synthesized. This netlist cannot be used for SDF annotated simulation.
@@ -55,7 +55,7 @@ module KanTop_xbar_1
     m_axi_rresp,
     m_axi_rvalid,
     m_axi_rready);
-  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 CLKIF CLK" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME CLKIF, FREQ_HZ 1.25e+08, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK1, ASSOCIATED_BUSIF M00_AXI:M01_AXI:M02_AXI:M03_AXI:M04_AXI:M05_AXI:M06_AXI:M07_AXI:M08_AXI:M09_AXI:M10_AXI:M11_AXI:M12_AXI:M13_AXI:M14_AXI:M15_AXI:S00_AXI:S01_AXI:S02_AXI:S03_AXI:S04_AXI:S05_AXI:S06_AXI:S07_AXI:S08_AXI:S09_AXI:S10_AXI:S11_AXI:S12_AXI:S13_AXI:S14_AXI:S15_AXI, ASSOCIATED_RESET ARESETN, INSERT_VIP 0" *) input aclk;
+  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 CLKIF CLK" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME CLKIF, FREQ_HZ 125000000, FREQ_TOLERANCE_HZ 0, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK1, ASSOCIATED_BUSIF M00_AXI:M01_AXI:M02_AXI:M03_AXI:M04_AXI:M05_AXI:M06_AXI:M07_AXI:M08_AXI:M09_AXI:M10_AXI:M11_AXI:M12_AXI:M13_AXI:M14_AXI:M15_AXI:S00_AXI:S01_AXI:S02_AXI:S03_AXI:S04_AXI:S05_AXI:S06_AXI:S07_AXI:S08_AXI:S09_AXI:S10_AXI:S11_AXI:S12_AXI:S13_AXI:S14_AXI:S15_AXI, ASSOCIATED_RESET ARESETN, INSERT_VIP 0" *) input aclk;
   (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 RSTIF RST" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME RSTIF, POLARITY ACTIVE_LOW, INSERT_VIP 0, TYPE INTERCONNECT" *) input aresetn;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S00_AXI AWADDR" *) input [31:0]s_axi_awaddr;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S00_AXI AWPROT" *) input [2:0]s_axi_awprot;
@@ -75,7 +75,7 @@ module KanTop_xbar_1
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S00_AXI RDATA" *) output [31:0]s_axi_rdata;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S00_AXI RRESP" *) output [1:0]s_axi_rresp;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S00_AXI RVALID" *) output [0:0]s_axi_rvalid;
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S00_AXI RREADY" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME S00_AXI, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 1.25e+08, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 8, NUM_WRITE_OUTSTANDING 8, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK1, NUM_READ_THREADS 4, NUM_WRITE_THREADS 4, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) input [0:0]s_axi_rready;
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S00_AXI RREADY" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME S00_AXI, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 125000000, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 8, NUM_WRITE_OUTSTANDING 8, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK1, NUM_READ_THREADS 4, NUM_WRITE_THREADS 4, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) input [0:0]s_axi_rready;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI AWADDR [31:0] [31:0], xilinx.com:interface:aximm:1.0 M01_AXI AWADDR [31:0] [63:32]" *) output [63:0]m_axi_awaddr;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI AWPROT [2:0] [2:0], xilinx.com:interface:aximm:1.0 M01_AXI AWPROT [2:0] [5:3]" *) output [5:0]m_axi_awprot;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI AWVALID [0:0] [0:0], xilinx.com:interface:aximm:1.0 M01_AXI AWVALID [0:0] [1:1]" *) output [1:0]m_axi_awvalid;
@@ -94,7 +94,7 @@ module KanTop_xbar_1
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI RDATA [31:0] [31:0], xilinx.com:interface:aximm:1.0 M01_AXI RDATA [31:0] [63:32]" *) input [63:0]m_axi_rdata;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI RRESP [1:0] [1:0], xilinx.com:interface:aximm:1.0 M01_AXI RRESP [1:0] [3:2]" *) input [3:0]m_axi_rresp;
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI RVALID [0:0] [0:0], xilinx.com:interface:aximm:1.0 M01_AXI RVALID [0:0] [1:1]" *) input [1:0]m_axi_rvalid;
-  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI RREADY [0:0] [0:0], xilinx.com:interface:aximm:1.0 M01_AXI RREADY [0:0] [1:1]" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME M00_AXI, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 1.25e+08, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK1, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0, XIL_INTERFACENAME M01_AXI, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 1.25e+08, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_0_FCLK_CLK1, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) output [1:0]m_axi_rready;
+  (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M00_AXI RREADY [0:0] [0:0], xilinx.com:interface:aximm:1.0 M01_AXI RREADY [0:0] [1:1]" *) (* X_INTERFACE_PARAMETER = "XIL_INTERFACENAME M00_AXI, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 125000000, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK1, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0, XIL_INTERFACENAME M01_AXI, DATA_WIDTH 32, PROTOCOL AXI4LITE, FREQ_HZ 125000000, ID_WIDTH 0, ADDR_WIDTH 32, AWUSER_WIDTH 0, ARUSER_WIDTH 0, WUSER_WIDTH 0, RUSER_WIDTH 0, BUSER_WIDTH 0, READ_WRITE_MODE READ_WRITE, HAS_BURST 0, HAS_LOCK 0, HAS_PROT 1, HAS_CACHE 0, HAS_QOS 0, HAS_REGION 0, HAS_WSTRB 1, HAS_BRESP 1, HAS_RRESP 1, SUPPORTS_NARROW_BURST 0, NUM_READ_OUTSTANDING 1, NUM_WRITE_OUTSTANDING 1, MAX_BURST_LENGTH 1, PHASE 0.0, CLK_DOMAIN KanTop_processing_system7_0_1_FCLK_CLK1, NUM_READ_THREADS 1, NUM_WRITE_THREADS 1, RUSER_BITS_PER_BYTE 0, WUSER_BITS_PER_BYTE 0, INSERT_VIP 0" *) output [1:0]m_axi_rready;
 
   wire aclk;
   wire aresetn;
@@ -176,14 +176,14 @@ module KanTop_xbar_1
   (* C_CONNECTIVITY_MODE = "0" *) 
   (* C_DEBUG = "1" *) 
   (* C_FAMILY = "zynq" *) 
-  (* C_M_AXI_ADDR_WIDTH = "128'b00000000000000000000000000001010000000000000000000000000000010110000000000000000000000000001000000000000000000000000000000001101" *) 
-  (* C_M_AXI_BASE_ADDR = "256'b0000000000000000000000000000000001000000000000000000100000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000100000000000000000000000000000000000000000000000000000001000000000000000010000000000000" *) 
+  (* C_M_AXI_ADDR_WIDTH = "192'b000000000000000000000000000010100000000000000000000000000000101000000000000000000000000000001110000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000001010" *) 
+  (* C_M_AXI_BASE_ADDR = "384'b000000000000000000000000000000000100000000000000010010000000000000000000000000000000000000000000010000000000000001000000000000000000000000000000000000000000000001000000000000000000000000000000111111111111111111111111111111111111111111111111111111111111111100000000000000000000000000000000010000000100000000000000000000000000000000000000000000000000000001000000000000000100010000000000" *) 
   (* C_M_AXI_READ_CONNECTIVITY = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) 
   (* C_M_AXI_READ_ISSUING = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) 
   (* C_M_AXI_SECURE = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) 
   (* C_M_AXI_WRITE_CONNECTIVITY = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) 
   (* C_M_AXI_WRITE_ISSUING = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) 
-  (* C_NUM_ADDR_RANGES = "2" *) 
+  (* C_NUM_ADDR_RANGES = "3" *) 
   (* C_NUM_MASTER_SLOTS = "2" *) 
   (* C_NUM_SLAVE_SLOTS = "1" *) 
   (* C_R_REGISTER = "0" *) 
@@ -305,139 +305,161 @@ module KanTop_xbar_1
         .s_axi_wvalid(s_axi_wvalid));
 endmodule
 
+(* ORIG_REF_NAME = "axi_crossbar_v2_1_27_addr_arbiter_sasd" *) 
 module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
-   (SR,
-    m_axi_awvalid,
+   (m_valid_i,
+    SR,
+    aa_grant_rnw,
     D,
-    \gen_no_arbiter.m_amesg_i_reg[48]_0 ,
-    \gen_no_arbiter.grant_rnw_reg_0 ,
-    \m_ready_d_reg[0] ,
-    m_ready_d0,
-    m_axi_bready,
+    Q,
+    \m_ready_d_reg[1] ,
+    \m_ready_d_reg[1]_0 ,
+    \m_ready_d_reg[2] ,
     s_axi_bvalid,
+    m_axi_bvalid_0_sp_1,
+    m_axi_bready,
     s_axi_bready_0_sp_1,
     s_axi_wready,
     m_axi_wvalid,
     s_axi_wvalid_0_sp_1,
-    m_ready_d0_0,
+    m_axi_awvalid,
+    \gen_no_arbiter.grant_rnw_reg_0 ,
     m_axi_arvalid,
     s_axi_rvalid,
     m_axi_rready,
     s_axi_rready_0_sp_1,
-    \gen_no_arbiter.grant_rnw_reg_1 ,
+    \gen_no_arbiter.m_valid_i_reg_0 ,
     s_axi_awready,
     s_axi_arready,
     any_error,
     aresetn_d_reg,
+    \m_ready_d_reg[2]_0 ,
     aclk,
-    m_ready_d,
-    Q,
     aresetn_d,
+    m_ready_d,
+    \m_ready_d_reg[0] ,
     \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_0 ,
-    s_axi_arvalid,
+    \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ,
     s_axi_awvalid,
+    s_axi_arvalid,
+    m_ready_d_0,
+    \m_ready_d_reg[2]_1 ,
+    \gen_no_arbiter.m_valid_i_reg_1 ,
     s_axi_bready,
-    s_axi_bvalid_0_sp_1,
+    m_axi_bvalid,
+    m_atarget_enc,
+    mi_bvalid,
+    \gen_axilite.s_axi_awready_i_reg ,
     s_axi_wready_0_sp_1,
     s_axi_wvalid,
-    \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ,
-    m_ready_d_1,
-    \m_ready_d_reg[1] ,
     s_axi_rvalid_0_sp_1,
     s_axi_rready,
     s_axi_arprot,
     s_axi_awprot,
     s_axi_araddr,
     s_axi_awaddr,
-    \gen_no_arbiter.m_valid_i_reg_0 );
+    mi_wready);
+  output m_valid_i;
   output [0:0]SR;
-  output [1:0]m_axi_awvalid;
+  output aa_grant_rnw;
   output [2:0]D;
-  output [34:0]\gen_no_arbiter.m_amesg_i_reg[48]_0 ;
-  output \gen_no_arbiter.grant_rnw_reg_0 ;
-  output \m_ready_d_reg[0] ;
-  output [1:0]m_ready_d0;
-  output [1:0]m_axi_bready;
+  output [34:0]Q;
+  output \m_ready_d_reg[1] ;
+  output \m_ready_d_reg[1]_0 ;
+  output \m_ready_d_reg[2] ;
   output [0:0]s_axi_bvalid;
+  output m_axi_bvalid_0_sp_1;
+  output [1:0]m_axi_bready;
   output s_axi_bready_0_sp_1;
   output [0:0]s_axi_wready;
   output [1:0]m_axi_wvalid;
   output s_axi_wvalid_0_sp_1;
-  output [0:0]m_ready_d0_0;
+  output [1:0]m_axi_awvalid;
+  output \gen_no_arbiter.grant_rnw_reg_0 ;
   output [1:0]m_axi_arvalid;
   output [0:0]s_axi_rvalid;
   output [1:0]m_axi_rready;
   output s_axi_rready_0_sp_1;
-  output \gen_no_arbiter.grant_rnw_reg_1 ;
+  output \gen_no_arbiter.m_valid_i_reg_0 ;
   output [0:0]s_axi_awready;
   output [0:0]s_axi_arready;
   output any_error;
   output aresetn_d_reg;
+  output \m_ready_d_reg[2]_0 ;
   input aclk;
-  input [2:0]m_ready_d;
-  input [1:0]Q;
   input aresetn_d;
+  input [1:0]m_ready_d;
+  input \m_ready_d_reg[0] ;
   input \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_0 ;
-  input [0:0]s_axi_arvalid;
+  input \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ;
   input [0:0]s_axi_awvalid;
+  input [0:0]s_axi_arvalid;
+  input [2:0]m_ready_d_0;
+  input \m_ready_d_reg[2]_1 ;
+  input \gen_no_arbiter.m_valid_i_reg_1 ;
   input [0:0]s_axi_bready;
-  input s_axi_bvalid_0_sp_1;
+  input [1:0]m_axi_bvalid;
+  input [1:0]m_atarget_enc;
+  input [0:0]mi_bvalid;
+  input [2:0]\gen_axilite.s_axi_awready_i_reg ;
   input s_axi_wready_0_sp_1;
   input [0:0]s_axi_wvalid;
-  input \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ;
-  input [1:0]m_ready_d_1;
-  input \m_ready_d_reg[1] ;
   input s_axi_rvalid_0_sp_1;
   input [0:0]s_axi_rready;
   input [2:0]s_axi_arprot;
   input [2:0]s_axi_awprot;
   input [31:0]s_axi_araddr;
   input [31:0]s_axi_awaddr;
-  input \gen_no_arbiter.m_valid_i_reg_0 ;
+  input [0:0]mi_wready;
 
   wire [2:0]D;
-  wire [1:0]Q;
+  wire [34:0]Q;
   wire [0:0]SR;
   wire aa_grant_rnw;
   wire aclk;
   wire any_error;
   wire aresetn_d;
   wire aresetn_d_reg;
+  wire \gen_axilite.s_axi_awready_i_i_2_n_0 ;
+  wire [2:0]\gen_axilite.s_axi_awready_i_reg ;
   wire \gen_no_arbiter.grant_rnw_i_1_n_0 ;
   wire \gen_no_arbiter.grant_rnw_reg_0 ;
-  wire \gen_no_arbiter.grant_rnw_reg_1 ;
-  wire [34:0]\gen_no_arbiter.m_amesg_i_reg[48]_0 ;
   wire \gen_no_arbiter.m_grant_hot_i[0]_inv_i_1_n_0 ;
-  wire \gen_no_arbiter.m_grant_hot_i[0]_inv_i_4_n_0 ;
+  wire \gen_no_arbiter.m_grant_hot_i[0]_inv_i_5_n_0 ;
   wire \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_0 ;
   wire \gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ;
   wire \gen_no_arbiter.m_valid_i_i_1_n_0 ;
-  wire \gen_no_arbiter.m_valid_i_i_3_n_0 ;
-  wire \gen_no_arbiter.m_valid_i_i_4_n_0 ;
   wire \gen_no_arbiter.m_valid_i_reg_0 ;
+  wire \gen_no_arbiter.m_valid_i_reg_1 ;
   wire \gen_no_arbiter.s_ready_i[0]_i_1_n_0 ;
-  wire \m_atarget_hot[1]_i_2_n_0 ;
-  wire \m_atarget_hot[1]_i_3_n_0 ;
-  wire \m_atarget_hot[1]_i_4_n_0 ;
-  wire \m_atarget_hot[1]_i_5_n_0 ;
+  wire [1:0]m_atarget_enc;
+  wire \m_atarget_enc[1]_i_2_n_0 ;
+  wire \m_atarget_hot[0]_i_2_n_0 ;
   wire \m_atarget_hot[2]_i_2_n_0 ;
   wire \m_atarget_hot[2]_i_3_n_0 ;
   wire \m_atarget_hot[2]_i_4_n_0 ;
   wire \m_atarget_hot[2]_i_5_n_0 ;
   wire \m_atarget_hot[2]_i_6_n_0 ;
   wire \m_atarget_hot[2]_i_7_n_0 ;
+  wire \m_atarget_hot[2]_i_8_n_0 ;
   wire [1:0]m_axi_arvalid;
   wire [1:0]m_axi_awvalid;
   wire [1:0]m_axi_bready;
+  wire [1:0]m_axi_bvalid;
+  wire m_axi_bvalid_0_sn_1;
   wire [1:0]m_axi_rready;
   wire [1:0]m_axi_wvalid;
-  wire [2:0]m_ready_d;
-  wire [1:0]m_ready_d0;
-  wire [0:0]m_ready_d0_0;
-  wire [1:0]m_ready_d_1;
+  wire [1:0]m_ready_d;
+  wire [2:0]m_ready_d_0;
   wire \m_ready_d_reg[0] ;
   wire \m_ready_d_reg[1] ;
+  wire \m_ready_d_reg[1]_0 ;
+  wire \m_ready_d_reg[2] ;
+  wire \m_ready_d_reg[2]_0 ;
+  wire \m_ready_d_reg[2]_1 ;
   wire m_valid_i;
+  wire [0:0]mi_bvalid;
+  wire [0:0]mi_wready;
   wire p_0_in1_in;
   wire [48:1]s_amesg;
   wire \s_arvalid_reg[0]_i_1_n_0 ;
@@ -455,7 +477,7 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
   wire [0:0]s_axi_bready;
   wire s_axi_bready_0_sn_1;
   wire [0:0]s_axi_bvalid;
-  wire s_axi_bvalid_0_sn_1;
+  wire \s_axi_bvalid[0]_INST_0_i_2_n_0 ;
   wire [0:0]s_axi_rready;
   wire s_axi_rready_0_sn_1;
   wire [0:0]s_axi_rvalid;
@@ -465,45 +487,72 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
   wire [0:0]s_axi_wvalid;
   wire s_axi_wvalid_0_sn_1;
   wire s_ready_i;
+  wire [0:0]\splitter_ar/m_ready_d0 ;
+  wire [0:0]\splitter_aw/m_ready_d0 ;
 
+  assign m_axi_bvalid_0_sp_1 = m_axi_bvalid_0_sn_1;
   assign s_axi_bready_0_sp_1 = s_axi_bready_0_sn_1;
-  assign s_axi_bvalid_0_sn_1 = s_axi_bvalid_0_sp_1;
   assign s_axi_rready_0_sp_1 = s_axi_rready_0_sn_1;
   assign s_axi_rvalid_0_sn_1 = s_axi_rvalid_0_sp_1;
   assign s_axi_wready_0_sn_1 = s_axi_wready_0_sp_1;
   assign s_axi_wvalid_0_sp_1 = s_axi_wvalid_0_sn_1;
-  (* SOFT_HLUTNM = "soft_lutpair0" *) 
+  LUT6 #(
+    .INIT(64'hFFFFFDFF00000200)) 
+    \gen_axilite.s_axi_awready_i_i_1 
+       (.I0(\gen_axilite.s_axi_awready_i_i_2_n_0 ),
+        .I1(m_ready_d_0[2]),
+        .I2(\gen_no_arbiter.grant_rnw_reg_0 ),
+        .I3(\gen_axilite.s_axi_awready_i_reg [2]),
+        .I4(mi_bvalid),
+        .I5(mi_wready),
+        .O(\m_ready_d_reg[2]_0 ));
+  (* SOFT_HLUTNM = "soft_lutpair1" *) 
   LUT4 #(
     .INIT(16'h0020)) 
     \gen_axilite.s_axi_awready_i_i_2 
        (.I0(s_axi_wvalid),
         .I1(aa_grant_rnw),
         .I2(m_valid_i),
-        .I3(m_ready_d[1]),
-        .O(s_axi_wvalid_0_sn_1));
-  (* SOFT_HLUTNM = "soft_lutpair1" *) 
-  LUT3 #(
-    .INIT(8'h08)) 
-    \gen_axilite.s_axi_bvalid_i_i_3 
-       (.I0(s_axi_bready),
-        .I1(m_valid_i),
-        .I2(aa_grant_rnw),
-        .O(s_axi_bready_0_sn_1));
+        .I3(m_ready_d_0[1]),
+        .O(\gen_axilite.s_axi_awready_i_i_2_n_0 ));
   (* SOFT_HLUTNM = "soft_lutpair6" *) 
+  LUT2 #(
+    .INIT(4'hB)) 
+    \gen_axilite.s_axi_awready_i_i_3 
+       (.I0(aa_grant_rnw),
+        .I1(m_valid_i),
+        .O(\gen_no_arbiter.grant_rnw_reg_0 ));
+  (* SOFT_HLUTNM = "soft_lutpair0" *) 
   LUT4 #(
-    .INIT(16'h0080)) 
-    \gen_axilite.s_axi_rvalid_i_i_2 
-       (.I0(s_axi_rready),
+    .INIT(16'h0020)) 
+    \gen_axilite.s_axi_bvalid_i_i_2 
+       (.I0(s_axi_bready),
         .I1(aa_grant_rnw),
         .I2(m_valid_i),
-        .I3(m_ready_d_1[0]),
+        .I3(m_ready_d_0[0]),
+        .O(s_axi_bready_0_sn_1));
+  (* SOFT_HLUTNM = "soft_lutpair7" *) 
+  LUT2 #(
+    .INIT(4'h7)) 
+    \gen_axilite.s_axi_rvalid_i_i_2 
+       (.I0(m_valid_i),
+        .I1(aa_grant_rnw),
+        .O(\gen_no_arbiter.m_valid_i_reg_0 ));
+  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+  LUT4 #(
+    .INIT(16'h0080)) 
+    \gen_axilite.s_axi_rvalid_i_i_3 
+       (.I0(s_axi_rready),
+        .I1(m_valid_i),
+        .I2(aa_grant_rnw),
+        .I3(m_ready_d[0]),
         .O(s_axi_rready_0_sn_1));
   LUT6 #(
-    .INIT(64'hFFFF53FF00005000)) 
+    .INIT(64'hFFFF47FF00004400)) 
     \gen_no_arbiter.grant_rnw_i_1 
        (.I0(s_awvalid_reg),
-        .I1(s_axi_awvalid),
-        .I2(s_axi_arvalid),
+        .I1(s_axi_arvalid),
+        .I2(s_axi_awvalid),
         .I3(p_0_in1_in),
         .I4(m_valid_i),
         .I5(aa_grant_rnw),
@@ -803,239 +852,242 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[10]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [9]),
+        .Q(Q[9]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[11] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[11]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [10]),
+        .Q(Q[10]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[12] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[12]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [11]),
+        .Q(Q[11]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[13] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[13]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [12]),
+        .Q(Q[12]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[14] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[14]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [13]),
+        .Q(Q[13]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[15] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[15]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [14]),
+        .Q(Q[14]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[16] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[16]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [15]),
+        .Q(Q[15]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[17] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[17]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [16]),
+        .Q(Q[16]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[18] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[18]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [17]),
+        .Q(Q[17]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[19] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[19]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [18]),
+        .Q(Q[18]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[1] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[1]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [0]),
+        .Q(Q[0]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[20] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[20]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [19]),
+        .Q(Q[19]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[21] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[21]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [20]),
+        .Q(Q[20]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[22] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[22]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [21]),
+        .Q(Q[21]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[23] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[23]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [22]),
+        .Q(Q[22]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[24] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[24]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [23]),
+        .Q(Q[23]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[25] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[25]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [24]),
+        .Q(Q[24]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[26] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[26]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [25]),
+        .Q(Q[25]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[27] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[27]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [26]),
+        .Q(Q[26]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[28] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[28]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [27]),
+        .Q(Q[27]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[29] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[29]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [28]),
+        .Q(Q[28]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[2] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[2]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [1]),
+        .Q(Q[1]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[30] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[30]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [29]),
+        .Q(Q[29]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[31] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[31]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [30]),
+        .Q(Q[30]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[32] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[32]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [31]),
+        .Q(Q[31]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[3] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[3]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [2]),
+        .Q(Q[2]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[46] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[46]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [32]),
+        .Q(Q[32]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[47] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[47]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [33]),
+        .Q(Q[33]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[48] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[48]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [34]),
+        .Q(Q[34]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[4] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[4]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [3]),
+        .Q(Q[3]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[5] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[5]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [4]),
+        .Q(Q[4]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[6] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[6]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [5]),
+        .Q(Q[5]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[7] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[7]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [6]),
+        .Q(Q[6]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[8] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[8]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [7]),
+        .Q(Q[7]),
         .R(SR));
   FDRE \gen_no_arbiter.m_amesg_i_reg[9] 
        (.C(aclk),
         .CE(p_0_in1_in),
         .D(s_amesg[9]),
-        .Q(\gen_no_arbiter.m_amesg_i_reg[48]_0 [8]),
+        .Q(Q[8]),
         .R(SR));
   LUT6 #(
-    .INIT(64'hFFFFFFFFABAAAAAA)) 
+    .INIT(64'hFFFFFFFF0040F040)) 
     \gen_no_arbiter.m_grant_hot_i[0]_inv_i_1 
        (.I0(\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_0 ),
-        .I1(\gen_no_arbiter.grant_rnw_reg_0 ),
-        .I2(\m_ready_d_reg[0] ),
-        .I3(m_ready_d0[0]),
-        .I4(m_ready_d0[1]),
-        .I5(\gen_no_arbiter.m_grant_hot_i[0]_inv_i_4_n_0 ),
+        .I1(\splitter_aw/m_ready_d0 ),
+        .I2(m_valid_i),
+        .I3(aa_grant_rnw),
+        .I4(\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ),
+        .I5(\gen_no_arbiter.m_grant_hot_i[0]_inv_i_5_n_0 ),
         .O(\gen_no_arbiter.m_grant_hot_i[0]_inv_i_1_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair3" *) 
-  LUT2 #(
-    .INIT(4'hB)) 
+  (* SOFT_HLUTNM = "soft_lutpair0" *) 
+  LUT5 #(
+    .INIT(32'hF0F4F0F0)) 
     \gen_no_arbiter.m_grant_hot_i[0]_inv_i_3 
        (.I0(aa_grant_rnw),
         .I1(m_valid_i),
-        .O(\gen_no_arbiter.grant_rnw_reg_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+        .I2(m_ready_d_0[0]),
+        .I3(\gen_no_arbiter.m_valid_i_reg_1 ),
+        .I4(s_axi_bready),
+        .O(\splitter_aw/m_ready_d0 ));
+  (* SOFT_HLUTNM = "soft_lutpair4" *) 
   LUT5 #(
     .INIT(32'hD5D5D5F5)) 
-    \gen_no_arbiter.m_grant_hot_i[0]_inv_i_4 
+    \gen_no_arbiter.m_grant_hot_i[0]_inv_i_5 
        (.I0(aresetn_d),
         .I1(m_valid_i),
         .I2(p_0_in1_in),
-        .I3(s_axi_arvalid),
-        .I4(s_axi_awvalid),
-        .O(\gen_no_arbiter.m_grant_hot_i[0]_inv_i_4_n_0 ));
+        .I3(s_axi_awvalid),
+        .I4(s_axi_arvalid),
+        .O(\gen_no_arbiter.m_grant_hot_i[0]_inv_i_5_n_0 ));
   (* inverted = "yes" *) 
   FDRE #(
     .INIT(1'b1)) 
@@ -1046,33 +1098,15 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
         .Q(p_0_in1_in),
         .R(1'b0));
   LUT6 #(
-    .INIT(64'h35F5350535F535F5)) 
+    .INIT(64'hFF55CF550055CF55)) 
     \gen_no_arbiter.m_valid_i_i_1 
        (.I0(p_0_in1_in),
-        .I1(\gen_no_arbiter.m_valid_i_reg_0 ),
-        .I2(m_valid_i),
-        .I3(aa_grant_rnw),
-        .I4(\gen_no_arbiter.m_valid_i_i_3_n_0 ),
-        .I5(m_ready_d0[1]),
+        .I1(\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_0 ),
+        .I2(\splitter_aw/m_ready_d0 ),
+        .I3(m_valid_i),
+        .I4(aa_grant_rnw),
+        .I5(\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ),
         .O(\gen_no_arbiter.m_valid_i_i_1_n_0 ));
-  LUT6 #(
-    .INIT(64'h0D0D0D0DFFFF0DFF)) 
-    \gen_no_arbiter.m_valid_i_i_3 
-       (.I0(s_axi_bready_0_sn_1),
-        .I1(s_axi_bvalid_0_sn_1),
-        .I2(m_ready_d[0]),
-        .I3(\gen_no_arbiter.m_valid_i_i_4_n_0 ),
-        .I4(s_axi_wready_0_sn_1),
-        .I5(m_ready_d[1]),
-        .O(\gen_no_arbiter.m_valid_i_i_3_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair5" *) 
-  LUT3 #(
-    .INIT(8'h08)) 
-    \gen_no_arbiter.m_valid_i_i_4 
-       (.I0(s_axi_wvalid),
-        .I1(m_valid_i),
-        .I2(aa_grant_rnw),
-        .O(\gen_no_arbiter.m_valid_i_i_4_n_0 ));
   FDRE #(
     .INIT(1'b0)) 
     \gen_no_arbiter.m_valid_i_reg 
@@ -1081,7 +1115,7 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
         .D(\gen_no_arbiter.m_valid_i_i_1_n_0 ),
         .Q(m_valid_i),
         .R(SR));
-  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+  (* SOFT_HLUTNM = "soft_lutpair4" *) 
   LUT3 #(
     .INIT(8'h10)) 
     \gen_no_arbiter.s_ready_i[0]_i_1 
@@ -1097,214 +1131,213 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
         .D(\gen_no_arbiter.s_ready_i[0]_i_1_n_0 ),
         .Q(s_ready_i),
         .R(1'b0));
-  (* SOFT_HLUTNM = "soft_lutpair10" *) 
-  LUT2 #(
-    .INIT(4'h2)) 
+  (* SOFT_HLUTNM = "soft_lutpair12" *) 
+  LUT3 #(
+    .INIT(8'h02)) 
     \m_atarget_enc[0]_i_1 
        (.I0(aresetn_d),
-        .I1(\m_atarget_hot[1]_i_2_n_0 ),
+        .I1(\m_atarget_hot[2]_i_5_n_0 ),
+        .I2(\m_atarget_hot[2]_i_4_n_0 ),
         .O(aresetn_d_reg));
   LUT6 #(
-    .INIT(64'h5757575557575757)) 
+    .INIT(64'hFFCFFFCFFFCDFFCC)) 
     \m_atarget_enc[1]_i_1 
-       (.I0(\m_atarget_hot[2]_i_2_n_0 ),
-        .I1(\m_atarget_hot[2]_i_3_n_0 ),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [22]),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [14]),
-        .I4(\gen_no_arbiter.m_amesg_i_reg[48]_0 [15]),
-        .I5(\gen_no_arbiter.m_amesg_i_reg[48]_0 [13]),
+       (.I0(\m_atarget_enc[1]_i_2_n_0 ),
+        .I1(\m_atarget_hot[2]_i_4_n_0 ),
+        .I2(Q[22]),
+        .I3(\m_atarget_hot[2]_i_3_n_0 ),
+        .I4(\m_atarget_hot[0]_i_2_n_0 ),
+        .I5(Q[15]),
         .O(any_error));
+  LUT5 #(
+    .INIT(32'h00015555)) 
+    \m_atarget_enc[1]_i_2 
+       (.I0(Q[22]),
+        .I1(Q[10]),
+        .I2(Q[12]),
+        .I3(Q[13]),
+        .I4(Q[14]),
+        .O(\m_atarget_enc[1]_i_2_n_0 ));
   LUT6 #(
-    .INIT(64'h00000000FF020000)) 
+    .INIT(64'h0000000004040405)) 
     \m_atarget_hot[0]_i_1 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [13]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [15]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [14]),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [22]),
-        .I4(\m_atarget_hot[2]_i_2_n_0 ),
+       (.I0(\m_atarget_hot[2]_i_4_n_0 ),
+        .I1(Q[22]),
+        .I2(\m_atarget_hot[2]_i_3_n_0 ),
+        .I3(\m_atarget_hot[0]_i_2_n_0 ),
+        .I4(Q[15]),
         .I5(p_0_in1_in),
         .O(D[0]));
-  LUT2 #(
-    .INIT(4'h1)) 
+  LUT5 #(
+    .INIT(32'hFFEFFFFF)) 
+    \m_atarget_hot[0]_i_2 
+       (.I0(Q[12]),
+        .I1(Q[13]),
+        .I2(Q[10]),
+        .I3(Q[11]),
+        .I4(Q[14]),
+        .O(\m_atarget_hot[0]_i_2_n_0 ));
+  (* SOFT_HLUTNM = "soft_lutpair12" *) 
+  LUT3 #(
+    .INIT(8'h01)) 
     \m_atarget_hot[1]_i_1 
        (.I0(p_0_in1_in),
-        .I1(\m_atarget_hot[1]_i_2_n_0 ),
+        .I1(\m_atarget_hot[2]_i_5_n_0 ),
+        .I2(\m_atarget_hot[2]_i_4_n_0 ),
         .O(D[1]));
   LUT6 #(
-    .INIT(64'hFFFFFFFFFFFFFFEF)) 
-    \m_atarget_hot[1]_i_2 
-       (.I0(\m_atarget_hot[1]_i_3_n_0 ),
-        .I1(\m_atarget_hot[2]_i_7_n_0 ),
-        .I2(\m_atarget_hot[2]_i_6_n_0 ),
-        .I3(\m_atarget_hot[2]_i_5_n_0 ),
-        .I4(\m_atarget_hot[1]_i_4_n_0 ),
-        .I5(\m_atarget_hot[1]_i_5_n_0 ),
-        .O(\m_atarget_hot[1]_i_2_n_0 ));
-  LUT3 #(
-    .INIT(8'hFE)) 
-    \m_atarget_hot[1]_i_3 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [21]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [28]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [31]),
-        .O(\m_atarget_hot[1]_i_3_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair9" *) 
-  LUT4 #(
-    .INIT(16'hFFF8)) 
-    \m_atarget_hot[1]_i_4 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [10]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [11]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [14]),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [15]),
-        .O(\m_atarget_hot[1]_i_4_n_0 ));
-  LUT3 #(
-    .INIT(8'hFE)) 
-    \m_atarget_hot[1]_i_5 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [12]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [22]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [13]),
-        .O(\m_atarget_hot[1]_i_5_n_0 ));
-  LUT6 #(
-    .INIT(64'h1115111111151115)) 
+    .INIT(64'h00000000FFC5FF00)) 
     \m_atarget_hot[2]_i_1 
-       (.I0(p_0_in1_in),
-        .I1(\m_atarget_hot[2]_i_2_n_0 ),
-        .I2(\m_atarget_hot[2]_i_3_n_0 ),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [22]),
-        .I4(\m_atarget_hot[2]_i_4_n_0 ),
-        .I5(\gen_no_arbiter.m_amesg_i_reg[48]_0 [13]),
+       (.I0(\m_atarget_hot[2]_i_2_n_0 ),
+        .I1(\m_atarget_hot[2]_i_3_n_0 ),
+        .I2(Q[22]),
+        .I3(\m_atarget_hot[2]_i_4_n_0 ),
+        .I4(\m_atarget_hot[2]_i_5_n_0 ),
+        .I5(p_0_in1_in),
         .O(D[2]));
   LUT6 #(
-    .INIT(64'h0000000000000004)) 
+    .INIT(64'h0000000000000800)) 
     \m_atarget_hot[2]_i_2 
-       (.I0(\m_atarget_hot[2]_i_5_n_0 ),
-        .I1(\m_atarget_hot[2]_i_6_n_0 ),
-        .I2(\m_atarget_hot[2]_i_7_n_0 ),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [21]),
-        .I4(\gen_no_arbiter.m_amesg_i_reg[48]_0 [28]),
-        .I5(\gen_no_arbiter.m_amesg_i_reg[48]_0 [31]),
+       (.I0(\m_atarget_hot[2]_i_6_n_0 ),
+        .I1(Q[14]),
+        .I2(Q[11]),
+        .I3(Q[10]),
+        .I4(Q[13]),
+        .I5(Q[12]),
         .O(\m_atarget_hot[2]_i_2_n_0 ));
-  LUT6 #(
-    .INIT(64'h0000000100010001)) 
+  (* SOFT_HLUTNM = "soft_lutpair3" *) 
+  LUT4 #(
+    .INIT(16'hFFFE)) 
     \m_atarget_hot[2]_i_3 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [13]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [22]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [12]),
-        .I3(\m_atarget_hot[2]_i_4_n_0 ),
-        .I4(\gen_no_arbiter.m_amesg_i_reg[48]_0 [11]),
-        .I5(\gen_no_arbiter.m_amesg_i_reg[48]_0 [10]),
+       (.I0(Q[19]),
+        .I1(Q[16]),
+        .I2(Q[17]),
+        .I3(Q[18]),
         .O(\m_atarget_hot[2]_i_3_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair9" *) 
-  LUT2 #(
-    .INIT(4'hE)) 
+  LUT5 #(
+    .INIT(32'hFFFFFFFB)) 
     \m_atarget_hot[2]_i_4 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [15]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [14]),
+       (.I0(Q[27]),
+        .I1(Q[30]),
+        .I2(Q[24]),
+        .I3(\m_atarget_hot[2]_i_7_n_0 ),
+        .I4(\m_atarget_hot[2]_i_8_n_0 ),
         .O(\m_atarget_hot[2]_i_4_n_0 ));
-  LUT4 #(
-    .INIT(16'hFFFD)) 
+  LUT6 #(
+    .INIT(64'hFFFFFFFFDDDDDDD5)) 
     \m_atarget_hot[2]_i_5 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [30]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [29]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [23]),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [25]),
+       (.I0(\m_atarget_hot[2]_i_6_n_0 ),
+        .I1(Q[14]),
+        .I2(Q[13]),
+        .I3(Q[12]),
+        .I4(Q[10]),
+        .I5(Q[22]),
         .O(\m_atarget_hot[2]_i_5_n_0 ));
-  LUT4 #(
-    .INIT(16'h0001)) 
+  (* SOFT_HLUTNM = "soft_lutpair3" *) 
+  LUT5 #(
+    .INIT(32'h00000001)) 
     \m_atarget_hot[2]_i_6 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [26]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [18]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [19]),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [17]),
+       (.I0(Q[15]),
+        .I1(Q[18]),
+        .I2(Q[17]),
+        .I3(Q[16]),
+        .I4(Q[19]),
         .O(\m_atarget_hot[2]_i_6_n_0 ));
   LUT4 #(
     .INIT(16'hFFFE)) 
     \m_atarget_hot[2]_i_7 
-       (.I0(\gen_no_arbiter.m_amesg_i_reg[48]_0 [27]),
-        .I1(\gen_no_arbiter.m_amesg_i_reg[48]_0 [16]),
-        .I2(\gen_no_arbiter.m_amesg_i_reg[48]_0 [20]),
-        .I3(\gen_no_arbiter.m_amesg_i_reg[48]_0 [24]),
+       (.I0(Q[23]),
+        .I1(Q[31]),
+        .I2(Q[20]),
+        .I3(Q[26]),
         .O(\m_atarget_hot[2]_i_7_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair8" *) 
+  LUT4 #(
+    .INIT(16'hFFFE)) 
+    \m_atarget_hot[2]_i_8 
+       (.I0(Q[28]),
+        .I1(Q[21]),
+        .I2(Q[25]),
+        .I3(Q[29]),
+        .O(\m_atarget_hot[2]_i_8_n_0 ));
+  (* SOFT_HLUTNM = "soft_lutpair11" *) 
   LUT4 #(
     .INIT(16'h0080)) 
     \m_axi_arvalid[0]_INST_0 
-       (.I0(Q[0]),
-        .I1(aa_grant_rnw),
-        .I2(m_valid_i),
-        .I3(m_ready_d_1[1]),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [0]),
+        .I1(m_valid_i),
+        .I2(aa_grant_rnw),
+        .I3(m_ready_d[1]),
         .O(m_axi_arvalid[0]));
-  (* SOFT_HLUTNM = "soft_lutpair11" *) 
+  (* SOFT_HLUTNM = "soft_lutpair10" *) 
   LUT4 #(
     .INIT(16'h0080)) 
     \m_axi_arvalid[1]_INST_0 
-       (.I0(Q[1]),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [1]),
+        .I1(m_valid_i),
+        .I2(aa_grant_rnw),
+        .I3(m_ready_d[1]),
+        .O(m_axi_arvalid[1]));
+  (* SOFT_HLUTNM = "soft_lutpair8" *) 
+  LUT4 #(
+    .INIT(16'h0020)) 
+    \m_axi_awvalid[0]_INST_0 
+       (.I0(\gen_axilite.s_axi_awready_i_reg [0]),
         .I1(aa_grant_rnw),
         .I2(m_valid_i),
-        .I3(m_ready_d_1[1]),
-        .O(m_axi_arvalid[1]));
-  (* SOFT_HLUTNM = "soft_lutpair7" *) 
-  LUT4 #(
-    .INIT(16'h0400)) 
-    \m_axi_awvalid[0]_INST_0 
-       (.I0(m_ready_d[2]),
-        .I1(Q[0]),
-        .I2(aa_grant_rnw),
-        .I3(m_valid_i),
+        .I3(m_ready_d_0[2]),
         .O(m_axi_awvalid[0]));
-  (* SOFT_HLUTNM = "soft_lutpair11" *) 
+  (* SOFT_HLUTNM = "soft_lutpair10" *) 
   LUT4 #(
-    .INIT(16'h0400)) 
+    .INIT(16'h0020)) 
     \m_axi_awvalid[1]_INST_0 
-       (.I0(m_ready_d[2]),
-        .I1(Q[1]),
-        .I2(aa_grant_rnw),
-        .I3(m_valid_i),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [1]),
+        .I1(aa_grant_rnw),
+        .I2(m_valid_i),
+        .I3(m_ready_d_0[2]),
         .O(m_axi_awvalid[1]));
-  (* SOFT_HLUTNM = "soft_lutpair3" *) 
+  (* SOFT_HLUTNM = "soft_lutpair5" *) 
   LUT5 #(
-    .INIT(32'h00400000)) 
+    .INIT(32'h00200000)) 
     \m_axi_bready[0]_INST_0 
-       (.I0(m_ready_d[0]),
-        .I1(s_axi_bready),
-        .I2(Q[0]),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [0]),
+        .I1(m_ready_d_0[0]),
+        .I2(m_valid_i),
         .I3(aa_grant_rnw),
-        .I4(m_valid_i),
+        .I4(s_axi_bready),
         .O(m_axi_bready[0]));
-  (* SOFT_HLUTNM = "soft_lutpair4" *) 
-  LUT5 #(
-    .INIT(32'h00400000)) 
-    \m_axi_bready[1]_INST_0 
-       (.I0(m_ready_d[0]),
-        .I1(s_axi_bready),
-        .I2(Q[1]),
-        .I3(aa_grant_rnw),
-        .I4(m_valid_i),
-        .O(m_axi_bready[1]));
   (* SOFT_HLUTNM = "soft_lutpair6" *) 
+  LUT5 #(
+    .INIT(32'h00200000)) 
+    \m_axi_bready[1]_INST_0 
+       (.I0(\gen_axilite.s_axi_awready_i_reg [1]),
+        .I1(m_ready_d_0[0]),
+        .I2(m_valid_i),
+        .I3(aa_grant_rnw),
+        .I4(s_axi_bready),
+        .O(m_axi_bready[1]));
   LUT5 #(
     .INIT(32'h20000000)) 
     \m_axi_rready[0]_INST_0 
-       (.I0(Q[0]),
-        .I1(m_ready_d_1[0]),
-        .I2(m_valid_i),
-        .I3(aa_grant_rnw),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [0]),
+        .I1(m_ready_d[0]),
+        .I2(aa_grant_rnw),
+        .I3(m_valid_i),
         .I4(s_axi_rready),
         .O(m_axi_rready[0]));
   LUT5 #(
     .INIT(32'h20000000)) 
     \m_axi_rready[1]_INST_0 
-       (.I0(Q[1]),
-        .I1(m_ready_d_1[0]),
-        .I2(m_valid_i),
-        .I3(aa_grant_rnw),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [1]),
+        .I1(m_ready_d[0]),
+        .I2(aa_grant_rnw),
+        .I3(m_valid_i),
         .I4(s_axi_rready),
         .O(m_axi_rready[1]));
-  (* SOFT_HLUTNM = "soft_lutpair5" *) 
   LUT5 #(
     .INIT(32'h00200000)) 
     \m_axi_wvalid[0]_INST_0 
-       (.I0(Q[0]),
-        .I1(m_ready_d[1]),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [0]),
+        .I1(m_ready_d_0[1]),
         .I2(m_valid_i),
         .I3(aa_grant_rnw),
         .I4(s_axi_wvalid),
@@ -1312,58 +1345,62 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
   LUT5 #(
     .INIT(32'h00200000)) 
     \m_axi_wvalid[1]_INST_0 
-       (.I0(Q[1]),
-        .I1(m_ready_d[1]),
+       (.I0(\gen_axilite.s_axi_awready_i_reg [1]),
+        .I1(m_ready_d_0[1]),
         .I2(m_valid_i),
         .I3(aa_grant_rnw),
         .I4(s_axi_wvalid),
         .O(m_axi_wvalid[1]));
-  (* SOFT_HLUTNM = "soft_lutpair8" *) 
-  LUT4 #(
-    .INIT(16'hEAAA)) 
-    \m_ready_d[1]_i_2 
-       (.I0(m_ready_d_1[1]),
-        .I1(aa_grant_rnw),
-        .I2(m_valid_i),
-        .I3(\m_ready_d_reg[1] ),
-        .O(m_ready_d0_0));
-  (* SOFT_HLUTNM = "soft_lutpair4" *) 
-  LUT2 #(
-    .INIT(4'h7)) 
-    \m_ready_d[1]_i_3 
-       (.I0(aa_grant_rnw),
-        .I1(m_valid_i),
-        .O(\gen_no_arbiter.grant_rnw_reg_1 ));
-  (* SOFT_HLUTNM = "soft_lutpair7" *) 
-  LUT4 #(
-    .INIT(16'hABAA)) 
-    \m_ready_d[2]_i_2 
-       (.I0(m_ready_d[2]),
-        .I1(\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 ),
-        .I2(aa_grant_rnw),
-        .I3(m_valid_i),
-        .O(m_ready_d0[1]));
-  (* SOFT_HLUTNM = "soft_lutpair0" *) 
-  LUT5 #(
-    .INIT(32'hAAAABAAA)) 
-    \m_ready_d[2]_i_3 
+  LUT6 #(
+    .INIT(64'h1555000000000000)) 
+    \m_ready_d[0]_i_1 
        (.I0(m_ready_d[1]),
-        .I1(s_axi_wready_0_sn_1),
-        .I2(s_axi_wvalid),
-        .I3(m_valid_i),
-        .I4(aa_grant_rnw),
-        .O(m_ready_d0[0]));
+        .I1(m_valid_i),
+        .I2(aa_grant_rnw),
+        .I3(\m_ready_d_reg[0] ),
+        .I4(\splitter_ar/m_ready_d0 ),
+        .I5(aresetn_d),
+        .O(\m_ready_d_reg[1] ));
+  LUT6 #(
+    .INIT(64'h0000EAAA00000000)) 
+    \m_ready_d[1]_i_1 
+       (.I0(m_ready_d[1]),
+        .I1(m_valid_i),
+        .I2(aa_grant_rnw),
+        .I3(\m_ready_d_reg[0] ),
+        .I4(\splitter_ar/m_ready_d0 ),
+        .I5(aresetn_d),
+        .O(\m_ready_d_reg[1]_0 ));
+  (* SOFT_HLUTNM = "soft_lutpair2" *) 
+  LUT5 #(
+    .INIT(32'hFFFF4000)) 
+    \m_ready_d[1]_i_3 
+       (.I0(s_axi_rvalid_0_sn_1),
+        .I1(s_axi_rready),
+        .I2(m_valid_i),
+        .I3(aa_grant_rnw),
+        .I4(m_ready_d[0]),
+        .O(\splitter_ar/m_ready_d0 ));
   (* SOFT_HLUTNM = "soft_lutpair1" *) 
   LUT5 #(
-    .INIT(32'h55554555)) 
-    \m_ready_d[2]_i_4 
-       (.I0(m_ready_d[0]),
-        .I1(s_axi_bvalid_0_sn_1),
-        .I2(s_axi_bready),
+    .INIT(32'h0000FBFF)) 
+    \m_ready_d[2]_i_2 
+       (.I0(s_axi_wready_0_sn_1),
+        .I1(s_axi_wvalid),
+        .I2(aa_grant_rnw),
         .I3(m_valid_i),
-        .I4(aa_grant_rnw),
-        .O(\m_ready_d_reg[0] ));
-  (* SOFT_HLUTNM = "soft_lutpair10" *) 
+        .I4(m_ready_d_0[1]),
+        .O(s_axi_wvalid_0_sn_1));
+  (* SOFT_HLUTNM = "soft_lutpair8" *) 
+  LUT4 #(
+    .INIT(16'h4555)) 
+    \m_ready_d[2]_i_3 
+       (.I0(m_ready_d_0[2]),
+        .I1(aa_grant_rnw),
+        .I2(m_valid_i),
+        .I3(\m_ready_d_reg[2]_1 ),
+        .O(\m_ready_d_reg[2] ));
+  (* SOFT_HLUTNM = "soft_lutpair9" *) 
   LUT4 #(
     .INIT(16'h0040)) 
     \s_arvalid_reg[0]_i_1 
@@ -1398,42 +1435,58 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd
         .D(\s_awvalid_reg[0]_i_1_n_0 ),
         .Q(s_awvalid_reg),
         .R(1'b0));
-  (* SOFT_HLUTNM = "soft_lutpair12" *) 
+  (* SOFT_HLUTNM = "soft_lutpair11" *) 
   LUT2 #(
     .INIT(4'h8)) 
     \s_axi_arready[0]_INST_0 
        (.I0(aa_grant_rnw),
         .I1(s_ready_i),
         .O(s_axi_arready));
-  (* SOFT_HLUTNM = "soft_lutpair12" *) 
+  (* SOFT_HLUTNM = "soft_lutpair9" *) 
   LUT2 #(
     .INIT(4'h2)) 
     \s_axi_awready[0]_INST_0 
        (.I0(s_ready_i),
         .I1(aa_grant_rnw),
         .O(s_axi_awready));
-  LUT5 #(
-    .INIT(32'h00000100)) 
+  LUT2 #(
+    .INIT(4'h1)) 
     \s_axi_bvalid[0]_INST_0 
-       (.I0(m_ready_d[0]),
-        .I1(p_0_in1_in),
-        .I2(aa_grant_rnw),
-        .I3(m_valid_i),
-        .I4(s_axi_bvalid_0_sn_1),
+       (.I0(p_0_in1_in),
+        .I1(m_axi_bvalid_0_sn_1),
         .O(s_axi_bvalid));
+  LUT6 #(
+    .INIT(64'hFAABFFABFAFBFFFB)) 
+    \s_axi_bvalid[0]_INST_0_i_1 
+       (.I0(\s_axi_bvalid[0]_INST_0_i_2_n_0 ),
+        .I1(m_axi_bvalid[0]),
+        .I2(m_atarget_enc[1]),
+        .I3(m_atarget_enc[0]),
+        .I4(m_axi_bvalid[1]),
+        .I5(mi_bvalid),
+        .O(m_axi_bvalid_0_sn_1));
+  (* SOFT_HLUTNM = "soft_lutpair5" *) 
+  LUT3 #(
+    .INIT(8'hFB)) 
+    \s_axi_bvalid[0]_INST_0_i_2 
+       (.I0(m_ready_d_0[0]),
+        .I1(m_valid_i),
+        .I2(aa_grant_rnw),
+        .O(\s_axi_bvalid[0]_INST_0_i_2_n_0 ));
   LUT5 #(
-    .INIT(32'h02000000)) 
+    .INIT(32'h00000040)) 
     \s_axi_rvalid[0]_INST_0 
-       (.I0(s_axi_rvalid_0_sn_1),
-        .I1(p_0_in1_in),
-        .I2(m_ready_d_1[0]),
-        .I3(m_valid_i),
-        .I4(aa_grant_rnw),
+       (.I0(m_ready_d[0]),
+        .I1(aa_grant_rnw),
+        .I2(m_valid_i),
+        .I3(p_0_in1_in),
+        .I4(s_axi_rvalid_0_sn_1),
         .O(s_axi_rvalid));
+  (* SOFT_HLUTNM = "soft_lutpair7" *) 
   LUT5 #(
     .INIT(32'h00000004)) 
     \s_axi_wready[0]_INST_0 
-       (.I0(m_ready_d[1]),
+       (.I0(m_ready_d_0[1]),
         .I1(m_valid_i),
         .I2(aa_grant_rnw),
         .I3(p_0_in1_in),
@@ -1445,19 +1498,19 @@ endmodule
 (* C_AXI_BUSER_WIDTH = "1" *) (* C_AXI_DATA_WIDTH = "32" *) (* C_AXI_ID_WIDTH = "1" *) 
 (* C_AXI_PROTOCOL = "2" *) (* C_AXI_RUSER_WIDTH = "1" *) (* C_AXI_SUPPORTS_USER_SIGNALS = "0" *) 
 (* C_AXI_WUSER_WIDTH = "1" *) (* C_CONNECTIVITY_MODE = "0" *) (* C_DEBUG = "1" *) 
-(* C_FAMILY = "zynq" *) (* C_M_AXI_ADDR_WIDTH = "128'b00000000000000000000000000001010000000000000000000000000000010110000000000000000000000000001000000000000000000000000000000001101" *) (* C_M_AXI_BASE_ADDR = "256'b0000000000000000000000000000000001000000000000000000100000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000010000000100000000000000000000000000000000000000000000000000000001000000000000000010000000000000" *) 
+(* C_FAMILY = "zynq" *) (* C_M_AXI_ADDR_WIDTH = "192'b000000000000000000000000000010100000000000000000000000000000101000000000000000000000000000001110000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000001010" *) (* C_M_AXI_BASE_ADDR = "384'b000000000000000000000000000000000100000000000000010010000000000000000000000000000000000000000000010000000000000001000000000000000000000000000000000000000000000001000000000000000000000000000000111111111111111111111111111111111111111111111111111111111111111100000000000000000000000000000000010000000100000000000000000000000000000000000000000000000000000001000000000000000100010000000000" *) 
 (* C_M_AXI_READ_CONNECTIVITY = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) (* C_M_AXI_READ_ISSUING = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) (* C_M_AXI_SECURE = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) 
-(* C_M_AXI_WRITE_CONNECTIVITY = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) (* C_M_AXI_WRITE_ISSUING = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) (* C_NUM_ADDR_RANGES = "2" *) 
+(* C_M_AXI_WRITE_CONNECTIVITY = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) (* C_M_AXI_WRITE_ISSUING = "64'b0000000000000000000000000000000100000000000000000000000000000001" *) (* C_NUM_ADDR_RANGES = "3" *) 
 (* C_NUM_MASTER_SLOTS = "2" *) (* C_NUM_SLAVE_SLOTS = "1" *) (* C_R_REGISTER = "0" *) 
 (* C_S_AXI_ARB_PRIORITY = "0" *) (* C_S_AXI_BASE_ID = "0" *) (* C_S_AXI_READ_ACCEPTANCE = "1" *) 
 (* C_S_AXI_SINGLE_THREAD = "1" *) (* C_S_AXI_THREAD_ID_WIDTH = "0" *) (* C_S_AXI_WRITE_ACCEPTANCE = "1" *) 
-(* DowngradeIPIdentifiedWarnings = "yes" *) (* P_ADDR_DECODE = "1" *) (* P_AXI3 = "1" *) 
-(* P_AXI4 = "0" *) (* P_AXILITE = "2" *) (* P_AXILITE_SIZE = "3'b010" *) 
-(* P_FAMILY = "zynq" *) (* P_INCR = "2'b01" *) (* P_LEN = "8" *) 
-(* P_LOCK = "1" *) (* P_M_AXI_ERR_MODE = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) (* P_M_AXI_SUPPORTS_READ = "2'b11" *) 
-(* P_M_AXI_SUPPORTS_WRITE = "2'b11" *) (* P_ONES = "65'b11111111111111111111111111111111111111111111111111111111111111111" *) (* P_RANGE_CHECK = "1" *) 
-(* P_S_AXI_BASE_ID = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) (* P_S_AXI_HIGH_ID = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) (* P_S_AXI_SUPPORTS_READ = "1'b1" *) 
-(* P_S_AXI_SUPPORTS_WRITE = "1'b1" *) 
+(* DowngradeIPIdentifiedWarnings = "yes" *) (* ORIG_REF_NAME = "axi_crossbar_v2_1_27_axi_crossbar" *) (* P_ADDR_DECODE = "1" *) 
+(* P_AXI3 = "1" *) (* P_AXI4 = "0" *) (* P_AXILITE = "2" *) 
+(* P_AXILITE_SIZE = "3'b010" *) (* P_FAMILY = "zynq" *) (* P_INCR = "2'b01" *) 
+(* P_LEN = "8" *) (* P_LOCK = "1" *) (* P_M_AXI_ERR_MODE = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) 
+(* P_M_AXI_SUPPORTS_READ = "2'b11" *) (* P_M_AXI_SUPPORTS_WRITE = "2'b11" *) (* P_ONES = "65'b11111111111111111111111111111111111111111111111111111111111111111" *) 
+(* P_RANGE_CHECK = "1" *) (* P_S_AXI_BASE_ID = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) (* P_S_AXI_HIGH_ID = "64'b0000000000000000000000000000000000000000000000000000000000000000" *) 
+(* P_S_AXI_SUPPORTS_READ = "1'b1" *) (* P_S_AXI_SUPPORTS_WRITE = "1'b1" *) 
 module KanTop_xbar_1_axi_crossbar_v2_1_27_axi_crossbar
    (aclk,
     aresetn,
@@ -1856,84 +1909,91 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_axi_crossbar
         .s_axi_wvalid(s_axi_wvalid));
 endmodule
 
+(* ORIG_REF_NAME = "axi_crossbar_v2_1_27_crossbar_sasd" *) 
 module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
-   (m_axi_awvalid,
-    Q,
-    m_axi_bready,
+   (Q,
     s_axi_bvalid,
+    m_axi_bready,
     s_axi_wready,
     m_axi_wvalid,
+    m_axi_awvalid,
     m_axi_arvalid,
     s_axi_rvalid,
     m_axi_rready,
-    s_axi_rresp,
     s_axi_rdata,
     s_axi_bresp,
+    s_axi_rresp,
     s_axi_awready,
     s_axi_arready,
     aresetn,
     aclk,
-    s_axi_rready,
-    s_axi_arvalid,
-    s_axi_awvalid,
     s_axi_bready,
+    s_axi_awvalid,
+    s_axi_arvalid,
     s_axi_wvalid,
-    m_axi_rresp,
-    m_axi_rdata,
-    m_axi_rvalid,
-    m_axi_arready,
     m_axi_bvalid,
-    m_axi_wready,
+    s_axi_rready,
+    m_axi_rdata,
+    m_axi_arready,
+    m_axi_rvalid,
     m_axi_awready,
+    m_axi_wready,
     m_axi_bresp,
+    m_axi_rresp,
     s_axi_arprot,
     s_axi_awprot,
     s_axi_araddr,
     s_axi_awaddr);
-  output [1:0]m_axi_awvalid;
   output [34:0]Q;
-  output [1:0]m_axi_bready;
   output [0:0]s_axi_bvalid;
+  output [1:0]m_axi_bready;
   output [0:0]s_axi_wready;
   output [1:0]m_axi_wvalid;
+  output [1:0]m_axi_awvalid;
   output [1:0]m_axi_arvalid;
   output [0:0]s_axi_rvalid;
   output [1:0]m_axi_rready;
-  output [1:0]s_axi_rresp;
   output [31:0]s_axi_rdata;
   output [1:0]s_axi_bresp;
+  output [1:0]s_axi_rresp;
   output [0:0]s_axi_awready;
   output [0:0]s_axi_arready;
   input aresetn;
   input aclk;
-  input [0:0]s_axi_rready;
-  input [0:0]s_axi_arvalid;
-  input [0:0]s_axi_awvalid;
   input [0:0]s_axi_bready;
+  input [0:0]s_axi_awvalid;
+  input [0:0]s_axi_arvalid;
   input [0:0]s_axi_wvalid;
-  input [3:0]m_axi_rresp;
-  input [63:0]m_axi_rdata;
-  input [1:0]m_axi_rvalid;
-  input [1:0]m_axi_arready;
   input [1:0]m_axi_bvalid;
-  input [1:0]m_axi_wready;
+  input [0:0]s_axi_rready;
+  input [63:0]m_axi_rdata;
+  input [1:0]m_axi_arready;
+  input [1:0]m_axi_rvalid;
   input [1:0]m_axi_awready;
+  input [1:0]m_axi_wready;
   input [3:0]m_axi_bresp;
+  input [3:0]m_axi_rresp;
   input [2:0]s_axi_arprot;
   input [2:0]s_axi_awprot;
   input [31:0]s_axi_araddr;
   input [31:0]s_axi_awaddr;
 
   wire [34:0]Q;
+  wire aa_grant_rnw;
   wire aclk;
+  wire addr_arbiter_inst_n_3;
   wire addr_arbiter_inst_n_41;
   wire addr_arbiter_inst_n_42;
+  wire addr_arbiter_inst_n_43;
+  wire addr_arbiter_inst_n_45;
   wire addr_arbiter_inst_n_48;
   wire addr_arbiter_inst_n_5;
   wire addr_arbiter_inst_n_52;
-  wire addr_arbiter_inst_n_59;
-  wire addr_arbiter_inst_n_60;
-  wire addr_arbiter_inst_n_64;
+  wire addr_arbiter_inst_n_55;
+  wire addr_arbiter_inst_n_61;
+  wire addr_arbiter_inst_n_62;
+  wire addr_arbiter_inst_n_66;
+  wire addr_arbiter_inst_n_67;
   wire any_error;
   wire aresetn;
   wire aresetn_d;
@@ -1943,9 +2003,10 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
   wire \gen_decerr.decerr_slave_inst_n_5 ;
   wire \gen_decerr.decerr_slave_inst_n_6 ;
   wire \gen_decerr.decerr_slave_inst_n_7 ;
+  wire \gen_decerr.decerr_slave_inst_n_8 ;
   wire [1:0]m_atarget_enc;
   wire [2:0]m_atarget_hot;
-  wire [2:1]m_atarget_hot0;
+  wire [1:1]m_atarget_hot0;
   wire [1:0]m_axi_arready;
   wire [1:0]m_axi_arvalid;
   wire [1:0]m_axi_awready;
@@ -1960,9 +2021,8 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
   wire [1:0]m_axi_wready;
   wire [1:0]m_axi_wvalid;
   wire [1:0]m_ready_d;
-  wire [1:1]m_ready_d0;
-  wire [2:1]m_ready_d0_0;
-  wire [2:0]m_ready_d_1;
+  wire [2:0]m_ready_d_0;
+  wire m_valid_i;
   wire [2:2]mi_bvalid;
   wire [2:2]mi_wready;
   wire reset;
@@ -1983,34 +2043,42 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
   wire [0:0]s_axi_rvalid;
   wire [0:0]s_axi_wready;
   wire [0:0]s_axi_wvalid;
-  wire splitter_ar_n_0;
-  wire splitter_aw_n_3;
+  wire splitter_aw_n_0;
 
   KanTop_xbar_1_axi_crossbar_v2_1_27_addr_arbiter_sasd addr_arbiter_inst
-       (.D({m_atarget_hot0,addr_arbiter_inst_n_5}),
-        .Q(m_atarget_hot[1:0]),
+       (.D({addr_arbiter_inst_n_3,m_atarget_hot0,addr_arbiter_inst_n_5}),
+        .Q(Q),
         .SR(reset),
+        .aa_grant_rnw(aa_grant_rnw),
         .aclk(aclk),
         .any_error(any_error),
         .aresetn_d(aresetn_d),
-        .aresetn_d_reg(addr_arbiter_inst_n_64),
-        .\gen_no_arbiter.grant_rnw_reg_0 (addr_arbiter_inst_n_41),
-        .\gen_no_arbiter.grant_rnw_reg_1 (addr_arbiter_inst_n_60),
-        .\gen_no_arbiter.m_amesg_i_reg[48]_0 (Q),
-        .\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_0 (splitter_ar_n_0),
-        .\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 (\gen_decerr.decerr_slave_inst_n_7 ),
-        .\gen_no_arbiter.m_valid_i_reg_0 (\gen_decerr.decerr_slave_inst_n_2 ),
+        .aresetn_d_reg(addr_arbiter_inst_n_66),
+        .\gen_axilite.s_axi_awready_i_reg (m_atarget_hot),
+        .\gen_no_arbiter.grant_rnw_reg_0 (addr_arbiter_inst_n_55),
+        .\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_0 (\gen_decerr.decerr_slave_inst_n_2 ),
+        .\gen_no_arbiter.m_grant_hot_i_reg[0]_inv_1 (\gen_decerr.decerr_slave_inst_n_5 ),
+        .\gen_no_arbiter.m_valid_i_reg_0 (addr_arbiter_inst_n_62),
+        .\gen_no_arbiter.m_valid_i_reg_1 (\gen_decerr.decerr_slave_inst_n_8 ),
+        .m_atarget_enc(m_atarget_enc),
         .m_axi_arvalid(m_axi_arvalid),
         .m_axi_awvalid(m_axi_awvalid),
         .m_axi_bready(m_axi_bready),
+        .m_axi_bvalid(m_axi_bvalid),
+        .m_axi_bvalid_0_sp_1(addr_arbiter_inst_n_45),
         .m_axi_rready(m_axi_rready),
         .m_axi_wvalid(m_axi_wvalid),
-        .m_ready_d(m_ready_d_1),
-        .m_ready_d0(m_ready_d0_0),
-        .m_ready_d0_0(m_ready_d0),
-        .m_ready_d_1(m_ready_d),
-        .\m_ready_d_reg[0] (addr_arbiter_inst_n_42),
-        .\m_ready_d_reg[1] (\gen_decerr.decerr_slave_inst_n_3 ),
+        .m_ready_d(m_ready_d),
+        .m_ready_d_0(m_ready_d_0),
+        .\m_ready_d_reg[0] (\gen_decerr.decerr_slave_inst_n_6 ),
+        .\m_ready_d_reg[1] (addr_arbiter_inst_n_41),
+        .\m_ready_d_reg[1]_0 (addr_arbiter_inst_n_42),
+        .\m_ready_d_reg[2] (addr_arbiter_inst_n_43),
+        .\m_ready_d_reg[2]_0 (addr_arbiter_inst_n_67),
+        .\m_ready_d_reg[2]_1 (\gen_decerr.decerr_slave_inst_n_3 ),
+        .m_valid_i(m_valid_i),
+        .mi_bvalid(mi_bvalid),
+        .mi_wready(mi_wready),
         .s_axi_araddr(s_axi_araddr),
         .s_axi_arprot(s_axi_arprot),
         .s_axi_arready(s_axi_arready),
@@ -2022,13 +2090,12 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .s_axi_bready(s_axi_bready),
         .s_axi_bready_0_sp_1(addr_arbiter_inst_n_48),
         .s_axi_bvalid(s_axi_bvalid),
-        .s_axi_bvalid_0_sp_1(\gen_decerr.decerr_slave_inst_n_5 ),
         .s_axi_rready(s_axi_rready),
-        .s_axi_rready_0_sp_1(addr_arbiter_inst_n_59),
+        .s_axi_rready_0_sp_1(addr_arbiter_inst_n_61),
         .s_axi_rvalid(s_axi_rvalid),
-        .s_axi_rvalid_0_sp_1(\gen_decerr.decerr_slave_inst_n_4 ),
+        .s_axi_rvalid_0_sp_1(\gen_decerr.decerr_slave_inst_n_7 ),
         .s_axi_wready(s_axi_wready),
-        .s_axi_wready_0_sp_1(\gen_decerr.decerr_slave_inst_n_6 ),
+        .s_axi_wready_0_sp_1(\gen_decerr.decerr_slave_inst_n_4 ),
         .s_axi_wvalid(s_axi_wvalid),
         .s_axi_wvalid_0_sp_1(addr_arbiter_inst_n_52));
   FDRE #(
@@ -2044,33 +2111,37 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .SR(reset),
         .aclk(aclk),
         .aresetn_d(aresetn_d),
-        .\gen_axilite.s_axi_awready_i_reg_0 (addr_arbiter_inst_n_52),
-        .\gen_axilite.s_axi_bvalid_i_reg_0 (splitter_aw_n_3),
-        .\gen_axilite.s_axi_rvalid_i_reg_0 (addr_arbiter_inst_n_60),
-        .\gen_axilite.s_axi_rvalid_i_reg_1 (addr_arbiter_inst_n_59),
+        .\gen_axilite.s_axi_arready_i_reg_0 (\gen_decerr.decerr_slave_inst_n_6 ),
+        .\gen_axilite.s_axi_awready_i_reg_0 (\gen_decerr.decerr_slave_inst_n_4 ),
+        .\gen_axilite.s_axi_awready_i_reg_1 (addr_arbiter_inst_n_67),
+        .\gen_axilite.s_axi_bvalid_i_reg_0 (\gen_decerr.decerr_slave_inst_n_8 ),
+        .\gen_axilite.s_axi_bvalid_i_reg_1 (addr_arbiter_inst_n_48),
+        .\gen_axilite.s_axi_bvalid_i_reg_2 (splitter_aw_n_0),
+        .\gen_axilite.s_axi_rvalid_i_reg_0 (\gen_decerr.decerr_slave_inst_n_7 ),
+        .\gen_axilite.s_axi_rvalid_i_reg_1 (addr_arbiter_inst_n_62),
+        .\gen_axilite.s_axi_rvalid_i_reg_2 (addr_arbiter_inst_n_61),
+        .\gen_no_arbiter.m_grant_hot_i_reg[0]_inv (addr_arbiter_inst_n_55),
         .m_atarget_enc(m_atarget_enc),
         .m_axi_arready(m_axi_arready),
-        .m_axi_arready_0_sp_1(\gen_decerr.decerr_slave_inst_n_3 ),
         .m_axi_awready(m_axi_awready),
-        .m_axi_awready_1_sp_1(\gen_decerr.decerr_slave_inst_n_7 ),
+        .m_axi_awready_0_sp_1(\gen_decerr.decerr_slave_inst_n_3 ),
         .m_axi_bvalid(m_axi_bvalid),
-        .m_axi_bvalid_1_sp_1(\gen_decerr.decerr_slave_inst_n_5 ),
         .m_axi_rvalid(m_axi_rvalid),
-        .m_axi_rvalid_1_sp_1(\gen_decerr.decerr_slave_inst_n_4 ),
         .m_axi_wready(m_axi_wready),
-        .m_axi_wready_0_sp_1(\gen_decerr.decerr_slave_inst_n_6 ),
-        .m_ready_d(m_ready_d),
-        .m_ready_d_0(m_ready_d_1[2]),
-        .\m_ready_d_reg[1] (\gen_decerr.decerr_slave_inst_n_2 ),
+        .m_ready_d(m_ready_d_0[2:1]),
+        .m_ready_d_0(m_ready_d),
+        .\m_ready_d_reg[1] (\gen_decerr.decerr_slave_inst_n_5 ),
+        .\m_ready_d_reg[2] (\gen_decerr.decerr_slave_inst_n_2 ),
         .mi_bvalid(mi_bvalid),
         .mi_wready(mi_wready),
-        .s_axi_rready(s_axi_rready));
+        .s_axi_rready(s_axi_rready),
+        .s_axi_wvalid(s_axi_wvalid));
   FDRE #(
     .INIT(1'b0)) 
     \m_atarget_enc_reg[0] 
        (.C(aclk),
         .CE(1'b1),
-        .D(addr_arbiter_inst_n_64),
+        .D(addr_arbiter_inst_n_66),
         .Q(m_atarget_enc[0]),
         .R(1'b0));
   FDRE #(
@@ -2094,7 +2165,7 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
     \m_atarget_hot_reg[1] 
        (.C(aclk),
         .CE(1'b1),
-        .D(m_atarget_hot0[1]),
+        .D(m_atarget_hot0),
         .Q(m_atarget_hot[1]),
         .R(reset));
   FDRE #(
@@ -2102,24 +2173,24 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
     \m_atarget_hot_reg[2] 
        (.C(aclk),
         .CE(1'b1),
-        .D(m_atarget_hot0[2]),
+        .D(addr_arbiter_inst_n_3),
         .Q(m_atarget_hot[2]),
         .R(reset));
   LUT4 #(
-    .INIT(16'h33B8)) 
+    .INIT(16'h22FC)) 
     \s_axi_bresp[0]_INST_0 
        (.I0(m_axi_bresp[2]),
-        .I1(m_atarget_enc[0]),
+        .I1(m_atarget_enc[1]),
         .I2(m_axi_bresp[0]),
-        .I3(m_atarget_enc[1]),
+        .I3(m_atarget_enc[0]),
         .O(s_axi_bresp[0]));
   LUT4 #(
-    .INIT(16'h33B8)) 
+    .INIT(16'h22FC)) 
     \s_axi_bresp[1]_INST_0 
        (.I0(m_axi_bresp[3]),
-        .I1(m_atarget_enc[0]),
+        .I1(m_atarget_enc[1]),
         .I2(m_axi_bresp[1]),
-        .I3(m_atarget_enc[1]),
+        .I3(m_atarget_enc[0]),
         .O(s_axi_bresp[1]));
   LUT4 #(
     .INIT(16'h3202)) 
@@ -2130,27 +2201,27 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .I3(m_axi_rdata[32]),
         .O(s_axi_rdata[0]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[10]_INST_0 
-       (.I0(m_axi_rdata[10]),
-        .I1(m_axi_rdata[42]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[42]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[10]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[10]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[11]_INST_0 
-       (.I0(m_axi_rdata[11]),
-        .I1(m_axi_rdata[43]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[43]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[11]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[11]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[12]_INST_0 
-       (.I0(m_axi_rdata[12]),
-        .I1(m_axi_rdata[44]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[44]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[12]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[12]));
   LUT4 #(
@@ -2162,19 +2233,19 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .I3(m_axi_rdata[45]),
         .O(s_axi_rdata[13]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[14]_INST_0 
-       (.I0(m_axi_rdata[14]),
-        .I1(m_axi_rdata[46]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[46]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[14]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[14]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[15]_INST_0 
-       (.I0(m_axi_rdata[15]),
-        .I1(m_axi_rdata[47]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[47]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[15]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[15]));
   LUT4 #(
@@ -2234,19 +2305,19 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .I3(m_axi_rdata[53]),
         .O(s_axi_rdata[21]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[22]_INST_0 
-       (.I0(m_axi_rdata[22]),
-        .I1(m_axi_rdata[54]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[54]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[22]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[22]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[23]_INST_0 
-       (.I0(m_axi_rdata[23]),
-        .I1(m_axi_rdata[55]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[55]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[23]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[23]));
   LUT4 #(
@@ -2258,35 +2329,35 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .I3(m_axi_rdata[56]),
         .O(s_axi_rdata[24]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[25]_INST_0 
-       (.I0(m_axi_rdata[25]),
-        .I1(m_axi_rdata[57]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[57]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[25]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[25]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[26]_INST_0 
-       (.I0(m_axi_rdata[26]),
-        .I1(m_axi_rdata[58]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[58]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[26]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[26]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[27]_INST_0 
-       (.I0(m_axi_rdata[27]),
-        .I1(m_axi_rdata[59]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[59]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[27]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[27]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[28]_INST_0 
-       (.I0(m_axi_rdata[28]),
-        .I1(m_axi_rdata[60]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[60]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[28]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[28]));
   LUT4 #(
@@ -2298,43 +2369,43 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .I3(m_axi_rdata[61]),
         .O(s_axi_rdata[29]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[2]_INST_0 
-       (.I0(m_axi_rdata[2]),
-        .I1(m_axi_rdata[34]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[34]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[2]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[2]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[30]_INST_0 
-       (.I0(m_axi_rdata[30]),
-        .I1(m_axi_rdata[62]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[62]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[30]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[30]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[31]_INST_0 
-       (.I0(m_axi_rdata[31]),
-        .I1(m_axi_rdata[63]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[63]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[31]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[31]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[3]_INST_0 
-       (.I0(m_axi_rdata[3]),
-        .I1(m_axi_rdata[35]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[35]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[3]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[3]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[4]_INST_0 
-       (.I0(m_axi_rdata[4]),
-        .I1(m_axi_rdata[36]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[36]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[4]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[4]));
   LUT4 #(
@@ -2370,148 +2441,152 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_crossbar_sasd
         .I3(m_axi_rdata[40]),
         .O(s_axi_rdata[8]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rdata[9]_INST_0 
-       (.I0(m_axi_rdata[9]),
-        .I1(m_axi_rdata[41]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rdata[41]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rdata[9]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rdata[9]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rresp[0]_INST_0 
-       (.I0(m_axi_rresp[0]),
-        .I1(m_axi_rresp[2]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rresp[2]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rresp[0]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rresp[0]));
   LUT4 #(
-    .INIT(16'h0CFA)) 
+    .INIT(16'h22FC)) 
     \s_axi_rresp[1]_INST_0 
-       (.I0(m_axi_rresp[1]),
-        .I1(m_axi_rresp[3]),
-        .I2(m_atarget_enc[1]),
+       (.I0(m_axi_rresp[3]),
+        .I1(m_atarget_enc[1]),
+        .I2(m_axi_rresp[1]),
         .I3(m_atarget_enc[0]),
         .O(s_axi_rresp[1]));
   KanTop_xbar_1_axi_crossbar_v2_1_27_splitter__parameterized0 splitter_ar
        (.aclk(aclk),
-        .aresetn_d(aresetn_d),
-        .\gen_no_arbiter.m_grant_hot_i_reg[0]_inv (\gen_decerr.decerr_slave_inst_n_3 ),
         .m_ready_d(m_ready_d),
-        .m_ready_d0(m_ready_d0),
-        .\m_ready_d_reg[0]_0 (splitter_ar_n_0),
-        .\m_ready_d_reg[1]_0 (\gen_decerr.decerr_slave_inst_n_4 ),
-        .\m_ready_d_reg[1]_1 (addr_arbiter_inst_n_60),
-        .s_axi_rready(s_axi_rready));
+        .\m_ready_d_reg[0]_0 (addr_arbiter_inst_n_41),
+        .\m_ready_d_reg[1]_0 (addr_arbiter_inst_n_42));
   KanTop_xbar_1_axi_crossbar_v2_1_27_splitter splitter_aw
        (.Q(m_atarget_hot[2]),
+        .aa_grant_rnw(aa_grant_rnw),
         .aclk(aclk),
         .aresetn_d(aresetn_d),
-        .\gen_axilite.s_axi_awready_i_reg (splitter_aw_n_3),
-        .\gen_axilite.s_axi_bvalid_i_reg (addr_arbiter_inst_n_41),
-        .\gen_axilite.s_axi_bvalid_i_reg_0 (addr_arbiter_inst_n_48),
-        .m_ready_d(m_ready_d_1),
-        .m_ready_d0(m_ready_d0_0),
-        .\m_ready_d_reg[2]_0 (addr_arbiter_inst_n_42),
-        .mi_bvalid(mi_bvalid),
-        .mi_wready(mi_wready),
+        .m_ready_d(m_ready_d_0),
+        .\m_ready_d_reg[1]_0 (splitter_aw_n_0),
+        .\m_ready_d_reg[2]_0 (addr_arbiter_inst_n_45),
+        .\m_ready_d_reg[2]_1 (addr_arbiter_inst_n_52),
+        .\m_ready_d_reg[2]_2 (addr_arbiter_inst_n_43),
+        .m_valid_i(m_valid_i),
+        .s_axi_bready(s_axi_bready),
         .s_axi_wvalid(s_axi_wvalid));
 endmodule
 
+(* ORIG_REF_NAME = "axi_crossbar_v2_1_27_decerr_slave" *) 
 module KanTop_xbar_1_axi_crossbar_v2_1_27_decerr_slave
    (mi_bvalid,
     mi_wready,
+    \m_ready_d_reg[2] ,
+    m_axi_awready_0_sp_1,
+    \gen_axilite.s_axi_awready_i_reg_0 ,
     \m_ready_d_reg[1] ,
-    m_axi_arready_0_sp_1,
-    m_axi_rvalid_1_sp_1,
-    m_axi_bvalid_1_sp_1,
-    m_axi_wready_0_sp_1,
-    m_axi_awready_1_sp_1,
-    SR,
-    \gen_axilite.s_axi_bvalid_i_reg_0 ,
-    aclk,
-    m_ready_d,
-    s_axi_rready,
+    \gen_axilite.s_axi_arready_i_reg_0 ,
     \gen_axilite.s_axi_rvalid_i_reg_0 ,
+    \gen_axilite.s_axi_bvalid_i_reg_0 ,
+    SR,
+    aclk,
+    \gen_axilite.s_axi_awready_i_reg_1 ,
+    m_ready_d,
+    \gen_no_arbiter.m_grant_hot_i_reg[0]_inv ,
+    s_axi_wvalid,
+    m_ready_d_0,
+    \gen_axilite.s_axi_rvalid_i_reg_1 ,
+    s_axi_rready,
     Q,
     aresetn_d,
-    m_axi_rvalid,
-    m_atarget_enc,
     m_axi_arready,
+    m_atarget_enc,
+    m_axi_rvalid,
     m_axi_bvalid,
-    m_axi_wready,
     m_axi_awready,
-    \gen_axilite.s_axi_rvalid_i_reg_1 ,
-    m_ready_d_0,
-    \gen_axilite.s_axi_awready_i_reg_0 );
+    m_axi_wready,
+    \gen_axilite.s_axi_bvalid_i_reg_1 ,
+    \gen_axilite.s_axi_bvalid_i_reg_2 ,
+    \gen_axilite.s_axi_rvalid_i_reg_2 );
   output [0:0]mi_bvalid;
   output [0:0]mi_wready;
+  output \m_ready_d_reg[2] ;
+  output m_axi_awready_0_sp_1;
+  output \gen_axilite.s_axi_awready_i_reg_0 ;
   output \m_ready_d_reg[1] ;
-  output m_axi_arready_0_sp_1;
-  output m_axi_rvalid_1_sp_1;
-  output m_axi_bvalid_1_sp_1;
-  output m_axi_wready_0_sp_1;
-  output m_axi_awready_1_sp_1;
+  output \gen_axilite.s_axi_arready_i_reg_0 ;
+  output \gen_axilite.s_axi_rvalid_i_reg_0 ;
+  output \gen_axilite.s_axi_bvalid_i_reg_0 ;
   input [0:0]SR;
-  input \gen_axilite.s_axi_bvalid_i_reg_0 ;
   input aclk;
+  input \gen_axilite.s_axi_awready_i_reg_1 ;
   input [1:0]m_ready_d;
+  input \gen_no_arbiter.m_grant_hot_i_reg[0]_inv ;
+  input [0:0]s_axi_wvalid;
+  input [1:0]m_ready_d_0;
+  input \gen_axilite.s_axi_rvalid_i_reg_1 ;
   input [0:0]s_axi_rready;
-  input \gen_axilite.s_axi_rvalid_i_reg_0 ;
   input [0:0]Q;
   input aresetn_d;
-  input [1:0]m_axi_rvalid;
-  input [1:0]m_atarget_enc;
   input [1:0]m_axi_arready;
+  input [1:0]m_atarget_enc;
+  input [1:0]m_axi_rvalid;
   input [1:0]m_axi_bvalid;
-  input [1:0]m_axi_wready;
   input [1:0]m_axi_awready;
-  input \gen_axilite.s_axi_rvalid_i_reg_1 ;
-  input [0:0]m_ready_d_0;
-  input \gen_axilite.s_axi_awready_i_reg_0 ;
+  input [1:0]m_axi_wready;
+  input \gen_axilite.s_axi_bvalid_i_reg_1 ;
+  input \gen_axilite.s_axi_bvalid_i_reg_2 ;
+  input \gen_axilite.s_axi_rvalid_i_reg_2 ;
 
   wire [0:0]Q;
   wire [0:0]SR;
   wire aclk;
   wire aresetn_d;
   wire \gen_axilite.s_axi_arready_i_i_1_n_0 ;
-  wire \gen_axilite.s_axi_awready_i_i_1_n_0 ;
+  wire \gen_axilite.s_axi_arready_i_reg_0 ;
   wire \gen_axilite.s_axi_awready_i_reg_0 ;
+  wire \gen_axilite.s_axi_awready_i_reg_1 ;
+  wire \gen_axilite.s_axi_bvalid_i_i_1_n_0 ;
   wire \gen_axilite.s_axi_bvalid_i_reg_0 ;
+  wire \gen_axilite.s_axi_bvalid_i_reg_1 ;
+  wire \gen_axilite.s_axi_bvalid_i_reg_2 ;
   wire \gen_axilite.s_axi_rvalid_i_i_1_n_0 ;
   wire \gen_axilite.s_axi_rvalid_i_reg_0 ;
   wire \gen_axilite.s_axi_rvalid_i_reg_1 ;
+  wire \gen_axilite.s_axi_rvalid_i_reg_2 ;
+  wire \gen_no_arbiter.m_grant_hot_i_reg[0]_inv ;
   wire [1:0]m_atarget_enc;
   wire [1:0]m_axi_arready;
-  wire m_axi_arready_0_sn_1;
   wire [1:0]m_axi_awready;
-  wire m_axi_awready_1_sn_1;
+  wire m_axi_awready_0_sn_1;
   wire [1:0]m_axi_bvalid;
-  wire m_axi_bvalid_1_sn_1;
   wire [1:0]m_axi_rvalid;
-  wire m_axi_rvalid_1_sn_1;
   wire [1:0]m_axi_wready;
-  wire m_axi_wready_0_sn_1;
   wire [1:0]m_ready_d;
-  wire [0:0]m_ready_d_0;
+  wire [1:0]m_ready_d_0;
   wire \m_ready_d_reg[1] ;
+  wire \m_ready_d_reg[2] ;
   wire [2:2]mi_arready;
   wire [0:0]mi_bvalid;
   wire [2:2]mi_rvalid;
   wire [0:0]mi_wready;
   wire [0:0]s_axi_rready;
+  wire [0:0]s_axi_wvalid;
 
-  assign m_axi_arready_0_sp_1 = m_axi_arready_0_sn_1;
-  assign m_axi_awready_1_sp_1 = m_axi_awready_1_sn_1;
-  assign m_axi_bvalid_1_sp_1 = m_axi_bvalid_1_sn_1;
-  assign m_axi_rvalid_1_sp_1 = m_axi_rvalid_1_sn_1;
-  assign m_axi_wready_0_sp_1 = m_axi_wready_0_sn_1;
+  assign m_axi_awready_0_sp_1 = m_axi_awready_0_sn_1;
   LUT6 #(
     .INIT(64'hFF00FDFF00000000)) 
     \gen_axilite.s_axi_arready_i_i_1 
        (.I0(Q),
-        .I1(m_ready_d[1]),
-        .I2(\gen_axilite.s_axi_rvalid_i_reg_0 ),
+        .I1(m_ready_d_0[1]),
+        .I2(\gen_axilite.s_axi_rvalid_i_reg_1 ),
         .I3(mi_arready),
         .I4(mi_rvalid),
         .I5(aresetn_d),
@@ -2524,40 +2599,40 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_decerr_slave
         .D(\gen_axilite.s_axi_arready_i_i_1_n_0 ),
         .Q(mi_arready),
         .R(1'b0));
-  LUT5 #(
-    .INIT(32'hFBFF0400)) 
-    \gen_axilite.s_axi_awready_i_i_1 
-       (.I0(mi_bvalid),
-        .I1(Q),
-        .I2(m_ready_d_0),
-        .I3(\gen_axilite.s_axi_awready_i_reg_0 ),
-        .I4(mi_wready),
-        .O(\gen_axilite.s_axi_awready_i_i_1_n_0 ));
   FDRE #(
     .INIT(1'b0)) 
     \gen_axilite.s_axi_awready_i_reg 
        (.C(aclk),
         .CE(1'b1),
-        .D(\gen_axilite.s_axi_awready_i_i_1_n_0 ),
+        .D(\gen_axilite.s_axi_awready_i_reg_1 ),
         .Q(mi_wready),
         .R(SR));
+  LUT5 #(
+    .INIT(32'h77770F00)) 
+    \gen_axilite.s_axi_bvalid_i_i_1 
+       (.I0(Q),
+        .I1(\gen_axilite.s_axi_bvalid_i_reg_1 ),
+        .I2(\gen_axilite.s_axi_bvalid_i_reg_2 ),
+        .I3(mi_wready),
+        .I4(mi_bvalid),
+        .O(\gen_axilite.s_axi_bvalid_i_i_1_n_0 ));
   FDRE #(
     .INIT(1'b0)) 
     \gen_axilite.s_axi_bvalid_i_reg 
        (.C(aclk),
         .CE(1'b1),
-        .D(\gen_axilite.s_axi_bvalid_i_reg_0 ),
+        .D(\gen_axilite.s_axi_bvalid_i_i_1_n_0 ),
         .Q(mi_bvalid),
         .R(SR));
   LUT6 #(
     .INIT(64'h00FF0200FFFF0200)) 
     \gen_axilite.s_axi_rvalid_i_i_1 
        (.I0(mi_arready),
-        .I1(m_ready_d[1]),
-        .I2(\gen_axilite.s_axi_rvalid_i_reg_0 ),
+        .I1(m_ready_d_0[1]),
+        .I2(\gen_axilite.s_axi_rvalid_i_reg_1 ),
         .I3(Q),
         .I4(mi_rvalid),
-        .I5(\gen_axilite.s_axi_rvalid_i_reg_1 ),
+        .I5(\gen_axilite.s_axi_rvalid_i_reg_2 ),
         .O(\gen_axilite.s_axi_rvalid_i_i_1_n_0 ));
   FDRE #(
     .INIT(1'b0)) 
@@ -2568,150 +2643,154 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_decerr_slave
         .Q(mi_rvalid),
         .R(SR));
   LUT6 #(
-    .INIT(64'hCCCCEEEE0000E000)) 
-    \gen_no_arbiter.m_valid_i_i_2 
-       (.I0(m_axi_arready_0_sn_1),
+    .INIT(64'h3F1F3F1F3F113F1F)) 
+    \gen_no_arbiter.m_grant_hot_i[0]_inv_i_2 
+       (.I0(m_axi_awready_0_sn_1),
         .I1(m_ready_d[1]),
-        .I2(m_axi_rvalid_1_sn_1),
-        .I3(s_axi_rready),
-        .I4(\gen_axilite.s_axi_rvalid_i_reg_0 ),
-        .I5(m_ready_d[0]),
+        .I2(m_ready_d[0]),
+        .I3(\gen_no_arbiter.m_grant_hot_i_reg[0]_inv ),
+        .I4(s_axi_wvalid),
+        .I5(\gen_axilite.s_axi_awready_i_reg_0 ),
+        .O(\m_ready_d_reg[2] ));
+  LUT6 #(
+    .INIT(64'h3F1F3F1F3F113F1F)) 
+    \gen_no_arbiter.m_grant_hot_i[0]_inv_i_4 
+       (.I0(\gen_axilite.s_axi_arready_i_reg_0 ),
+        .I1(m_ready_d_0[1]),
+        .I2(m_ready_d_0[0]),
+        .I3(\gen_axilite.s_axi_rvalid_i_reg_1 ),
+        .I4(s_axi_rready),
+        .I5(\gen_axilite.s_axi_rvalid_i_reg_0 ),
         .O(\m_ready_d_reg[1] ));
   LUT5 #(
-    .INIT(32'h00F0CCAA)) 
-    \m_ready_d[1]_i_4 
-       (.I0(m_axi_arready[0]),
-        .I1(m_axi_arready[1]),
-        .I2(mi_arready),
-        .I3(m_atarget_enc[0]),
-        .I4(m_atarget_enc[1]),
-        .O(m_axi_arready_0_sn_1));
-  LUT5 #(
-    .INIT(32'hF053FF53)) 
-    \m_ready_d[2]_i_5 
-       (.I0(m_axi_awready[1]),
-        .I1(m_axi_awready[0]),
-        .I2(m_atarget_enc[0]),
-        .I3(m_atarget_enc[1]),
-        .I4(mi_wready),
-        .O(m_axi_awready_1_sn_1));
-  LUT5 #(
     .INIT(32'hF530F53F)) 
-    \s_axi_bvalid[0]_INST_0_i_1 
-       (.I0(m_axi_bvalid[1]),
-        .I1(mi_bvalid),
-        .I2(m_atarget_enc[1]),
-        .I3(m_atarget_enc[0]),
-        .I4(m_axi_bvalid[0]),
-        .O(m_axi_bvalid_1_sn_1));
-  LUT5 #(
-    .INIT(32'h0ACF0AC0)) 
-    \s_axi_rvalid[0]_INST_0_i_1 
-       (.I0(m_axi_rvalid[1]),
-        .I1(mi_rvalid),
-        .I2(m_atarget_enc[1]),
-        .I3(m_atarget_enc[0]),
-        .I4(m_axi_rvalid[0]),
-        .O(m_axi_rvalid_1_sn_1));
-  LUT5 #(
-    .INIT(32'hF035FF35)) 
-    \s_axi_wready[0]_INST_0_i_1 
-       (.I0(m_axi_wready[0]),
-        .I1(m_axi_wready[1]),
+    \gen_no_arbiter.m_grant_hot_i[0]_inv_i_6 
+       (.I0(mi_bvalid),
+        .I1(m_axi_bvalid[1]),
         .I2(m_atarget_enc[0]),
         .I3(m_atarget_enc[1]),
-        .I4(mi_wready),
-        .O(m_axi_wready_0_sn_1));
+        .I4(m_axi_bvalid[0]),
+        .O(\gen_axilite.s_axi_bvalid_i_reg_0 ));
+  LUT5 #(
+    .INIT(32'h00CCAAF0)) 
+    \m_ready_d[1]_i_2 
+       (.I0(mi_arready),
+        .I1(m_axi_arready[1]),
+        .I2(m_axi_arready[0]),
+        .I3(m_atarget_enc[1]),
+        .I4(m_atarget_enc[0]),
+        .O(\gen_axilite.s_axi_arready_i_reg_0 ));
+  LUT5 #(
+    .INIT(32'h00F0CCAA)) 
+    \m_ready_d[2]_i_4 
+       (.I0(m_axi_awready[0]),
+        .I1(mi_wready),
+        .I2(m_axi_awready[1]),
+        .I3(m_atarget_enc[1]),
+        .I4(m_atarget_enc[0]),
+        .O(m_axi_awready_0_sn_1));
+  LUT5 #(
+    .INIT(32'hF503F5F3)) 
+    \s_axi_rvalid[0]_INST_0_i_1 
+       (.I0(mi_rvalid),
+        .I1(m_axi_rvalid[0]),
+        .I2(m_atarget_enc[0]),
+        .I3(m_atarget_enc[1]),
+        .I4(m_axi_rvalid[1]),
+        .O(\gen_axilite.s_axi_rvalid_i_reg_0 ));
+  LUT5 #(
+    .INIT(32'hF503F5F3)) 
+    \s_axi_wready[0]_INST_0_i_1 
+       (.I0(mi_wready),
+        .I1(m_axi_wready[0]),
+        .I2(m_atarget_enc[0]),
+        .I3(m_atarget_enc[1]),
+        .I4(m_axi_wready[1]),
+        .O(\gen_axilite.s_axi_awready_i_reg_0 ));
 endmodule
 
+(* ORIG_REF_NAME = "axi_crossbar_v2_1_27_splitter" *) 
 module KanTop_xbar_1_axi_crossbar_v2_1_27_splitter
-   (m_ready_d,
-    \gen_axilite.s_axi_awready_i_reg ,
-    \gen_axilite.s_axi_bvalid_i_reg ,
+   (\m_ready_d_reg[1]_0 ,
+    m_ready_d,
     s_axi_wvalid,
+    m_valid_i,
+    aa_grant_rnw,
     Q,
-    mi_bvalid,
-    mi_wready,
-    \gen_axilite.s_axi_bvalid_i_reg_0 ,
     aresetn_d,
-    m_ready_d0,
+    s_axi_bready,
     \m_ready_d_reg[2]_0 ,
+    \m_ready_d_reg[2]_1 ,
+    \m_ready_d_reg[2]_2 ,
     aclk);
+  output \m_ready_d_reg[1]_0 ;
   output [2:0]m_ready_d;
-  output \gen_axilite.s_axi_awready_i_reg ;
-  input \gen_axilite.s_axi_bvalid_i_reg ;
   input [0:0]s_axi_wvalid;
+  input m_valid_i;
+  input aa_grant_rnw;
   input [0:0]Q;
-  input [0:0]mi_bvalid;
-  input [0:0]mi_wready;
-  input \gen_axilite.s_axi_bvalid_i_reg_0 ;
   input aresetn_d;
-  input [1:0]m_ready_d0;
+  input [0:0]s_axi_bready;
   input \m_ready_d_reg[2]_0 ;
+  input \m_ready_d_reg[2]_1 ;
+  input \m_ready_d_reg[2]_2 ;
   input aclk;
 
   wire [0:0]Q;
+  wire aa_grant_rnw;
   wire aclk;
   wire aresetn_d;
-  wire \gen_axilite.s_axi_awready_i_reg ;
-  wire \gen_axilite.s_axi_bvalid_i_reg ;
-  wire \gen_axilite.s_axi_bvalid_i_reg_0 ;
-  wire \gen_decerr.decerr_slave_inst/s_axi_awready_i ;
   wire [2:0]m_ready_d;
-  wire [1:0]m_ready_d0;
   wire \m_ready_d[0]_i_1_n_0 ;
   wire \m_ready_d[1]_i_1_n_0 ;
   wire \m_ready_d[2]_i_1_n_0 ;
+  wire \m_ready_d_reg[1]_0 ;
   wire \m_ready_d_reg[2]_0 ;
-  wire [0:0]mi_bvalid;
-  wire [0:0]mi_wready;
+  wire \m_ready_d_reg[2]_1 ;
+  wire \m_ready_d_reg[2]_2 ;
+  wire m_valid_i;
+  wire [0:0]s_axi_bready;
   wire [0:0]s_axi_wvalid;
 
   LUT6 #(
-    .INIT(64'h7707888877778888)) 
-    \gen_axilite.s_axi_bvalid_i_i_1 
-       (.I0(\gen_decerr.decerr_slave_inst/s_axi_awready_i ),
-        .I1(mi_wready),
-        .I2(Q),
-        .I3(m_ready_d[0]),
-        .I4(mi_bvalid),
-        .I5(\gen_axilite.s_axi_bvalid_i_reg_0 ),
-        .O(\gen_axilite.s_axi_awready_i_reg ));
-  LUT6 #(
-    .INIT(64'h0000000000100000)) 
-    \gen_axilite.s_axi_bvalid_i_i_2 
+    .INIT(64'hFFFFFBFFFFFFFFFF)) 
+    \gen_axilite.s_axi_bvalid_i_i_3 
        (.I0(m_ready_d[1]),
-        .I1(\gen_axilite.s_axi_bvalid_i_reg ),
-        .I2(s_axi_wvalid),
-        .I3(m_ready_d[2]),
-        .I4(Q),
-        .I5(mi_bvalid),
-        .O(\gen_decerr.decerr_slave_inst/s_axi_awready_i ));
-  LUT4 #(
-    .INIT(16'h002A)) 
+        .I1(s_axi_wvalid),
+        .I2(m_ready_d[2]),
+        .I3(m_valid_i),
+        .I4(aa_grant_rnw),
+        .I5(Q),
+        .O(\m_ready_d_reg[1]_0 ));
+  LUT6 #(
+    .INIT(64'hAA08AA08AA080000)) 
     \m_ready_d[0]_i_1 
        (.I0(aresetn_d),
-        .I1(m_ready_d0[1]),
-        .I2(m_ready_d0[0]),
-        .I3(\m_ready_d_reg[2]_0 ),
+        .I1(s_axi_bready),
+        .I2(\m_ready_d_reg[2]_0 ),
+        .I3(m_ready_d[0]),
+        .I4(\m_ready_d_reg[2]_1 ),
+        .I5(\m_ready_d_reg[2]_2 ),
         .O(\m_ready_d[0]_i_1_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair13" *) 
-  LUT4 #(
-    .INIT(16'hA020)) 
+  LUT6 #(
+    .INIT(64'h0000AAAA000000A2)) 
     \m_ready_d[1]_i_1 
        (.I0(aresetn_d),
-        .I1(m_ready_d0[1]),
-        .I2(m_ready_d0[0]),
-        .I3(\m_ready_d_reg[2]_0 ),
+        .I1(s_axi_bready),
+        .I2(\m_ready_d_reg[2]_0 ),
+        .I3(m_ready_d[0]),
+        .I4(\m_ready_d_reg[2]_1 ),
+        .I5(\m_ready_d_reg[2]_2 ),
         .O(\m_ready_d[1]_i_1_n_0 ));
-  (* SOFT_HLUTNM = "soft_lutpair13" *) 
-  LUT4 #(
-    .INIT(16'h8808)) 
+  LUT6 #(
+    .INIT(64'h00000000AAAA00A2)) 
     \m_ready_d[2]_i_1 
        (.I0(aresetn_d),
-        .I1(m_ready_d0[1]),
-        .I2(m_ready_d0[0]),
-        .I3(\m_ready_d_reg[2]_0 ),
+        .I1(s_axi_bready),
+        .I2(\m_ready_d_reg[2]_0 ),
+        .I3(m_ready_d[0]),
+        .I4(\m_ready_d_reg[2]_1 ),
+        .I5(\m_ready_d_reg[2]_2 ),
         .O(\m_ready_d[2]_i_1_n_0 ));
   FDRE #(
     .INIT(1'b0)) 
@@ -2741,73 +2820,26 @@ endmodule
 
 (* ORIG_REF_NAME = "axi_crossbar_v2_1_27_splitter" *) 
 module KanTop_xbar_1_axi_crossbar_v2_1_27_splitter__parameterized0
-   (\m_ready_d_reg[0]_0 ,
-    m_ready_d,
-    s_axi_rready,
+   (m_ready_d,
     \m_ready_d_reg[1]_0 ,
-    \gen_no_arbiter.m_grant_hot_i_reg[0]_inv ,
-    \m_ready_d_reg[1]_1 ,
-    aresetn_d,
-    m_ready_d0,
-    aclk);
-  output \m_ready_d_reg[0]_0 ;
+    aclk,
+    \m_ready_d_reg[0]_0 );
   output [1:0]m_ready_d;
-  input [0:0]s_axi_rready;
   input \m_ready_d_reg[1]_0 ;
-  input \gen_no_arbiter.m_grant_hot_i_reg[0]_inv ;
-  input \m_ready_d_reg[1]_1 ;
-  input aresetn_d;
-  input [0:0]m_ready_d0;
   input aclk;
+  input \m_ready_d_reg[0]_0 ;
 
   wire aclk;
-  wire aresetn_d;
-  wire \gen_no_arbiter.m_grant_hot_i_reg[0]_inv ;
   wire [1:0]m_ready_d;
-  wire [0:0]m_ready_d0;
-  wire \m_ready_d[0]_i_1_n_0 ;
-  wire \m_ready_d[1]_i_1_n_0 ;
   wire \m_ready_d_reg[0]_0 ;
   wire \m_ready_d_reg[1]_0 ;
-  wire \m_ready_d_reg[1]_1 ;
-  wire [0:0]s_axi_rready;
 
-  LUT6 #(
-    .INIT(64'h00000000EAEAEA00)) 
-    \gen_no_arbiter.m_grant_hot_i[0]_inv_i_2 
-       (.I0(m_ready_d[0]),
-        .I1(s_axi_rready),
-        .I2(\m_ready_d_reg[1]_0 ),
-        .I3(m_ready_d[1]),
-        .I4(\gen_no_arbiter.m_grant_hot_i_reg[0]_inv ),
-        .I5(\m_ready_d_reg[1]_1 ),
-        .O(\m_ready_d_reg[0]_0 ));
-  LUT6 #(
-    .INIT(64'h2222222200002000)) 
-    \m_ready_d[0]_i_1 
-       (.I0(aresetn_d),
-        .I1(m_ready_d0),
-        .I2(\m_ready_d_reg[1]_0 ),
-        .I3(s_axi_rready),
-        .I4(\m_ready_d_reg[1]_1 ),
-        .I5(m_ready_d[0]),
-        .O(\m_ready_d[0]_i_1_n_0 ));
-  LUT6 #(
-    .INIT(64'h0000000088880888)) 
-    \m_ready_d[1]_i_1 
-       (.I0(aresetn_d),
-        .I1(m_ready_d0),
-        .I2(\m_ready_d_reg[1]_0 ),
-        .I3(s_axi_rready),
-        .I4(\m_ready_d_reg[1]_1 ),
-        .I5(m_ready_d[0]),
-        .O(\m_ready_d[1]_i_1_n_0 ));
   FDRE #(
     .INIT(1'b0)) 
     \m_ready_d_reg[0] 
        (.C(aclk),
         .CE(1'b1),
-        .D(\m_ready_d[0]_i_1_n_0 ),
+        .D(\m_ready_d_reg[0]_0 ),
         .Q(m_ready_d[0]),
         .R(1'b0));
   FDRE #(
@@ -2815,7 +2847,7 @@ module KanTop_xbar_1_axi_crossbar_v2_1_27_splitter__parameterized0
     \m_ready_d_reg[1] 
        (.C(aclk),
         .CE(1'b1),
-        .D(\m_ready_d[1]_i_1_n_0 ),
+        .D(\m_ready_d_reg[1]_0 ),
         .Q(m_ready_d[1]),
         .R(1'b0));
 endmodule

@@ -12,8 +12,8 @@
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.ASSOCIATED_BUSIF">M00_AXI:M01_AXI:M02_AXI:M03_AXI:M04_AXI:M05_AXI:M06_AXI:M07_AXI:M08_AXI:M09_AXI:M10_AXI:M11_AXI:M12_AXI:M13_AXI:M14_AXI:M15_AXI:S00_AXI:S01_AXI:S02_AXI:S03_AXI:S04_AXI:S05_AXI:S06_AXI:S07_AXI:S08_AXI:S09_AXI:S10_AXI:S11_AXI:S12_AXI:S13_AXI:S14_AXI:S15_AXI</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.ASSOCIATED_PORT"/>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.ASSOCIATED_RESET">ARESETN</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.FREQ_HZ">1.25e+08</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.FREQ_HZ">125000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.FREQ_TOLERANCE_HZ">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.INSERT_VIP">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLKIF.PHASE">0.0</spirit:configurableElementValue>
@@ -21,9 +21,9 @@
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.ARUSER_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.AWUSER_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.BUSER_WIDTH">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.DATA_WIDTH">32</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.FREQ_HZ">1.25e+08</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.FREQ_HZ">125000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.HAS_BRESP">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.HAS_BURST">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M00_AXI.HAS_CACHE">0</spirit:configurableElementValue>
@@ -52,9 +52,9 @@
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.ARUSER_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.AWUSER_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.BUSER_WIDTH">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.DATA_WIDTH">32</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.FREQ_HZ">1.25e+08</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.FREQ_HZ">125000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.HAS_BRESP">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.HAS_BURST">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.M01_AXI.HAS_CACHE">0</spirit:configurableElementValue>
@@ -520,9 +520,9 @@
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.ARUSER_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.AWUSER_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.BUSER_WIDTH">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.DATA_WIDTH">32</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.FREQ_HZ">1.25e+08</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.FREQ_HZ">125000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.HAS_BRESP">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.HAS_BURST">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.S00_AXI.HAS_CACHE">0</spirit:configurableElementValue>
@@ -1024,14 +1024,14 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_AXI_WUSER_WIDTH">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_CONNECTIVITY_MODE">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_FAMILY">zynq</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_ADDR_WIDTH">0x0000000a0000000b000000100000000d</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_BASE_ADDR">0x0000000040000800000000004000000000000000404000000000000040002000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_ADDR_WIDTH">0x0000000a0000000a0000000e00000000000000100000000a</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_BASE_ADDR">0x000000004000480000000000400040000000000040000000ffffffffffffffff00000000404000000000000040004400</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_READ_CONNECTIVITY">0x0000000100000001</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_READ_ISSUING">0x0000000100000001</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_SECURE">0x0000000000000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_WRITE_CONNECTIVITY">0x0000000100000001</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_M_AXI_WRITE_ISSUING">0x0000000100000001</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_NUM_ADDR_RANGES">2</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_NUM_ADDR_RANGES">3</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_NUM_MASTER_SLOTS">2</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_NUM_SLAVE_SLOTS">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_R_REGISTER">0</spirit:configurableElementValue>
@@ -1041,7 +1041,7 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_S_AXI_SINGLE_THREAD">0x00000001</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_S_AXI_THREAD_ID_WIDTH">0x00000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_S_AXI_WRITE_ACCEPTANCE">0x00000001</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDR_RANGES">2</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDR_RANGES">3</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ADDR_WIDTH">32</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ARUSER_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.AWUSER_WIDTH">0</spirit:configurableElementValue>
@@ -1050,8 +1050,8 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.Component_Name">KanTop_xbar_1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.DATA_WIDTH">32</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.ID_WIDTH">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_A00_ADDR_WIDTH">13</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_A00_BASE_ADDR">0x0000000040002000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_A00_ADDR_WIDTH">10</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_A00_BASE_ADDR">0x0000000040004400</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_A01_ADDR_WIDTH">16</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_A01_BASE_ADDR">0x0000000040400000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_A02_ADDR_WIDTH">0</spirit:configurableElementValue>
@@ -1118,12 +1118,12 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_S15_WRITE_CONNECTIVITY">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_SECURE">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M00_WRITE_ISSUING">1</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A00_ADDR_WIDTH">11</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A00_ADDR_WIDTH">14</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A00_BASE_ADDR">0x0000000040000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A01_ADDR_WIDTH">10</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A01_BASE_ADDR">0x0000000040000800</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A02_ADDR_WIDTH">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A02_BASE_ADDR">0xffffffffffffffff</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A01_BASE_ADDR">0x0000000040004000</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A02_ADDR_WIDTH">10</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A02_BASE_ADDR">0x0000000040004800</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A03_ADDR_WIDTH">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A03_BASE_ADDR">0xffffffffffffffff</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.M01_A04_ADDR_WIDTH">0</spirit:configurableElementValue>
@@ -2532,8 +2532,8 @@
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A00_BASE_ADDR" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A01_ADDR_WIDTH" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A01_BASE_ADDR" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
-            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_ADDR_WIDTH" xilinx:valuePermission="bd_and_user"/>
-            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_BASE_ADDR" xilinx:valuePermission="bd_and_user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_ADDR_WIDTH" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
+            <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_BASE_ADDR" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A03_ADDR_WIDTH" xilinx:valuePermission="bd_and_user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A03_BASE_ADDR" xilinx:valuePermission="bd_and_user"/>
             <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A04_ADDR_WIDTH" xilinx:valuePermission="bd_and_user"/>
@@ -3638,10 +3638,10 @@
                     &quot;abstraction_type&quot;: &quot;xilinx.com:signal:clock_rtl:1.0&quot;,
                     &quot;mode&quot;: &quot;slave&quot;,
                     &quot;parameters&quot;: {
-                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;1.25e+08&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;user&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;all&quot; } ],
+                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;125000000&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;user&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;all&quot; } ],
                       &quot;FREQ_TOLERANCE_HZ&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;PHASE&quot;: [ { &quot;value&quot;: &quot;0.0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;float&quot;, &quot;is_static_object&quot;: false } ],
-                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_0_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;is_static_object&quot;: false } ],
+                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_1_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ASSOCIATED_BUSIF&quot;: [ { &quot;value&quot;: &quot;M00_AXI:M01_AXI:M02_AXI:M03_AXI:M04_AXI:M05_AXI:M06_AXI:M07_AXI:M08_AXI:M09_AXI:M10_AXI:M11_AXI:M12_AXI:M13_AXI:M14_AXI:M15_AXI:S00_AXI:S01_AXI:S02_AXI:S03_AXI:S04_AXI:S05_AXI:S06_AXI:S07_AXI:S08_AXI:S09_AXI:S10_AXI:S11_AXI:S12_AXI:S13_AXI:S14_AXI:S15_AXI&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ASSOCIATED_PORT&quot;: [ { &quot;value&quot;: &quot;&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ASSOCIATED_RESET&quot;: [ { &quot;value&quot;: &quot;ARESETN&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;is_static_object&quot;: false } ],
@@ -3658,7 +3658,7 @@
                     &quot;parameters&quot;: {
                       &quot;DATA_WIDTH&quot;: [ { &quot;value&quot;: &quot;32&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;PROTOCOL&quot;: [ { &quot;value&quot;: &quot;AXI4LITE&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
-                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;1.25e+08&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
+                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;125000000&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ID_WIDTH&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_src&quot;: &quot;propagated&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ADDR_WIDTH&quot;: [ { &quot;value&quot;: &quot;32&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;AWUSER_WIDTH&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_src&quot;: &quot;constant_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
@@ -3681,7 +3681,7 @@
                       &quot;NUM_WRITE_OUTSTANDING&quot;: [ { &quot;value&quot;: &quot;8&quot;, &quot;value_src&quot;: &quot;constant_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;MAX_BURST_LENGTH&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;PHASE&quot;: [ { &quot;value&quot;: &quot;0.0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;float&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
-                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_0_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
+                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_1_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;NUM_READ_THREADS&quot;: [ { &quot;value&quot;: &quot;4&quot;, &quot;value_src&quot;: &quot;constant_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;NUM_WRITE_THREADS&quot;: [ { &quot;value&quot;: &quot;4&quot;, &quot;value_src&quot;: &quot;constant_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;RUSER_BITS_PER_BYTE&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_src&quot;: &quot;ip_propagated&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
@@ -3717,7 +3717,7 @@
                     &quot;parameters&quot;: {
                       &quot;DATA_WIDTH&quot;: [ { &quot;value&quot;: &quot;32&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;PROTOCOL&quot;: [ { &quot;value&quot;: &quot;AXI4LITE&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
-                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;1.25e+08&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
+                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;125000000&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ID_WIDTH&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ADDR_WIDTH&quot;: [ { &quot;value&quot;: &quot;32&quot;, &quot;value_src&quot;: &quot;propagated&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;AWUSER_WIDTH&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
@@ -3740,7 +3740,7 @@
                       &quot;NUM_WRITE_OUTSTANDING&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;MAX_BURST_LENGTH&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_src&quot;: &quot;propagated&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;PHASE&quot;: [ { &quot;value&quot;: &quot;0.0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;float&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
-                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_0_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
+                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_1_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;NUM_READ_THREADS&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;NUM_WRITE_THREADS&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;RUSER_BITS_PER_BYTE&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
@@ -3776,7 +3776,7 @@
                     &quot;parameters&quot;: {
                       &quot;DATA_WIDTH&quot;: [ { &quot;value&quot;: &quot;32&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;PROTOCOL&quot;: [ { &quot;value&quot;: &quot;AXI4LITE&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
-                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;1.25e+08&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
+                      &quot;FREQ_HZ&quot;: [ { &quot;value&quot;: &quot;125000000&quot;, &quot;value_src&quot;: &quot;user_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ID_WIDTH&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;ADDR_WIDTH&quot;: [ { &quot;value&quot;: &quot;32&quot;, &quot;value_src&quot;: &quot;propagated&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;AWUSER_WIDTH&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
@@ -3799,7 +3799,7 @@
                       &quot;NUM_WRITE_OUTSTANDING&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;MAX_BURST_LENGTH&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_src&quot;: &quot;propagated&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;PHASE&quot;: [ { &quot;value&quot;: &quot;0.0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;float&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
-                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_0_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
+                      &quot;CLK_DOMAIN&quot;: [ { &quot;value&quot;: &quot;KanTop_processing_system7_0_1_FCLK_CLK1&quot;, &quot;value_src&quot;: &quot;default_prop&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;NUM_READ_THREADS&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;NUM_WRITE_THREADS&quot;: [ { &quot;value&quot;: &quot;1&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],
                       &quot;RUSER_BITS_PER_BYTE&quot;: [ { &quot;value&quot;: &quot;0&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;resolve_type&quot;: &quot;generated&quot;, &quot;format&quot;: &quot;long&quot;, &quot;usage&quot;: &quot;simulation.tlm&quot;, &quot;is_static_object&quot;: false } ],

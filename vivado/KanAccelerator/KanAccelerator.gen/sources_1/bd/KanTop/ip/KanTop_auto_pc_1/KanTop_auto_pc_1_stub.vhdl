@@ -1,7 +1,7 @@
 -- Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
--- Date        : Thu Jun 19 19:21:31 2025
+-- Date        : Mon Jun 23 20:32:24 2025
 -- Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
 -- Command     : write_vhdl -force -mode synth_stub -rename_top KanTop_auto_pc_1 -prefix
 --               KanTop_auto_pc_1_ KanTop_auto_pc_1_stub.vhdl

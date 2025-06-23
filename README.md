@@ -120,7 +120,7 @@ the result stream makes use of the TID flag to indicate the corresponding batch.
 - This repo is designed to produce files and run tests in linux systems. 
     If you want to use in windows (for example to use Vivado and Vitis) on a Windows environment, 
     it is highly recommended to clone this repo in the desired windows path using WSL.
-
+- If you plan to change the block design, make sure DDR has no negative skew values.
 
 # To-Do (Important)
 - [ ] Most python tests are old or have low coverage of the UUT's functionality and need to be updated. 

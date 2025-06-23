@@ -72,7 +72,7 @@
           <spirit:name>FREQ_HZ</spirit:name>
           <spirit:displayName>aclk frequency</spirit:displayName>
           <spirit:description>aclk frequency</spirit:description>
-          <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="BUSIFPARAM_VALUE.CLKIF.FREQ_HZ" spirit:minimum="1" spirit:maximum="1000000000" spirit:rangeType="long">1.25e+08</spirit:value>
+          <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="BUSIFPARAM_VALUE.CLKIF.FREQ_HZ" spirit:minimum="1" spirit:maximum="1000000000" spirit:rangeType="long">125000000</spirit:value>
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>FREQ_TOLERANCE_HZ</spirit:name>
@@ -94,7 +94,7 @@
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>CLK_DOMAIN</spirit:name>
-          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.CLKIF.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:value>
+          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.CLKIF.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:value>
           <spirit:vendorExtensions>
             <xilinx:parameterInfo>
               <xilinx:parameterUsage>none</xilinx:parameterUsage>
@@ -684,7 +684,7 @@
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>FREQ_HZ</spirit:name>
-          <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.S00_AXI.FREQ_HZ">1.25e+08</spirit:value>
+          <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.S00_AXI.FREQ_HZ">125000000</spirit:value>
           <spirit:vendorExtensions>
             <xilinx:parameterInfo>
               <xilinx:parameterUsage>simulation.tlm</xilinx:parameterUsage>
@@ -891,7 +891,7 @@
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>CLK_DOMAIN</spirit:name>
-          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.S00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:value>
+          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.S00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:value>
           <spirit:vendorExtensions>
             <xilinx:parameterInfo>
               <xilinx:parameterUsage>simulation.tlm</xilinx:parameterUsage>
@@ -1521,7 +1521,7 @@
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>FREQ_HZ</spirit:name>
-          <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M00_AXI.FREQ_HZ">1.25e+08</spirit:value>
+          <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M00_AXI.FREQ_HZ">125000000</spirit:value>
           <spirit:vendorExtensions>
             <xilinx:parameterInfo>
               <xilinx:parameterUsage>simulation.tlm</xilinx:parameterUsage>
@@ -1728,7 +1728,7 @@
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>CLK_DOMAIN</spirit:name>
-          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:value>
+          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M00_AXI.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:value>
           <spirit:vendorExtensions>
             <xilinx:parameterInfo>
               <xilinx:parameterUsage>simulation.tlm</xilinx:parameterUsage>
@@ -3171,7 +3171,7 @@
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>FREQ_HZ</spirit:name>
-          <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M01_AXI.FREQ_HZ">1.25e+08</spirit:value>
+          <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M01_AXI.FREQ_HZ">125000000</spirit:value>
           <spirit:vendorExtensions>
             <xilinx:parameterInfo>
               <xilinx:parameterUsage>simulation.tlm</xilinx:parameterUsage>
@@ -3378,7 +3378,7 @@
         </spirit:parameter>
         <spirit:parameter>
           <spirit:name>CLK_DOMAIN</spirit:name>
-          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M01_AXI.CLK_DOMAIN">KanTop_processing_system7_0_0_FCLK_CLK1</spirit:value>
+          <spirit:value spirit:resolve="generated" spirit:id="BUSIFPARAM_VALUE.M01_AXI.CLK_DOMAIN">KanTop_processing_system7_0_1_FCLK_CLK1</spirit:value>
           <spirit:vendorExtensions>
             <xilinx:parameterInfo>
               <xilinx:parameterUsage>simulation.tlm</xilinx:parameterUsage>
@@ -27344,7 +27344,7 @@
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:09e5f831</spirit:value>
+            <spirit:value>9:02b8d64e</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -27358,11 +27358,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu Jun 19 18:01:34 UTC 2025</spirit:value>
+            <spirit:value>Mon Jun 23 17:29:13 UTC 2025</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:09e5f831</spirit:value>
+            <spirit:value>9:02b8d64e</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -27378,11 +27378,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu Jun 19 18:01:34 UTC 2025</spirit:value>
+            <spirit:value>Mon Jun 23 17:29:13 UTC 2025</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:09e5f831</spirit:value>
+            <spirit:value>9:02b8d64e</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -27417,7 +27417,7 @@
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:d2b452df</spirit:value>
+            <spirit:value>9:7913fadd</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -27433,11 +27433,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu Jun 19 18:01:34 UTC 2025</spirit:value>
+            <spirit:value>Mon Jun 23 17:29:13 UTC 2025</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:00705267</spirit:value>
+            <spirit:value>9:17676c43</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>sim_type</spirit:name>
@@ -27461,11 +27461,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu Jun 19 18:01:34 UTC 2025</spirit:value>
+            <spirit:value>Mon Jun 23 17:29:13 UTC 2025</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:d2b452df</spirit:value>
+            <spirit:value>9:7913fadd</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -27481,11 +27481,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu Jun 19 18:01:34 UTC 2025</spirit:value>
+            <spirit:value>Mon Jun 23 17:29:13 UTC 2025</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:00705267</spirit:value>
+            <spirit:value>9:17676c43</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>sim_type</spirit:name>
@@ -27503,11 +27503,11 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu Jun 19 18:01:45 UTC 2025</spirit:value>
+            <spirit:value>Mon Jun 23 17:31:37 UTC 2025</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>outputProductCRC</spirit:name>
-            <spirit:value>9:09e5f831</spirit:value>
+            <spirit:value>9:02b8d64e</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -31664,15 +31664,15 @@
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="integer">
         <spirit:name>C_NUM_ADDR_RANGES</spirit:name>
-        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_NUM_ADDR_RANGES">2</spirit:value>
+        <spirit:value spirit:format="long" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_NUM_ADDR_RANGES">3</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="std_logic_vector">
         <spirit:name>C_M_AXI_BASE_ADDR</spirit:name>
-        <spirit:value spirit:format="bitString" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_M_AXI_BASE_ADDR" spirit:bitStringLength="256">0x0000000040000800000000004000000000000000404000000000000040002000</spirit:value>
+        <spirit:value spirit:format="bitString" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_M_AXI_BASE_ADDR" spirit:bitStringLength="384">0x000000004000480000000000400040000000000040000000ffffffffffffffff00000000404000000000000040004400</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="std_logic_vector">
         <spirit:name>C_M_AXI_ADDR_WIDTH</spirit:name>
-        <spirit:value spirit:format="bitString" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_M_AXI_ADDR_WIDTH" spirit:bitStringLength="128">0x0000000a0000000b000000100000000d</spirit:value>
+        <spirit:value spirit:format="bitString" spirit:resolve="generated" spirit:id="MODELPARAM_VALUE.C_M_AXI_ADDR_WIDTH" spirit:bitStringLength="192">0x0000000a0000000a0000000e00000000000000100000000a</spirit:value>
       </spirit:modelParameter>
       <spirit:modelParameter spirit:dataType="integer">
         <spirit:name>C_S_AXI_BASE_ID</spirit:name>
@@ -32106,6 +32106,18 @@
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
+        <spirit:name>KanTop_xbar_1_stub.v</spirit:name>
+        <spirit:fileType>verilogSource</spirit:fileType>
+        <spirit:userFileType>USED_IN_synth_blackbox_stub</spirit:userFileType>
+        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
+        <spirit:name>KanTop_xbar_1_stub.vhdl</spirit:name>
+        <spirit:fileType>vhdlSource</spirit:fileType>
+        <spirit:userFileType>USED_IN_synth_blackbox_stub</spirit:userFileType>
+        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
+      </spirit:file>
+      <spirit:file>
         <spirit:name>KanTop_xbar_1_sim_netlist.v</spirit:name>
         <spirit:fileType>verilogSource</spirit:fileType>
         <spirit:userFileType>USED_IN_simulation</spirit:userFileType>
@@ -32119,18 +32131,6 @@
         <spirit:userFileType>USED_IN_single_language</spirit:userFileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
-      <spirit:file>
-        <spirit:name>KanTop_xbar_1_stub.v</spirit:name>
-        <spirit:fileType>verilogSource</spirit:fileType>
-        <spirit:userFileType>USED_IN_synth_blackbox_stub</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
-      <spirit:file>
-        <spirit:name>KanTop_xbar_1_stub.vhdl</spirit:name>
-        <spirit:fileType>vhdlSource</spirit:fileType>
-        <spirit:userFileType>USED_IN_synth_blackbox_stub</spirit:userFileType>
-        <spirit:logicalName>xil_defaultlib</spirit:logicalName>
-      </spirit:file>
     </spirit:fileSet>
   </spirit:fileSets>
   <spirit:description>The AXI Crossbar IP provides the infrastructure to connect multiple AXI4/AXI3/AXI4-Lite masters and slaves.</spirit:description>
@@ -32138,7 +32138,7 @@
     <spirit:parameter>
       <spirit:name>ADDR_RANGES</spirit:name>
       <spirit:displayName>Number of Address Ranges</spirit:displayName>
-      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.ADDR_RANGES" spirit:order="2" spirit:minimum="1" spirit:maximum="16" spirit:rangeType="long">2</spirit:value>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.ADDR_RANGES" spirit:order="2" spirit:minimum="1" spirit:maximum="16" spirit:rangeType="long">3</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -40382,7 +40382,7 @@
     <spirit:parameter>
       <spirit:name>M00_A00_BASE_ADDR</spirit:name>
       <spirit:displayName>My M00_A00_BASE_ADDR</spirit:displayName>
-      <spirit:value spirit:format="bitString" spirit:resolve="user" spirit:id="PARAM_VALUE.M00_A00_BASE_ADDR" spirit:order="693" spirit:bitStringLength="64">0x0000000040002000</spirit:value>
+      <spirit:value spirit:format="bitString" spirit:resolve="user" spirit:id="PARAM_VALUE.M00_A00_BASE_ADDR" spirit:order="693" spirit:bitStringLength="64">0x0000000040004400</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -40586,7 +40586,7 @@
     <spirit:parameter>
       <spirit:name>M01_A01_BASE_ADDR</spirit:name>
       <spirit:displayName>My M01_A01_BASE_ADDR</spirit:displayName>
-      <spirit:value spirit:format="bitString" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A01_BASE_ADDR" spirit:order="710" spirit:bitStringLength="64">0x0000000040000800</spirit:value>
+      <spirit:value spirit:format="bitString" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A01_BASE_ADDR" spirit:order="710" spirit:bitStringLength="64">0x0000000040004000</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -40598,7 +40598,7 @@
     <spirit:parameter>
       <spirit:name>M01_A02_BASE_ADDR</spirit:name>
       <spirit:displayName>My M01_A02_BASE_ADDR</spirit:displayName>
-      <spirit:value spirit:format="bitString" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A02_BASE_ADDR" spirit:order="711" spirit:bitStringLength="64">0xffffffffffffffff</spirit:value>
+      <spirit:value spirit:format="bitString" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A02_BASE_ADDR" spirit:order="711" spirit:bitStringLength="64">0x0000000040004800</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -43454,7 +43454,7 @@
     <spirit:parameter>
       <spirit:name>M00_A00_ADDR_WIDTH</spirit:name>
       <spirit:displayName>My M00_A00_ADDR_WIDTH</spirit:displayName>
-      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.M00_A00_ADDR_WIDTH" spirit:order="949" spirit:minimum="0" spirit:maximum="64" spirit:rangeType="long">13</spirit:value>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.M00_A00_ADDR_WIDTH" spirit:order="949" spirit:minimum="0" spirit:maximum="64" spirit:rangeType="long">10</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -43646,7 +43646,7 @@
     <spirit:parameter>
       <spirit:name>M01_A00_ADDR_WIDTH</spirit:name>
       <spirit:displayName>My M01_A00_ADDR_WIDTH</spirit:displayName>
-      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A00_ADDR_WIDTH" spirit:order="965" spirit:minimum="0" spirit:maximum="64" spirit:rangeType="long">11</spirit:value>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A00_ADDR_WIDTH" spirit:order="965" spirit:minimum="0" spirit:maximum="64" spirit:rangeType="long">14</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -43670,7 +43670,7 @@
     <spirit:parameter>
       <spirit:name>M01_A02_ADDR_WIDTH</spirit:name>
       <spirit:displayName>My M01_A02_ADDR_WIDTH</spirit:displayName>
-      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A02_ADDR_WIDTH" spirit:order="967" spirit:minimum="0" spirit:maximum="64" spirit:rangeType="long">0</spirit:value>
+      <spirit:value spirit:format="long" spirit:resolve="user" spirit:id="PARAM_VALUE.M01_A02_ADDR_WIDTH" spirit:order="967" spirit:minimum="0" spirit:maximum="64" spirit:rangeType="long">10</spirit:value>
       <spirit:vendorExtensions>
         <xilinx:parameterInfo>
           <xilinx:enablement>
@@ -46807,8 +46807,8 @@
         <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A00_BASE_ADDR" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
         <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A01_ADDR_WIDTH" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
         <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A01_BASE_ADDR" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
-        <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_ADDR_WIDTH" xilinx:valuePermission="bd_and_user"/>
-        <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_BASE_ADDR" xilinx:valuePermission="bd_and_user"/>
+        <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_ADDR_WIDTH" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
+        <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A02_BASE_ADDR" xilinx:valueSource="propagated" xilinx:valuePermission="bd_and_user"/>
         <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A03_ADDR_WIDTH" xilinx:valuePermission="bd_and_user"/>
         <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A03_BASE_ADDR" xilinx:valuePermission="bd_and_user"/>
         <xilinx:configElementInfo xilinx:referenceId="PARAM_VALUE.M01_A04_ADDR_WIDTH" xilinx:valuePermission="bd_and_user"/>

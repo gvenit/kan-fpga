@@ -93,7 +93,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
   // 'S_AXI' transactor parameters
     xsc::common_cpp::properties S_AXI_transactor_param_props;
     S_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    S_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    S_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     S_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     S_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     S_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -123,7 +123,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
     S_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     S_AXI_transactor_param_props.addString("PROTOCOL", "AXI4");
     S_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_S_AXI_transactor = new xtlm::xaximm_pin2xtlm_t<64,32,1,1,1,1,1,1>("S_AXI_transactor", S_AXI_transactor_param_props);
 
@@ -191,7 +191,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
   // 'M_AXI' transactor parameters
     xsc::common_cpp::properties M_AXI_transactor_param_props;
     M_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    M_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    M_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     M_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     M_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     M_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -221,7 +221,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
     M_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     M_AXI_transactor_param_props.addString("PROTOCOL", "AXI3");
     M_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_M_AXI_transactor = new xtlm::xaximm_xtlm2pin_t<64,32,1,1,1,1,1,1>("M_AXI_transactor", M_AXI_transactor_param_props);
 
@@ -324,7 +324,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
   // 'S_AXI' transactor parameters
     xsc::common_cpp::properties S_AXI_transactor_param_props;
     S_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    S_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    S_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     S_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     S_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     S_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -354,7 +354,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
     S_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     S_AXI_transactor_param_props.addString("PROTOCOL", "AXI4");
     S_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_S_AXI_transactor = new xtlm::xaximm_pin2xtlm_t<64,32,1,1,1,1,1,1>("S_AXI_transactor", S_AXI_transactor_param_props);
 
@@ -422,7 +422,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
   // 'M_AXI' transactor parameters
     xsc::common_cpp::properties M_AXI_transactor_param_props;
     M_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    M_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    M_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     M_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     M_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     M_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -452,7 +452,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
     M_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     M_AXI_transactor_param_props.addString("PROTOCOL", "AXI3");
     M_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_M_AXI_transactor = new xtlm::xaximm_xtlm2pin_t<64,32,1,1,1,1,1,1>("M_AXI_transactor", M_AXI_transactor_param_props);
 
@@ -555,7 +555,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
   // 'S_AXI' transactor parameters
     xsc::common_cpp::properties S_AXI_transactor_param_props;
     S_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    S_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    S_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     S_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     S_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     S_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -585,7 +585,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
     S_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     S_AXI_transactor_param_props.addString("PROTOCOL", "AXI4");
     S_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_S_AXI_transactor = new xtlm::xaximm_pin2xtlm_t<64,32,1,1,1,1,1,1>("S_AXI_transactor", S_AXI_transactor_param_props);
 
@@ -653,7 +653,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
   // 'M_AXI' transactor parameters
     xsc::common_cpp::properties M_AXI_transactor_param_props;
     M_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    M_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    M_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     M_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     M_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     M_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -683,7 +683,7 @@ void KanTop_auto_pc_1::before_end_of_elaboration()
     M_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     M_AXI_transactor_param_props.addString("PROTOCOL", "AXI3");
     M_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_M_AXI_transactor = new xtlm::xaximm_xtlm2pin_t<64,32,1,1,1,1,1,1>("M_AXI_transactor", M_AXI_transactor_param_props);
 
@@ -775,7 +775,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
   // configure S_AXI_transactor
     xsc::common_cpp::properties S_AXI_transactor_param_props;
     S_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    S_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    S_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     S_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     S_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     S_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -805,7 +805,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
     S_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     S_AXI_transactor_param_props.addString("PROTOCOL", "AXI4");
     S_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_S_AXI_transactor = new xtlm::xaximm_pin2xtlm_t<64,32,1,1,1,1,1,1>("S_AXI_transactor", S_AXI_transactor_param_props);
   mp_S_AXI_transactor->AWADDR(s_axi_awaddr);
@@ -854,7 +854,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
   // configure M_AXI_transactor
     xsc::common_cpp::properties M_AXI_transactor_param_props;
     M_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    M_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    M_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     M_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     M_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     M_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -884,7 +884,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
     M_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     M_AXI_transactor_param_props.addString("PROTOCOL", "AXI3");
     M_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_M_AXI_transactor = new xtlm::xaximm_xtlm2pin_t<64,32,1,1,1,1,1,1>("M_AXI_transactor", M_AXI_transactor_param_props);
   mp_M_AXI_transactor->AWADDR(m_axi_awaddr);
@@ -1006,7 +1006,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
   // configure S_AXI_transactor
     xsc::common_cpp::properties S_AXI_transactor_param_props;
     S_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    S_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    S_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     S_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     S_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     S_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -1036,7 +1036,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
     S_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     S_AXI_transactor_param_props.addString("PROTOCOL", "AXI4");
     S_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    S_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_S_AXI_transactor = new xtlm::xaximm_pin2xtlm_t<64,32,1,1,1,1,1,1>("S_AXI_transactor", S_AXI_transactor_param_props);
   mp_S_AXI_transactor->AWADDR(s_axi_awaddr);
@@ -1085,7 +1085,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
   // configure M_AXI_transactor
     xsc::common_cpp::properties M_AXI_transactor_param_props;
     M_AXI_transactor_param_props.addLong("DATA_WIDTH", "64");
-    M_AXI_transactor_param_props.addLong("FREQ_HZ", "2.5e+08");
+    M_AXI_transactor_param_props.addLong("FREQ_HZ", "250000000");
     M_AXI_transactor_param_props.addLong("ID_WIDTH", "0");
     M_AXI_transactor_param_props.addLong("ADDR_WIDTH", "32");
     M_AXI_transactor_param_props.addLong("AWUSER_WIDTH", "0");
@@ -1115,7 +1115,7 @@ KanTop_auto_pc_1::KanTop_auto_pc_1(const sc_core::sc_module_name& nm) : KanTop_a
     M_AXI_transactor_param_props.addFloat("PHASE", "0.0");
     M_AXI_transactor_param_props.addString("PROTOCOL", "AXI3");
     M_AXI_transactor_param_props.addString("READ_WRITE_MODE", "READ_WRITE");
-    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_0_FCLK_CLK0");
+    M_AXI_transactor_param_props.addString("CLK_DOMAIN", "KanTop_processing_system7_0_1_FCLK_CLK2");
 
     mp_M_AXI_transactor = new xtlm::xaximm_xtlm2pin_t<64,32,1,1,1,1,1,1>("M_AXI_transactor", M_AXI_transactor_param_props);
   mp_M_AXI_transactor->AWADDR(m_axi_awaddr);

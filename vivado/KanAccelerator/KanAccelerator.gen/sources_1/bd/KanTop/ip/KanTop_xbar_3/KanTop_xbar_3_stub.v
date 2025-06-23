@@ -1,10 +1,10 @@
 // Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2022.1 (win64) Build 3526262 Mon Apr 18 15:48:16 MDT 2022
-// Date        : Thu Jun 19 19:15:11 2025
+// Date        : Mon Jun 23 20:31:40 2025
 // Host        : GV-LAPTOP-LOQ running 64-bit major release  (build 9200)
-// Command     : write_verilog -force -mode synth_stub -rename_top KanTop_xbar_3 -prefix
-//               KanTop_xbar_3_ KanTop_xbar_3_stub.v
+// Command     : write_verilog -force -mode synth_stub
+//               c:/Users/gvenit/Projects/PhD/kan-fpga/vivado/KanAccelerator/KanAccelerator.gen/sources_1/bd/KanTop/ip/KanTop_xbar_3/KanTop_xbar_3_stub.v
 // Design      : KanTop_xbar_3
 // Purpose     : Stub declaration of top-level module interface
 // Device      : xc7z007sclg400-1
