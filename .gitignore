@@ -45,3 +45,4 @@ vitis/System_Versions/Version_0/RemoteSystemsTempFiles
 *_temp
 *.analytics
 *Packages
+*_test

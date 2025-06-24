@@ -2,6 +2,18 @@
 
 To avoid clatter ASW software on the PS is documented here. Even though there are many subdirectories, mainly to keep all the vitis tests seperated because Vitis tends to crash if I mix them together and work on a single workspace.
 
+***Imortant** : _all the PS projetcs are in [System_Versions](./System_Versions/) every time I abandon an old version and go for a new one I remove all the C source files from the other one and various other files so that VSCode will not have conflicts. I only leave important stuff behind for that particular version. In other cases I delete them altogether._
+
+<br>
+
+## Build amd Setup notes
+
+Whenever you start a new system version make sure to do the following:
+1. The platform must be able to build on its own
+2. Copy paste the src and inc folders to the application folder
+3. Go to the properties of the application (not the platform) and go to `C/C++ General/Path and Symbols` and in the Includes tab add the inc folder as a workspace directory
+
+
 <br>
 
 ## Project outlines
