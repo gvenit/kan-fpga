@@ -19,7 +19,7 @@
  *
  * Comment it out for release execution
  */
-// #define DEF_DBG
+#define DEF_DBG
 
 /*==============================================================================
     Definitions to specify the internal types of RAM to sotre network data

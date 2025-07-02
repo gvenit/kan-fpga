@@ -88,9 +88,14 @@ First these headers act as ma
   - [ ] every layer
   - [ ] _hardware metrics_
 - [x] grid and scale have banks 4
-- [ ] change the linker script too and the datasets I think ***this is the reason why the memcpys fail as of now***
+- [x] change the linker script too and the datasets I think ***this is the reason why the memcpys fail as of now***
+- [ ] make the memcpy more plain again since it wasn't the bug
 
 <br>
+
+## Issues and notes on the execution
+
+- [ ] after configuration the status of the core is idle not configuration valid...
 
 ## Inquiries
 
@@ -107,7 +112,4 @@ First these headers act as ma
 - [ ] there are not deinit functions. Are they needed?
 - [x] Should I disable both data and instruction cache? I only disable data cache for now. Instruction might be good for memory operations
 - [ ] weight loaded reg should not exist
-
-
-
 

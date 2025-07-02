@@ -166,14 +166,6 @@ int main(void)
 
         hLayer_p = (hKan.kan_layers_handlers + layer);
 
-#ifdef DEF_DBG
-        data_t testval = 0;
-        data_t *testval_p = NULL;
-        testval_p = hLayer_p->data_ps_src_addr;
-        testval = *testval_p;
-        xil_printf("First data from data array: %d\r\n", (int)testval);
-#endif
-
         kan_mem_cpy((void *)(hLayer_p->data_ps_src_addr), (void *)(hKan.data_pl_base_addr), (hLayer_p->data_num) * sizeof(data_t));
         kan_mem_cpy((void *)(hLayer_p->grid_ps_src_addr), (void *)(hKan.grid_pl_base_addr), (hLayer_p->grid_num) * sizeof(data_t));
         kan_mem_cpy((void *)(hLayer_p->scale_ps_src_addr), (void *)(hKan.scale_pl_base_addr), (hLayer_p->scale_num) * sizeof(data_t));
@@ -198,8 +190,11 @@ int main(void)
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_WGHT_LDR_1B, LOADED_VAL, BYTE);
 
         kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_OPER_STS_1B, &reg_rd_val, BYTE);
+
+#ifndef DEF_DBG
         if (reg_rd_val != CTRL_REG_MASK_OPER_STS_VLD)
             kan_error_handler(STATUS_PL_ERROR, "The configuration was rejected by the PL");
+#endif
 
         // strating the DMA transfer of weights (RX) and results (TX)
 

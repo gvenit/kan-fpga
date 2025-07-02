@@ -66,7 +66,7 @@ typedef struct Kan_Layer_Config_Struct kan_layer_handler_t;
  * in the `kan_config_init` function to be initialized as
  * a buffer withe size of the layer that has the most data
  */
-typedef volatile data_t *kan_data_buff_t;
+typedef volatile data_t __attribute__((aligned(DMA_ALIGNMENT))) * kan_data_buff_t;
 
 struct Kan_Network_Config_Struct
 {

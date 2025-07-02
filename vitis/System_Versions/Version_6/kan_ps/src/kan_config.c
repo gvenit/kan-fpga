@@ -1,5 +1,15 @@
 #include "kan_config.h"
 
+void *aligned_malloc(size_t size, size_t alignment)
+{
+    uintptr_t raw = (uintptr_t)malloc(size + alignment - 1 + sizeof(void *));
+    if (!raw)
+        return NULL;
+    uintptr_t aligned = (raw + sizeof(void *) + alignment - 1) & ~(alignment - 1);
+    ((void **)aligned)[-1] = (void *)raw;
+    return (void *)aligned;
+}
+
 // kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, kan_data_buff_t *kan_data_buff_p)
 kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p)
 {
@@ -40,8 +50,16 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
             max_data = kan_layers_array[i].result_num;
     }
 
-    (*kan_data_buff_p) = (kan_data_buff_t)calloc(sizeof(data_t), max_data);
+    size_t buffer_bytes = sizeof(data_t) * max_data;
+
+    if (buffer_bytes % DMA_ALIGNMENT != 0)
+        buffer_bytes += DMA_ALIGNMENT - (buffer_bytes % DMA_ALIGNMENT);
+
+    (*kan_data_buff_p) = (kan_data_buff_t)aligned_alloc(DMA_ALIGNMENT, buffer_bytes);
     if ((*kan_data_buff_p) == NULL)
+        return STATUS_MALLOC_FAIL;
+
+    if (((uintptr_t)(*kan_data_buff_p)) % DMA_ALIGNMENT != 0)
         return STATUS_MALLOC_FAIL;
 
     // layer params - kan layer handlers

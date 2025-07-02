@@ -20,3 +20,8 @@ platform generate -domains
 platform generate
 platform active {kan_pl}
 platform generate -domains 
+platform clean
+platform generate
+platform active {kan_pl}
+platform generate
+platform generate
