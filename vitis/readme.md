@@ -90,6 +90,12 @@ First these headers act as ma
 - [x] grid and scale have banks 4
 - [x] change the linker script too and the datasets I think ***this is the reason why the memcpys fail as of now***
 - [ ] make the memcpy more plain again since it wasn't the bug
+- [ ] add contract to kan layer config function
+- [ ] You need a results memory space and a way to dump it
+
+***IMPORTANT***
+- [ ] weights are uint8_t now so you cannot have them in such a big array
+- [ ] also change the dma tx function to take weight_t and not data_t
 
 <br>
 
