@@ -148,7 +148,7 @@ static void callback_dma_rx(void *dma_handler)
         dma_tx_done_flag = 1;
 }
 
-kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, XScuGic *intr_handler)
+kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, kan_intr_handler_t *intr_handler)
 {
     kan_status_t status;
 
@@ -207,7 +207,22 @@ kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, X
     return STATUS_OK;
 }
 
-kan_status_t kan_dma_tx(kan_dma_handler_t *dma_handler, volatile data_t *tx_buff, size_t size)
+kan_status_t kan_dma_disable_irq(kan_intr_handler_t *intr_handler)
+{
+    kan_status_t status = STATUS_FAILURE;
+
+    status = kan_intr_detach(intr_handler, TX_INTR_ID);
+    if (status != STATUS_OK)
+        return status;
+
+    status = kan_intr_detach(intr_handler, RX_INTR_ID);
+    if (status != STATUS_OK)
+        return status;
+
+    return STATUS_OK;
+}
+
+kan_status_t kan_dma_tx(kan_dma_handler_t *dma_handler, volatile weight_t *tx_buff, size_t size)
 {
     if (dma_handler == NULL || tx_buff == NULL)
         return STATUS_ILLEGAL_ARG;

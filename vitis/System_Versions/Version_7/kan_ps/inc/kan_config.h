@@ -120,6 +120,19 @@ struct Kan_Layer_Config_Struct
     Function prototypes of the header
  ===========================================================================*/
 
+/**
+ * @brief Initialization and configuration of the entire KAN.
+ * With this call values from `kan_build_params.h` (which are user defined)
+ * are passed into structs that hold information about the KAN
+ * and each layer of it
+ *
+ * @param kan_handler a pointer to the already allocated struct of the entire network
+ * @param kan_handler a pointer to the already allocated array of layer structs (one struct for each layer)
+ * @param kan_data_buff_p pointer to a buffer that will hold the results and the data on each layer iteration
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
 kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p);
 
 #endif

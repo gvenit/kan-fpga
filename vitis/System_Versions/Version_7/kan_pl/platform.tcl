@@ -18,3 +18,6 @@ platform active {kan_pl}
 platform generate
 platform active {kan_pl}
 platform generate -domains 
+platform active {kan_pl}
+platform active {kan_pl}
+platform generate -domains 

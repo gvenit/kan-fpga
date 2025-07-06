@@ -69,7 +69,7 @@ First these headers act as ma
 - [x] add volatile wherever it is needed
 - [x] data and results do not need strides and they are not knownn from the beggining
 - [x] old dma examples had cache flushes that need to be imlpemented somehow
-- [ ] having status variable be `kan_status_t` in the source code might pose problems even if it is compatible with the defines in `xstatus.h`
+- [x] having status variable be `kan_status_t` in the source code might pose problems even if it is compatible with the defines in `xstatus.h`
 - [ ] not sure if deallocation function are needed (for example in the `kan_config.h`)
 - [ ] I do not have status everywhere. Should I check it more?
 - [ ] Dma examples had a number of transfers, something like a for loop to attempt to do the dma transaction multiple times. I am not sure if it is needed. I have the macro for it in `kan_defines.h` commented out and not no such implementation in the main code.
@@ -90,12 +90,11 @@ First these headers act as ma
 - [x] grid and scale have banks 4
 - [x] change the linker script too and the datasets I think ***this is the reason why the memcpys fail as of now***
 - [ ] make the memcpy more plain again since it wasn't the bug
-- [ ] add contract to kan layer config function
+- [x] add contract to kan layer config function
 - [ ] You need a results memory space and a way to dump it
+- [x] add contract to `kan_dma_disable_irq`
+- [ ] maybe seperate the dma interrupt attachment from the initialization because there is too much overhead in every layer call
 
-***IMPORTANT***
-- [ ] weights are uint8_t now so you cannot have them in such a big array
-- [ ] also change the dma tx function to take weight_t and not data_t
 
 <br>
 

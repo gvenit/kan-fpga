@@ -8,13 +8,15 @@ import argparse
 def create_sourcefile (
         dataset, 
         file_path,
-        array_name="data_array"
+        array_name="data_array",
+        limit = None
     ):
     '''
     Args:
         dataset (list) : a list of the datasets to become a header file array
         file_path (path) : the path with the name of the header file to be created
         array_name (str) : the name of the C array that will contain the data
+        limit (int) : the maximum number for the counter (will not be included since it counts from zero)
     '''
     # with open(bin_file_path, "rb") as bin_file:
     #     byte_data = bin_file.read()
@@ -30,6 +32,9 @@ def create_sourcefile (
         source_file.write(f"data_t {array_name}[] = {{\n")
 
         for i, val in enumerate(dataset):
+            if limit is not None:
+                val = val % limit
+
             if i != len(dataset) - 1:
                 source_file.write(f"    {val},\n")
             else:
@@ -97,17 +102,19 @@ def bin_to_c_file (
 def enumlist_to_c_file (
         size,
         file_path,
-        array_name="data_array"
+        array_name="data_array",
+        limit = None
     ):
     '''
     Args:
         size (int) : teh size of the dataset list
         file_path (path) : the path with the name of the header file to be created
         array_name (str) : the name of the C array that will contain the data
+        limit (int) : the maximum number for the counter (will not be included since it counts from zero)
     '''
     values = list(range(size))
 
-    create_sourcefile(values, file_path, array_name)
+    create_sourcefile(values, file_path, array_name, limit)
 
 def constlist_to_c_file (
         constant,
@@ -152,16 +159,24 @@ parser.add_argument(
     action='store',
     help='input as datasets a .raw or .bin file. Otherwise the dataset will be a list of ascending values'
 )
+
 parser.add_argument(
     '--size', '-s',
     action='store',
     help='the size of the dataset that will be a list of ascending values (used only if --raw not specified)'
 )
 parser.add_argument(
+    '--threshold', '-t',
+    action='store',
+    help='a maximum threshold for the enumeration option at which the counter will roll over (used only if --raw not specified)'
+)
+
+parser.add_argument(
     '--constant', '-c',
     action='store',
     help='the size of the dataset that will be a list of constant values (used only if --raw not specified and if --size not specified)'
 )
+
 
 ###################################
 # Main function
@@ -175,8 +190,8 @@ if __name__ == "__main__":
         if args.size is None:
             parser.error('You have to specify --size when you do not specify --raw')
     else:
-        if args.size is not None or args.constant is not None:
-            parser.error('If using --raw do not use --size or --constant')
+        if args.size is not None or args.constant is not None or args.threshold is not None:
+            parser.error('If using --raw do not use --size, --constant, --threshold')
 
     filename = args.filename
     arrayname = args.arrayname
@@ -199,4 +214,8 @@ if __name__ == "__main__":
             constant = int(args.constant)
             constlist_to_c_file(constant, size, filepath, arrayname)
         else:
-            enumlist_to_c_file(size, filepath, arrayname)
+            if args.threshold:
+                limit = int(args.threshold)
+                enumlist_to_c_file(size, filepath, arrayname, limit)
+            else:
+                enumlist_to_c_file(size, filepath, arrayname, None)

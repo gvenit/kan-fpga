@@ -28,7 +28,7 @@ MEMORY
    ps7_ram_1 : ORIGIN = 0xFFFF0000, LENGTH = 0xFE00
    dataset_data   : ORIGIN = 0x100000, LENGTH = 128 /*64 data elements of the first layer*/
    dataset_scale  : ORIGIN = 0x100080, LENGTH = 8 /*4 elements*/
-   dataset_grid   : ORIGIN = 0x100088, LENGTH = 40 /*14 elements + 12 (C) bytes for alignment*/ 1C
+   dataset_grid   : ORIGIN = 0x100088, LENGTH = 40 /*14 elements + 12 (C) bytes for alignment*/
    dataset_weight : ORIGIN = 0x1000B0, LENGTH = 13312 /*13312 elements*/
 }
 

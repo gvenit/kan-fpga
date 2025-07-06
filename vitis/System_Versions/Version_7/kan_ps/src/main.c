@@ -113,9 +113,11 @@ int main(void)
     xil_printf("Initialize dma engine\r\n");
 #endif
 
+#ifndef DEF_DBG
     status = kan_dma_init_irq(&hDma, DMA_DEV_ID, &hIntrCtr);
     if (status != STATUS_OK)
         kan_error_handler(status, "DMA with interrupts initialization failed");
+#endif
 
 #ifdef DATA_BRAM
 #ifdef DEF_VERBOSE
@@ -210,6 +212,11 @@ int main(void)
         xil_printf("Start DMA transfer of weights and results\r\n");
 #endif
 
+#ifdef DEF_DBG
+        status = kan_dma_init_irq(&hDma, DMA_DEV_ID, &hIntrCtr);
+        if (status != STATUS_OK)
+            kan_error_handler(status, "DMA with interrupts initialization failed");
+#endif
         status = kan_dma_rx(&hDma, (hLayer_p->result_ps_dest_addr), (hLayer_p->result_num) * sizeof(data_t));
         if (status != STATUS_OK)
             kan_error_handler(status, "DMA rx process of results failed");
@@ -284,14 +291,24 @@ int main(void)
 
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_1B, CTRL_REG_MASK_INTR_SFT_1B, BYTE);
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OPER_DNE, 0x00000000, BYTE);
+
+#ifdef DEF_DBG
+        status = kan_dma_disable_irq(&hIntrCtr);
+        if (status != STATUS_OK)
+            kan_error_handler(status, "Could not detach interrupts from DMA engine");
+#endif
     }
+    xil_printf("---\r\n");
 
     // deallocation and ternimation
 
-#ifdef DEF_DEBUG
+#ifdef DEF_DBG
+    xil_printf("DBG : Final results:\r\n");
+    for (int j = 0; j < KAN_RESULT_FEATURES / DATA_PER_WORD; j++)
+        xil_printf("DBG : %x\r\n", (void *)(*(((uint32_t *)data_buffer) + j)));
+
 #endif
 
-    xil_printf("---\r\n");
     xil_printf("Application termination\r\n");
     xil_printf("=============================================================\r\n\r\n");
 

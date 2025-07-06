@@ -37,7 +37,19 @@ extern volatile int dma_error_flag;   // error in DMA transaction
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, XScuGic *intr_handler);
+kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, kan_intr_handler_t *intr_handler);
+
+/**
+ * @brief Disables the interrupts attached to the DMA engie
+ *
+ * @param intr_handler is a pointer to the interrupt controller device handler
+ * already initialized and configured by the functions provided by
+ * `kan_interrupts.h`, which was used in the call of `kan_dma_init_irq`
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
+kan_status_t kan_dma_disable_irq(kan_intr_handler_t *intr_handler);
 
 /**
  * @brief Begin a dma transmission from the PL to the PS.
@@ -45,6 +57,10 @@ kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, X
  * without waiting to end.
  * It uses the transfer function and macros from the `xaxidma.h`
  * xilinx vitis header.
+ *
+ * @warning this targets the current architecture in which the dma
+ * is only used for sending weight values to the PL.
+ * Therefore the data type is `weight_t`
  *
  * @param dma_handler pointer to the dma handler struct that
  * must have been initialized by a call to `kan_dma_init_irq`
@@ -54,7 +70,7 @@ kan_status_t kan_dma_init_irq(kan_dma_handler_t *dma_handler, uint16_t dma_id, X
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_dma_tx(kan_dma_handler_t *dma_handler, volatile data_t *tx_buff, size_t size);
+kan_status_t kan_dma_tx(kan_dma_handler_t *dma_handler, volatile weight_t *tx_buff, size_t size);
 
 /**
  * @brief Begin a dma transmission from the PS to the PL.
