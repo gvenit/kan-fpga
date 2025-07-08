@@ -46,3 +46,4 @@ vitis/System_Versions/Version_0/RemoteSystemsTempFiles
 *.analytics
 *Packages
 *_test
+*_unused

@@ -93,7 +93,9 @@ First these headers act as ma
 - [x] add contract to kan layer config function
 - [ ] You need a results memory space and a way to dump it
 - [x] add contract to `kan_dma_disable_irq`
-- [ ] maybe seperate the dma interrupt attachment from the initialization because there is too much overhead in every layer call
+- [x] maybe seperate the dma interrupt attachment from the initialization because there is too much overhead in every layer call
+- [x] make banks to channels
+- [ ] add contract to interrupt callback and maybe better contracts in the interrupt library
 
 
 <br>
