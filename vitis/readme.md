@@ -96,6 +96,11 @@ First these headers act as ma
 - [x] maybe seperate the dma interrupt attachment from the initialization because there is too much overhead in every layer call
 - [x] make banks to channels
 - [ ] add contract to interrupt callback and maybe better contracts in the interrupt library
+- [ ] write somewhere in a contract that pl2ps interrupt triggers with the status register (27) change but not with reset and valid fields.
+- [ ] null interrupt register (26) jic
+- [ ] create a state getter function based on the one from gvenit
+- [ ] weight loaded ack should be after the dma rx initiation
+- [ ] do operation start ffs
 
 
 <br>
