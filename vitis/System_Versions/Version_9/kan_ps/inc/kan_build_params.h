@@ -48,24 +48,6 @@
 #define KAN_RESULT_FEATURES 8
 
 /**
- * @brief Number of channels in the data
- * bram in the PL
- */
-#define KAN_CHANNELS_DATA 4
-
-/**
- * @brief Number of channels in the grid
- * bram in the PL
- */
-#define KAN_CHANNELS_GRID 1
-
-/**
- * @brief Number of channels in the scale
- * bram in the PL
- */
-#define KAN_CHANNELS_SCALE 1
-
-/**
  * @brief the number of data on each KAN layer
  *
  * @warning

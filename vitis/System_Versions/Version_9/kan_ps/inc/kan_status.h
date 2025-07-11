@@ -31,6 +31,20 @@ typedef enum
 ============================================================================*/
 
 /**
+ * @brief The state of the core
+ * by reading of the control status register
+ */
+typedef enum
+{
+    KAN_STATE_OPER_IDL = 0,
+    KAN_STATE_OPER_BSY = -1,
+    KAN_STATE_OPER_ERR = -2,
+    KAN_STATE_OEPR_DNE = -3,
+    KAN_STATE_ITRL_ERR = -4,
+    KAN_STATE_UNKNOWN = -5
+} kan_state_t;
+
+/**
  * @brief Return type for
  * the header files of this project.
  * Compatible with `xstatus.h`

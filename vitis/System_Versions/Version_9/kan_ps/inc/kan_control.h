@@ -1,5 +1,5 @@
-#ifndef _KAN_REGISTERS_H_
-#define _KAN_REGISTERS_H_
+#ifndef _KAN_CONTROL_H_
+#define _KAN_CONTROL_H_
 
 #include "kan_status.h"
 #include "kan_memory_map.h"
@@ -11,10 +11,7 @@
  * Flags updated by the PL to PS interrupt
  */
 
-extern volatile int reg_status_idle_flag;   // 1 if core idle. Updated by the PL and user must zero it after a read
-extern volatile int reg_status_busy_flag;   // 1 if core busy. Updated by the PL and user must zero it after a read
-extern volatile int reg_status_error_flag;  // 1 if core in error. Updated by the PL and user must zero it after a read
-extern volatile int reg_status_locked_flag; // 1 if core locked. Updated by the PL and user must zero it after a read
+extern volatile kan_state_t kan_state; // the state of the core, based on the contents of the control status register
 
 /**
  * @brief Returns a boolean if
@@ -23,7 +20,7 @@ extern volatile int reg_status_locked_flag; // 1 if core locked. Updated by the 
  * @returns `IS_TRUE == 1` if the core is idle
  * or else `IS_FALSE == 0`
  */
-kan_bool_t kan_reg_status_idle(void);
+kan_bool_t kan_ctrl_reg_status_idle(void);
 
 /**
  * @brief Returns a boolean if
@@ -32,7 +29,7 @@ kan_bool_t kan_reg_status_idle(void);
  * @returns `IS_TRUE == 1` if the core is busy
  * or else `IS_FALSE == 0`
  */
-kan_bool_t kan_reg_status_busy(void);
+kan_bool_t kan_ctrl_reg_status_busy(void);
 
 /**
  * @brief Returns a boolean if
@@ -41,7 +38,7 @@ kan_bool_t kan_reg_status_busy(void);
  * @returns `IS_TRUE == 1` if the core is in error
  * or else `IS_FALSE == 0`
  */
-kan_bool_t kan_reg_status_error(void);
+kan_bool_t kan_ctrl_reg_status_error(void);
 
 /**
  * @brief Returns a boolean if
@@ -50,7 +47,7 @@ kan_bool_t kan_reg_status_error(void);
  * @returns `IS_TRUE == 1` if the core is locked
  * or else `IS_FALSE == 0`
  */
-kan_bool_t kan_reg_status_locked(void);
+kan_bool_t kan_ctrl_reg_status_locked(void);
 
 /**
  * @brief Returns a boolean if
@@ -59,7 +56,7 @@ kan_bool_t kan_reg_status_locked(void);
  * @returns `IS_TRUE == 1` if the core is valid
  * or else `IS_FALSE == 0`
  */
-kan_bool_t kan_reg_status_valid(void);
+kan_bool_t kan_ctrl_reg_status_valid(void);
 
 /**
  * @brief Returns a boolean if
@@ -68,8 +65,18 @@ kan_bool_t kan_reg_status_valid(void);
  * @returns `IS_TRUE == 1` if the core is reset
  * or else `IS_FALSE == 0`
  */
-kan_bool_t kan_reg_status_reset(void);
+kan_bool_t kan_ctrl_reg_status_reset(void);
+
+/////////////////////////////////////////////
+
+kan_status_t kan_ctrl_soft_rest(void);
+
+kan_bool_t kan_ctrl_reg_oper_done(void);
+
+kan_state_t kan_ctrl_get_state(void);
 
 void callback_status_reg(void *intr_handler);
+
+/////////////////////////////////////////////
 
 #endif

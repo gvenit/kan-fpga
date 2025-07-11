@@ -16,7 +16,7 @@
 #include "kan_memory.h"
 #include "kan_memory_map.h"
 #include "kan_status.h"
-#include "kan_registers.h"
+#include "kan_control.h"
 
 // xilinx vitis sdk header files
 
@@ -67,7 +67,7 @@ int main(void)
 
     kan_layer_handler_t *hLayer_p = NULL;
 
-    uint32_t reg_rd_val = 0;
+    // uint32_t reg_rd_val = 0;
 
     /*----------------------------------------
      Disable cache - only data
@@ -100,20 +100,6 @@ int main(void)
         kan_error_handler(status, "Interrupts configuration failed");
 
 #ifdef DEF_VERBOSE
-    xil_printf("Attach PL to PS interrupts\r\n");
-#endif
-
-#ifdef DEF_DBG
-    dbg_print_pl_status_regs();
-#endif
-    status = kan_intr_attach(&hIntrCtr, INTR_PL_TOP_PS_ID, INTR_DEFAULT_PRIORITY, INTR_TRIGGER_RISING_EDGE, (kan_intr_callback_t)callback_status_reg, (void *)&hIntrCtr);
-    if (status != STATUS_OK)
-        kan_error_handler(status, "Failed to attach PL to PS interrupts");
-#ifdef DEF_DBG
-    dbg_print_pl_status_regs();
-#endif
-
-#ifdef DEF_VERBOSE
     xil_printf("Initialize DMA engine\r\n");
 #endif
 
@@ -125,14 +111,15 @@ int main(void)
      Downloading data to layer
     ----------------------------------------*/
 
-    // reset the PL - soft reset
+    // reset the PL and null interrupt reg - soft reset
 
 #ifdef DEF_VERBOSE
     xil_printf("Soft reset the core before execution\r\n");
 #endif
 
-    kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_1B, CTRL_REG_MASK_INTR_SFT_1B, BYTE);
-    kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_INTR_1B, NULL_VAL, BYTE);
+    status = kan_ctrl_soft_rest();
+    if (status != STATUS_OK)
+        kan_error_handler(status, "Unable to reset the core");
 
     // iterating over all layers
 
@@ -161,21 +148,17 @@ int main(void)
         xil_printf("Configure PL registers\r\n");
 #endif
 
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LEN_4B, (uint32_t)(hLayer_p->data_num) / KAN_CHANNELS_DATA, WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LEN_4B, (uint32_t)(hLayer_p->grid_num) / KAN_CHANNELS_GRID, WORD);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LEN_4B, (uint32_t)(hLayer_p->scale_num) / KAN_CHANNELS_SCALE, WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LEN_4B, (uint32_t)(hLayer_p->data_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LEN_4B, (uint32_t)(hLayer_p->grid_num), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LEN_4B, (uint32_t)(hLayer_p->scale_num), WORD);
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_RSLT_LEN_4B, (uint32_t)(hLayer_p->result_num), WORD);
 
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_PCKT_LEN_4B, (uint32_t)(((hLayer_p->data_num) / (KAN_CHANNELS_DATA)) * ((hLayer_p->grid_num) / (KAN_CHANNELS_GRID))), WORD);
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_PCKT_LEN_4B, (uint32_t)(hLayer_p->data_num) * (uint32_t)(hLayer_p->grid_num), WORD);
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_BTCH_LEN_1B, 0x00000001, BYTE);
 
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_DATA_LDR_1B, IS_TRUE, BYTE);
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_GRID_LDR_1B, IS_TRUE, BYTE);
         kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_SCLE_LDR_1B, IS_TRUE, BYTE);
-        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_WGHT_LDR_1B, IS_TRUE, BYTE);
-
-        if (!kan_reg_status_valid())
-            kan_error_handler(STATUS_PL_ERROR, "The configuration was rejected by the PL");
 
         // strating the DMA transfer of weights (RX) and results (TX)
 
@@ -195,6 +178,21 @@ int main(void)
         if (status != STATUS_OK)
             kan_error_handler(status, "DMA tx process of weights failed");
 
+        kan_mem_reg_write(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_WGHT_LDR_1B, IS_TRUE, BYTE);
+
+        if (!kan_ctrl_reg_status_valid())
+            kan_error_handler(STATUS_PL_ERROR, "The configuration was rejected by the PL");
+
+        // attach PL2PS interrupts
+
+#ifdef DEF_VERBOSE
+        xil_printf("Attach PL to PS interrupts\r\n");
+#endif
+
+        status = kan_intr_attach(&hIntrCtr, INTR_PL_TOP_PS_ID, INTR_DEFAULT_PRIORITY, INTR_TRIGGER_RISING_EDGE, (kan_intr_callback_t)callback_status_reg, (void *)&hIntrCtr);
+        if (status != STATUS_OK)
+            kan_error_handler(status, "Failed to attach PL to PS interrupts");
+
         // strating the core
 
 #ifdef DEF_VERBOSE
@@ -211,47 +209,54 @@ int main(void)
         xil_printf("Monitor the core...\r\n");
 #endif
 
-#ifdef DEF_DBG
-        dbg_print_pl_status_regs();
-#endif
+        // while (!dma_rx_done_flag && !dma_tx_done_flag)
+        // {
+        //     if (dma_error_flag)
+        //         kan_error_handler(STATUS_DMA_ERROR_INTR, "DMA interrupt error flag was raised");
 
-        while (!dma_rx_done_flag && !dma_tx_done_flag)
+        //     if (kan_ctrl_reg_status_error())
+        //         kan_error_handler(STATUS_PL_ERROR, "Operation error. locked core awaiting soft/hard reset");
+
+        //     if (kan_ctrl_reg_status_reset())
+        //         kan_error_handler(STATUS_PL_ERROR, "PL reset on its own");
+
+        //     if (kan_ctrl_reg_status_locked())
+        //     {
+        //         kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OPER_DNE, &reg_rd_val, BYTE);
+        //         if (reg_rd_val != OPERATION_DONE_VAL)
+        //             kan_error_handler(STATUS_PL_ERROR, "Core locked but operation not done");
+        //         else
+        //             continue;
+        //     }
+        //     else if (kan_ctrl_reg_status_busy() || kan_ctrl_reg_status_idle() || kan_ctrl_reg_status_valid())
+        //         continue;
+        //     else
+        //     {
+        //         kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_OPER_STS_1B, &reg_rd_val, BYTE);
+        //         kan_error_handler(reg_rd_val, "Unkown value on the operation status register. It is the one returned above");
+        //     }
+        // }
+
+        // dma_rx_done_flag = 0;
+        // dma_tx_done_flag = 0;
+
+        while (kan_state == KAN_STATE_OPER_BSY)
         {
-            if (dma_error_flag)
-                kan_error_handler(STATUS_DMA_ERROR_INTR, "DMA interrupt error flag was raised");
+            if (kan_ctrl_get_state() == KAN_STATE_OPER_ERR)
+                kan_error_handler(STATUS_PL_ERROR, "Operation Error in the PL");
 
-            if (kan_reg_status_error())
-                kan_error_handler(STATUS_PL_ERROR, "Operation error. locked core awaiting soft/hard reset");
+            if (kan_ctrl_get_state() == KAN_STATE_ITRL_ERR)
+                kan_error_handler(STATUS_PL_ERROR, "Internal Error in the PL");
 
-            if (kan_reg_status_reset())
-                kan_error_handler(STATUS_PL_ERROR, "PL reset on its own");
-
-            if (kan_reg_status_locked())
-            {
-                kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OPER_DNE, &reg_rd_val, BYTE);
-                if (reg_rd_val != OPERATION_DONE_VAL)
-                    kan_error_handler(STATUS_PL_ERROR, "Core locked but operation not done");
-                else
-                    continue;
-            }
-            else if (kan_reg_status_busy() || kan_reg_status_idle() || kan_reg_status_valid())
-                continue;
-            else
-            {
-                kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OFST_OPER_STS_1B, &reg_rd_val, BYTE);
-                kan_error_handler(reg_rd_val, "Unkown value on the operation status register. It is the one returned above");
-            }
+            if (kan_ctrl_get_state() == KAN_STATE_UNKNOWN)
+                kan_error_handler(STATUS_PL_ERROR, "The core does nothting");
         }
 
-        dma_rx_done_flag = 0;
-        dma_tx_done_flag = 0;
-
 #ifdef DEF_DBG
         dbg_print_pl_status_regs();
 #endif
 
-        kan_mem_reg_read(CTRL_REG_BASE_ADDRESS, CTRL_REG_OPER_DNE, &reg_rd_val, BYTE);
-        if (reg_rd_val != IS_TRUE)
+        if (!kan_ctrl_reg_oper_done())
             kan_error_handler(STATUS_PL_ERROR, "DMA transfer complete but the core is not ready");
 
         // report metrics

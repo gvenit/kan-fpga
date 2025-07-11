@@ -16,3 +16,6 @@ platform write
 platform generate -domains 
 platform active {kan_pl}
 platform generate
+platform active {kan_pl}
+platform config -updatehw {C:/Users/giann/Downloads/mixed16_4x4x1_wrapper.xsa}
+platform generate -domains 
