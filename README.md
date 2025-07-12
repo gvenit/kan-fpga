@@ -18,7 +18,7 @@ $$ N_{total} = N_{grid} + 1 + N_{in} \times N_{grid} \times N_{out} = N_{grid} (
 ## Mapping to FPGA
 In this project, the data processor does not normalize the input data 
 and only performs the activation function and the linear layer.
-RSWAF is precalculated and loaded as LUTRAM in the FPGA, 
+The radial basis function (RBF) used is precalculated and loaded as LUTRAM in the FPGA, 
 thus speeding significantly the process in the cost of memory resources.
 The Linear Layer is mapped as a parallelized version of the classic systolic architecture, 
 where data and weights are streamed from the sides of a systolic array 
@@ -64,8 +64,8 @@ Iteration \ Latency &=& (\text{Input Length})  \\
 The LPC is fully compliant with the AXI-Stream Protocol, and produces results after all input channels
 have provided the LPC with packets of the same length. 
 
-### RSWAF
-In this project, the first operand is of the MMM is the output of the module that calculates RSWAF.
+### Radial Basis Function Unit
+In this project, the first operand is of the MMM is the output of the module that calculates the RBF.
 This module works in a stream-wise fashion, where the input data, grid and scale are streamed.
 The component then synchronizes the flows and calculates the difference between the data and the grid,
 multiplies the result with the scale and 
@@ -94,7 +94,7 @@ the result stream makes use of the TID flag to indicate the corresponding batch.
 
 ### Resource utilization
 - The number of DSP slices are:
-    - $D \times B$ for multiplications in the RSWAF module,
+    - $D \times B$ for multiplications in the RBF unit,
     - $D \times B \times R$ for Multiply-and-Accumulate in the LPC and
     - $B \times R$ for partial sum accumulations in the LPC. In case of $D == 1$, no extra DSPs are needed.
 
@@ -115,6 +115,7 @@ the result stream makes use of the TID flag to indicate the corresponding batch.
 - Data processing procedures operate on core clock.
 - In synchronous mode, core and fsm clocks are expected to be driven by the same clock.
 - In asynchronous mode, it is recommended that the core clock speed is an integer multiple of the fsm closk speed, and the two clocks are phase-aligned.
+- It is recommended having `WEIGHT_LAST_ENABLE` flag unset, unless it is guaranteed that `s_axis_wght` provides the expected weights in a single packet. If `WEIGHT_LAST_ENABLE = 1` and the weights arrive in multiple packets, the core will fail if the split doesn't match the core's internal split. On the other hand, when properly used, `WEIGHT_LAST_ENABLE` adds a layer of security to the design by raising errors when there is an unexpected ammount of weights delivered to the core.
 
 # Important
 - This repo is designed to produce files and run tests in linux systems. 
