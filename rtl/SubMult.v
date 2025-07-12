@@ -358,74 +358,75 @@ module SubMult #(
   assign stage_3_in_axis_data_tdest     = stage_2_out_axis_data_tdest ;
   assign {stage_3_in_axis_data_tuser, stage_3_in_axis_data_tdata_op1} = stage_2_out_axis_data_tuser ;
 
-  wire signed [MTL_WIDTH-1:0] stage_3_in_axis_data_tdata = stage_3_in_axis_data_tdata_op0 * stage_3_in_axis_data_tdata_op1;
+//  // Stage 3 Skid Register
+//  AxisALU #(
+//    .OP0_WIDTH        (SUB_WIDTH),
+//    .OP1_WIDTH        (SCALE_WIDTH),
+//    .RSLT_WIDTH       (MTL_WIDTH),
+//    .LAST_ENABLE      (1),
+//    .ID_ENABLE        (ID_ENABLE),
+//    .ID_WIDTH         (ID_WIDTH),
+//    .DEST_ENABLE      (DEST_ENABLE),
+//    .DEST_WIDTH       (DEST_WIDTH),
+//    .USER_ENABLE      (USER_ENABLE),
+//    .USER_WIDTH       (USER_WIDTH),
+//    .OP_MODE          (2),
+//    .REG_TYPE         (2)
+//  ) axis_alu_mlt_inst (
+//    .clk              (clk),
+//    .rst              (rst),
+//    .s_axis_tdata_op0 (stage_3_in_axis_data_tdata_op0),
+//    .s_axis_tdata_op1 (stage_3_in_axis_data_tdata_op1),
+//    .s_axis_tvalid    (stage_3_in_axis_data_tvalid),
+//    .s_axis_tready    (stage_3_in_axis_data_tready),
+//    .s_axis_tlast     (stage_3_in_axis_data_tlast),
+//    .s_axis_tid       (stage_3_in_axis_data_tid),
+//    .s_axis_tdest     (stage_3_in_axis_data_tdest),
+//    .s_axis_tuser     (stage_3_in_axis_data_tuser),
+//    .m_axis_tdata     (stage_3_out_axis_data_tdata),
+//    .m_axis_tvalid    (stage_3_out_axis_data_tvalid),
+//    .m_axis_tready    (stage_3_out_axis_data_tready),
+//    .m_axis_tlast     (stage_3_out_axis_data_tlast),
+//    .m_axis_tid       (stage_3_out_axis_data_tid),
+//    .m_axis_tdest     (stage_3_out_axis_data_tdest),
+//    .m_axis_tuser     (stage_3_out_axis_data_tuser)
+//  );
 
-  // // Stage 3 Skid Register
-  // AxisALU #(
-  //   .OP0_WIDTH        (SUB_WIDTH),
-  //   .OP1_WIDTH        (SCALE_WIDTH),
-  //   .RSLT_WIDTH       (MTL_WIDTH),
-  //   .LAST_ENABLE      (1),
-  //   .ID_ENABLE        (ID_ENABLE),
-  //   .ID_WIDTH         (ID_WIDTH),
-  //   .DEST_ENABLE      (DEST_ENABLE),
-  //   .DEST_WIDTH       (DEST_WIDTH),
-  //   .USER_ENABLE      (USER_ENABLE),
-  //   .USER_WIDTH       (USER_WIDTH),
-  //   .OP_MODE          (2),
-  //   .REG_TYPE         (2)
-  // ) axis_alu_mlt_inst (
-  //   .clk              (clk),
-  //   .rst              (rst),
-  //   .s_axis_tdata_op0 (stage_3_in_axis_data_tdata_op0),
-  //   .s_axis_tdata_op1 (stage_3_in_axis_data_tdata_op1),
-  //   .s_axis_tvalid    (stage_3_in_axis_data_tvalid),
-  //   .s_axis_tready    (stage_3_in_axis_data_tready),
-  //   .s_axis_tlast     (stage_3_in_axis_data_tlast),
-  //   .s_axis_tid       (stage_3_in_axis_data_tid),
-  //   .s_axis_tdest     (stage_3_in_axis_data_tdest),
-  //   .s_axis_tuser     (stage_3_in_axis_data_tuser),
-  //   .m_axis_tdata     (stage_3_out_axis_data_tdata),
-  //   .m_axis_tvalid    (stage_3_out_axis_data_tvalid),
-  //   .m_axis_tready    (stage_3_out_axis_data_tready),
-  //   .m_axis_tlast     (stage_3_out_axis_data_tlast),
-  //   .m_axis_tid       (stage_3_out_axis_data_tid),
-  //   .m_axis_tdest     (stage_3_out_axis_data_tdest),
-  //   .m_axis_tuser     (stage_3_out_axis_data_tuser)
-  // );
+  (* use_dsp="yes" *) 
+   wire signed [MTL_WIDTH-1:0] stage_3_in_axis_data_tdata = stage_3_in_axis_data_tdata_op0 * stage_3_in_axis_data_tdata_op1;
 
-  // Stage 3 Skid Register
-  axis_register #(
-    .DATA_WIDTH       (MTL_WIDTH),
-    .KEEP_ENABLE      (0),
-    .KEEP_WIDTH       (1),
-    .LAST_ENABLE      (1),
-    .ID_ENABLE        (ID_ENABLE),
-    .ID_WIDTH         (ID_WIDTH),
-    .DEST_ENABLE      (DEST_ENABLE),
-    .DEST_WIDTH       (DEST_WIDTH),
-    .USER_ENABLE      (USER_ENABLE),
-    .USER_WIDTH       (USER_WIDTH),
-    .REG_TYPE         (2)
-  ) axis_alu_mlt_inst (
-    .clk              (clk),
-    .rst              (rst),
-    .s_axis_tdata     (stage_3_in_axis_data_tdata),
-    .s_axis_tkeep     (1'b1),
-    .s_axis_tvalid    (stage_3_in_axis_data_tvalid),
-    .s_axis_tready    (stage_3_in_axis_data_tready),
-    .s_axis_tlast     (stage_3_in_axis_data_tlast),
-    .s_axis_tid       (stage_3_in_axis_data_tid),
-    .s_axis_tdest     (stage_3_in_axis_data_tdest),
-    .s_axis_tuser     (stage_3_in_axis_data_tuser),
-    .m_axis_tdata     (stage_3_out_axis_data_tdata),
-    .m_axis_tvalid    (stage_3_out_axis_data_tvalid),
-    .m_axis_tready    (stage_3_out_axis_data_tready),
-    .m_axis_tlast     (stage_3_out_axis_data_tlast),
-    .m_axis_tid       (stage_3_out_axis_data_tid),
-    .m_axis_tdest     (stage_3_out_axis_data_tdest),
-    .m_axis_tuser     (stage_3_out_axis_data_tuser)
-  );
+   // Stage 3 Skid Register
+   axis_register #(
+     .DATA_WIDTH       (MTL_WIDTH),
+     .KEEP_ENABLE      (0),
+     .KEEP_WIDTH       (1),
+     .LAST_ENABLE      (1),
+     .ID_ENABLE        (ID_ENABLE),
+     .ID_WIDTH         (ID_WIDTH),
+     .DEST_ENABLE      (DEST_ENABLE),
+     .DEST_WIDTH       (DEST_WIDTH),
+     .USER_ENABLE      (USER_ENABLE),
+     .USER_WIDTH       (USER_WIDTH),
+     .REG_TYPE         (2)
+   ) axis_alu_mlt_inst (
+     .clk              (clk),
+     .rst              (rst),
+     .s_axis_tdata     (stage_3_in_axis_data_tdata),
+     .s_axis_tkeep     (1'b1),
+     .s_axis_tvalid    (stage_3_in_axis_data_tvalid),
+     .s_axis_tready    (stage_3_in_axis_data_tready),
+     .s_axis_tlast     (stage_3_in_axis_data_tlast),
+     .s_axis_tid       (stage_3_in_axis_data_tid),
+     .s_axis_tdest     (stage_3_in_axis_data_tdest),
+     .s_axis_tuser     (stage_3_in_axis_data_tuser),
+     .m_axis_tdata     (stage_3_out_axis_data_tdata),
+     .m_axis_tvalid    (stage_3_out_axis_data_tvalid),
+     .m_axis_tready    (stage_3_out_axis_data_tready),
+     .m_axis_tlast     (stage_3_out_axis_data_tlast),
+     .m_axis_tid       (stage_3_out_axis_data_tid),
+     .m_axis_tdest     (stage_3_out_axis_data_tdest),
+     .m_axis_tuser     (stage_3_out_axis_data_tuser)
+   );
 
   // Output Control Logic
   assign m_axis_data_tdata            = $signed(stage_3_out_axis_data_tdata[MTL_WIDTH-1:RSLT_LSB]);

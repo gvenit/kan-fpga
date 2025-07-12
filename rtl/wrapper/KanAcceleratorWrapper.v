@@ -12,13 +12,6 @@ python wrapper/KanAcceleratorInst.py --dma-width 64 --data-width 16 --data-frac-
 
 module KanAcceleratorWrapper #(
   /*------------------------------------------------------------------
-    Genreal parameters of the architecture
-  ------------------------------------------------------------------*/
-  
-  // Number of PEs in Processing Array k axis -- Number of batches per run
-  parameter BATCH_SIZE = 1,
-
-  /*------------------------------------------------------------------
     DMA parameters
   ------------------------------------------------------------------*/
   
@@ -133,6 +126,8 @@ module KanAcceleratorWrapper #(
     Various AXI parameters
   ------------------------------------------------------------------*/
 
+  // Propagate tlast signal
+  parameter WEIGHT_LAST_ENABLE = 0,
   // Propagate tid signal
   parameter WEIGHT_ID_ENABLE = 0,
   // tid signal width
@@ -141,7 +136,7 @@ module KanAcceleratorWrapper #(
   // Propagate tid signal
   parameter RSLT_ID_ENABLE = 1,
   // tid signal width
-  parameter RSLT_ID_WIDTH = (RSLT_ID_ENABLE) ? `LOG2(BATCH_SIZE) : 1,
+  parameter RSLT_ID_WIDTH = (RSLT_ID_ENABLE) ? `LOG2(1) : 1,
   // tid value
   parameter ID_OUTPUT = 0,
 
@@ -403,7 +398,7 @@ module KanAcceleratorWrapper #(
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
   input  wire                                       s_axis_wght_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TDATA" *)
-    (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
+    (* X_INTERFACE_PARAMETER = "HAS_TLAST WEIGHT_LAST_ENABLE, HAS_TSTRB 0, HAS_TREADY 1" *)
   input  wire [DMA_WIDTH-1:0]                       s_axis_wght_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TKEEP" *)
   input  wire [DMA_KEEP_WIDTH-1:0]                  s_axis_wght_tkeep,
@@ -455,7 +450,7 @@ module KanAcceleratorWrapper #(
   localparam GRID_STRB_WIDTH = GRID_WIDTH / 8;
   
   KanAccelerator #(
-    .BATCH_SIZE                     (BATCH_SIZE),
+    .BATCH_SIZE                     (1),
     .DMA_WIDTH                      (DMA_WIDTH),
     .DMA_KEEP_ENABLE                (DMA_KEEP_ENABLE),
     .DMA_KEEP_WIDTH                 (DMA_KEEP_WIDTH),
@@ -491,6 +486,7 @@ module KanAcceleratorWrapper #(
     .SCALED_DIFF_FRACTIONAL_BITS    (SCALED_DIFF_FRACTIONAL_BITS),
     .ACT_WIDTH                      (ACT_WIDTH),
     .ACT_FRACTIONAL_BITS            (ACT_FRACTIONAL_BITS),
+    .WEIGHT_LAST_ENABLE             (WEIGHT_LAST_ENABLE),
     .WEIGHT_ID_ENABLE               (WEIGHT_ID_ENABLE),
     .WEIGHT_ID_WIDTH                (WEIGHT_ID_WIDTH),
     .RSLT_ID_ENABLE                 (RSLT_ID_ENABLE),

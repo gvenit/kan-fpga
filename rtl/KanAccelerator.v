@@ -135,7 +135,8 @@ module KanAccelerator #(
   /*------------------------------------------------------------------
     Various AXI parameters
   ------------------------------------------------------------------*/
-
+  // Propagate tlast signal
+  parameter WEIGHT_LAST_ENABLE = 0,
   // Propagate tid signal
   parameter WEIGHT_ID_ENABLE = 0,
   // tid signal width
@@ -411,7 +412,7 @@ module KanAccelerator #(
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
   input  wire                                       s_axis_wght_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TDATA" *)
-    (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
+    (* X_INTERFACE_PARAMETER = "HAS_TLAST WEIGHT_LAST_ENABLE, HAS_TSTRB 0, HAS_TREADY 1" *)
   input  wire [DMA_WIDTH-1:0]                       s_axis_wght_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TKEEP" *)
   input  wire [DMA_KEEP_WIDTH-1:0]                  s_axis_wght_tkeep,
@@ -506,6 +507,7 @@ module KanAccelerator #(
   localparam SCALE_BRAM_ADDR = SCALE_ADDR - `RLOG2( SCALE_STRB_WIDTH ) - `RLOG2( SCALE_CHANNELS_IN );
 
   localparam PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR;
+  localparam PCKT_SIZE_NORM = DATA_BRAM_ADDR + GRID_BRAM_ADDR;
 
   // Number of Independent AXI-Stream Weight Channels
   localparam WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS;
@@ -564,10 +566,11 @@ module KanAccelerator #(
   wire [DATA_ADDR:0]              data_size;
   wire [GRID_ADDR:0]              grid_size;
   wire [SCALE_ADDR:0]             scle_size;
+  wire [PCKT_SIZE_WIDTH-1:0]      pckt_size;
   wire [DATA_BRAM_ADDR:0]         data_size_norm;
   wire [GRID_BRAM_ADDR:0]         grid_size_norm;
   wire [SCALE_BRAM_ADDR:0]        scle_size_norm;
-  wire [PCKT_SIZE_WIDTH-1:0]      pckt_size;
+  wire [PCKT_SIZE_NORM-1:0]       pckt_size_norm;
   wire [RSLT_CHANNELS-1:0]        use_channels;
   wire [BATCH_SIZE-1:0]           use_batch;
   wire                            internal_operation_error;
@@ -1314,13 +1317,14 @@ module KanAccelerator #(
     .DEST_WIDTH         (1),
     .USER_ENABLE        (0),
     .USER_WIDTH         (1),
-    .PCKT_WIDTH         (PCKT_SIZE_WIDTH),
-    .RAISE_NON_DIVISIBLE(1)
+    .PCKT_WIDTH         (PCKT_SIZE_NORM),
+    .IGNORE_TLAST       (!WEIGHT_LAST_ENABLE),
+    .RAISE_NON_DIVISIBLE(WEIGHT_LAST_ENABLE)
   ) axis_aps_wghts_inst (
     .clk                (core_clk),
     .rst                (core_rst),
     .operation_start    (operation_start),
-    .pckt_size          (pckt_size),
+    .pckt_size          (pckt_size_norm),
     .external_error     (aps_external_error),
     .operation_busy     (aps_operation_busy),
     .operation_complete (aps_operation_complete),
@@ -1810,7 +1814,7 @@ module KanAccelerator #(
   assign int_adp_wght_s_axis_tkeep   = s_axis_wght_tkeep;
   assign int_adp_wght_s_axis_tvalid  = s_axis_wght_tvalid;
   assign s_axis_wght_tready          = int_adp_wght_s_axis_tready;
-  assign int_adp_wght_s_axis_tlast   = s_axis_wght_tlast;
+  assign int_adp_wght_s_axis_tlast   = (WEIGHT_LAST_ENABLE) ? s_axis_wght_tlast : 1'b0;
 
   // connect slave axi adp to axi spl of the wght streams
 
@@ -1936,6 +1940,8 @@ module KanAccelerator #(
   assign data_size_norm = data_size >> `RLOG2( DATA_CHANNELS );
   assign grid_size_norm = grid_size >> `RLOG2( GRID_CHANNELS_IN );
   assign scle_size_norm = scle_size >> `RLOG2( SCALE_CHANNELS_IN );
+  // assign pckt_size_norm = pckt_size >> `RLOG2( GRID_CHANNELS_IN );
+  assign pckt_size_norm = pckt_size >> `RLOG2( DATA_CHANNELS * GRID_CHANNELS_IN);
 
   // assign peripheral_operation_busy     [PERIPHERAL_MCU] = mcu_operation_busy;
   // assign peripheral_operation_complete [PERIPHERAL_MCU] = mcu_operation_complete;

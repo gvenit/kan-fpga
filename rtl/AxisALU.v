@@ -114,6 +114,7 @@ genvar CHN;
 generate
 for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
   wire signed [OP0_WIDTH-1:0]  op0_i;
+  (* keep="soft" *)
   wire signed [OP1_WIDTH-1:0]  op1_i;
 
   if (REG_TYPE > 1) begin : skid_buffer_genblock
@@ -130,6 +131,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
     reg [USER_WIDTH-1:0] m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
 
     reg [OP0_WIDTH-1:0]  temp_m_axis_tdata_op0_reg = {OP0_WIDTH{1'b0}};
+    (* keep="soft" *)
     reg [OP1_WIDTH-1:0]  temp_m_axis_tdata_op1_reg = {OP1_WIDTH{1'b0}};
     reg                  temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
     reg                  temp_m_axis_tlast_reg  = 1'b0;
@@ -257,7 +259,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
     assign s_axis_tready [CHN] = s_axis_tready_reg;
 
     assign m_axis_tdata  [CHN*RSLT_WIDTH +: RSLT_WIDTH] = m_axis_tdata_reg;
-    assign m_axis_tvalid [CHN]                        = m_axis_tvalid_reg;
+    assign m_axis_tvalid [CHN]                          = m_axis_tvalid_reg;
 
     if (LAST_ENABLE) assign m_axis_tlast [CHN] = m_axis_tlast_reg ; 
     else             assign m_axis_tlast [CHN] = 1'b1;

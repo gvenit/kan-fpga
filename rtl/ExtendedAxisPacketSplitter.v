@@ -30,8 +30,10 @@ module ExtendedAxisPacketSplitter # (
   parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // Width of Packet Size
   parameter PCKT_WIDTH = 32,
+  // Ignore input packet sizes
+  parameter IGNORE_TLAST = 0,
   // Raise error flag if input packet non divisible
-  parameter RAISE_NON_DIVISIBLE = 1
+  parameter RAISE_NON_DIVISIBLE = !IGNORE_TLAST
 ) (
   input  wire                            clk,
   input  wire                            rst,
@@ -193,6 +195,8 @@ module ExtendedAxisPacketSplitter # (
         .PCKT_WIDTH(PCKT_WIDTH),
         // Allow locking module in its current state
         .ALLOW_LOCKS(1),
+        // Ignore input packet sizes
+        .IGNORE_TLAST(IGNORE_TLAST),
         // Raise error flag if input packet non divisible
         .RAISE_NON_DIVISIBLE(RAISE_NON_DIVISIBLE)
       ) axis_packet_splitter_inst (

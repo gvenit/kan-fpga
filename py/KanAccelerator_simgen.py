@@ -146,7 +146,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
 
     DATA_CHANNELS               : Localparam = params['DATA_CHANNELS']
     RSLT_CHANNELS               : Localparam = params['RSLT_CHANNELS']
-    BATCH_SIZE                  : Localparam = params['BATCH_SIZE']
+    # BATCH_SIZE                  : Localparam = params['BATCH_SIZE']
     SCALE_SHARE                 : Localparam = params['SCALE_SHARE']
     GRID_SHARE                  : Localparam = params['GRID_SHARE']
     DATA_WIDTH                  : Localparam = params['DATA_WIDTH']
@@ -175,7 +175,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     
     RSLT_CHANNELS.value = I
     DATA_CHANNELS.value = J
-    BATCH_SIZE.value  = K
+    # BATCH_SIZE.value  = K
     DATA_WIDTH.value = data_width
     DATA_STRB_WIDTH.value = data_width // 8
     DATA_FRACTIONAL_BITS.value = data_width-3
@@ -419,10 +419,11 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     grid_len = 8
     scale_len = (1,1,1) if SCALE_SHARE.value else (1,data_len,grid_len)
     rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
-    weight_len = data_len*grid_len
+    weight_len = data_len * grid_len
     adder_size = 64
-    pckt_len = (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value))
-    # print(data_len,grid_len,scale_len,rslt_len,weight_len)
+    pckt_len = (data_len * grid_len) # >> int(np.ceil(np.log2(DATA_CHANNELS.value)))
+    # pckt_len = (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value))
+    # print(data_len,grid_len,scale_len,rslt_len,weight_len,pckt_len)
     
     # Create data - size = [BATCH X DATA X 1]
     layer_data = torch.randn(K, data_len, 1, device=device)
@@ -872,11 +873,12 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     )
         
     # Weight coordinator
-    test_wght = torch.stack( torch.split(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)), DATA_CHANNELS.value,0) ).cpu().to(final_dtype).reshape(-1).tolist()
+    test_wght = torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)).cpu().to(final_dtype).reshape(-1).tolist()
     
     ## Weight driver
     intra_wght = module.Integer('intra_wght')
     total_wght = module.Integer('total_wght')
+    update_total_wght = module.Reg('update_total_wght')
     wght_global_stage = module.Integer('wght_global_stage')
     
     module.Initial(
@@ -915,7 +917,11 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                     ),
                     total_wght.inc(),
                 ),
-                s_axis_wght_tlast(total_wght == len(test_wght)-1),
+                # Display('---- Hit weight %d at %0t', total_wght, SystemTask('time')),
+                # s_axis_wght_tlast(0),
+                # s_axis_wght_tlast(total_wght == len(test_wght)),
+                # s_axis_wght_tlast(Ands(total_wght,(total_wght % 254 == 0))),
+                s_axis_wght_tlast(1),
                 While(Ands(~s_axis_wght_tready, ~s_axis_wght_areset, wght_global_stage == global_stage_counter))(
                     Wait(s_axis_wght_aclk),
                     Wait(~s_axis_wght_aclk),
@@ -961,7 +967,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     total_rslt = [module.Integer(f'total_rslt_{batch}') for batch in range(K)]
     # curr_batch = module.Integer('curr_batch')
     rslt_global_stage = module.Integer('rslt_global_stage')
-    update_total = module.Reg('update_total')
+    update_total_rslt = module.Reg('update_total_rslt')
     rslt_buffer = module.Reg('rslt_buffer', DATA_WIDTH)
     
     module.Initial(
@@ -998,18 +1004,18 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                                 ), 
                                 intra_rslt.inc()
                             )(
-                                update_total(1),
-                                For(rslt_buffer(rslt_buffer), update_total, rslt_buffer((m_axis_rslt_tkeep >> (intra_rslt * DATA_STRB_WIDTH) & EmbeddedNumeric("{DATA_STRB_WIDTH{1'b1}}"))))(
-                                    update_total(0),
+                                update_total_rslt(1),
+                                For(rslt_buffer(rslt_buffer), update_total_rslt, rslt_buffer((m_axis_rslt_tkeep >> (intra_rslt * DATA_STRB_WIDTH) & EmbeddedNumeric("{DATA_STRB_WIDTH{1'b1}}"))))(
+                                    update_total_rslt(0),
                                 ),
                                 # Display("DEBUG: KEEP %h >> %2d = %h -> %b", m_axis_rslt_tkeep, (intra_rslt * DATA_STRB_WIDTH), m_axis_rslt_tkeep >> (intra_rslt * DATA_STRB_WIDTH), rslt_buffer),
                                 Case(total_rslt_i)(*[
                                     When(i)(
                                         If(rslt_buffer == EmbeddedNumeric("{DATA_STRB_WIDTH{1'b1}}"))(
                                             AssertTrue(total_rslt_i < rslt_len),
-                                            update_total(1),
-                                            For(rslt_buffer(rslt_buffer), update_total, rslt_buffer(m_axis_rslt_tdata >> (intra_rslt * DATA_WIDTH)))(
-                                                update_total(0),
+                                            update_total_rslt(1),
+                                            For(rslt_buffer(rslt_buffer), update_total_rslt, rslt_buffer(m_axis_rslt_tdata >> (intra_rslt * DATA_WIDTH)))(
+                                                update_total_rslt(0),
                                             ),
                                     Display("DEBUG: DATA %h >> %2d = %h -> %h", m_axis_rslt_tdata, (intra_rslt * DATA_WIDTH), m_axis_rslt_tdata >> (intra_rslt * DATA_WIDTH), rslt_buffer),
                                             AssertAbsDiffLE(rslt_buffer, test_rslt_i,1),
@@ -1019,13 +1025,13 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                                             ).Elif(intra_rslt == DMA_STRB_WIDTH - 1)(
                                                 AssertFalse(m_axis_rslt_tlast),
                                             ),
-                                            update_total(1),
+                                            update_total_rslt(1),
                                         ) 
                                     ) for i, test_rslt_i in enumerate(test_rslt_batch)
                                 ], When()(AssertTrue(0))
                                 ),
-                                For(total_rslt_i(total_rslt_i), update_total, total_rslt_i.inc())(
-                                    update_total(0),
+                                For(total_rslt_i(total_rslt_i), update_total_rslt, total_rslt_i.inc())(
+                                    update_total_rslt(0),
                                 ),
                             ),
                             Display('Total after iteration : %3d', total_rslt_i),
@@ -1122,8 +1128,8 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
-        *control_wr_seq('CTRL_REG_PCKT_LEN', (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value)), AXIL_CTRL_STRB_WIDTH),
-        *control_wr_seq('CTRL_REG_BTCH_LEN', BATCH_SIZE, 1),
+        *control_wr_seq('CTRL_REG_PCKT_LEN', pckt_len, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_BTCH_LEN', K, 1),
         *control_wr_seq('CTRL_REG_DATA_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_SCLE_LDR', 1, 1),
@@ -1142,7 +1148,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_rd_seq('CTRL_REG_PCKT_LEN', ctrl_buffer, AXIL_CTRL_STRB_WIDTH),
         Assert(ctrl_buffer, pckt_len ),
         *control_rd_seq('CTRL_REG_BTCH_LEN', ctrl_buffer, 1),
-        Assert(ctrl_buffer, BATCH_SIZE),
+        Assert(ctrl_buffer, K),
         *control_rd_seq('CTRL_REG_DATA_LDR', ctrl_buffer, 1),
         Assert(ctrl_buffer, 1),
         *control_rd_seq('CTRL_REG_GRID_LDR', ctrl_buffer, 1),
@@ -1482,7 +1488,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
-        *control_wr_seq('CTRL_REG_PCKT_LEN', (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value)), AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_PCKT_LEN', pckt_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_BTCH_LEN', K, 1),
         *control_wr_seq('CTRL_REG_DATA_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
@@ -1673,7 +1679,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
-        *control_wr_seq('CTRL_REG_PCKT_LEN', (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value)), AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_PCKT_LEN', pckt_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_BTCH_LEN', K, 1),
         *control_wr_seq('CTRL_REG_DATA_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
@@ -1772,7 +1778,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_GRID_LEN', grid_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_SCLE_LEN', scle_len_reduced, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_RSLT_LEN', rslt_len, AXIL_CTRL_STRB_WIDTH),
-        *control_wr_seq('CTRL_REG_PCKT_LEN', (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value)), AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_PCKT_LEN', pckt_len, AXIL_CTRL_STRB_WIDTH),
         *control_wr_seq('CTRL_REG_BTCH_LEN', K, 1),
         *control_wr_seq('CTRL_REG_DATA_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, 1),
@@ -1883,12 +1889,13 @@ def main():
     ## I = Results, J = Data, K = Batch
     
     for I,J,K in (
-        (1,1,1),
-        (1,2,1),
-        (8,1,1),
-        (1,1,3),
-        (2,2,1),
-        (2,2,2),
+        # (1,1,1),
+        # (1,2,1),
+        # (8,1,1),
+        # (1,1,3),
+        # (2,2,1),
+        # (2,2,2),
+        (8,2,1),
         # (2,3,1),
         # (4,2,1),
         # (4,4,1),

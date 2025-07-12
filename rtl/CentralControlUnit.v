@@ -399,6 +399,25 @@ module CentralControlUnit #(
   // Check if all components are in error state
   reg  internal_error_asserted;
 
+  // Check if pl2ps is raised
+  reg int_pl2ps = 1'b0;
+  reg pl2ps_raised = 1'b0;
+
+  always @(*) begin
+    pl2ps_intr <= int_pl2ps;
+    if (pl2ps_raised) begin
+      pl2ps_intr <= 1'b0;
+    end
+  end
+
+  always @(posedge fsm_clk ) begin
+    if (fsm_rst) begin
+      pl2ps_raised  <= 1'b0;
+    end else begin
+      pl2ps_raised  <= int_pl2ps;
+    end
+  end
+
   // Global FSM state logic
   always @(posedge fsm_clk ) begin
     if (fsm_rst) begin
@@ -425,7 +444,7 @@ module CentralControlUnit #(
       iteration_reg         <= {24{1'b0}};
 
       locked      <= 1'b0;
-      pl2ps_intr  <= 1'b0;
+      int_pl2ps  <= 1'b0;
 
       interrupt_soft_reg        <= 1'b0;
       interrupt_soft_reg_early  <= 1'b0;
@@ -451,7 +470,7 @@ module CentralControlUnit #(
       operation_error       <= 1'b0;
 
       locked      <= locked_next;
-      pl2ps_intr  <= 1'b0;
+      int_pl2ps  <= 1'b0;
 
       // Soft Interrupts -- Capture soft interrupts, activate at the end of an iteration
       interrupt_soft_reg        <= interrupt_soft_reg;
@@ -486,7 +505,7 @@ module CentralControlUnit #(
 
           operation_busy  <= 1'b1;
 
-          pl2ps_intr  <= 1'b1;
+          int_pl2ps  <= 1'b1;
         end
         FSM_OPE: begin
           if (fsm_state == FSM_STR)
@@ -508,18 +527,18 @@ module CentralControlUnit #(
             interrupt_soft_reg_early  <= 1'b0;
 
             operation_start <= ~(interrupt_soft_reg_early || interrupt_soft);
-            pl2ps_intr  <= 1'b1;
+            int_pl2ps  <= 1'b1;
           end
         end
         FSM_END: begin
           operation_complete <= 1'b1;
-          pl2ps_intr  <= 1'b1;
+          int_pl2ps  <= 1'b1;
         end
         FSM_ERR: begin
           internal_operation_error  <= ~(internal_error_asserted || core_rst);
           operation_error           <= 1'b1;
           interrupt_soft_reg        <= interrupt_soft_reg_early || interrupt_soft;
-          pl2ps_intr                <= 1'b1;
+          int_pl2ps                <= 1'b1;
           internal_error_asserted   <= internal_error_asserted || core_rst;
         end
         FSM_ITR: begin

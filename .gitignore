@@ -41,6 +41,7 @@ temp
 
 #vitis
 vitis/System_Versions/Version_0/RemoteSystemsTempFiles
+vitis/lib
 *log
 *.metadata
 *logs

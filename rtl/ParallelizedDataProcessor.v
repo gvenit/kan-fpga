@@ -157,7 +157,7 @@ module ParallelizedDataProcessor #(
   wire [DATA_CHANNELS_OUT*DEST_WIDTH-1:0]      int_axis_srl_func_tdest;
   wire [DATA_CHANNELS_OUT*USER_WIDTH-1:0]      int_axis_srl_func_tuser;
   
-  RSWAFFunction #(
+  RadialBasisFunctionUnit #(
     // Width of AXI stream Input Data & Grid interfaces in bits
     .DATA_WIDTH(DATA_WIDTH),
     // Fractional bits of input data & grid
