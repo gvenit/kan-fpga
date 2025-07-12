@@ -19,3 +19,10 @@ platform generate
 platform active {kan_pl}
 platform config -updatehw {C:/Users/giann/Downloads/mixed16_4x4x1_wrapper.xsa}
 platform generate -domains 
+platform active {kan_pl}
+platform config -updatehw {D:/Yannos/FILES/PROGRAMS/FPGA/SoC/KAN/gvenit_design/kan-fpga/vitis/Hardware_Files/mixed16_4x4x1_wrapper.xsa}
+platform generate -domains 
+platform config -updatehw {C:/Users/giann/Downloads/mixed16_4x4x1_wrapper.xsa}
+platform generate -domains 
+platform clean
+platform generate
