@@ -168,6 +168,8 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     GRID_ADDR                   : Localparam = params['GRID_ADDR']
     SCALE_ADDR                  : Localparam = params['SCALE_ADDR']
     
+    WEIGHT_LAST_ENABLE          : Localparam = params['WEIGHT_LAST_ENABLE']
+    
     if ('DATA_STRB_WIDTH' not in params):
         DATA_STRB_WIDTH         = module.Localparam('DATA_STRB_WIDTH', DATA_WIDTH / 8)
     else :
@@ -196,6 +198,8 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     AXIL_CTRL_WIDTH =  module.Localparam('AXIL_CTRL_WIDTH',32)
     AXIL_CTRL_STRB_WIDTH =  module.Localparam('AXIL_CTRL_STRB_WIDTH',4)
     CLOG_AXIL_CTRL_STRB_WIDTH = module.Localparam('CLOG_AXIL_CTRL_STRB_WIDTH', 2)
+    
+    WEIGHT_LAST_ENABLE.value = 0
     
     if SCALE_SHARE.value :
         SCALE_ADDR.value *= 4

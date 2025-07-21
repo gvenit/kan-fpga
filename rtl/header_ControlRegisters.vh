@@ -89,3 +89,7 @@
   parameter CTRL_REG_OPER_STS_MASK_VLD = 16,
   // Control Register Mask: core reset
   parameter CTRL_REG_OPER_STS_MASK_RST = 32,
+  // Control Register Mask: operation error from MCU
+  parameter CTRL_REG_OPER_STS_MASK_ERR_MCU = 64,
+  // Control Register Mask: operation error from DPU
+  parameter CTRL_REG_OPER_STS_MASK_ERR_DPU = 128,
