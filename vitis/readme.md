@@ -99,8 +99,10 @@ First these headers act as ma
 - [ ] write somewhere in a contract that pl2ps interrupt triggers with the status register (27) change but not with reset and valid fields.
 - [x] null interrupt register (26) jic
 - [x] create a state getter function based on the one from gvenit
-- [ ] weight loaded ack should be after the dma rx initiation
+- [x] weight loaded ack should be after the dma rx initiation
 - [x] do operation start ffs
+- [ ] remove DEF_DBG everywhere not needed and also remove the kan_defines.h and xil_printf.h if it is only impolrted for debugging purposes
+- [ ] optimize the callback and the state getter function
 
 
 <br>
