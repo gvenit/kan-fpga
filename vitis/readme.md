@@ -2,6 +2,18 @@
 
 To avoid clatter ASW software on the PS is documented here. Even though there are many subdirectories, mainly to keep all the vitis tests seperated because Vitis tends to crash if I mix them together and work on a single workspace.
 
+***Imortant** : _all the PS projetcs are in [System_Versions](./System_Versions/) every time I abandon an old version and go for a new one I remove all the C source files from the other one and various other files so that VSCode will not have conflicts. I only leave important stuff behind for that particular version. In other cases I delete them altogether._
+
+<br>
+
+## Build amd Setup notes
+
+Whenever you start a new system version make sure to do the following:
+1. The platform must be able to build on its own
+2. Copy paste the src and inc folders to the application folder
+3. Go to the properties of the application (not the platform) and go to `C/C++ General/Path and Symbols` and in the Includes tab add the inc folder as a workspace directory
+
+
 <br>
 
 ## Project outlines
@@ -57,7 +69,7 @@ First these headers act as ma
 - [x] add volatile wherever it is needed
 - [x] data and results do not need strides and they are not knownn from the beggining
 - [x] old dma examples had cache flushes that need to be imlpemented somehow
-- [ ] having status variable be `kan_status_t` in the source code might pose problems even if it is compatible with the defines in `xstatus.h`
+- [x] having status variable be `kan_status_t` in the source code might pose problems even if it is compatible with the defines in `xstatus.h`
 - [ ] not sure if deallocation function are needed (for example in the `kan_config.h`)
 - [ ] I do not have status everywhere. Should I check it more?
 - [ ] Dma examples had a number of transfers, something like a for loop to attempt to do the dma transaction multiple times. I am not sure if it is needed. I have the macro for it in `kan_defines.h` commented out and not no such implementation in the main code.
@@ -76,9 +88,28 @@ First these headers act as ma
   - [ ] every layer
   - [ ] _hardware metrics_
 - [x] grid and scale have banks 4
-- [ ] change the linker script too and the datasets I think ***this is the reason why the memcpys fail as of now***
+- [x] change the linker script too and the datasets I think ***this is the reason why the memcpys fail as of now***
+- [ ] make the memcpy more plain again since it wasn't the bug
+- [x] add contract to kan layer config function
+- [ ] You need a results memory space and a way to dump it
+- [x] add contract to `kan_dma_disable_irq`
+- [x] maybe seperate the dma interrupt attachment from the initialization because there is too much overhead in every layer call
+- [x] make banks to channels
+- [ ] add contract to interrupt callback and maybe better contracts in the interrupt library and to the new kan_control.h functions
+- [ ] write somewhere in a contract that pl2ps interrupt triggers with the status register (27) change but not with reset and valid fields.
+- [x] null interrupt register (26) jic
+- [x] create a state getter function based on the one from gvenit
+- [x] weight loaded ack should be after the dma rx initiation
+- [x] do operation start ffs
+- [ ] remove DEF_DBG everywhere not needed and also remove the kan_defines.h and xil_printf.h if it is only impolrted for debugging purposes
+- [ ] optimize the callback and the state getter function
+
 
 <br>
+
+## Issues and notes on the execution
+
+- [ ] after configuration the status of the core is idle not configuration valid...
 
 ## Inquiries
 
@@ -95,7 +126,4 @@ First these headers act as ma
 - [ ] there are not deinit functions. Are they needed?
 - [x] Should I disable both data and instruction cache? I only disable data cache for now. Instruction might be good for memory operations
 - [ ] weight loaded reg should not exist
-
-
-
 

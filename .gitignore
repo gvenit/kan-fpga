@@ -28,18 +28,27 @@ graphs
 dot
 
 temp
+# auxiliary
+*.o
+*.exe
+*.raw
+*.bin
 
 # vivado
 vivado/*/*
 !vivado/*/*.tcl
 
 
-#vitis
+# vitis
+vitis/*
+!vitis/System_Versions
+!vitis/Hardware_Files
 vitis/System_Versions/Version_0/RemoteSystemsTempFiles
-vitis/lib
 *log
 *.metadata
 *logs
 *_temp
 *.analytics
 *Packages
+*_test
+*_unused
