@@ -9,15 +9,15 @@
  `include "header_utils.vh"
   // PS to PL
   // Configuration signals -- Nulled from PL at the end of the operation -- READ-WRITE
-  // Control Register : data length -- 4B -- Equals data_len / data_banks
+  // Control Register : data length -- 4B 
   parameter CTRL_REG_DATA_LEN = 0,
-  // Control Register : grid length -- 4B -- Equals grid_len / grid_banks
+  // Control Register : grid length -- 4B 
   parameter CTRL_REG_GRID_LEN = 4,
-  // Control Register : scale lengh -- 4B -- Equals scle_len / scale_banks
+  // Control Register : scale lengh -- 4B 
   parameter CTRL_REG_SCLE_LEN = 8,
-  // Control Register : result length -- 4B -- Equals rslt_len
+  // Control Register : result length -- 4B 
   parameter CTRL_REG_RSLT_LEN = 12,
-  // Control Register : packet length -- 4B -- Equals (data_len / data_banks) * (grid_len / grid_banks)
+  // Control Register : packet length -- 4B -- Equals data_len * grid_len
   parameter CTRL_REG_PCKT_LEN = 16,
   // Control Register : batch length -- 1B
   parameter CTRL_REG_BTCH_LEN = 20,
@@ -89,3 +89,7 @@
   parameter CTRL_REG_OPER_STS_MASK_VLD = 16,
   // Control Register Mask: core reset
   parameter CTRL_REG_OPER_STS_MASK_RST = 32,
+  // Control Register Mask: operation error from MCU
+  parameter CTRL_REG_OPER_STS_MASK_ERR_MCU = 64,
+  // Control Register Mask: operation error from DPU
+  parameter CTRL_REG_OPER_STS_MASK_ERR_DPU = 128,

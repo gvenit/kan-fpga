@@ -15,9 +15,17 @@ parser.add_argument('-o','--fr-bits-out', type=int, dest='fr_bits_out')
 parser.add_argument('-N','--natural', action='store_true', dest='natural')
 
 args = parser.parse_args()
+num_bits_in = None
 
 ### Check dtype of input data validity
 try:
+    if str(args.dtype_in).isnumeric():
+        num_bits_in = int(args.dtype_in)
+        args.dtype_in = 2 ** int(np.ceil(np.log2(num_bits_in)))
+        if args.natural :
+            args.dtype_in = f'uint{args.dtype_in}'
+        else:
+            args.dtype_in = f'int{args.dtype_in}'
     args.dtype_in = np.dtype(args.dtype_in)
 except Exception as e:
     raise ValueError('Invalid value for argument "dtype_in" : {dtype}', args.dtype_in) from e
@@ -29,9 +37,10 @@ except Exception as e:
     raise ValueError('Invalid value for argument "dtype_out" : {dtype}', args.dtype_out) from e
 
 ### Check number of fractional bits of input data validity
-num_bits_in = args.dtype_in.name.split('int')[-1]
+if num_bits_in is None:
+    num_bits_in = args.dtype_in.name.split('int')[-1]
 
-if  num_bits_in.isnumeric() :
+if  str(num_bits_in).isnumeric() :
     num_bits_in = int(num_bits_in)
 
     if args.fr_bits_in is None :

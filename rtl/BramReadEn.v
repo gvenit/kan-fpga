@@ -14,11 +14,12 @@
 */
 
 module BramReadEn #(
-  parameter DATA_WIDTH = 32,
   parameter ADDR_WIDTH = 16,
+  parameter DATA_WIDTH = 32,
   parameter STRB_WIDTH = (DATA_WIDTH/8)
 ) (
-  input  wire                     clk,
+  input  wire                     clka,
+  input  wire                     clkb,
 
   input  wire                     rdena,
   input  wire                     wrena,
@@ -26,13 +27,15 @@ module BramReadEn #(
   input  wire [ADDR_WIDTH-1:0]    addra,
   input  wire [DATA_WIDTH-1:0]    dina,
   output wire [DATA_WIDTH-1:0]    douta,
+  output wire                     dacka,
   
   input  wire                     rdenb,
   input  wire                     wrenb,
   input  wire [STRB_WIDTH-1:0]    wrstrbb,
   input  wire [ADDR_WIDTH-1:0]    addrb,
   input  wire [DATA_WIDTH-1:0]    dinb,
-  output wire [DATA_WIDTH-1:0]    doutb
+  output wire [DATA_WIDTH-1:0]    doutb,
+  output wire                     dackb
 );
 
   /********************************
@@ -48,15 +51,18 @@ module BramReadEn #(
 
   integer i, j;
 
-  reg [DATA_WIDTH-1:0] rddata_a;
-  reg [DATA_WIDTH-1:0] rddata_b;
+  reg [DATA_WIDTH-1:0] rddata_a = 0;
+  reg [DATA_WIDTH-1:0] rddata_b = 0;
   reg [DATA_WIDTH-1:0] ram [0:DEPTH-1];
+
+  reg rdack_a = 0;
+  reg rdack_b = 0;
 
   /********************************
   Always blocks
   ********************************/
 
-  always @ (posedge clk) begin
+  always @ (posedge clka) begin
     if (rdena) begin
       rddata_a <= ram[addra];
     end else if (wrena) begin
@@ -65,9 +71,10 @@ module BramReadEn #(
           ram[addra][WORD_SIZE*i +: WORD_SIZE] <= dina[WORD_SIZE*i +: WORD_SIZE];
       end
     end
+    rdack_a <= rdena;
   end
 
-  always @ (posedge clk) begin
+  always @ (posedge clkb) begin
     if (rdenb) begin
       rddata_b <= ram[addrb];
     end else if (wrenb) begin
@@ -76,6 +83,7 @@ module BramReadEn #(
           ram[addrb][WORD_SIZE*i +: WORD_SIZE] <= dinb[WORD_SIZE*i +: WORD_SIZE];
       end
     end
+    rdack_b <= rdenb;
   end
 
   /********************************
@@ -84,6 +92,9 @@ module BramReadEn #(
 
   assign douta = rddata_a;
   assign doutb = rddata_b;
+
+  assign dacka = rdack_a;
+  assign dackb = rdack_b;
 
 endmodule
 

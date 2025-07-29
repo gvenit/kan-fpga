@@ -38,8 +38,8 @@ module AxisRom #(
   // 0 to bypass, 1 for simple buffer, 2 for skid buffer
   parameter REG_TYPE = 2
 ) (
-  input  wire                                 clk,
-  input  wire                                 rst,
+  input  wire [CHANNELS-1:0]                  clk,
+  input  wire [CHANNELS-1:0]                  rst,
 
   /*
    * AXI Stream Data input
@@ -64,14 +64,6 @@ module AxisRom #(
   output wire [CHANNELS*USER_WIDTH-1:0]       m_axis_tuser
 );
 
-  // // LUTRAM Configuration
-  // (* ROM_STYLE="BLOCK" *)
-  // reg [DATA_WIDTH-1:0] mem [0:2**ADDR_WIDTH-1];
-
-  // initial begin
-  //   $readmemh(ROM_DATA_PATH, mem);
-  // end
-    
   wire [CHANNELS*ADDR_WIDTH-1:0] addr;
   wire [CHANNELS*DATA_WIDTH-1:0] data;
   wire [CHANNELS-1:0]            en;
@@ -122,7 +114,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
   wire [ADDR_WIDTH-1:0] addr_i;
   wire                  en_i;
 
-  assign addr[CHN*DATA_WIDTH +: DATA_WIDTH] = addr_i;
+  assign addr[CHN*ADDR_WIDTH +: ADDR_WIDTH] = addr_i;
   assign en  [CHN]                          = en_i;
 
   wire [DATA_WIDTH-1:0] data_i = data [CHN*DATA_WIDTH +: DATA_WIDTH];
@@ -198,7 +190,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       end
     end
 
-    always @(posedge clk) begin
+    always @(posedge clk [CHN]) begin
       s_axis_tready_reg <= s_axis_tready_early;
       m_axis_tvalid_reg <= m_axis_tvalid_next;
       temp_m_axis_tvalid_reg <= temp_m_axis_tvalid_next;
@@ -224,7 +216,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
         temp_m_axis_tuser_reg <= s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH];
       end
 
-      if (rst) begin
+      if (rst [CHN]) begin
         s_axis_tready_reg <= 1'b0;
         m_axis_tvalid_reg <= 1'b0;
         temp_m_axis_tvalid_reg <= 1'b0;
@@ -282,7 +274,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       end
     end
 
-    always @(posedge clk) begin
+    always @(posedge clk [CHN]) begin
       s_axis_tready_reg <= s_axis_tready_early;
       m_axis_tvalid_reg <= m_axis_tvalid_next;
 
@@ -294,7 +286,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
         m_axis_tuser_reg <= s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH];
       end
 
-      if (rst) begin
+      if (rst [CHN]) begin
         s_axis_tready_reg <= 1'b0;
         m_axis_tvalid_reg <= 1'b0;
       end

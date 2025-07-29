@@ -138,7 +138,7 @@ module DataProcessor #(
   wire [DATA_CHANNELS*DEST_WIDTH-1:0]                 int_axis_act_func_tdest;
   wire [DATA_CHANNELS*USER_WIDTH-1:0]                 int_axis_act_func_tuser;
   
-  RSWAFFunction #(
+  RadialBasisFunctionUnit #(
     // Width of AXI stream Input Data & Grid interfaces in bits
     .DATA_WIDTH(DATA_WIDTH),
     // Fractional bits of input data & grid

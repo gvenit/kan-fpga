@@ -30,8 +30,10 @@ module AxisPacketSplitter #(
   parameter PCKT_WIDTH = 32,
   // Allow locking module in its current state
   parameter ALLOW_LOCKS = 1,
+  // Ignore input packet sizes
+  parameter IGNORE_TLAST = 0,
   // Raise error flag if input packet non divisible
-  parameter RAISE_NON_DIVISIBLE = 1
+  parameter RAISE_NON_DIVISIBLE = !IGNORE_TLAST
 ) (
   input  wire                   clk,
   input  wire                   rst,
@@ -104,12 +106,16 @@ module AxisPacketSplitter #(
 
   assign s_axis_tready     = operation_busy && s_axis_tready_int;
   wire   s_axis_tvalid_int = operation_busy && s_axis_tvalid;
-  wire   s_axis_tlast_int  = generate_tlast || s_axis_tlast;
+  wire   s_axis_tlast_int  = generate_tlast || (!IGNORE_TLAST && s_axis_tlast);
 
   // Global FSM state logic
   always @(posedge clk ) begin
     if (rst) begin
       fsm_state <= FSM_STR;
+      
+      operation_busy        <= 1'b0;
+      operation_complete    <= 1'b0;
+      operation_error       <= 1'b0;
 
     end else begin
       fsm_state <= fsm_state_next;
@@ -168,14 +174,19 @@ module AxisPacketSplitter #(
         end
         FSM_OPE: begin
           fsm_state_next <= FSM_OPE;
-          if (get_next && s_axis_tlast) begin
-            if (generate_tlast) begin
-              fsm_state_next <= FSM_END;
-            end else if (RAISE_NON_DIVISIBLE) begin
-              fsm_state_next <= FSM_ERR;
-            end else begin
-              fsm_state_next <= FSM_END;
-            end
+          if (get_next) begin
+            if (IGNORE_TLAST) begin
+              if(generate_tlast)
+                fsm_state_next <= FSM_END;
+            end else if (s_axis_tlast) begin
+              if (generate_tlast) begin
+                fsm_state_next <= FSM_END;
+              end else if (RAISE_NON_DIVISIBLE) begin
+                fsm_state_next <= FSM_ERR;
+              end else begin
+                fsm_state_next <= FSM_END;
+              end
+            end  
           end
         end
         FSM_END: begin

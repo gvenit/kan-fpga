@@ -52,8 +52,8 @@ module AxisALU #(
   // 0 to bypass, 1 for simple buffer, 2 for skid buffer
   parameter REG_TYPE = 2
 ) (
-  input  wire                                 clk,
-  input  wire                                 rst,
+  input  wire [CHANNELS-1:0]                  clk,
+  input  wire [CHANNELS-1:0]                  rst,
 
   /*
    * AXI Stream Data input
@@ -113,8 +113,9 @@ THE SOFTWARE.
 genvar CHN;
 generate
 for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
-  wire [OP0_WIDTH-1:0]  op0_i;
-  wire [OP1_WIDTH-1:0]  op1_i;
+  wire signed [OP0_WIDTH-1:0]  op0_i;
+  (* keep="soft" *)
+  wire signed [OP1_WIDTH-1:0]  op1_i;
 
   if (REG_TYPE > 1) begin : skid_buffer_genblock
     // skid buffer, no bubble cycles
@@ -130,6 +131,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
     reg [USER_WIDTH-1:0] m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
 
     reg [OP0_WIDTH-1:0]  temp_m_axis_tdata_op0_reg = {OP0_WIDTH{1'b0}};
+    (* keep="soft" *)
     reg [OP1_WIDTH-1:0]  temp_m_axis_tdata_op1_reg = {OP1_WIDTH{1'b0}};
     reg                  temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
     reg                  temp_m_axis_tlast_reg  = 1'b0;
@@ -187,17 +189,17 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       end
     end
 
-    always @(posedge clk) begin
+    always @(posedge clk[CHN]) begin
       s_axis_tready_reg <= s_axis_tready_early;
       m_axis_tvalid_reg <= m_axis_tvalid_next;
       temp_m_axis_tvalid_reg <= temp_m_axis_tvalid_next;
 
       if (store_axis_input_to_output || store_axis_temp_to_output) begin
         case (OP_MODE)
-          0 :      m_axis_tdata_reg <= $signed(op0_i) + $signed(op1_i); // ADD : 0
-          1 :      m_axis_tdata_reg <= $signed(op0_i) - $signed(op1_i); // SUB : 1
-          2 :      m_axis_tdata_reg <= $signed(op0_i) * $signed(op1_i); // MLT : 2
-          3 :      m_axis_tdata_reg <= `ABS( op0_i );                   // ABS : 3
+          0 :      m_axis_tdata_reg <= op0_i + op1_i; // ADD : 0
+          1 :      m_axis_tdata_reg <= op0_i - op1_i; // SUB : 1
+          2 :      m_axis_tdata_reg <= op0_i * op1_i; // MLT : 2
+          3 :      m_axis_tdata_reg <= `ABS( op0_i ); // ABS : 3
           default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
         endcase
       end
@@ -224,7 +226,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
         temp_m_axis_tuser_reg <= s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH];
       end
 
-      if (rst) begin
+      if (rst[CHN]) begin
         s_axis_tready_reg <= 1'b0;
         m_axis_tvalid_reg <= 1'b0;
         temp_m_axis_tvalid_reg <= 1'b0;
@@ -257,7 +259,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
     assign s_axis_tready [CHN] = s_axis_tready_reg;
 
     assign m_axis_tdata  [CHN*RSLT_WIDTH +: RSLT_WIDTH] = m_axis_tdata_reg;
-    assign m_axis_tvalid [CHN]                        = m_axis_tvalid_reg;
+    assign m_axis_tvalid [CHN]                          = m_axis_tvalid_reg;
 
     if (LAST_ENABLE) assign m_axis_tlast [CHN] = m_axis_tlast_reg ; 
     else             assign m_axis_tlast [CHN] = 1'b1;
@@ -285,16 +287,16 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       end
     end
 
-    always @(posedge clk) begin
+    always @(posedge clk[CHN]) begin
       s_axis_tready_reg <= s_axis_tready_early;
       m_axis_tvalid_reg <= m_axis_tvalid_next;
 
       if (store_axis_input_to_output) begin
         case (OP_MODE)
-          0 :      m_axis_tdata_reg <= $signed(op0_i) + $signed(op1_i); // ADD : 0
-          1 :      m_axis_tdata_reg <= $signed(op0_i) - $signed(op1_i); // SUB : 1
-          2 :      m_axis_tdata_reg <= $signed(op0_i) * $signed(op1_i); // MLT : 2
-          3 :      m_axis_tdata_reg <= `ABS(op0_i);                     // ABS : 3
+          0 :      m_axis_tdata_reg <= op0_i + op1_i; // ADD : 0
+          1 :      m_axis_tdata_reg <= op0_i - op1_i; // SUB : 1
+          2 :      m_axis_tdata_reg <= op0_i * op1_i; // MLT : 2
+          3 :      m_axis_tdata_reg <= `ABS( op0_i ); // ABS : 3
           default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
         endcase
       end
@@ -307,7 +309,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
         m_axis_tuser_reg <= s_axis_tuser [CHN*USER_WIDTH +: USER_WIDTH];
       end
 
-      if (rst) begin
+      if (rst[CHN]) begin
         s_axis_tready_reg <= 1'b0;
         m_axis_tvalid_reg <= 1'b0;
       end
@@ -320,10 +322,10 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
     // bypass
 
     case (OP_MODE)
-      0 :      assign m_axis_tdata = $signed(op0_i) + $signed(op1_i); // ADD : 0
-      1 :      assign m_axis_tdata = $signed(op0_i) - $signed(op1_i); // SUB : 1
-      2 :      assign m_axis_tdata = $signed(op0_i) * $signed(op1_i); // MLT : 2
-      3 :      assign m_axis_tdata = `ABS(op0_i);                     // ABS : 3
+      0 :      assign m_axis_tdata = op0_i + op1_i; // ADD : 0
+      1 :      assign m_axis_tdata = op0_i - op1_i; // SUB : 1
+      2 :      assign m_axis_tdata = op0_i * op1_i; // MLT : 2
+      3 :      assign m_axis_tdata = `ABS( op0_i ); // ABS : 3
       default: assign m_axis_tdata = {RSLT_WIDTH{1'bX}};
     endcase
 

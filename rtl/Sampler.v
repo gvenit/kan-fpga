@@ -3,43 +3,43 @@
 `default_nettype none
 
 module Sampler (
-  input  wire clk,
+  input  wire signal_clk,
+  input  wire sampler_clk,
   input  wire signal,
   output reg  sampled_signal
 );
 
+  reg captured_signal_pos  = 1'b0;
+  reg captured_signal_neg  = 1'b0;
+  reg captured_signal_pos_sampled = 1'b0;
+
   reg switch = 1'b0;
 
-  wire [1:0] samples_in;
-  reg  [1:0] samples_out = 2'b0;
-
-  // Switch
-  always @(posedge clk ) begin
-    switch <= !switch;
+  // Output Driver
+  always @(posedge sampler_clk ) begin
+    sampled_signal <= captured_signal_neg || captured_signal_pos_sampled;
   end
 
-  // Demultiplexer
-  assign samples_in[0] = signal &&  switch;
-  assign samples_in[1] = signal && !switch;
-
-  // Registers
-  always @(posedge samples_in[0] or posedge switch) begin
-    if (switch) begin
-      samples_out[0] <= 1'b0;
-    end else begin
-      samples_out[0] <= 1'b1;
-    end
-  end
-  always @(posedge samples_in[1] or negedge switch) begin
-    if (!switch) begin
-      samples_out[1] <= 1'b0;
-    end else begin
-      samples_out[1] <= 1'b1;
-    end
+  always @(posedge signal_clk ) begin
+    if (switch)
+      captured_signal_neg <= 1'b0;
+    else 
+      captured_signal_neg <= captured_signal_neg || signal;
   end
 
-  always @(posedge clk ) begin
-    sampled_signal <= |samples_out;
+  always @(posedge signal_clk ) begin
+    if (~switch)
+      captured_signal_pos <= 1'b0;
+    else 
+      captured_signal_pos <= captured_signal_pos || signal;
+  end
+
+  always @(posedge sampler_clk ) begin
+    captured_signal_pos_sampled <= captured_signal_pos;
+  end
+
+  always @(posedge sampler_clk ) begin
+    switch <= ~switch;
   end
 
 endmodule

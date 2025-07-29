@@ -60,9 +60,7 @@ module ParallelizedLinearProcessingArray #(
   // Output Destination 
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 
-  parameter OUTPUT_ID = 0,
-  // Pipeline Level to use for dsp
-  parameter PIPELINE_LEVEL = 0
+  parameter OUTPUT_ID = 0
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -112,7 +110,7 @@ module ParallelizedLinearProcessingArray #(
 );
   // Global Local Parameters
   localparam MLT_OP_SIZE     = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
-  localparam PSUM_WIDTH      = `MAX( RSLT_WIDTH, MLT_OP_SIZE);
+  localparam PSUM_WIDTH      = 48; // `MAX( RSLT_WIDTH, MLT_OP_SIZE);
   localparam MAC_RSLT_LSB    = OP0_FRACTIONAL_BITS + OP1_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
 
   localparam IS_UNSIGNED_RES = (IS_UNSIGNED_OP0 > 0) && (IS_UNSIGNED_OP1 > 0);
@@ -174,8 +172,8 @@ module ParallelizedLinearProcessingArray #(
     end
 
     for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin  : batch_plane_genblock
-      for (pe_pos_j = 0; pe_pos_j < PE_NUMBER_J; pe_pos_j = pe_pos_j + 1) begin : col_genblock
-        for (pe_pos_i = 0; pe_pos_i < PE_NUMBER_I; pe_pos_i = pe_pos_i + 1) begin : row_genblock
+      for (pe_pos_j = 0; pe_pos_j < PE_NUMBER_J; pe_pos_j = pe_pos_j + 1) begin : row_genblock
+        for (pe_pos_i = 0; pe_pos_i < PE_NUMBER_I; pe_pos_i = pe_pos_i + 1) begin : col_genblock
           localparam PE_POSITION_I = pe_pos_i;
           localparam PE_POSITION_J = pe_pos_j;
           localparam UID    = (  batch    *  PE_NUMBER_J    +  PE_POSITION_J    ) *  PE_NUMBER_I    +  PE_POSITION_I;
@@ -195,8 +193,7 @@ module ParallelizedLinearProcessingArray #(
             .IS_UNSIGNED_OP0        (IS_UNSIGNED_OP0),
             .OP1_WIDTH              (OP1_WIDTH),
             .IS_UNSIGNED_OP1        (IS_UNSIGNED_OP1),
-            .PSUM_WIDTH             (PSUM_WIDTH),
-            .PIPELINE_LEVEL         (PIPELINE_LEVEL)
+            .PSUM_WIDTH             (PSUM_WIDTH)
           ) parallelized_lpe_ijk (
             .clk                    (clk),
             .rst                    (rst_int),

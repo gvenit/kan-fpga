@@ -15,49 +15,64 @@ module ROM_simple #(
   // Use synchronous reads
   parameter IS_SYNC = 1
 ) (
-  input  wire                           clk,
+  input  wire [CHANNELS-1:0]            clk,
   input  wire [CHANNELS-1:0]            en,
   input  wire [CHANNELS*ADDR_WIDTH-1:0] addr,
   output wire [CHANNELS*DATA_WIDTH-1:0] data,
   output wire [CHANNELS-1:0]            ack
 );
 
-  // LUTRAM Configuration
-  (* ROM_STYLE="BLOCK" *)
-  reg [DATA_WIDTH-1:0] mem [0:2**ADDR_WIDTH-1];
-
-  initial begin
-    $readmemh( ROM_DATA_PATH, mem);
-  end
-
 genvar CHN;
 generate
-for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin : ROM_if_genblock
+for (CHN = 0; CHN < CHANNELS; CHN = CHN+2) begin : ROM_if_genblock
 
-  wire [ADDR_WIDTH-1:0] addr_i = addr[CHN*ADDR_WIDTH +: ADDR_WIDTH];
-  wire                  en_i   = en  [CHN];
+  wire                  clka  = clk [CHN];
+  wire [ADDR_WIDTH-1:0] addra = addr[CHN*ADDR_WIDTH +: ADDR_WIDTH];
+  wire                  rdena = en  [CHN];
 
-  reg  [DATA_WIDTH-1:0] data_i = 0;
-  reg                   ack_i  = 1'b0;
+  wire [DATA_WIDTH-1:0] douta;
+  wire                  racka;
 
-  assign data [CHN*DATA_WIDTH +: DATA_WIDTH] = data_i;
-  assign ack  [CHN] = ack_i;
+  assign data [CHN*DATA_WIDTH +: DATA_WIDTH] = douta;
+  assign ack  [CHN] = racka;
 
-  if (IS_SYNC) begin : synchronous_read_genblock
-    always @(posedge clk ) begin
-      ack_i <= en_i;
-      if (en_i) 
-        data_i <= mem[addr_i];
-    end
-  end else begin : asynchronous_read_genblock
-    always @(*) begin
-      ack_i <= en_i;
-      if (en_i) 
-        data_i <= mem[addr_i];
-      else
-        data_i <= {DATA_WIDTH{1'bX}};
-    end
-  end 
+  wire                  clkb;
+  wire [ADDR_WIDTH-1:0] addrb;
+  wire                  rdenb;
+  wire [DATA_WIDTH-1:0] doutb;
+  wire                  rackb;
+  
+  if (CHN+1 < CHANNELS) begin
+    assign clkb  = clk [(CHN+1)];
+    assign addrb = addr[(CHN+1)*ADDR_WIDTH +: ADDR_WIDTH];
+    assign rdenb = en  [(CHN+1)];
+    assign data [(CHN+1)*DATA_WIDTH +: DATA_WIDTH] = doutb;
+    assign ack  [(CHN+1)] = rackb;
+  end
+
+  BramReadEnInitialized #( 
+    .ADDR_WIDTH     (ADDR_WIDTH),
+    .DATA_WIDTH     (DATA_WIDTH),
+    .STRB_WIDTH     (1),
+    .ROM_DATA_PATH  (ROM_DATA_PATH)
+  ) dp_rom_inst ( 
+    .clka     (clka),
+    .clkb     (clkb),
+    .rdena    (rdena),
+    .wrena    (1'b0),
+    .wrstrba  (1'b0),
+    .addra    (addra),
+    .dina     ({DATA_WIDTH{1'b0}}),
+    .douta    (douta),
+    .racka    (racka),
+    .rdenb    (rdenb),
+    .wrenb    (1'b0),
+    .wrstrbb  (1'b0),
+    .addrb    (addrb),
+    .dinb     ({DATA_WIDTH{1'b0}}),
+    .doutb    (doutb),
+    .rackb    (rackb)
+  );
 
 end
 

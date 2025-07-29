@@ -36,9 +36,7 @@ module ParallelizedLinearProcessingElement #(
   // Treat operand 1 as unsigned
   parameter IS_UNSIGNED_OP1 = 0,
   // Data Width of Output Data (D-AXIS)
-  parameter PSUM_WIDTH = OP0_WIDTH + OP1_WIDTH,
-  // Pipeline Level to use for dsp
-  parameter PIPELINE_LEVEL = 0
+  parameter PSUM_WIDTH = OP0_WIDTH + OP1_WIDTH
 ) (
   input  wire                         clk,
   input  wire                         rst,
@@ -147,19 +145,19 @@ module ParallelizedLinearProcessingElement #(
   wire export_rslt_last;
   
   // Pipelined Output Signals
-  wire export_rslt_sync;
-  wire export_rslt_last_sync;
+  wire export_rslt_sync, export_rslt_last_sync;
 
   // DataFlow Registers & Wires
   wire [PSUM_WIDTH-1:0]                   partial_sum_reg;
   wire [OP0_WIDTH + IS_UNSIGNED_OP0 -1:0] mult_op0 = { {IS_UNSIGNED_OP0{1'b0}}, int_axis_l_tdata};
   wire [OP1_WIDTH + IS_UNSIGNED_OP1 -1:0] mult_op1 = { {IS_UNSIGNED_OP1{1'b0}}, int_axis_t_tdata};
+  wire [PSUM_WIDTH-1:0]                   op2      = (PE_POSITION_J == PE_NUMBER_J-1) ? int_axis_u_tdata : {PSUM_WIDTH{1'bZ}};
 
   DSPELogic #(
     .OP0_SIZE             (OP0_WIDTH + IS_UNSIGNED_OP0),
     .OP1_SIZE             (OP1_WIDTH + IS_UNSIGNED_OP1),
     .ACC_SIZE             (PSUM_WIDTH),
-    .PIPELINE_LEVEL       (1),
+    .USE_OP2              (PE_POSITION_J > 0 && PE_POSITION_J == PE_NUMBER_J-1),
     .EXTRA_SIGNAL_SIZE    (2)
   ) data_processing_inst  (
     .clk                  (clk),
@@ -169,7 +167,7 @@ module ParallelizedLinearProcessingElement #(
     .reset_acc            (op_start),
     .op0                  (mult_op0),
     .op1                  (mult_op1),
-    .op2                  (int_axis_u_tdata),
+    .op2                  (op2),
     .acc                  (partial_sum_reg),
     .extra_sig_in         ({export_rslt, export_rslt_last}),
     .extra_sig_out        ({export_rslt_sync, export_rslt_last_sync})
@@ -244,7 +242,7 @@ module ParallelizedLinearProcessingElement #(
         .USER_WIDTH(1),
         // Register type
         // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-        .REG_TYPE(2)
+        .REG_TYPE(0)
       ) axis_register_u_inst (
         .clk              (clk),
         .rst              (rst),
@@ -288,7 +286,7 @@ module ParallelizedLinearProcessingElement #(
     .USER_WIDTH(1),
     // Register type
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-    .REG_TYPE(0)
+    .REG_TYPE((PE_POSITION_J != PE_NUMBER_J-1))
   ) axis_register_d_inst (
     .clk              (clk),
     .rst              (rst),
@@ -332,7 +330,7 @@ module ParallelizedLinearProcessingElement #(
     .USER_WIDTH(1),
     // Register type
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-    .REG_TYPE(2)
+    .REG_TYPE(2 * (PE_POSITION_I!=PE_NUMBER_I-1 || PE_POSITION_I > 0))
   ) axis_register_l_inst (
     .clk              (clk),
     .rst              (rst),
@@ -481,10 +479,10 @@ module ParallelizedLinearProcessingElement #(
   // Output Down AXI-Stream Drivers
   generate
     if (PE_POSITION_J > 0) begin : up_down_connections_genblock
-      assign int_axis_d_tdata   = (export_rslt_sync) ? partial_sum_reg  : int_axis_u_tdata;
-      assign int_axis_d_tvalid  = (export_rslt_sync) ? 1'b1             : int_axis_u_tvalid & forward_u & !drop_u;
-      assign int_axis_u_tready  = (export_rslt_sync) ? 1'b0             : int_axis_d_tready & forward_u |  drop_u;
-      assign int_axis_d_tlast   = export_rslt_last_sync;
+      assign int_axis_d_tdata   = (export_rslt_sync) ? partial_sum_reg       : int_axis_u_tdata;
+      assign int_axis_d_tvalid  = (export_rslt_sync) ? 1'b1                  : int_axis_u_tvalid & forward_u & !drop_u;
+      assign int_axis_u_tready  = (export_rslt_sync) ? 1'b0                  : int_axis_d_tready & forward_u |  drop_u;
+      assign int_axis_d_tlast   = (export_rslt_sync) ? export_rslt_last_sync : export_rslt_last;
     end else begin : down_interface_genblock
       assign int_axis_d_tdata   = partial_sum_reg;
       assign int_axis_d_tvalid  = export_rslt_sync;

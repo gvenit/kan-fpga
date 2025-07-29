@@ -64,6 +64,9 @@ module ParallelizedLPEControlUnit #(
    * AXI Stream Bottom Output
    */
   input  wire                       int_axis_b_tready,
+  
+  // input  wire                       export_rslt_sync,
+  // input  wire                       export_rslt_last_sync,
 
   output wire                       store_l,
   output wire                       store_t,
@@ -284,7 +287,8 @@ module ParallelizedLPEControlUnit #(
           // partial_sum_last_reg <= partial_sum_last_reg_next; 
 
           // Accumulate Partial Sums
-          acc_res_reg      <= 1'b1;
+          // acc_res_reg      <= 1'b1;
+          acc_res_reg      <= (PE_POSITION_J == PE_NUMBER_J-1);
 
           if (int_axis_d_tready) begin
             export_rslt_reg <= export_rslt_reg_next && (PE_POSITION_J != 0);
@@ -474,11 +478,14 @@ module ParallelizedLPEControlUnit #(
   assign bypass_adder = bypass_adder_reg;
   assign err_unalligned_data = err_unalligned_data_int | err_unalligned_data_reg;
 
+  assign op_start = op_start_reg || (fsm_state == FSM_END && fsm_state_next != FSM_END); 
+
   generate
     if (PE_POSITION_J) assign store_u = store_u_reg;
     if (PE_POSITION_J) assign forward_u = forward_u_reg;
     if (PE_POSITION_J) assign acc_res = fsm_state_next == FSM_END ? acc_res_reg : 1'b0;
-    if (PE_POSITION_J) assign op_start = op_start_reg | (down_axis_open && export_rslt_reg_next); 
+    // if (PE_POSITION_J) assign op_start = op_start_reg | (down_axis_open && export_rslt_reg_next); 
+    // if (PE_POSITION_J) assign op_start = op_start_reg || (fsm_state == FSM_END && fsm_state_next != FSM_END); 
 
     if (PE_POSITION_J == 0) begin
       // No Up Axis in this PE -- Always drop Up Axis 
@@ -486,7 +493,7 @@ module ParallelizedLPEControlUnit #(
       assign forward_u = 1'bZ;  // Not used
       assign drop_u    = 1'bZ;  // Not used
       assign acc_res   = 1'b0;  // No data to accumulate
-      assign op_start = op_start_reg | (export_rslt && int_axis_d_tready);
+      // assign op_start = op_start_reg | (export_rslt && int_axis_d_tready);
 
       assign export_rslt_last_int = export_rslt;
 

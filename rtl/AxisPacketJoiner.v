@@ -85,24 +85,40 @@ module AxisPacketJoiner #(
 
 generate
  if (CHANNELS == 1) begin : pass_through_genblock
+  reg allow_transmission = 1'b1;
+
   // Pass through
   assign m_axis_tdata  = s_axis_tdata;
   assign m_axis_tkeep  = s_axis_tkeep;
-  assign m_axis_tvalid = s_axis_tvalid;
-  assign s_axis_tready = m_axis_tready;
+  assign m_axis_tvalid = s_axis_tvalid && allow_transmission;
+  assign s_axis_tready = m_axis_tready && allow_transmission;
   assign m_axis_tlast  = s_axis_tlast;
   assign m_axis_tid    = s_axis_tid;
   assign m_axis_tdest  = s_axis_tdest;
   assign m_axis_tuser  = s_axis_tuser;
 
   always @(posedge clk ) begin
-    operation_error    <= 1'b0;
-    operation_busy     <= 1'b1;
-    operation_complete <= 1'b0;
-    transmission       <= m_axis_tvalid && m_axis_tready;
-    if (s_axis_tvalid && s_axis_tready) begin
+    if (rst) begin
+      operation_error    <= 1'b0;
       operation_busy     <= 1'b0;
-      operation_complete <= 1'b1;
+      operation_complete <= 1'b0;
+
+      transmission       <= 1'b0;
+      allow_transmission <= 1'b0;
+        
+    end else begin
+      operation_error    <= 1'b0;
+      operation_busy     <= operation_start || operation_busy;
+      operation_complete <= 1'b0;
+
+      transmission       <= m_axis_tvalid && m_axis_tready;
+      allow_transmission <= operation_start || allow_transmission;
+
+      if (s_axis_tvalid && s_axis_tready && s_axis_tlast) begin
+        operation_busy     <= operation_start;
+        operation_complete <= 1'b1;
+        allow_transmission <= operation_start;
+      end
     end
   end
 

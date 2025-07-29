@@ -79,7 +79,8 @@ module MCULocalBramFSM #(
   // Intra-Iteration Counter Registers & Wires
   reg  [INTRA_ITER_WIDTH-1:0] intra_counter_reg;
   wire [INTRA_ITER_WIDTH-1:0] intra_counter_reg_next = intra_counter_reg + 1;
-  wire forward_reg_next = (intra_counter_reg_next == intra_counter_max) ;
+//  wire forward_reg_next = (intra_counter_reg_next == intra_counter_max) ;
+  wire forward_reg_next = ~|(intra_counter_reg_next ^ intra_counter_max) ;
 
   // Local FSM Output Registers & Wires
   reg [LOC_FSM_WIDTH-1:0]     loc_fsm_state, loc_fsm_state_next;

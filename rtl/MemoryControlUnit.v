@@ -12,16 +12,23 @@
  *      clock drivers. The global FSM is expected to work with
  *      the slowest clock of the module.
  * 
+ *    ** As of 2025/06/18, MemoryControlUnit will operate using
+ *        only BRAM-Controller Interface.
  */
 
-`include "header_IFOptions.vh"
+`undef  DATA_IF_IS_AXIL
+`define DATA_IF_IS_BRAM
+
+`undef  GRID_IF_IS_AXIL
+`define GRID_IF_IS_BRAM
+
+`undef  SCALE_IF_IS_AXIL
+`define SCALE_IF_IS_BRAM
 
 module MemoryControlUnit #(
  `include "header_MCUGlobalFSMParameters.vh"
- `ifdef BRAM_ACK_SIG_OPTION
   // BRAM control has ack signal
   parameter BRAM_ACK_SIG = 1,
- `endif 
   // Number of batches per run
   parameter BATCH_SIZE = 1,
   // Width of AXI stream Input Data interfaces in bits
@@ -222,16 +229,33 @@ module MemoryControlUnit #(
 
   // Global FSM output signals
   reg  [GLO_FSM_WIDTH-1:0]            glo_fsm_state, glo_fsm_state_next;
-  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg;
-  reg  [GRID_CHANNELS_IN-1:0]         grid_op_done_reg;
-  reg  [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg;
+  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg = 0;
+  reg  [GRID_CHANNELS_IN-1:0]         grid_op_done_reg = 0;
+  reg  [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg = 0;
 
   // Global FSM input signals
   wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_op_done_reg_next = data_op_done_reg | data_tlast_transmitted;
   wire [GRID_CHANNELS_IN-1:0]         grid_op_done_reg_next = grid_op_done_reg | grid_tlast_transmitted;
   wire [SCALE_CHANNELS_IN-1:0]        scle_op_done_reg_next = scle_op_done_reg | scle_tlast_transmitted;
 
+  wire op_valid = (
+    ($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && 
+    ($unsigned(grid_size) <= {1'b1, {GRID_ADDR{1'b0}}}) && (|grid_size) && 
+    ($unsigned(scle_size) <= {1'b1,{SCALE_ADDR{1'b0}}}) && (|scle_size) 
+  );
+
   wire op_done        =  &{data_op_done_reg, grid_op_done_reg, scle_op_done_reg};
+
+  reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_error_reg = 0;
+  reg  [GRID_CHANNELS_IN-1:0]         grid_error_reg = 0;
+  reg  [SCALE_CHANNELS_IN-1:0]        scle_error_reg = 0;
+
+  always @(posedge fsm_clk ) begin
+    data_error_reg <= data_error;
+    grid_error_reg <= grid_error;
+    scle_error_reg <= scle_error;
+  end
+
   wire internal_error = |{data_error, grid_error, scle_error};
 
   // Global FSM state logic
@@ -239,8 +263,13 @@ module MemoryControlUnit #(
     if (rst) begin
       glo_fsm_state <= GLO_FSM_ST0;
 
-      data_op_done_reg <= {(BATCH_SIZE*DATA_CHANNELS){1'b0}};
-      grid_op_done_reg <= 1'b0;
+      data_op_done_reg <= 0;
+      grid_op_done_reg <= 0;
+      scle_op_done_reg <= 0;
+
+      data_error_reg   <= 0;
+      grid_error_reg   <= 0;
+      scle_error_reg   <= 0;
 
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
@@ -253,6 +282,10 @@ module MemoryControlUnit #(
       grid_op_done_reg <= {GRID_CHANNELS_IN{1'b0}};
       scle_op_done_reg <= {SCALE_CHANNELS_IN{1'b0}};
 
+      data_error_reg  <= data_error;
+      grid_error_reg  <= grid_error;
+      scle_error_reg  <= scle_error;
+
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
       operation_error       <= 1'b0;
@@ -262,11 +295,11 @@ module MemoryControlUnit #(
 
         end
         GLO_FSM_STR: begin
-          operation_busy <= 1'b1;
-
           data_size_reg <= data_size;
           grid_size_reg <= grid_size;
           scle_size_reg <= scle_size;
+
+          operation_busy <= 1'b1;
 
         end
         GLO_FSM_OPE: begin
@@ -284,6 +317,9 @@ module MemoryControlUnit #(
         GLO_FSM_ERR: begin
           operation_error <= 1'b1;
 
+          data_error_reg  <= 0;
+          grid_error_reg  <= 0;
+          scle_error_reg  <= 0;
         end
         default: begin
           
@@ -292,11 +328,13 @@ module MemoryControlUnit #(
     end
   end
 
+  wire validate = ($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && 
+          ($unsigned(grid_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|grid_size) && 
+          ($unsigned(scle_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|scle_size);
+
   `define GLO_CHECK_OP_START \
     if (operation_start) begin \
-      if (($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && \
-          ($unsigned(grid_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|grid_size) && \
-          ($unsigned(scle_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|scle_size) ) begin \
+      if (op_valid) begin \
         glo_fsm_state_next <= GLO_FSM_STR; \
       end else begin \
         glo_fsm_state_next <= GLO_FSM_ERR; \

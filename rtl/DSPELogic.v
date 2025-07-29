@@ -8,8 +8,8 @@
 module DSPELogic #(
   parameter OP0_SIZE = 8,
   parameter OP1_SIZE = 8,
-  parameter ACC_SIZE = OP0_SIZE + OP1_SIZE,
-  parameter PIPELINE_LEVEL = 2,
+  parameter ACC_SIZE = 8,
+  parameter USE_OP2 = 0,
   parameter EXTRA_SIGNAL_SIZE = 1
 ) (
   input  wire                         clk,
@@ -33,155 +33,137 @@ module DSPELogic #(
 
   localparam MLT_SIZE = `MAX( OP0_SIZE+OP1_SIZE, ACC_SIZE);
 
-  reg signed [OP0_SIZE-1:0]   op0_reg = {OP0_SIZE{1'b0}};
-  reg signed [OP1_SIZE-1:0]   op1_reg = {OP1_SIZE{1'b0}};
-  reg signed [ACC_SIZE-1:0]   op2_reg = {ACC_SIZE{1'b0}};
-  reg signed [MLT_SIZE-1:0]   mlt_reg = {MLT_SIZE{1'b0}}, mux_reg;
-  reg signed [ACC_SIZE-1:0]   acc_reg = {ACC_SIZE{1'b0}}, old_acc;
+  reg  signed [OP0_SIZE-1:0]    op0_reg = 0;
+  reg  signed [OP1_SIZE-1:0]    op1_reg = 0;
+  reg  signed [ACC_SIZE-1:0]    op2_reg = 0;
+  reg  signed [MLT_SIZE-1:0]    mlt_reg = 0;
+  reg  signed [ACC_SIZE-1:0]    old_reg = 0;
+  reg  signed [ACC_SIZE-1:0]    acc_reg = 0;
 
-  reg                    bypass_mlt_reg = 1'b0;
-  reg  [1:0]             bypass_add_reg = 2'b0;
-  reg  [1:0]             reset_acc_reg  = 2'b0;
+  reg  bypass_mlt_reg_0 = 1'b0;
+  reg  bypass_add_reg_0 = 1'b0;
+  reg  reset_acc_reg_0  = 1'b0;
+  reg  bypass_mlt_reg_1 = 1'b0;
+  reg  bypass_add_reg_1 = 1'b0;
+  reg  reset_acc_reg_1  = 1'b0;
 
-  reg  [EXTRA_SIGNAL_SIZE-1:0] extra_sig_reg [0:1];
+  reg  [EXTRA_SIGNAL_SIZE-1:0] extra_sig_reg_0;
+  reg  [EXTRA_SIGNAL_SIZE-1:0] extra_sig_reg_1;
+
+  wire ce_in     = ~bypass_mlt;
+  wire ce_op2    =  bypass_mlt_reg_0;
+  wire ce_mlt    = ~bypass_mlt_reg_0;
+  wire ce_acc    = ~bypass_add_reg_1;
+  wire sload     =  reset_acc_reg_1;
+
+  wire rst_in    =  rst;
+  wire rst_op2   =  rst;
+  wire rst_mlt   =  rst;
+  wire rst_acc   =  bypass_add_reg_1 &&  reset_acc_reg_1;
+
+
+  always @(sload or acc_reg) begin
+    if (sload)
+      old_reg <= 0;
+    else
+      old_reg <= acc_reg;
+  end
+
+  always @(posedge clk) begin
+    if (rst) begin
+      bypass_mlt_reg_0  <= 1'b1;   
+      bypass_add_reg_0  <= 1'b1;   
+      reset_acc_reg_0   <= 1'b1; 
+
+      bypass_mlt_reg_1  <= 1'b1;   
+      bypass_add_reg_1  <= 1'b1;   
+      reset_acc_reg_1   <= 1'b1;
+
+      extra_sig_reg_0   <= 0;
+      extra_sig_reg_1   <= 0;
+    end else begin
+      bypass_mlt_reg_0  <= bypass_mlt;   
+      bypass_add_reg_0  <= bypass_add;   
+      reset_acc_reg_0   <= reset_acc; 
+
+      bypass_mlt_reg_1  <= bypass_mlt_reg_0;   
+      bypass_add_reg_1  <= bypass_add_reg_0;   
+      reset_acc_reg_1   <= reset_acc_reg_0;
+
+      extra_sig_reg_0   <= extra_sig_in;
+      extra_sig_reg_1   <= extra_sig_reg_0;
+    end
+
+    // Multiplier Input
+    if (rst) begin
+      op0_reg     <= op0;
+      op1_reg     <= op1;
+    end else if (ce_in) begin
+      op0_reg     <= op0;
+      op1_reg     <= op1;
+    end
+
+    // Multiplier Output
+    if (rst_mlt) begin
+      mlt_reg <= 0;
+    end else if (ce_mlt) begin
+      mlt_reg <= op0_reg * op1_reg;
+    end
+
+    if (rst_acc) begin
+      // Store accumulation result into a register
+      acc_reg <= 0;
+    end else if (ce_acc) begin
+      // Store accumulation result into a register
+      acc_reg <= old_reg + mlt_reg;
+    end
+  end 
+ 
 
  generate
-  initial begin
-    extra_sig_reg [0] = {EXTRA_SIGNAL_SIZE{1'b0}};
-    extra_sig_reg [1] = {EXTRA_SIGNAL_SIZE{1'b0}};
-  end
+  if (USE_OP2) begin : accumulate_genblock
+    reg  [ACC_SIZE-1:0] old_psum = 0;
+    reg  [ACC_SIZE-1:0] psum = 0;
 
-  if (PIPELINE_LEVEL > 1) begin : full_pipeline_genblock
-    always @(bypass_add_reg or mlt_reg) begin
-      if (bypass_add_reg)
-        mux_reg <= 0;
+    reg  psum_load = 1'b0;
+      
+    always @(psum_load or psum) begin
+      if (psum_load)
+        old_psum <= acc_reg;
       else
-        mux_reg <= mlt_reg;
-    end
-
-    always @(reset_acc_reg[1] or acc_reg) begin
-      if (reset_acc_reg[1])
-        old_acc <= 0;
-      else
-        old_acc <= acc_reg;
+        old_psum <= psum;
     end
 
     always @(posedge clk) begin
-      if (rst) begin
-        op0_reg <= {OP0_SIZE{1'b0}};
-        op1_reg <= {OP1_SIZE{1'b0}};
-        op2_reg <= {ACC_SIZE{1'b0}};
-        mlt_reg <= {MLT_SIZE{1'b0}};
-        acc_reg <= {ACC_SIZE{1'b0}};
+      psum_load <= ce_acc && ~bypass_mlt_reg_1;
 
-        bypass_mlt_reg <= 1'b0;
-        bypass_add_reg <= 1'b0;
-        reset_acc_reg  <= 2'b0;
-
-        extra_sig_reg [0] = {EXTRA_SIGNAL_SIZE{1'b0}};
-        extra_sig_reg [1] = {EXTRA_SIGNAL_SIZE{1'b0}};
-
-      end else begin
-        // Stage Input
-        op0_reg  <= op0;
-        op1_reg  <= op1;
-        op2_reg  <= op2;
-        extra_sig_reg [0] <= extra_sig_in;
-
-        bypass_mlt_reg    <= bypass_mlt;
-        bypass_add_reg    <= bypass_add;
-        reset_acc_reg [0] <= reset_acc;
-
-        // Stage Multiplier
-        mlt_reg  <= (bypass_mlt_reg) ? op2_reg : op0_reg * op1_reg;
-        extra_sig_reg [1] <= extra_sig_reg [0];
-
-        reset_acc_reg [1] <= reset_acc_reg[0];
-
-        // Stage Accumulator
-        acc_reg <= old_acc + mux_reg;
+      // Register C
+      if (rst_op2) begin
+        op2_reg <= 0;
+      end else if (ce_op2) begin
+        op2_reg <= op2;
       end
-    end
+
+      if (rst_acc) begin
+        // Store accumulation result into a register
+        psum <= 0;
+      end else if (ce_acc) begin
+        // Store accumulation result into a register
+        psum <= old_psum + op2_reg;
+      end else if (psum_load) begin
+        psum <= old_psum;
+      end
+    end 
 
     // Output accumulation result
+    assign acc = psum;
+  end else begin : skip_accumulate_genblock
+    // Output accumulation result
     assign acc = acc_reg;
-
-  end else if (PIPELINE_LEVEL > 0) begin : half_pipeline_genblock
-    always @(bypass_add or mlt_reg) begin
-      if (bypass_add)
-        mux_reg <= 0;
-      else
-        mux_reg <= mlt_reg;
-    end
-
-    always @(reset_acc_reg[0] or acc_reg) begin
-      if (reset_acc_reg[0])
-        old_acc <= 0;
-      else
-        old_acc <= acc_reg;
-    end
-
-    always @(posedge clk) begin
-      if (rst) begin
-        mlt_reg <= {MLT_SIZE{1'b0}};
-        acc_reg <= {ACC_SIZE{1'b0}};
-
-        reset_acc_reg  <= 2'b0;
-
-        extra_sig_reg [0] = {EXTRA_SIGNAL_SIZE{1'b0}};
-        extra_sig_reg [1] = {EXTRA_SIGNAL_SIZE{1'b0}};
-
-      end else begin
-        // Stage Multiplier
-        mlt_reg  <= (bypass_mlt) ? op2 : op0 * op1;
-        extra_sig_reg [1] <= extra_sig_in;
-
-        reset_acc_reg [0] <= reset_acc;
-
-        // Stage Accumulator
-        acc_reg <= old_acc + mux_reg;
-      end
-    end
-
-  end else begin
-    always @(extra_sig_in) begin
-      extra_sig_reg [1] <= extra_sig_in;
-    end
-
-    always @(bypass_mlt, op0, op1, op2) begin
-      if (bypass_mlt)
-        mlt_reg  <= op2;
-      else
-        mlt_reg  <= op0 * op1;
-    end
-
-    always @(bypass_add or mlt_reg) begin
-      if (bypass_add)
-        mux_reg <= 0;
-      else
-        mux_reg <= mlt_reg;
-    end
-
-    always @(reset_acc or acc_reg) begin
-      if (reset_acc)
-        old_acc <= 0;
-      else
-        old_acc <= acc_reg;
-    end
-
-    always @(posedge clk) begin
-      if (rst) begin
-        acc_reg <= {ACC_SIZE{1'b0}};
-      end else begin
-        // Stage Accumulator
-        acc_reg <= old_acc + mux_reg;
-      end
-    end
   end
-		
  endgenerate
-
- assign acc = acc_reg;
- assign extra_sig_out = extra_sig_reg [1];
+ 
+  // Output accumulation result
+  assign extra_sig_out = extra_sig_reg_1;
     
 endmodule

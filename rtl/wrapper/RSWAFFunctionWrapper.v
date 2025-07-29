@@ -3,13 +3,13 @@
 `default_nettype none
 
 /*
- *  RSWAFFunction : Accepts three input AXI-Stream frames and returns the
+ *  RadialBasisFunctionUnit : Accepts three input AXI-Stream frames and returns the
  *    result sech^2(scale * (x-grid))
  *    If the three input frames don't have the same length, the
  *    two shortest are extended to match the length of the longest.
  */
 
-module RSWAFFunctionWrapper #
+module RadialBasisFunctionUnitWrapper #
 (
   // Width of AXI stream Input Data & Grid interfaces in bits
   parameter DATA_WIDTH = 16,
@@ -103,7 +103,7 @@ module RSWAFFunctionWrapper #
   output wire [CHANNELS*USER_WIDTH-1:0]               m_axis_data_tuser
 );
 
-  RSWAFFunction #(
+  RadialBasisFunctionUnit #(
     // Width of AXI stream Input Data & Grid interfaces in bits
     .DATA_WIDTH(DATA_WIDTH),
     // Fractional bits of input data & grid

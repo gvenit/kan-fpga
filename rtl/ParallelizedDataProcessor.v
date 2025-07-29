@@ -68,9 +68,7 @@ module ParallelizedDataProcessor #(
   // Output Thread ID 
   parameter OUTPUT_ID = 1,
   // Input FIFO size
-  parameter FIFO_DEPTH = 0,
-  // Pipeline Level to use for dsp
-  parameter PIPELINE_LEVEL = 0
+  parameter FIFO_DEPTH = 0
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -141,17 +139,25 @@ module ParallelizedDataProcessor #(
    */
   output wire                                                 core_rst
 );
+  localparam DATA_CHANNELS_OUT = DATA_CHANNELS*BATCH_SIZE;
   // Internal Activation Function Output AXI-Stream Wires
-  wire [DATA_CHANNELS*BATCH_SIZE*ACT_WIDTH-1:0]       int_axis_act_func_tdata;
-  wire [DATA_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]      int_axis_act_func_tkeep;
-  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tvalid;
-  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tready;
-  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                 int_axis_act_func_tlast;
-  wire [DATA_CHANNELS*BATCH_SIZE*ID_WIDTH-1:0]        int_axis_act_func_tid;
-  wire [DATA_CHANNELS*BATCH_SIZE*DEST_WIDTH-1:0]      int_axis_act_func_tdest;
-  wire [DATA_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]      int_axis_act_func_tuser;
+  wire [DATA_CHANNELS_OUT*ACT_WIDTH-1:0]       int_axis_act_func_tdata;
+  wire [DATA_CHANNELS_OUT-1:0]                 int_axis_act_func_tvalid;
+  wire [DATA_CHANNELS_OUT-1:0]                 int_axis_act_func_tready;
+  wire [DATA_CHANNELS_OUT-1:0]                 int_axis_act_func_tlast;
+  wire [DATA_CHANNELS_OUT*ID_WIDTH-1:0]        int_axis_act_func_tid;
+  wire [DATA_CHANNELS_OUT*DEST_WIDTH-1:0]      int_axis_act_func_tdest;
+  wire [DATA_CHANNELS_OUT*USER_WIDTH-1:0]      int_axis_act_func_tuser;
+
+  wire [DATA_CHANNELS_OUT*ACT_WIDTH-1:0]       int_axis_srl_func_tdata;
+  wire [DATA_CHANNELS_OUT-1:0]                 int_axis_srl_func_tvalid;
+  wire [DATA_CHANNELS_OUT-1:0]                 int_axis_srl_func_tready;
+  wire [DATA_CHANNELS_OUT-1:0]                 int_axis_srl_func_tlast;
+  wire [DATA_CHANNELS_OUT*ID_WIDTH-1:0]        int_axis_srl_func_tid;
+  wire [DATA_CHANNELS_OUT*DEST_WIDTH-1:0]      int_axis_srl_func_tdest;
+  wire [DATA_CHANNELS_OUT*USER_WIDTH-1:0]      int_axis_srl_func_tuser;
   
-  RSWAFFunction #(
+  RadialBasisFunctionUnit #(
     // Width of AXI stream Input Data & Grid interfaces in bits
     .DATA_WIDTH(DATA_WIDTH),
     // Fractional bits of input data & grid
@@ -181,7 +187,7 @@ module ParallelizedDataProcessor #(
     // tuser signal width
     .USER_WIDTH(USER_WIDTH),
     // Number of Independent AXI-Stream Channels
-    .CHANNELS(DATA_CHANNELS*BATCH_SIZE),
+    .CHANNELS(DATA_CHANNELS_OUT),
     // Use Common Share Channel 
     .SCALE_SHARE(SCALE_SHARE),
     // Scale Channels
@@ -227,6 +233,53 @@ module ParallelizedDataProcessor #(
     .m_axis_data_tuser    (int_axis_act_func_tuser)
   );
 
+ genvar CHN;
+ generate for (CHN = 0; CHN < DATA_CHANNELS_OUT; CHN = CHN + 1) begin
+  axis_srl_fifo #(
+    // Width of AXI stream interfaces in bits
+    .DATA_WIDTH(ACT_WIDTH),
+    // Propagate tkeep signal
+    .KEEP_ENABLE(0),
+    // tkeep signal width (words per cycle)
+    .KEEP_WIDTH(1),
+    // Propagate tlast signal
+    .LAST_ENABLE(1),
+    // Propagate tid signal
+    .ID_ENABLE(ID_ENABLE),
+    // tid signal width
+    .ID_WIDTH(ID_WIDTH),
+    // Propagate tdest signal
+    .DEST_ENABLE(DEST_ENABLE),
+    // tdest signal width
+    .DEST_WIDTH(DEST_WIDTH),
+    // Propagate tuser signal
+    .USER_ENABLE(USER_ENABLE),
+    // tuser signal width
+    .USER_WIDTH(USER_WIDTH),
+    // FIFO depth in cycles
+    .DEPTH(4)
+  ) fifo_inst (
+    .clk              (clk),
+    .rst              (rst),
+    .s_axis_tdata     (int_axis_act_func_tdata    [CHN*ACT_WIDTH +: ACT_WIDTH]),
+    .s_axis_tkeep     (1'b1),
+    .s_axis_tvalid    (int_axis_act_func_tvalid   [CHN]),
+    .s_axis_tready    (int_axis_act_func_tready   [CHN]),
+    .s_axis_tlast     (int_axis_act_func_tlast    [CHN]),
+    .s_axis_tid       (int_axis_act_func_tid      [CHN*ID_WIDTH   +: ID_WIDTH]),
+    .s_axis_tdest     (int_axis_act_func_tdest    [CHN*DEST_WIDTH +: DEST_WIDTH]),
+    .s_axis_tuser     (int_axis_act_func_tuser    [CHN*USER_WIDTH +: USER_WIDTH]),
+    .m_axis_tdata     (int_axis_srl_func_tdata    [CHN*ACT_WIDTH  +: ACT_WIDTH]),
+    .m_axis_tvalid    (int_axis_srl_func_tvalid   [CHN]),
+    .m_axis_tready    (int_axis_srl_func_tready   [CHN]),
+    .m_axis_tlast     (int_axis_srl_func_tlast    [CHN]),
+    .m_axis_tid       (int_axis_srl_func_tid      [CHN*ID_WIDTH   +: ID_WIDTH]),
+    .m_axis_tdest     (int_axis_srl_func_tdest    [CHN*DEST_WIDTH +: DEST_WIDTH]),
+    .m_axis_tuser     (int_axis_srl_func_tuser    [CHN*USER_WIDTH +: USER_WIDTH])
+  );
+ end
+ endgenerate
+
   ParallelizedLinearProcessingArray #(
     // Number of PEs in Processing Array i axis -- Number of results per batch per run
     .PE_NUMBER_I(RSLT_CHANNELS),
@@ -269,9 +322,7 @@ module ParallelizedDataProcessor #(
     // Output Destination 
     .OUTPUT_DEST(OUTPUT_DEST),
     // Output Thread ID 
-    .OUTPUT_ID(OUTPUT_ID),
-    // Pipeline Level to use for dsp
-    .PIPELINE_LEVEL(PIPELINE_LEVEL)
+    .OUTPUT_ID(OUTPUT_ID)
   ) parallelized_lpa_inst (
     .clk                    (clk),
     .rst                    (rst),
@@ -282,13 +333,13 @@ module ParallelizedDataProcessor #(
     .s_axis_t_tid           (s_axis_wght_tid),
     .s_axis_t_tdest         (s_axis_wght_tdest),
     .s_axis_t_tuser         (s_axis_wght_tuser),
-    .s_axis_l_tdata         (int_axis_act_func_tdata),
-    .s_axis_l_tvalid        (int_axis_act_func_tvalid),
-    .s_axis_l_tready        (int_axis_act_func_tready),
-    .s_axis_l_tlast         (int_axis_act_func_tlast),
-    .s_axis_l_tid           (int_axis_act_func_tid),
-    .s_axis_l_tdest         (int_axis_act_func_tdest),
-    .s_axis_l_tuser         (int_axis_act_func_tuser),
+    .s_axis_l_tdata         (int_axis_srl_func_tdata),
+    .s_axis_l_tvalid        (int_axis_srl_func_tvalid),
+    .s_axis_l_tready        (int_axis_srl_func_tready),
+    .s_axis_l_tlast         (int_axis_srl_func_tlast),
+    .s_axis_l_tid           (int_axis_srl_func_tid),
+    .s_axis_l_tdest         (int_axis_srl_func_tdest),
+    .s_axis_l_tuser         (int_axis_srl_func_tuser),
     .m_axis_d_tdata         (m_axis_data_tdata),
     .m_axis_d_tvalid        (m_axis_data_tvalid),
     .m_axis_d_tready        (m_axis_data_tready),
