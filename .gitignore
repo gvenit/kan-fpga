@@ -43,7 +43,7 @@ vivado/*/*
 vitis/*
 !vitis/System_Versions
 !vitis/Hardware_Files
-vitis/System_Versions/Version_0/RemoteSystemsTempFiles
+vitis/System_Versions/Version_*/kan_pl
 *log
 *.metadata
 *logs
