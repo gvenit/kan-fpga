@@ -103,13 +103,13 @@ int main(void)
     if (status != STATUS_OK)
         kan_error_handler(status, "Interrupts configuration failed");
 
-#ifdef DEF_VERBOSE
-    xil_printf("Initialize DMA engine\r\n");
-#endif
+    // #ifdef DEF_VERBOSE
+    //     xil_printf("Initialize DMA engine\r\n");
+    // #endif
 
-    status = kan_dma_init(&hDma, DMA_DEV_ID);
-    if (status != STATUS_OK)
-        kan_error_handler(status, "DMA initialization failed");
+    //     status = kan_dma_init(&hDma, DMA_DEV_ID);
+    //     if (status != STATUS_OK)
+    //         kan_error_handler(status, "DMA initialization failed");
 
     /*----------------------------------------
      Downloading data to layer
@@ -142,6 +142,10 @@ int main(void)
 
         hLayer_p = (hKan.kan_layers_handlers + layer);
 
+#ifdef DEF_DBG
+        dbg_print_metrics(hLayer_p);
+#endif
+
         kan_mem_cpy((void *)(hLayer_p->data_ps_src_addr), (void *)(hKan.data_pl_base_addr), (hLayer_p->data_num) * sizeof(data_t));
         kan_mem_cpy((void *)(hLayer_p->grid_ps_src_addr), (void *)(hKan.grid_pl_base_addr), (hLayer_p->grid_num) * sizeof(data_t));
         kan_mem_cpy((void *)(hLayer_p->scale_ps_src_addr), (void *)(hKan.scale_pl_base_addr), (hLayer_p->scale_num) * sizeof(data_t));
@@ -164,6 +168,9 @@ int main(void)
 #ifdef DEF_VERBOSE
         xil_printf("Start DMA transfer of weights and results\r\n");
 #endif
+        status = kan_dma_init(&hDma, DMA_DEV_ID);
+        if (status != STATUS_OK)
+            kan_error_handler(status, "DMA initialization failed");
 
         status = kan_dma_attach_irq(&hDma, &hIntrCtr);
         if (status != STATUS_OK)
@@ -228,15 +235,14 @@ int main(void)
                 if (dma_error_flag)
                     kan_error_handler(STATUS_DMA_ERROR_INTR, "DMA error flag reaised before monitoring the core");
 
-                // #ifdef DEF_DBG
-                //                 count++;
-                //                 if (count == countMax)
-                //                 {
-                //                     count = 0;
-                //                     dbg_print_metrics(hLayer_p);
-                //                     dbg_print_status();
-                //                 }
-                // #endif
+#ifdef DEF_DBG
+                count++;
+                if (count == countMax)
+                {
+                    count = 0;
+                    dbg_print_metrics(hLayer_p);
+                }
+#endif
             }
         }
         else
@@ -257,7 +263,7 @@ int main(void)
 
         if ((kan_state != KAN_STATE_ITRL_ERR) && (kan_state != KAN_STATE_OPER_ERR))
         {
-            while ((dma_rx_done_flag == 0) || (dma_tx_done_flag == 0)) // !!!!!!!!!! for debug pusposes it is &&, it should be ||
+            while ((dma_rx_done_flag == 0) || (dma_tx_done_flag == 0))
             {
                 if (dma_error_flag)
                     kan_error_handler(STATUS_DMA_ERROR_INTR, "DMA interrupt error flag was raised");
@@ -267,15 +273,6 @@ int main(void)
 
                 if (kan_state == KAN_STATE_ITRL_ERR)
                     kan_error_handler(STATUS_PL_ERROR, "Internal Error in the PL");
-
-                // #ifdef DEF_DBG
-                //                 count++;
-                //                 if (count == countMax)
-                //                 {
-                //                     count = 0;
-                //                     dbg_print_metrics(hLayer_p);
-                //                 }
-                // #endif
             }
             dma_rx_done_flag = 0;
             dma_tx_done_flag = 0;
@@ -284,15 +281,15 @@ int main(void)
         else
             kan_error_handler(STATUS_PL_ERROR, "Core in error before monitoring the DMA");
 
-#ifdef DEF_DBG
-        dbg_print_status();
-#endif
-
         // report metrics
 
         status = kan_ctrl_update_layer_stats(hLayer_p);
         if (status != STATUS_OK)
             kan_error_handler(status, "Error in updating KAN statistics");
+
+#ifdef DEF_DBG
+        dbg_print_metrics(hLayer_p);
+#endif
 
         // null the core after completion (soft reset and null operation done reg)
 
@@ -305,9 +302,25 @@ int main(void)
             kan_error_handler(status, "Unable to reset the core");
         kan_mem_reg_write(KAN_REG_BASE_ADDRESS, KAN_REG_OPER_DNE_1B, NULL_VAL, BYTE);
 
+        // detach all interrupts and null their flags
+
         status = kan_dma_detach_irq(&hIntrCtr);
         if (status != STATUS_OK)
             kan_error_handler(status, "Could not detach interrupts from DMA engine");
+        dma_rx_done_flag = 0;
+        dma_tx_done_flag = 0;
+        dma_error_flag = 0;
+
+        status = kan_intr_detach(&hIntrCtr, INTR_PL_TOP_PS_ID);
+        if (status != STATUS_OK)
+            kan_error_handler(status, "Could not detach PL2PS interrupts");
+        kan_state = KAN_STATE_UNKNOWN;
+
+        // reset the DMA engine
+
+        status = kan_dma_reset(&hDma);
+        if (status != STATUS_OK)
+            kan_error_handler(status, "Could not reset DMA engine");
     }
     xil_printf("---\r\n");
 

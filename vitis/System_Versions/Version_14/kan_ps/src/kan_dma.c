@@ -25,15 +25,15 @@ static void callback_dma_tx(void *dma_handler)
      * Read pending interrupts
      */
 
-    intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DEVICE_TO_DMA);
-    // intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DMA_TO_DEVICE);
+    // intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DEVICE_TO_DMA);
+    intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DMA_TO_DEVICE);
 
     /**
      * Acknowledge pending interrupts
      */
 
-    XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DEVICE_TO_DMA);
-    // XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DMA_TO_DEVICE);
+    // XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DEVICE_TO_DMA);
+    XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DMA_TO_DEVICE);
 
     /**
      * If no interrupt is asserted, we do not do anything
@@ -103,15 +103,15 @@ static void callback_dma_rx(void *dma_handler)
      * Read pending interrupts
      */
 
-    intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DMA_TO_DEVICE);
-    // intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DEVICE_TO_DMA);
+    // intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DMA_TO_DEVICE);
+    intr_mask = XAxiDma_IntrGetIrq(dma_handler_p, XAXIDMA_DEVICE_TO_DMA);
 
     /**
      * Acknowledge pending interrupts
      */
 
-    XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DMA_TO_DEVICE);
-    // XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DEVICE_TO_DMA);
+    // XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DMA_TO_DEVICE);
+    XAxiDma_IntrAckIrq(dma_handler_p, intr_mask, XAXIDMA_DEVICE_TO_DMA);
 
     /**
      * If no interrupt is asserted, we do not do anything
@@ -195,6 +195,22 @@ kan_status_t kan_dma_init(kan_dma_handler_t *dma_handler, uint16_t dma_id)
     return STATUS_OK;
 }
 
+kan_status_t kan_dma_reset(kan_dma_handler_t *dma_handler)
+{
+    size_t timeout = 0;
+
+    XAxiDma_Reset(dma_handler);
+
+    while (!XAxiDma_ResetIsDone(dma_handler))
+    {
+        timeout++;
+        if (timeout == RESET_TIMEOUT_COUNTER)
+            return STATUS_DMA_TIMEOUT;
+    }
+
+    return STATUS_OK;
+}
+
 kan_status_t kan_dma_attach_irq(kan_dma_handler_t *dma_handler, kan_intr_handler_t *intr_handler)
 {
     if (dma_handler == NULL || intr_handler == NULL || (!(intr_handler->IsReady)))
@@ -251,7 +267,6 @@ kan_status_t kan_dma_tx(kan_dma_handler_t *dma_handler, volatile weight_t *tx_bu
 
     kan_status_t status = STATUS_FAILURE;
 
-    // status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)tx_buff, size, XAXIDMA_DEVICE_TO_DMA);
     status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)tx_buff, size, XAXIDMA_DMA_TO_DEVICE);
 
     if (status != STATUS_OK)
@@ -267,7 +282,6 @@ kan_status_t kan_dma_rx(kan_dma_handler_t *dma_handler, volatile data_t *rx_buff
 
     kan_status_t status = STATUS_FAILURE;
 
-    // status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)rx_buff, size, XAXIDMA_DMA_TO_DEVICE);
     status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)rx_buff, size, XAXIDMA_DEVICE_TO_DMA);
 
     if (status != STATUS_OK)
