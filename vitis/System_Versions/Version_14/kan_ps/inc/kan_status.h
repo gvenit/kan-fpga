@@ -62,7 +62,7 @@ typedef enum Kan_Status
     STATUS_DMA_TX_FAILURE,
     STATUS_DMA_RX_FAILURE,
     STATUS_DMA_ERROR_INTR,
-    STATUS_BRAMC_INIT_FAILURE,
+    STATUS_DMA_TIMEOUT,
     STATUS_PL_ERROR,
     STATUS_MEM_READ_ERROR,
     STATUS_MEM_WRITE_ERROR
@@ -154,10 +154,10 @@ typedef enum Kan_Status
             xil_printf("***\r\n");                                             \
             xil_printf("\r\n");                                                \
             break;                                                             \
-        case STATUS_BRAMC_INIT_FAILURE:                                        \
+        case STATUS_DMA_TIMEOUT:                                               \
             xil_printf("\r\n");                                                \
             xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_BRAMC_INIT_FAILURE\r\n");  \
+            xil_printf("Call returned error: STATUS_DMA_TIMEOUT\r\n");         \
             xil_printf("MESSAGE: %s\r\n", msg);                                \
             xil_printf("***\r\n");                                             \
             xil_printf("\r\n");                                                \

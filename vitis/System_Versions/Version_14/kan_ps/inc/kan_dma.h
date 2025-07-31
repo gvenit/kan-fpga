@@ -35,6 +35,10 @@ extern volatile int dma_error_flag;   // error in DMA transaction
  */
 kan_status_t kan_dma_init(kan_dma_handler_t *dma_handler, uint16_t dma_id);
 
+//////////////////////////////////////////////////////////////////////////////////////
+kan_status_t kan_dma_reset(kan_dma_handler_t *dma_handler);
+//////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * @brief Attaches interrupts
  * with DMA-specific callbacks that affect the
