@@ -252,6 +252,7 @@ int main(void)
         dbg_print_status();
 #endif
 
+        // THIS MUST BE COMPLETELY WRONG - YOU DO NOT READ THAT YOU WRITE IT
         if (!kan_ctrl_reg_oper_done())
             kan_error_handler(STATUS_PL_ERROR, "DMA transfer complete and the core is not busy anymore but still not done");
 

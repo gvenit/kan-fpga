@@ -20,3 +20,6 @@ domain active {zynq_fsbl}
 domain active {standalone_ps7_cortexa9_0}
 platform generate -quick
 platform generate
+platform active {kan_pl}
+platform config -updatehw {C:/Users/giann/Downloads/mixed16_4x4x1_wrapper.xsa}
+platform generate -domains 
