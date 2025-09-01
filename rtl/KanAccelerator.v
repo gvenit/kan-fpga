@@ -481,7 +481,7 @@ module KanAccelerator #(
   // Output Grid Channels
   localparam GRID_CHANNELS_OUT = (GRID_SHARE) ? 1 : DATA_CHANNELS*BATCH_SIZE;
   // Grid FIFO Depth
-  localparam GRID_FIFO_DEPTH = `MAX((GRID_SHARE) ? 1 : DATA_CHANNELS + BATCH_SIZE, 2);
+  localparam GRID_FIFO_DEPTH = DATA_FIFO_DEPTH;
   // Pipeline Output Grid
   localparam GRID_PIPELINE_OUTPUT = 1;
 
@@ -494,7 +494,7 @@ module KanAccelerator #(
   // Output Scale Channels
   localparam SCALE_CHANNELS_OUT = (SCALE_SHARE) ? 1 : DATA_CHANNELS*BATCH_SIZE;
   // Scale FIFO Depth
-  localparam SCALE_FIFO_DEPTH = `MAX((SCALE_SHARE) ? 1 : DATA_CHANNELS + BATCH_SIZE,2);
+  localparam SCALE_FIFO_DEPTH = (SCALE_SHARE) ? 0 : DATA_FIFO_DEPTH;
   // Pipeline Output Scale
   localparam SCALE_PIPELINE_OUTPUT = 1;
 
@@ -506,7 +506,7 @@ module KanAccelerator #(
   localparam GRID_BRAM_ADDR = GRID_ADDR - `RLOG2( GRID_STRB_WIDTH ) - `RLOG2( GRID_CHANNELS_IN );
   localparam SCALE_BRAM_ADDR = SCALE_ADDR - `RLOG2( SCALE_STRB_WIDTH ) - `RLOG2( SCALE_CHANNELS_IN );
 
-  localparam PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR;
+  localparam PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR - `RLOG2( DATA_STRB_WIDTH ) - `RLOG2( GRID_STRB_WIDTH );
   localparam PCKT_SIZE_NORM = DATA_BRAM_ADDR + GRID_BRAM_ADDR;
 
   // Number of Independent AXI-Stream Weight Channels
@@ -515,6 +515,8 @@ module KanAccelerator #(
   localparam DATA_CHANNELS_IN  = BATCH_SIZE*DATA_CHANNELS;
   localparam DATA_CHANNELS_OUT = DATA_CHANNELS_IN;
   localparam RSLT_CHANNELS_OUT = BATCH_SIZE*RSLT_CHANNELS;
+
+  localparam INTERNAL_FIFO_DEPTH = RSLT_CHANNELS + BATCH_SIZE;
 
  `include "header_PeripheralsLocal.vh"
 
@@ -534,18 +536,6 @@ module KanAccelerator #(
     end
     if ( 2 ** ($clog2(DATA_CHANNELS)) != DATA_CHANNELS) begin
       $error("Data channels is expected to be a power of 2.");
-      $finish;
-    end
-    if (DATA_FIFO_DEPTH < 2) begin
-      $error("FIFO depth for Data must be greater than 1.");
-      $finish;
-    end
-    if (GRID_FIFO_DEPTH < 2) begin
-      $error("FIFO depth for Grid must be greater than 1.");
-      $finish;
-    end
-    if (SCALE_FIFO_DEPTH < 2) begin
-      $error("FIFO depth for Scale must be greater than 1.");
       $finish;
     end
     if (WEIGHT_FIFO_DEPTH < 2) begin
@@ -988,186 +978,6 @@ module KanAccelerator #(
   );
 
   /**********************************************
-    Slave AXI Async FIFO
-    between the MCU
-    and the DPU data stream
-
-    Naming conventions
-    - int_ : internal signal
-    - _axis_ : axi stream
-    - _s_ : input / slave interface
-    - _m_ : otuput / master interface
-  *********************************************/
-
-  wire [DATA_CHANNELS_OUT-1:0]                      int_adp_data_s_axis_aclk;
-  wire [DATA_CHANNELS_OUT*DATA_WIDTH-1:0]           int_adp_data_s_axis_tdata;
-  wire [DATA_CHANNELS_OUT-1:0]                      int_adp_data_s_axis_tvalid;
-  wire [DATA_CHANNELS_OUT-1:0]                      int_adp_data_s_axis_tready;
-  wire [DATA_CHANNELS_OUT-1:0]                      int_adp_data_s_axis_tlast;
-
-  wire [DATA_CHANNELS_OUT*DATA_WIDTH-1:0]           int_adp_data_m_axis_tdata;
-  wire [DATA_CHANNELS_OUT-1:0]                      int_adp_data_m_axis_tvalid;
-  wire [DATA_CHANNELS_OUT-1:0]                      int_adp_data_m_axis_tready;
-  wire [DATA_CHANNELS_OUT-1:0]                      int_adp_data_m_axis_tlast;
-
-// // To be excluded from the core
-//  generate
-//   for (CHN=0; CHN < DATA_CHANNELS_OUT; CHN = CHN + 1) begin : axis_adp_data_genblock
-//     axis_async_fifo #(
-//       .DEPTH          (DATA_FIFO_DEPTH),
-//       .DATA_WIDTH     (DATA_WIDTH),
-//       .KEEP_ENABLE    (0),
-//       .KEEP_WIDTH     (1),
-//       .ID_ENABLE      (0),
-//       .ID_WIDTH       (1),
-//       .DEST_ENABLE    (0),
-//       .DEST_WIDTH     (1),
-//       .USER_ENABLE    (0),
-//       .USER_WIDTH     (1)
-//     ) axis_adp_data_inst (
-//       .s_clk          (int_adp_data_s_axis_aclk   [CHN]),
-//       .s_rst          (core_rst),
-//       .s_axis_tdata   (int_adp_data_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
-//       .s_axis_tkeep   (1'b1),
-//       .s_axis_tvalid  (int_adp_data_s_axis_tvalid [CHN]),
-//       .s_axis_tready  (int_adp_data_s_axis_tready [CHN]),
-//       .s_axis_tlast   (int_adp_data_s_axis_tlast  [CHN]),
-//       .s_axis_tid     (1'b0),
-//       .s_axis_tdest   (1'b0),
-//       .s_axis_tuser   (1'b0),
-//       .m_clk          (core_clk),
-//       .m_rst          (core_rst),
-//       .m_axis_tdata   (int_adp_data_m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
-//       .m_axis_tvalid  (int_adp_data_m_axis_tvalid [CHN]),
-//       .m_axis_tready  (int_adp_data_m_axis_tready [CHN]),
-//       .m_axis_tlast   (int_adp_data_m_axis_tlast  [CHN]),
-//       .s_pause_req    (1'b0),
-//       .m_pause_req    (1'b0)
-//     );
-//   end 
-//  endgenerate
-
-  /**********************************************
-    Slave AXI Async FIFO
-    between the MCU
-    and the DPU data stream
-
-    Naming conventions
-    - int_ : internal signal
-    - _axis_ : axi stream
-    - _s_ : input / slave interface
-    - _m_ : otuput / master interface
-  *********************************************/
-
-  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_aclk;
-  wire [GRID_CHANNELS_OUT*GRID_WIDTH-1:0]       int_adp_grid_s_axis_tdata;
-  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_tvalid;
-  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_tready;
-  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_s_axis_tlast;
-
-  wire [GRID_CHANNELS_OUT*GRID_WIDTH-1:0]       int_adp_grid_m_axis_tdata;
-  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_m_axis_tvalid;
-  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_m_axis_tready;
-  wire [GRID_CHANNELS_OUT-1:0]                  int_adp_grid_m_axis_tlast;
-
-// // To be excluded from the core
-//  generate
-//   for (CHN=0; CHN < GRID_CHANNELS_OUT; CHN = CHN + 1) begin: axis_adp_grid_genblock
-//     axis_async_fifo #(
-//       .DEPTH          (GRID_FIFO_DEPTH),
-//       .DATA_WIDTH     (GRID_WIDTH),
-//       .KEEP_ENABLE    (0),
-//       .KEEP_WIDTH     (1),
-//       .ID_ENABLE      (0),
-//       .ID_WIDTH       (1),
-//       .DEST_ENABLE    (0),
-//       .DEST_WIDTH     (1),
-//       .USER_ENABLE    (0),
-//       .USER_WIDTH     (1)
-//     ) axis_adp_grid_inst (
-//       .s_clk          (int_adp_grid_s_axis_aclk   [CHN]),
-//       .s_rst          (core_rst),
-//       .s_axis_tdata   (int_adp_grid_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
-//       .s_axis_tkeep   (1'b1),
-//       .s_axis_tvalid  (int_adp_grid_s_axis_tvalid [CHN]),
-//       .s_axis_tready  (int_adp_grid_s_axis_tready [CHN]),
-//       .s_axis_tlast   (int_adp_grid_s_axis_tlast  [CHN]),
-//       .s_axis_tid     (1'b0),
-//       .s_axis_tdest   (1'b0),
-//       .s_axis_tuser   (1'b0),
-//       .m_clk          (core_clk),
-//       .m_rst          (core_rst),
-//       .m_axis_tdata   (int_adp_grid_m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
-//       .m_axis_tvalid  (int_adp_grid_m_axis_tvalid [CHN]),
-//       .m_axis_tready  (int_adp_grid_m_axis_tready [CHN]),
-//       .m_axis_tlast   (int_adp_grid_m_axis_tlast  [CHN]),
-//       .s_pause_req    (1'b0),
-//       .m_pause_req    (1'b0)
-//     );
-//   end 
-//  endgenerate
-
-  /**********************************************
-    Slave AXI Async FIFO
-    between the MCU
-    and the DPU data stream
-
-    Naming conventions
-    - int_ : internal signal
-    - _axis_ : axi stream
-    - _s_ : input / slave interface
-    - _m_ : otuput / master interface
-  *********************************************/
-
-  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_aclk;
-  wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]     int_adp_scle_s_axis_tdata;
-  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_tvalid;
-  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_tready;
-  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_s_axis_tlast;
-
-  wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]     int_adp_scle_m_axis_tdata;
-  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_m_axis_tvalid;
-  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_m_axis_tready;
-  wire [SCALE_CHANNELS_OUT-1:0]                 int_adp_scle_m_axis_tlast;
-
-// // To be excluded from the core
-//  generate
-//   for (CHN=0; CHN < SCALE_CHANNELS_OUT; CHN = CHN + 1) begin: axis_adp_scle_genblock
-//     axis_async_fifo #(
-//       .DEPTH          (SCALE_FIFO_DEPTH),
-//       .DATA_WIDTH     (SCALE_WIDTH),
-//       .KEEP_ENABLE    (0),
-//       .KEEP_WIDTH     (1),
-//       .ID_ENABLE      (0),
-//       .ID_WIDTH       (1),
-//       .DEST_ENABLE    (0),
-//       .DEST_WIDTH     (1),
-//       .USER_ENABLE    (0),
-//       .USER_WIDTH     (1)
-//     ) axis_adp_scle_inst (
-//       .s_clk          (int_adp_scle_s_axis_aclk   [CHN]),
-//       .s_rst          (core_rst),
-//       .s_axis_tdata   (int_adp_scle_s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
-//       .s_axis_tkeep   (1'b1),
-//       .s_axis_tvalid  (int_adp_scle_s_axis_tvalid [CHN]),
-//       .s_axis_tready  (int_adp_scle_s_axis_tready [CHN]),
-//       .s_axis_tlast   (int_adp_scle_s_axis_tlast  [CHN]),
-//       .s_axis_tid     (1'b0),
-//       .s_axis_tdest   (1'b0),
-//       .s_axis_tuser   (1'b0),
-//       .m_clk          (core_clk),
-//       .m_rst          (core_rst),
-//       .m_axis_tdata   (int_adp_scle_m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH]),
-//       .m_axis_tvalid  (int_adp_scle_m_axis_tvalid [CHN]),
-//       .m_axis_tready  (int_adp_scle_m_axis_tready [CHN]),
-//       .m_axis_tlast   (int_adp_scle_m_axis_tlast  [CHN]),
-//       .s_pause_req    (1'b0),
-//       .m_pause_req    (1'b0)
-//     );
-//   end 
-//  endgenerate
-
-  /**********************************************
     Slave AXI Adapter
     between the DMA Master
     and the Weight Streams Splitter 
@@ -1283,7 +1093,7 @@ module KanAccelerator #(
   /**********************************************
     Weight streams AXI-Stream Packet Splitter
     betweem the slave AXIS Splitter
-    and the Data Processor 
+    and the Weight SRL FIFOs
 
     Naming conventions
     - int_ : internal signal
@@ -1560,7 +1370,7 @@ module KanAccelerator #(
   wire [RSLT_CHANNELS_OUT-1:0]                    int_dpu_rslt_m_axis_tlast;
 
   wire                                            dpu_operation_busy = |(int_dpu_rslt_m_axis_tready & int_dpu_wght_s_axis_tvalid);
-  wire                                            dpu_operation_complete = int_dpu_rslt_m_axis_tlast[0];
+  wire                                            dpu_operation_complete = int_dpu_rslt_m_axis_tlast[0] && int_dpu_rslt_m_axis_tready && int_dpu_rslt_m_axis_tvalid;
   wire                                            dpu_operation_error;
   wire                                            dpu_transmission = |(int_dpu_rslt_m_axis_tready & int_dpu_rslt_m_axis_tvalid);
 
@@ -1593,7 +1403,8 @@ module KanAccelerator #(
     .ROM_DATA_PATH                (ROM_DATA_PATH),
     .OUTPUT_DEST                  (0),
     .OUTPUT_ID                    (0),
-    .FIFO_DEPTH                   (0)
+    .INPUT_FIFO_DEPTH             (2),
+    .INTERNAL_FIFO_DEPTH          (INTERNAL_FIFO_DEPTH)
   ) data_processor_inst (
     .clk                          (core_clk),
     .rst                          (fsm_rst || internal_operation_error),
@@ -1643,9 +1454,9 @@ module KanAccelerator #(
     .BATCH_SIZE                     (BATCH_SIZE),
     .DATA_CHANNELS                  (DATA_CHANNELS),
     .RSLT_CHANNELS                  (RSLT_CHANNELS),
-    .DATA_ADDR                      (DATA_ADDR),
-    .GRID_ADDR                      (GRID_ADDR),
-    .SCALE_ADDR                     (SCALE_ADDR),
+    .DATA_ADDR                      (DATA_ADDR  - `RLOG2( DATA_STRB_WIDTH )),
+    .GRID_ADDR                      (GRID_ADDR  - `RLOG2( GRID_STRB_WIDTH )),
+    .SCALE_ADDR                     (SCALE_ADDR - `RLOG2( SCALE_STRB_WIDTH )),
     .PCKT_SIZE_WIDTH                (PCKT_SIZE_WIDTH),
     .IS_ASYNCHRONOUS                (IS_ASYNCHRONOUS)
   ) ccu_inst (
@@ -1808,7 +1619,7 @@ module KanAccelerator #(
   assign int_mcu_scle_bram_rddata    = int_ram_scle_bram_rddata;
   assign int_mcu_scle_bram_rdack     = int_ram_scle_bram_rdack;
 
-  // connect dma slave to slave axi adp
+  // connect dma slave to slave axi adapter
 
   assign int_adp_wght_s_axis_tdata   = s_axis_wght_tdata;
   assign int_adp_wght_s_axis_tkeep   = s_axis_wght_tkeep;
@@ -1816,7 +1627,7 @@ module KanAccelerator #(
   assign s_axis_wght_tready          = int_adp_wght_s_axis_tready;
   assign int_adp_wght_s_axis_tlast   = (WEIGHT_LAST_ENABLE) ? s_axis_wght_tlast : 1'b0;
 
-  // connect slave axi adp to axi spl of the wght streams
+  // connect slave axi adatper to axi spliter of the weight streams
 
   assign int_spl_wght_s_axis_tdata   = int_adp_wght_m_axis_tdata;
   assign int_spl_wght_s_axis_tkeep   = int_adp_wght_m_axis_tkeep;
@@ -1824,75 +1635,33 @@ module KanAccelerator #(
   assign int_adp_wght_m_axis_tready  = int_spl_wght_s_axis_tready;
   assign int_spl_wght_s_axis_tlast   = int_adp_wght_m_axis_tlast;
 
-  // connect slave axi spl to axi aps of the wght streams
+  // connect slave axi splitter to axi aps of the weight streams
 
   assign int_aps_wght_s_axis_tdata   = int_spl_wght_m_axis_tdata;
   assign int_aps_wght_s_axis_tvalid  = int_spl_wght_m_axis_tvalid;
   assign int_spl_wght_m_axis_tready  = int_aps_wght_s_axis_tready;
   assign int_aps_wght_s_axis_tlast   = int_spl_wght_m_axis_tlast;
 
-  // Connect the data axis from mcu to async fifo
+  // Connect the data axis from MCU to data processor
 
-  assign int_adp_data_s_axis_aclk    = int_mcu_data_m_axis_aclk;
-  assign int_adp_data_s_axis_tdata   = int_mcu_data_m_axis_tdata;
-  assign int_adp_data_s_axis_tvalid  = int_mcu_data_m_axis_tvalid;
-  assign int_mcu_data_m_axis_tready  = int_adp_data_s_axis_tready;
-  assign int_adp_data_s_axis_tlast   = int_mcu_data_m_axis_tlast;
+  assign int_dpu_data_s_axis_tdata   = int_mcu_data_m_axis_tdata;
+  assign int_dpu_data_s_axis_tvalid  = int_mcu_data_m_axis_tvalid;
+  assign int_mcu_data_m_axis_tready  = int_dpu_data_s_axis_tready;
+  assign int_dpu_data_s_axis_tlast   = int_mcu_data_m_axis_tlast;
 
-// // To be excluded from the core -- Data Adapter
-  assign int_adp_data_m_axis_tdata   = int_adp_data_s_axis_tdata;
-  assign int_adp_data_m_axis_tvalid  = int_adp_data_s_axis_tvalid;
-  assign int_adp_data_s_axis_tready  = int_adp_data_m_axis_tready;
-  assign int_adp_data_m_axis_tlast   = int_adp_data_s_axis_tlast;
+  // Connect the grid axis from MCU to data processor
 
-  // Connect the data axis from async fifo to data processor
+  assign int_dpu_grid_s_axis_tdata   = int_mcu_grid_m_axis_tdata;
+  assign int_dpu_grid_s_axis_tvalid  = int_mcu_grid_m_axis_tvalid;
+  assign int_mcu_grid_m_axis_tready  = int_dpu_grid_s_axis_tready;
+  assign int_dpu_grid_s_axis_tlast   = int_mcu_grid_m_axis_tlast;
 
-  assign int_dpu_data_s_axis_tdata   = int_adp_data_m_axis_tdata;
-  assign int_dpu_data_s_axis_tvalid  = int_adp_data_m_axis_tvalid;
-  assign int_adp_data_m_axis_tready  = int_dpu_data_s_axis_tready;
-  assign int_dpu_data_s_axis_tlast   = int_adp_data_m_axis_tlast;
+  // Connect the scle axis from MCU to data processor
 
-  // Connect the grid axis from mcu to async fifo
-
-  assign int_adp_grid_s_axis_aclk    = int_mcu_grid_m_axis_aclk;
-  assign int_adp_grid_s_axis_tdata   = int_mcu_grid_m_axis_tdata;
-  assign int_adp_grid_s_axis_tvalid  = int_mcu_grid_m_axis_tvalid;
-  assign int_mcu_grid_m_axis_tready  = int_adp_grid_s_axis_tready;
-  assign int_adp_grid_s_axis_tlast   = int_mcu_grid_m_axis_tlast;
-
-// // To be excluded from the core -- Data Adapter
-  assign int_adp_grid_m_axis_tdata   = int_adp_grid_s_axis_tdata;
-  assign int_adp_grid_m_axis_tvalid  = int_adp_grid_s_axis_tvalid;
-  assign int_adp_grid_s_axis_tready  = int_adp_grid_m_axis_tready;
-  assign int_adp_grid_m_axis_tlast   = int_adp_grid_s_axis_tlast;
-
-  // Connect the grid axis from async fifo to data processor
-
-  assign int_dpu_grid_s_axis_tdata   = int_adp_grid_m_axis_tdata;
-  assign int_dpu_grid_s_axis_tvalid  = int_adp_grid_m_axis_tvalid;
-  assign int_adp_grid_m_axis_tready  = int_dpu_grid_s_axis_tready;
-  assign int_dpu_grid_s_axis_tlast   = int_adp_grid_m_axis_tlast;
-
-  // Connect the scle axis from mcu to async fifo
-
-  assign int_adp_scle_s_axis_aclk    = int_mcu_scle_m_axis_aclk;
-  assign int_adp_scle_s_axis_tdata   = int_mcu_scle_m_axis_tdata;
-  assign int_adp_scle_s_axis_tvalid  = int_mcu_scle_m_axis_tvalid;
-  assign int_mcu_scle_m_axis_tready  = int_adp_scle_s_axis_tready;
-  assign int_adp_scle_s_axis_tlast   = int_mcu_scle_m_axis_tlast;
-
-// // To be excluded from the core -- Data Adapter
-  assign int_adp_scle_m_axis_tdata   = int_adp_scle_s_axis_tdata;
-  assign int_adp_scle_m_axis_tvalid  = int_adp_scle_s_axis_tvalid;
-  assign int_adp_scle_s_axis_tready  = int_adp_scle_m_axis_tready;
-  assign int_adp_scle_m_axis_tlast   = int_adp_scle_s_axis_tlast;
-
-  // Connect the scle axis from async fifo to data processor
-
-  assign int_dpu_scle_s_axis_tdata   = int_adp_scle_m_axis_tdata;
-  assign int_dpu_scle_s_axis_tvalid  = int_adp_scle_m_axis_tvalid;
-  assign int_adp_scle_m_axis_tready  = int_dpu_scle_s_axis_tready;
-  assign int_dpu_scle_s_axis_tlast   = int_adp_scle_m_axis_tlast;
+  assign int_dpu_scle_s_axis_tdata   = int_mcu_scle_m_axis_tdata;
+  assign int_dpu_scle_s_axis_tvalid  = int_mcu_scle_m_axis_tvalid;
+  assign int_mcu_scle_m_axis_tready  = int_dpu_scle_s_axis_tready;
+  assign int_dpu_scle_s_axis_tlast   = int_mcu_scle_m_axis_tlast;
 
   // connect axi spl wght streams to data processor
 
@@ -1901,19 +1670,21 @@ module KanAccelerator #(
   assign int_aps_wght_m_axis_tready  = int_dpu_wght_s_axis_tready;
   assign int_dpu_wght_s_axis_tlast   = int_aps_wght_m_axis_tlast;
 
-  // connect the rslt streams from data procesor to axi jnr
+  // connect the result streams from data procesor to axi buffer
 
   assign int_buf_rslt_s_axis_tdata   = int_dpu_rslt_m_axis_tdata;
   assign int_buf_rslt_s_axis_tvalid  = int_dpu_rslt_m_axis_tvalid;
   assign int_dpu_rslt_m_axis_tready  = int_buf_rslt_s_axis_tready;
   assign int_buf_rslt_s_axis_tlast   = int_dpu_rslt_m_axis_tlast;
 
+  // connect the result streams from axi buffer to axi joiner
+
   assign int_jnr_rslt_s_axis_tdata   = int_buf_rslt_m_axis_tdata;
   assign int_jnr_rslt_s_axis_tvalid  = int_buf_rslt_m_axis_tvalid;
   assign int_buf_rslt_m_axis_tready  = int_jnr_rslt_s_axis_tready;
   assign int_jnr_rslt_s_axis_tlast   = int_buf_rslt_m_axis_tlast;
 
-  // connect axi jnr of result streams to axi master adp
+  // connect the result streams from axi joiner to axi master adapter
 
   assign int_adp_rslt_s_axis_tdata   = int_jnr_rslt_m_axis_tdata;
   assign int_adp_rslt_s_axis_tvalid  = int_jnr_rslt_m_axis_tvalid;
@@ -1940,30 +1711,8 @@ module KanAccelerator #(
   assign data_size_norm = data_size >> `RLOG2( DATA_CHANNELS );
   assign grid_size_norm = grid_size >> `RLOG2( GRID_CHANNELS_IN );
   assign scle_size_norm = scle_size >> `RLOG2( SCALE_CHANNELS_IN );
-  // assign pckt_size_norm = pckt_size >> `RLOG2( GRID_CHANNELS_IN );
-  assign pckt_size_norm = pckt_size >> `RLOG2( DATA_CHANNELS * GRID_CHANNELS_IN);
+  assign pckt_size_norm = pckt_size >> `RLOG2( DATA_CHANNELS );
 
-  // assign peripheral_operation_busy     [PERIPHERAL_MCU] = mcu_operation_busy;
-  // assign peripheral_operation_complete [PERIPHERAL_MCU] = mcu_operation_complete;
-  // assign peripheral_operation_error    [PERIPHERAL_MCU] = mcu_operation_error;
-  // assign peripheral_transmission       [PERIPHERAL_MCU] = mcu_transmission;
-
-  // assign peripheral_operation_busy     [PERIPHERAL_DPU] = dpu_operation_busy;
-  // assign peripheral_operation_complete [PERIPHERAL_DPU] = dpu_operation_complete;
-  // assign peripheral_operation_error    [PERIPHERAL_DPU] = dpu_operation_error;
-  // assign peripheral_transmission       [PERIPHERAL_DPU] = dpu_transmission;
-
-  // assign peripheral_operation_busy     [PERIPHERAL_APS] = aps_operation_busy;
-  // assign peripheral_operation_complete [PERIPHERAL_APS] = aps_operation_complete;
-  // assign peripheral_operation_error    [PERIPHERAL_APS] = aps_operation_error;
-  // assign peripheral_transmission       [PERIPHERAL_APS] = aps_transmission;
-
-  // assign peripheral_operation_busy     [PERIPHERAL_JNR] = jnr_operation_busy;
-  // assign peripheral_operation_complete [PERIPHERAL_JNR] = jnr_operation_complete;
-  // assign peripheral_operation_error    [PERIPHERAL_JNR] = jnr_operation_error;
-  // assign peripheral_transmission       [PERIPHERAL_JNR] = jnr_transmission;
-
-  // assign rslt_tlast = jnr_operation_complete;
 endmodule
 
 `resetall

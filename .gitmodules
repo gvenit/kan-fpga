@@ -1,3 +1,5 @@
 [submodule "lib/verilog-axis"]
 	path = lib/verilog-axis
 	url = https://github.com/alexforencich/verilog-axis.git
+[submodule "lib/Radial-Basis-Function-Based-Kolmogorov-Arnold-Networks"]
+	path = lib/Radial-Basis-Function-Based-Kolmogorov-Arnold-Networks

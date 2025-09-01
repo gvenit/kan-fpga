@@ -51,11 +51,11 @@ module CentralControlUnit #(
   parameter DATA_CHANNELS = 1,
   // Number of Independent AXI-Stream Result Channels per Batch
   parameter RSLT_CHANNELS = 1,
-  // Data Width of address bus in bits
+  // Data Width of word-addressible address bus in bits
   parameter DATA_ADDR = 32,
-  // Grid Width of address bus in bits
+  // Grid Width of word-addressible address bus in bits
   parameter GRID_ADDR = 32,
-  // Scale Width of address bus in bits
+  // Scale Width of word-addressible address bus in bits
   parameter SCALE_ADDR = 32,
   // Width of Packet size bus in bits
   parameter PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR,

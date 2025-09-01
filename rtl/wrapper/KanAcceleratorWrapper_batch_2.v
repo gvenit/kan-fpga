@@ -69,6 +69,10 @@ module KanAcceleratorWrapper_batch_2 #(
   parameter SCALE_FRACTIONAL_BITS = 14,
   // Total memory size allocated for Data in words
   parameter SCALE_DEPTH = 2,
+  // Scale Strobe Width
+  parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
+  // Scale Address Width
+  parameter SCALE_ADDR = `LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ),
 
   /*------------------------------------------------------------------
     RESULT / OUTPUT parameters
@@ -84,10 +88,6 @@ module KanAcceleratorWrapper_batch_2 #(
   parameter RSLT_KEEP_WIDTH = ((RSLT_WIDTH + 7) / 8),
   // FIFO Depth for results
   parameter RSLT_FIFO_DEPTH = 32,
-  // Scale Strobe Width
-  parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
-  // Scale Address Width
-  parameter SCALE_ADDR = `MAX( `LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ), SCALE_STRB_WIDTH),
 
   /*------------------------------------------------------------------
     WEIGHT streams parameters

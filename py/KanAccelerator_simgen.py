@@ -49,10 +49,10 @@ def KanAccelerator(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_widt
         '--data-chn',               J,
         '--data-depth',             2**14,
         # '--data-depth',             J * max(N_in // J, 1),
-        '--grid-depth',             8,
+        '--grid-depth',             2**10,
         '--scle-width',             data_width,
         '--scle-frac-bits',         data_width-2,
-        '--scle-depth',             1,
+        '--scle-depth',             2**10,
         '--wght-width',             data_width,
         '--wght-frac-bits',         data_width-5,
         '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)) * 2,
@@ -200,9 +200,6 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     CLOG_AXIL_CTRL_STRB_WIDTH = module.Localparam('CLOG_AXIL_CTRL_STRB_WIDTH', 2)
     
     WEIGHT_LAST_ENABLE.value = 0
-    
-    if SCALE_SHARE.value :
-        SCALE_ADDR.value *= 4
     
     reset_done = module.Reg('reset_done', initval=0)
 
@@ -420,7 +417,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     # KAN Layer parameters
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_len = DATA_CHANNELS.value * max(N_in // DATA_CHANNELS.value, 1)
-    grid_len = 8
+    grid_len = 4
     scale_len = (1,1,1) if SCALE_SHARE.value else (1,data_len,grid_len)
     rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
     weight_len = data_len * grid_len
@@ -1209,7 +1206,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         Display('-- Control Test 3 complete.'),
         
         # Test 4: Check invalid configuration -- Data len = 2**DATA_ADDR+1
-        *control_wr_seq('CTRL_REG_DATA_LEN', 2**DATA_ADDR+1, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_DATA_LEN', params['DATA_DEPTH']+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -1236,7 +1233,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         Display('-- Control Test 5 complete.'),
         
         # Test 6: Check invalid configuration -- Grid len = 2**GRID_ADDR+1
-        *control_wr_seq('CTRL_REG_GRID_LEN', 2**GRID_ADDR+1, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_GRID_LEN', params['GRID_DEPTH']+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -1263,7 +1260,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         Display('-- Control Test 7 complete.'),
         
         # Test 8: Check invalid configuration -- Scale len = 2**SCALE_ADDR+1
-        *control_wr_seq('CTRL_REG_SCLE_LEN', 2**SCALE_ADDR+1, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_SCLE_LEN', params['SCALE_DEPTH']+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
@@ -1290,7 +1287,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         Display('-- Control Test 9 complete.'),
         
         # Test 10: Check invalid configuration -- Packet len = 2**(DATA_ADDR + GRID_ADDR)+1
-        *control_wr_seq('CTRL_REG_PCKT_LEN', 2**(DATA_ADDR + GRID_ADDR)+1, AXIL_CTRL_STRB_WIDTH),
+        *control_wr_seq('CTRL_REG_PCKT_LEN', params['DATA_DEPTH']*params['GRID_DEPTH']+1, AXIL_CTRL_STRB_WIDTH),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
             ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |

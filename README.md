@@ -2,6 +2,9 @@
 
 A complete engine for accelerating Kolmogorov-Arnold Networks (KAN) in FPGAs. The engine is based on [faster-kan](https://github.com/AthanasiosDelis/faster-kan) and exploits the repeatitive use of the data and grid elements to calculate the operations of a KAN layer. 
 
+## Notes
+The `vitis` application is under development. The engine is functional but susceptible to small changes. 
+
 ## FasterKAN
 [faster-kan](https://github.com/AthanasiosDelis/faster-kan), when compared to [pykan](), uses an easier to calculate activation function, the Reflectional SWitch Activation Function:  
 

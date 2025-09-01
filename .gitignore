@@ -4,6 +4,8 @@ __pycache__
 parse*
 .vscode
 
+!lib/*/
+
 tb/
 out/
 data/
@@ -37,7 +39,8 @@ temp
 # vivado
 vivado/*/*
 !vivado/*/*.tcl
-
+vivado*.jou
+vivado*.log
 
 # vitis
 vitis/*
