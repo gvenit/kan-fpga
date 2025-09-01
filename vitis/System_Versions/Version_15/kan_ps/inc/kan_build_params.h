@@ -86,7 +86,7 @@ static const uint16_t sizes_array_grid[KAN_LAYERS_NUM] = {1};
 /**
  * @brief used datatype for data, scale and grid
  */
-typedef uint32_t data_t; // the type of a single packet
+typedef uint16_t data_t; // the type of a single packet
 
 /**
  * @brief used datatype for weights
