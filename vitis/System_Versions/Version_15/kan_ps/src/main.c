@@ -103,13 +103,33 @@ int main(void)
     if (status != STATUS_OK)
         kan_error_handler(status, "Interrupts configuration failed");
 
-    // #ifdef DEF_VERBOSE
-    //     xil_printf("Initialize DMA engine\r\n");
-    // #endif
+#ifdef DEF_VERBOSE
+    xil_printf("Initialize DMA engine\r\n");
+#endif
 
-    //     status = kan_dma_init(&hDma, DMA_DEV_ID);
-    //     if (status != STATUS_OK)
-    //         kan_error_handler(status, "DMA initialization failed");
+    status = kan_dma_init(&hDma, DMA_DEV_ID);
+    if (status != STATUS_OK)
+        kan_error_handler(status, "DMA initialization failed");
+
+    /*----------------------------------------
+     Interrupt attachments
+    ----------------------------------------*/
+
+#ifdef DEF_VERBOSE
+    xil_printf("Attach DMA engine interrupts\r\n");
+#endif
+
+    status = kan_dma_attach_irq(&hDma, &hIntrCtr);
+    if (status != STATUS_OK)
+        kan_error_handler(status, "DMA interrupts attach failed");
+
+#ifdef DEF_VERBOSE
+    xil_printf("Attach PL to PS interrupts\r\n");
+#endif
+
+    status = kan_intr_attach(&hIntrCtr, INTR_PL_TOP_PS_ID, INTR_DEFAULT_PRIORITY, INTR_TRIGGER_RISING_EDGE, (kan_intr_callback_t)callback_status_reg, (void *)&hIntrCtr);
+    if (status != STATUS_OK)
+        kan_error_handler(status, "Failed to attach PL to PS interrupts");
 
     /*----------------------------------------
      Downloading data to layer
@@ -168,14 +188,6 @@ int main(void)
 #ifdef DEF_VERBOSE
         xil_printf("Start DMA transfer of weights and results\r\n");
 #endif
-        status = kan_dma_init(&hDma, DMA_DEV_ID);
-        if (status != STATUS_OK)
-            kan_error_handler(status, "DMA initialization failed");
-
-        status = kan_dma_attach_irq(&hDma, &hIntrCtr);
-        if (status != STATUS_OK)
-            kan_error_handler(status, "DMA interrupts attach failed");
-
         status = kan_dma_rx(&hDma, (hLayer_p->result_ps_dest_addr), (hLayer_p->result_num) * sizeof(data_t));
         if (status != STATUS_OK)
             kan_error_handler(status, "DMA rx process of results failed");
@@ -188,20 +200,6 @@ int main(void)
 
         if (!kan_ctrl_reg_status_valid())
             kan_error_handler(STATUS_PL_ERROR, "The configuration was rejected by the PL");
-
-        // attach PL2PS interrupts
-
-#ifdef DEF_VERBOSE
-        xil_printf("Attach PL to PS interrupts\r\n");
-#endif
-
-        status = kan_intr_attach(&hIntrCtr, INTR_PL_TOP_PS_ID, INTR_DEFAULT_PRIORITY, INTR_TRIGGER_RISING_EDGE, (kan_intr_callback_t)callback_status_reg, (void *)&hIntrCtr);
-        if (status != STATUS_OK)
-            kan_error_handler(status, "Failed to attach PL to PS interrupts");
-
-#ifdef DEF_DBG
-        dbg_print_status();
-#endif
 
         // strating the core
 
@@ -305,23 +303,24 @@ int main(void)
 
         // detach all interrupts and null their flags
 
-        status = kan_dma_detach_irq(&hIntrCtr);
-        if (status != STATUS_OK)
-            kan_error_handler(status, "Could not detach interrupts from DMA engine");
+        // status = kan_dma_detach_irq(&hIntrCtr);
+        // if (status != STATUS_OK)
+        //     kan_error_handler(status, "Could not detach interrupts from DMA engine");
+
         dma_rx_done_flag = 0;
         dma_tx_done_flag = 0;
         dma_error_flag = 0;
 
-        status = kan_intr_detach(&hIntrCtr, INTR_PL_TOP_PS_ID);
-        if (status != STATUS_OK)
-            kan_error_handler(status, "Could not detach PL2PS interrupts");
-        kan_state = KAN_STATE_UNKNOWN;
+        // status = kan_intr_detach(&hIntrCtr, INTR_PL_TOP_PS_ID);
+        // if (status != STATUS_OK)
+        //     kan_error_handler(status, "Could not detach PL2PS interrupts");
+        // kan_state = KAN_STATE_UNKNOWN;
 
-        // reset the DMA engine
+        // // reset the DMA engine
 
-        status = kan_dma_reset(&hDma);
-        if (status != STATUS_OK)
-            kan_error_handler(status, "Could not reset DMA engine");
+        // status = kan_dma_reset(&hDma);
+        // if (status != STATUS_OK)
+        //     kan_error_handler(status, "Could not reset DMA engine");
     }
     xil_printf("---\r\n");
 

@@ -47,7 +47,8 @@ vitis/*
 !vitis/System_Versions
 !vitis/Hardware_Files
 vitis/*/RemoteSystemsTempFiles
-vitis/System_Versions/Version_*/kan_pl
+vitis/System_Versions/Version_*/kan_pl/*
+!vitis/System_Versions/Version_*/kan_pl/platform.tcl
 *log
 *.metadata
 *logs
