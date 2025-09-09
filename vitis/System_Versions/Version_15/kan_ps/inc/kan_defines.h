@@ -60,15 +60,8 @@
 #define RESET_TIMEOUT_COUNTER 10000 // Timeout loop counter for reset (measured in ms)
 // #define NUMBER_OF_TRANSFERS 10
 
-#ifdef MICRODMA
-#define DMA_MICRO_MIN_ALIGNMENT 0xFFF // minimum alignment of micro dma - found in `xaxidma_hw.h` as `XAXIDMA_MICROMODE_MIN_BUF_ALIGN`
-#define DMA_MICRO_MAX_TX_LEN 0x200    // In MicroDMA mode, Maximum length that can be transferred is '(Memory Data Width / 8) * Burst Size'
-
-#define DMA_ALIGNMENT DMA_MICRO_MIN_ALIGNMENT // the dma page boundary since there is no scatter gather or Data Realignment Engine (DRE)
-#else
-#define DMA_MIN_ALIGNMENT 0x10 // minimum alignment of dma - found in `xaxidma_hw.h` as `XAXIDMA_MICROMODE_MIN_BUF_ALIGN`, or the debugger
+#define DMA_MIN_ALIGNMENT 0x20 // minimum alignment of dma - found in `xaxidma_hw.h` as `XAXIDMA_MICROMODE_MIN_BUF_ALIGN`, or the debugger
 
 #define DMA_ALIGNMENT DMA_MIN_ALIGNMENT // the dma page boundary since there is no scatter gather or Data Realignment Engine (DRE)
-#endif
 
 #endif

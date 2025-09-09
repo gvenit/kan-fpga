@@ -8,6 +8,8 @@
     Control Registers address mapping and masks
 ============================================================================*/
 
+#define APPERATUS_BASE_ADDRESS (XPAR_KANACCELERATOR_BASEADDR - 0x200000)
+
 /**
  * @brief Axi-Lite Control Register File base address.
  * This is used as base address and later in this section
@@ -25,7 +27,7 @@
  * You have to find it from Hardware Platform Specification GUI
  * in Vitis, or in address editor in Vivado
  */
-#define KAN_REG_BASE_ADDRESS 0x40200000
+#define KAN_REG_BASE_ADDRESS XPAR_KANACCELERATOR_BASEADDR
 
 /**
  * @brief Control Data Transfer/Operation Status signals.
@@ -114,8 +116,8 @@
 #define KAN_REG_MASK_OPER_STS_LCK 0x08     // Locked core. Nulled from PL when the awaited action is complete
 #define KAN_REG_MASK_OPER_STS_VLD 0x10     // Valid configuration
 #define KAN_REG_MASK_OPER_STS_RST 0x20     // Core reset
-#define KAN_REG_MASK_OPER_STS_MCU_ERR 0x40 // MCU Error
-#define KAN_REG_MASK_OPER_STS_DPU_ERR 0x80 // DPU Error
+#define KAN_REG_MASK_OPER_STS_MCU_ERR 0x24 // MCU Error
+#define KAN_REG_MASK_OPER_STS_DPU_ERR 0x28 // DPU Error
 
 /*===========================================================================
     Data, Scale and Grid Memory Regions
@@ -130,21 +132,21 @@
  * in Vitis, or in address editor in Vivado
  */
 
-#define DATA_AXIL_BRAM_BASE_ADDR 0x40000000
+#define DATA_AXIL_BRAM_BASE_ADDR (APPERATUS_BASE_ADDRESS + 0x0)
 #define DATA_BRAM_BASE_ADDR DATA_AXIL_BRAM_BASE_ADDR
 
 /**
  * Grid BRAM parameters
  */
 
-#define GRID_AXIL_BRAM_BASE_ADDR 0x40008000
+#define GRID_AXIL_BRAM_BASE_ADDR (DATA_AXIL_BRAM_BASE_ADDR + 0x8000)
 #define GRID_BRAM_BASE_ADDR GRID_AXIL_BRAM_BASE_ADDR
 
 /**
  * Scale BRAM parameters
  */
 
-#define SCALE_AXIL_BRAM_BASE_ADDR 0x40008400
+#define SCALE_AXIL_BRAM_BASE_ADDR (GRID_AXIL_BRAM_BASE_ADDR + 0x400)
 #define SCALE_BRAM_BASE_ADDR SCALE_AXIL_BRAM_BASE_ADDR
 
 #endif

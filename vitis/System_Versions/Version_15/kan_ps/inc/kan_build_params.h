@@ -19,7 +19,7 @@
  *
  * Comment it out for release execution
  */
-#define DEF_DBG
+// #define DEF_DBG
 
 /*==============================================================================
     Network parameters and type definitions
@@ -39,13 +39,19 @@
  * - Different weight number of seperate weight values are specified
  * and downloaded to the core
  */
-#define KAN_LAYERS_NUM 1
+#define KAN_LAYERS_NUM 2
 
 /**
  * @brief Number of result packets.
  * Define how many data the final layer produces
  */
-#define KAN_RESULT_FEATURES 4
+#define KAN_RESULT_FEATURES 7
+
+/**
+ * @brief Number of result channels.
+ * Internal info of the PL architecture used to update the weights
+ */
+#define KAN_RESULT_CHANNELS 1
 
 /**
  * @brief the number of data on each KAN layer
@@ -59,7 +65,7 @@
  *
  * - They must strictly adhere to the `DEF_DATA_BRAM_CTR` macro.
  */
-static const uint16_t sizes_array_data[KAN_LAYERS_NUM] = {4};
+static const uint16_t sizes_array_data[KAN_LAYERS_NUM] = {64 * 64 * 3, 1024};
 
 /**
  * @brief the number of scale on each KAN layer
@@ -70,7 +76,7 @@ static const uint16_t sizes_array_data[KAN_LAYERS_NUM] = {4};
  *
  * - They must strictly adhere to the `DEF_SCALE_BRAM_CTR` macro.
  */
-static const uint16_t sizes_array_scale[KAN_LAYERS_NUM] = {1};
+static const uint16_t sizes_array_scale[KAN_LAYERS_NUM] = {1, 1};
 
 /**
  * @brief the number of grid on each KAN layer
@@ -81,7 +87,7 @@ static const uint16_t sizes_array_scale[KAN_LAYERS_NUM] = {1};
  *
  * - They must strictly adhere to the `DEF_GRID_BRAM_CTR` macro.
  */
-static const uint16_t sizes_array_grid[KAN_LAYERS_NUM] = {1};
+static const uint16_t sizes_array_grid[KAN_LAYERS_NUM] = {4, 4};
 
 /**
  * @brief used datatype for data, scale and grid

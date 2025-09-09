@@ -23,13 +23,13 @@ _UNDEF_STACK_SIZE = DEFINED(_UNDEF_STACK_SIZE) ? _UNDEF_STACK_SIZE : 1024;
 
 MEMORY
 {
-   ps7_ddr_0 : ORIGIN = 0x6500C00, LENGTH = 0x19AFF400 /* original size was x1FF0_0000 */
+   ps7_ddr_0 : ORIGIN = 0x6508800, LENGTH = 0x19AF7800 /* original size was x1FF0_0000 */
    ps7_ram_0 : ORIGIN = 0x0, LENGTH = 0x30000
    ps7_ram_1 : ORIGIN = 0xFFFF0000, LENGTH = 0xFE00
-   dataset_data   : ORIGIN = 0x100000, LENGTH = 0x400 /*1KB region*/
-   dataset_scale  : ORIGIN = 0x100400, LENGTH = 0x400 /*1KB region*/
-   dataset_grid   : ORIGIN = 0x100800, LENGTH = 0x400 /*1KB region*/
-   dataset_weight : ORIGIN = 0x100C00, LENGTH = 0x06400000 /*100MB region*/
+   dataset_data   : ORIGIN = 0x100000, LENGTH = 0x8000 /*32KB region*/
+   dataset_scale  : ORIGIN = 0x108000, LENGTH = 0x400 /*1KB region*/
+   dataset_grid   : ORIGIN = 0x108400, LENGTH = 0x400 /*1KB region*/
+   dataset_weight : ORIGIN = 0x108800, LENGTH = 0x06400000 /*100MB region*/
 }
 
 /* Specify the default entry point to the program */

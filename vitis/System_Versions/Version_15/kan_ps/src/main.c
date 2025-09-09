@@ -30,7 +30,7 @@
  *******************************************/
 
 #define LOADED_VAL 0x01
-#define OPERATION_DONE_VAL 0x01 // !!!!!!!
+#define OPERATION_DONE_VAL 0x01
 #define NULL_VAL 0x00
 
 /********************************************
@@ -141,7 +141,7 @@ int main(void)
     xil_printf("Soft reset the core before execution\r\n");
 #endif
 
-    status = kan_ctrl_soft_rest();
+    status = kan_ctrl_soft_reset();
     if (status != STATUS_OK)
         kan_error_handler(status, "Unable to reset the core");
 
@@ -183,33 +183,41 @@ int main(void)
         kan_config_grid_loaded();
         kan_config_scale_loaded();
 
-        // starting the DMA transfer of weights (RX) and results (TX)
+        // starting the DMA transfer of results (RX)
 
 #ifdef DEF_VERBOSE
-        xil_printf("Start DMA transfer of weights and results\r\n");
+        xil_printf("Start DMA transfer of results (RX)\r\n");
 #endif
+        kan_config_weight_loaded(); // !!!!!!!! MIGHT BE WRONG
+
         status = kan_dma_rx(&hDma, (hLayer_p->result_ps_dest_addr), (hLayer_p->result_num) * sizeof(data_t));
         if (status != STATUS_OK)
             kan_error_handler(status, "DMA rx process of results failed");
 
-        status = kan_dma_tx(&hDma, (hLayer_p->weight_ps_src_addr), (hLayer_p->weight_num) * sizeof(weight_t));
-        if (status != STATUS_OK)
-            kan_error_handler(status, "DMA tx process of weights failed");
-
-        kan_config_weight_loaded();
-
         if (!kan_ctrl_reg_status_valid())
             kan_error_handler(STATUS_PL_ERROR, "The configuration was rejected by the PL");
 
-        // strating the core
+        // starting the core
 
 #ifdef DEF_VERBOSE
         xil_printf("Start the core\r\n");
 #endif
 
-        status = kan_mem_reg_write(KAN_REG_BASE_ADDRESS, KAN_REG_OFST_OPER_STR_1B, IS_TRUE, BYTE);
+        status = kan_ctrl_start_core();
         if (status != STATUS_OK)
             kan_error_handler(status, "Unable to start the core");
+
+        if (kan_state == KAN_STATE_OPER_ERR)
+            kan_error_handler(STATUS_PL_ERROR, "Operation Error before DMA start.");
+
+        // starting the DMA transfer of weights (TX)
+
+#ifdef DEF_VERBOSE
+        xil_printf("Start DMA transfer of weights (TX)\r\n");
+#endif
+        status = kan_dma_tx(&hDma, (hLayer_p->weight_ps_src_addr), (hLayer_p->weight_num) * sizeof(weight_t));
+        if (status != STATUS_OK)
+            kan_error_handler(status, "DMA tx process of weights failed");
 
         // monitoring the core state
 
@@ -223,6 +231,9 @@ int main(void)
             {
                 if (kan_ctrl_get_state() == KAN_STATE_OPER_ERR)
                     kan_error_handler(STATUS_PL_ERROR, "Operation Error in the PL");
+
+                if (kan_ctrl_get_state() == KAN_STATE_OPER_IDL)
+                    break;
 
                 if (kan_ctrl_get_state() == KAN_STATE_ITRL_ERR)
                     kan_error_handler(STATUS_PL_ERROR, "Internal Error in the PL");
@@ -250,7 +261,6 @@ int main(void)
         dbg_print_status();
 #endif
 
-        // THIS MUST BE COMPLETELY WRONG - YOU DO NOT READ THAT YOU WRITE IT
         if (!kan_ctrl_reg_oper_done())
             kan_error_handler(STATUS_PL_ERROR, "DMA transfer complete and the core is not busy anymore but still not done");
 
