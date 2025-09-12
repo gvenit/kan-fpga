@@ -5,7 +5,6 @@
 #include "xstatus.h"
 
 #ifdef DEF_VERBOSE
-// #include "xil_printf.h"
 #include "xil_printf.h"
 #endif
 

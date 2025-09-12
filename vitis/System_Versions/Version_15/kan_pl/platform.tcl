@@ -23,3 +23,13 @@ platform generate
 platform clean
 platform generate
 platform generate -domains 
+platform active {kan_pl}
+platform config -updatehw {C:/Users/giann/Downloads/mixed16_4x4x1_wrapper.xsa}
+platform generate -domains 
+platform active {kan_pl}
+platform config -updatehw {C:/Users/giann/Downloads/mixed16_1x1x1_wrapper.xsa}
+platform generate -domains 
+platform clean
+platform config -updatehw {C:/Users/giann/Downloads/mixed16_1x1x1_wrapper_but_better.xsa}
+platform generate
+platform generate -domains 

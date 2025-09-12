@@ -105,7 +105,7 @@ struct Kan_Layer_Config_Struct
     uint16_t data_num;
     uint16_t grid_num;
     uint16_t scale_num;
-    uint16_t weight_num;
+    uint32_t weight_num;
     uint16_t result_num;
 
     // pointers to target addresses in PS memory space
@@ -145,18 +145,46 @@ struct Kan_Layer_Config_Struct
  */
 kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p);
 
-//////////////////////////////////////////////
-
+/**
+ * @brief Writes configuration data to the PL registers for a layer
+ *
+ * The configuration is fetched from the Kan_Layer_Config_Struct
+ * and their data are defined by the user in the `kan_build_params.h`
+ *
+ * @param layer_handler a pointer to the layer handler
+ */
 kan_status_t kan_config_download2pl(kan_layer_handler_t *layer_handler);
 
+/**
+ * @brief Updates the PL that the data are donwloaded to their dedicated BRAM
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
 kan_status_t kan_config_data_loaded(void);
 
+/**
+ * @brief Updates the PL that the grid are donwloaded to their dedicated BRAM
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
 kan_status_t kan_config_grid_loaded(void);
 
+/**
+ * @brief Updates the PL that the scale are donwloaded to their dedicated BRAM
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
 kan_status_t kan_config_scale_loaded(void);
 
+/**
+ * @brief Updates the PL that the weight are donwloaded to their dedicated BRAM
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
 kan_status_t kan_config_weight_loaded(void);
-
-//////////////////////////////////////////////
 
 #endif

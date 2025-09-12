@@ -1,20 +1,4 @@
-#include "dataset_weight.h"
+#include "dataset_data.h"
 
-__attribute__((section(".dataset_weight"), aligned(4), used))
-weight_t weightArray[] = {
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0};
+__attribute__((section(".dataset_data"), aligned(4), used))
+weight_t weightArray[];

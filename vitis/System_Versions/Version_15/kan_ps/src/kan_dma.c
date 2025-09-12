@@ -285,7 +285,7 @@ kan_status_t kan_dma_rx(kan_dma_handler_t *dma_handler, volatile data_t *rx_buff
     status = XAxiDma_SimpleTransfer(dma_handler, (UINTPTR)rx_buff, size, XAXIDMA_DEVICE_TO_DMA);
 
     if (status != STATUS_OK)
-        return STATUS_DMA_TX_FAILURE;
+        return STATUS_DMA_RX_FAILURE;
 
     return STATUS_OK;
 }

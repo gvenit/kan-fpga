@@ -47,6 +47,7 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
             kan_layers_array[i].result_num = KAN_RESULT_FEATURES;
 
         kan_layers_array[i].weight_num = sizes_array_data[i] * sizes_array_grid[i] * kan_layers_array[i].result_num;
+        kan_layers_array[i].weight_num = sizes_array_data[i] * sizes_array_grid[i] * (uint32_t)((kan_layers_array[i].result_num + KAN_RESULT_CHANNELS - 1) / KAN_RESULT_CHANNELS) * KAN_RESULT_CHANNELS;
 
         if (max_data < kan_layers_array[i].result_num)
             max_data = kan_layers_array[i].result_num;
