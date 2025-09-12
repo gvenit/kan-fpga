@@ -59,6 +59,8 @@ module CentralControlUnit #(
   parameter SCALE_ADDR = 32,
   // Width of Packet size bus in bits
   parameter PCKT_SIZE_WIDTH = DATA_ADDR + GRID_ADDR,
+  // Width of Packet size bus in bits
+  parameter RSLT_SIZE_WIDTH = DATA_ADDR,
   // Set to true if fsm_clk and core_clk are driven by different clocks
   parameter IS_ASYNCHRONOUS = 1
 ) (
@@ -71,11 +73,13 @@ module CentralControlUnit #(
   /*
    * Control signals -- Corresponding clock : fsm_clk
    */
+  output reg                              core_start,
   output reg                              operation_start,
   output reg  [DATA_ADDR:0]               data_size,
   output reg  [GRID_ADDR:0]               grid_size,
   output reg  [SCALE_ADDR:0]              scle_size,
   output reg  [PCKT_SIZE_WIDTH-1:0]       pckt_size,
+  output reg  [RSLT_SIZE_WIDTH-1:0]       rslt_size,
 
   output reg                              iteration_start,
   output reg  [RSLT_CHANNELS-1:0]         use_channels,
@@ -87,7 +91,7 @@ module CentralControlUnit #(
   input  wire [NUM_PERIPHERALS-1:0]       peripheral_operation_busy,
   input  wire [NUM_PERIPHERALS-1:0]       peripheral_operation_complete,
   input  wire [NUM_PERIPHERALS-1:0]       peripheral_operation_error,
-  input  wire [NUM_PERIPHERALS-1:0]       peripheral_transmission,
+  input  wire [PERIPHERAL_TRANSMISSION_WIDTH-1:0]       peripheral_transmission,
   input  wire                             rslt_tlast,
 
   /*
@@ -148,7 +152,18 @@ module CentralControlUnit #(
   localparam MAX_GRID_SIZE = 2 ** GRID_ADDR;
   localparam MAX_SCLE_SIZE = 2 ** SCALE_ADDR;
   localparam MAX_PCKT_SIZE = 2 ** PCKT_SIZE_WIDTH;
+  localparam MAX_RSLT_SIZE = 2 ** RSLT_SIZE_WIDTH;
 
+  // FSM States
+`ifdef USE_ONE_HOT_ENCODING_FSM
+  localparam FSM_WIDTH = 6;
+  localparam FSM_ST0 = 2 ** 0;
+  localparam FSM_STR = 2 ** 1;
+  localparam FSM_OPE = 2 ** 2;
+  localparam FSM_ERR = 2 ** 3;
+  localparam FSM_END = 2 ** 4;
+  localparam FSM_ITR = 2 ** 5;
+`else
   // FSM States
   localparam FSM_WIDTH = 3;
   localparam FSM_ST0 = 0;
@@ -157,6 +172,7 @@ module CentralControlUnit #(
   localparam FSM_ERR = 3;
   localparam FSM_END = 4;
   localparam FSM_ITR = 5;
+`endif 
 
   // FSM output states
   reg  [FSM_WIDTH-1:0] fsm_state, fsm_state_next;
@@ -259,15 +275,16 @@ module CentralControlUnit #(
   wire        operation_status_locked_wr;
   wire        operation_status_valid_wr;
   wire        operation_status_reset_wr = core_rst;
-  wire        operation_status_error_mcu_wr = peripheral_operation_error_sampled[PERIPHERAL_MCU];
+  wire        operation_status_error_aps_wr = peripheral_operation_error_sampled[PERIPHERAL_APS];
+  // wire        operation_status_error_mcu_wr = peripheral_operation_error_sampled[PERIPHERAL_MCU];
   wire        operation_status_error_dpu_wr = peripheral_operation_error_sampled[PERIPHERAL_DPU];
 
   wire [31:0] operation_progress_rslt_wr;
   wire [31:0] operation_progress_iter_wr;
-  wire [31:0] iteration_timer_wr = -1;
-  wire [31:0] iteration_latency_wr = -1;
-  wire [31:0] operation_timer_wr = -1;
-  wire [31:0] operation_latency_wr = -1;
+  wire [31:0] iteration_timer_wr    = -1;
+  wire [31:0] iteration_latency_wr  = -1;
+  wire [31:0] operation_timer_wr    = -1;
+  wire [31:0] operation_latency_wr  = -1;
 
   CCURegisterFile #(
   ) register_file (
@@ -310,7 +327,8 @@ module CentralControlUnit #(
     .operation_status_locked_wr   (operation_status_locked_wr),
     .operation_status_valid_wr    (operation_status_valid_wr),
     .operation_status_reset_wr    (operation_status_reset_wr),
-    .operation_status_error_mcu_wr(operation_status_error_mcu_wr),
+    .operation_status_error_aps_wr(operation_status_error_aps_wr),
+    // .operation_status_error_mcu_wr(operation_status_error_mcu_wr),
     .operation_status_error_dpu_wr(operation_status_error_dpu_wr),
     .operation_progress_rslt_wr   (operation_progress_rslt_wr),
     .operation_progress_iter_wr   (operation_progress_iter_wr),
@@ -345,15 +363,10 @@ module CentralControlUnit #(
     grid_loaded_rd, |grid_size_rd, grid_size_rd <= MAX_GRID_SIZE,
     scle_loaded_rd, |scle_size_rd, scle_size_rd <= MAX_SCLE_SIZE,
     wght_loaded_rd, |pckt_size_rd, pckt_size_rd <= MAX_PCKT_SIZE,
-     |rslt_size_rd, |btch_size_rd, btch_size_rd <= BATCH_SIZE
+                    |rslt_size_rd, rslt_size_rd <= MAX_RSLT_SIZE,
+                    |btch_size_rd, btch_size_rd <= BATCH_SIZE
   };
-  wire operation_valid_int = &{
-    data_loaded_rd, |data_size_rd, data_size_rd <= MAX_DATA_SIZE,
-    grid_loaded_rd, |grid_size_rd, grid_size_rd <= MAX_GRID_SIZE,
-    scle_loaded_rd, |scle_size_rd, scle_size_rd <= MAX_SCLE_SIZE,
-    wght_loaded_rd, |pckt_size_rd, pckt_size_rd <= MAX_PCKT_SIZE,
-     |rslt_size_rd, |btch_size_rd, btch_size_rd <= BATCH_SIZE
-  };
+  
   assign operation_status_valid_wr = operation_valid;
 
   // Check if operation is error
@@ -395,7 +408,7 @@ module CentralControlUnit #(
   reg  [23:0] iteration_reg;
   wire [23:0] iteration_reg_next = iteration_reg + 1;
 
-  assign operation_progress_iter_wr = $unsigned(iteration_reg);
+  assign operation_progress_iter_wr = $unsigned(iteration_reg_next);
 
   // Check if last iteration
   wire last_iteration = (results_left_reg == 0);
@@ -427,17 +440,18 @@ module CentralControlUnit #(
     if (fsm_rst) begin
       fsm_state <= FSM_ST0;
 
+      core_start      <= 1'b0;
       operation_start <= 1'b0;
       data_size       <= {DATA_ADDR{1'b0}};
       grid_size       <= {GRID_ADDR{1'b0}};
       scle_size       <= {SCALE_ADDR{1'b0}};
       pckt_size       <= {PCKT_SIZE_WIDTH{1'b0}};
+      rslt_size       <= {RSLT_SIZE_WIDTH{1'b0}};
 
       iteration_start <= 1'b0;
       use_channels    <= {RSLT_CHANNELS{1'b0}};
       use_batch       <= {BATCH_SIZE{1'b0}};
 
-      operation_start       <= 1'b0;
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
       operation_error       <= 1'b0;
@@ -459,7 +473,6 @@ module CentralControlUnit #(
     end else begin
       fsm_state <= fsm_state_next;
 
-      operation_start <= 1'b0;
 
       iteration_start <= 1'b0;
 
@@ -468,6 +481,7 @@ module CentralControlUnit #(
 
       iteration_reg         <= iteration_reg;
 
+      core_start            <= 1'b0;
       operation_start       <= 1'b0;
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
@@ -497,7 +511,8 @@ module CentralControlUnit #(
           data_size       <= data_size_rd[DATA_ADDR :0];
           grid_size       <= grid_size_rd[GRID_ADDR :0];
           scle_size       <= scle_size_rd[SCALE_ADDR:0];
-          pckt_size       <= pckt_size_rd[PCKT_SIZE_WIDTH :0];
+          pckt_size       <= pckt_size_rd[PCKT_SIZE_WIDTH-1:0];
+          rslt_size       <= rslt_size_rd[RSLT_SIZE_WIDTH-1:0];
 
           use_channels    <= use_channels_next;
           use_batch       <= use_batch_next;
@@ -512,8 +527,10 @@ module CentralControlUnit #(
           int_pl2ps  <= 1'b1;
         end
         FSM_OPE: begin
-          if (fsm_state == FSM_STR)
+          if (fsm_state == FSM_STR) begin
+            core_start      <= 1'b1;
             operation_start <= 1'b1;
+          end
 
           operation_busy  <= 1'b1;
 
@@ -536,13 +553,13 @@ module CentralControlUnit #(
         end
         FSM_END: begin
           operation_complete <= 1'b1;
-          int_pl2ps  <= 1'b1;
+          int_pl2ps          <= 1'b1;
         end
         FSM_ERR: begin
           internal_operation_error  <= ~(internal_error_asserted || core_rst);
           operation_error           <= 1'b1;
           interrupt_soft_reg        <= interrupt_soft_reg_early || interrupt_soft;
-          int_pl2ps                <= 1'b1;
+          int_pl2ps                 <= 1'b1;
           internal_error_asserted   <= internal_error_asserted || core_rst;
         end
         FSM_ITR: begin
@@ -590,6 +607,7 @@ module CentralControlUnit #(
         if (last_iteration && rslt_tlast_sampled) begin
           fsm_state_next <= FSM_END;
           rw_op_dne_reg_en <= 1'b1;
+          locked_next_error <= 1'b1;
         end
       end
       FSM_END: begin

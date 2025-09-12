@@ -26,8 +26,10 @@ venv/*
 !venv/requirements.txt
 test
 log
-graphs
+graphs/*
 dot
+!graphs/system-overview.png
+!graphs/lpc.png
 
 temp
 # auxiliary

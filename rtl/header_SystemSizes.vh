@@ -3,4 +3,12 @@
   // Number of Independent AXI-Stream Weight Channels
   parameter WEIGHT_CHANNELS = RSLT_CHANNELS * DATA_CHANNELS,
 
+  parameter GRID_SHARE = 1,
+  parameter SCALE_SHARE = 1,
+  parameter DATA_CHANNELS_IN  = BATCH_SIZE*DATA_CHANNELS,
+  parameter DATA_CHANNELS_OUT = DATA_CHANNELS_IN,
+  parameter RSLT_CHANNELS_OUT = BATCH_SIZE*RSLT_CHANNELS,
+  parameter GRID_CHANNELS_OUT = (GRID_SHARE) ? 1 : DATA_CHANNELS*BATCH_SIZE,
+  parameter SCALE_CHANNELS_OUT = (SCALE_SHARE) ? 1 : DATA_CHANNELS*BATCH_SIZE,
+
 `endif

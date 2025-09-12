@@ -19,18 +19,47 @@ with size $len(x) \times len(grid)$. The matrix is flattened and forwarded to th
 $$ N_{total} = N_{grid} + 1 + N_{in} \times N_{grid} \times N_{out} = N_{grid} (N_{in}\times N_{out}+1) +1 $$
 
 ## Mapping to FPGA
+This project aims to provide a highly parameterizable soft core 
+for the acceleration of RBF-based KAN layers. 
+The acceleration device works iteratively and the algorithm is partitioned accordingly.
+The soft IP core offers the option to apply a custom RBF with the use of 
+read-only memories (ROMs) that are configured as lookup tables (LUT). 
+Moreover, the core can be parameterized to accept arbitrary data widths, 
+ansynchronous clocks, on-chip memory depths,
+and other aspects directly related to the allocation of computational resources.
+These options allow for the core to adapt to inpout/output data rates, 
+resource limitations, quantization errors, task sizes and clock speeds.
+
+### System Overview
+![system-overview](graphs/system-overview.png) \
+Figure [1](#system-overview). System Overview
+
+Figure [1](#system-overview) is the overview of the *kan-fpga* system architecture on a SoC.
+KAN Accelerator consists of the soft IP core for on-chip inference of RBF-KAN layers
+and custom drivers, written in C, for runtime configuration of the core. 
+On the programmable logic (PL) side, a DMA accompanies the soft core
+to handle large data transfers from the off-chip memory. 
+An interconnection network manages the incoming and outgoing data transfers
+among the modules on the PL and on-chip central processing unit (CPU).
+On the processing system (PS) side, the KAN handler is tasked with
+(a) configuring the core by feeding the core with data and starting the DMA engine,
+and (b) handling interrupts originated from the DMA and the KAN Accelerator. 
+
+### KAN Accelerator
 In this project, the data processor does not normalize the input data 
 and only performs the activation function and the linear layer.
 The radial basis function (RBF) used is precalculated and loaded as LUTRAM in the FPGA, 
-thus speeding significantly the process in the cost of memory resources.
+thus speeding up significantly the process in the cost of memory resources.
 The Linear Layer is mapped as a parallelized version of the classic systolic architecture, 
 where data and weights are streamed from the sides of a systolic array 
 and the outputs are accumulated on each node of the array 
 and streamed on one of the opposite sides when the partial sum is complete.
 
 ### Linear Processing Cube
-The Linear Processing Cube (LPC) consists of Linear Processing Elements (LPE)
-that are connected as follows:
+![lpc](graphs/lpc.png) \
+Figure [2](#lpc). Linear Processing Cube
+
+The Linear Processing Cube (LPC) of Figure [(2)](#lpc)  consists of Linear Processing Elements (LPE) that are connected as follows:
 
 - Input Data (or data from the first operand in general) are streamed from left to right.
 - Input Weights (or data from the second operand in general) are streamed from top to bottom.
@@ -46,7 +75,7 @@ In order to calculate the MMM,
 we split the matrices in sizes $\frac{A}{N} \times K$ and $K \times \frac{B}{M}$, 
 resulting in matrices:
 
-$$A_n = a_{ic} \ , \ nN \le i \lt (n+1)N, \ 0 \le c \lt C$$ 
+$$A_n = a_{ic} \ , \ nN \le i \lt (n+1)N, \ 0 \le c \lt C$$
 $$B_m = b_{cj} \ , \ mM \le j \lt (m+1)M, \ 0 \le c \lt C$$
 
 Then, these matrices are converted to 3D Tensors using the following transform:
@@ -128,12 +157,25 @@ the result stream makes use of the TID flag to indicate the corresponding batch.
 
 # To-Do (Important)
 - [ ] Most python tests are old or have low coverage of the UUT's functionality and need to be updated. 
-- [ ] Integrate dataset and KAN model to the repository
-- [ ] Integrate quantization of the KAN model to the repository. 
-- [ ] Integrate a valid vivado projects to the repository.
+- [x] Integrate dataset and KAN model to the repository
+- [x] Integrate quantization of the KAN model to the repository. 
+- [x] Integrate a valid vivado projects to the repository.
 - [ ] Integrate vitis project to the repository.
 
 # To-Do (Secondary)
 - [ ] Upgrade to / add option for AXI interfaces for data, grid and scale on-chip memory storage.
 - [ ] Option to use Distributed RAM instead of Block Ram for small memory depths.
 - [ ] Update `KanAccelerator_simgen.py` to use actual data instead of randomly generated ones.
+
+# Citation
+Copyright (c) 2025 Georgios Venitourakis under MIT License.
+
+```bib
+pending...
+```
+
+# Contributions
+Contributions are welcome. Please raise issues as necessary. 
+
+# References
+- pending...

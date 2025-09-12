@@ -65,7 +65,8 @@ module CCURegisterFile #(
   input  wire                   operation_status_locked_wr,
   input  wire                   operation_status_valid_wr,
   input  wire                   operation_status_reset_wr,
-  input  wire                   operation_status_error_mcu_wr,
+  input  wire                   operation_status_error_aps_wr,
+  // input  wire                   operation_status_error_mcu_wr,
   input  wire                   operation_status_error_dpu_wr,
 
   input  wire [31:0]            operation_progress_rslt_wr,
@@ -225,7 +226,8 @@ module CCURegisterFile #(
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_LCK)] = operation_status_locked_wr;
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_VLD)] = operation_status_valid_wr;
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_RST)] = operation_status_reset_wr;
-  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_MCU)] = operation_status_error_mcu_wr;
+  assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_MCU)] = operation_status_error_aps_wr;
+  // assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_MCU)] = operation_status_error_mcu_wr;
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_DPU)] = operation_status_error_dpu_wr;
   // assign operation_status_wr[WORD_SIZE-1:`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_DPU)+1] = {WORD_SIZE-`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_DPU){1'b0}};
 

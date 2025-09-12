@@ -63,11 +63,19 @@ module MCULocalAxilFSM #(
   wire                  int_axil_rready;
 
   // Local FSM states
+`ifdef USE_ONE_HOT_ENCODING_FSM
+  localparam LOC_FSM_WIDTH = 4;
+  localparam LOC_FSM_STR = 2 ** 0;
+  localparam LOC_FSM_OPE = 2 ** 1;
+  localparam LOC_FSM_ERR = 2 ** 2;
+  localparam LOC_FSM_END = 2 ** 3;
+`else
   localparam LOC_FSM_WIDTH = 2;
   localparam LOC_FSM_STR = 0;
   localparam LOC_FSM_OPE = 1;
   localparam LOC_FSM_ERR = 2;
   localparam LOC_FSM_END = 3;
+`endif 
 
   // Local Register I/O Registers & Wires
   wire [DATA_WIDTH-1:0] loc_in_axis_tdata,  loc_out_axis_tdata;

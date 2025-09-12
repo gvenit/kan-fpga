@@ -127,28 +127,28 @@ module KanAcceleratorWrapper #(
   ------------------------------------------------------------------*/
 
   // Propagate tlast signal
-  parameter WEIGHT_LAST_ENABLE = 0,
+  parameter WEIGHT_LAST_ENABLE = 1'b1,
   // Propagate tid signal
-  parameter WEIGHT_ID_ENABLE = 0,
+  parameter WEIGHT_ID_ENABLE = 1'b0,
   // tid signal width
   parameter WEIGHT_ID_WIDTH = (WEIGHT_ID_ENABLE) ? 8 : 1,
 
   // Propagate tid signal
-  parameter RSLT_ID_ENABLE = 1,
+  parameter RSLT_ID_ENABLE = 1'b1,
   // tid signal width
   parameter RSLT_ID_WIDTH = (RSLT_ID_ENABLE) ? `LOG2(1) : 1,
   // tid value
   parameter ID_OUTPUT = 0,
 
   // Propagate tdest signal
-  parameter DEST_ENABLE = 0,
+  parameter DEST_ENABLE = 1'b0,
   // tdest signal width
   parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
   // tdest value
   parameter DEST_OUTPUT = 0,
 
   // Propagate tuser signal
-  parameter USER_ENABLE = 0,
+  parameter USER_ENABLE = 1'b0,
   // tuser signal width
   parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // tuser value
@@ -164,6 +164,10 @@ module KanAcceleratorWrapper #(
   parameter CTRL_ADDR = 13, // 13 
   // Set to true if fsm_clk and core_clk are driven by different clocks
   parameter IS_ASYNCHRONOUS = 1,
+
+ `ifdef DEBUG
+  parameter DEBUG_WIRE_LENGTH = 1,
+ `endif 
 
   /*------------------------------------------------------------------
     Input / Output file constants
@@ -194,6 +198,10 @@ module KanAcceleratorWrapper #(
   output wire                                       operation_error,
   output wire                                       locked,
   output wire                                       pl2ps_intr,
+
+ `ifdef DEBUG
+  output wire [DEBUG_WIRE_LENGTH-1:0]               debug_wire,
+ `endif
 
   /*------------------------------------------------------------------
       AXI-Lite Control Slave interface
@@ -517,6 +525,10 @@ module KanAcceleratorWrapper #(
     .operation_error                (operation_error),
     .locked                         (locked),
     .pl2ps_intr                     (pl2ps_intr),
+
+ `ifdef DEBUG
+    .debug_wire                     (debug_wire),
+ `endif
 
     /*------------------------------------------------------------------
         AXI-Lite Control Slave interface

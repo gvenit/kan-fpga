@@ -138,6 +138,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     is_async = True
     
     fast_clk_hperiod = 2      # 250 MHz
+    GRID_LEN = 2
     
     kan = KanAccelerator(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, actf_width=actf_width, is_async=is_async)
     params = module.copy_params_as_localparams(kan)
@@ -199,7 +200,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     AXIL_CTRL_STRB_WIDTH =  module.Localparam('AXIL_CTRL_STRB_WIDTH',4)
     CLOG_AXIL_CTRL_STRB_WIDTH = module.Localparam('CLOG_AXIL_CTRL_STRB_WIDTH', 2)
     
-    WEIGHT_LAST_ENABLE.value = 0
+    WEIGHT_LAST_ENABLE.value = 1
     
     reset_done = module.Reg('reset_done', initval=0)
 
@@ -386,15 +387,6 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     )
     for batch in range(K):
         simulation.setup_clock(module, s_axil_data_aclk[batch], hperiod=dma_hperiod+batch+1)
-        module.Always()(
-            s_axil_data_areset[batch](core_rst),
-        )
-    module.Always()(
-        s_axil_grid_areset(core_rst),
-    )
-    module.Always()(
-        s_axil_scle_areset(core_rst),
-    )
     
     init = simulation.setup_reset(module, fsm_rst, reset_stmt, period=4*slow_clk_hperiod)
 
@@ -406,7 +398,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         reset_done(1),
         # Systask('finish'),
         nclk(fsm_clk),
-        Delay(2000 + 8*N_in*N_out/DATA_CHANNELS/RSLT_CHANNELS * 2 * 4 * (2**5)),
+        Delay(2000 + 8*GRID_LEN*N_in*N_out/DATA_CHANNELS/RSLT_CHANNELS * 2 * 4 * (2**5)),
         # Delay(10),
         Display('!! TIMEOUT ERROR !!'),
         AssertTrue(0),
@@ -417,7 +409,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     # KAN Layer parameters
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     data_len = DATA_CHANNELS.value * max(N_in // DATA_CHANNELS.value, 1)
-    grid_len = 4
+    grid_len = GRID_LEN
     scale_len = (1,1,1) if SCALE_SHARE.value else (1,data_len,grid_len)
     rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
     weight_len = data_len * grid_len
@@ -557,7 +549,9 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         ## Data AXI-Lite Driver
         module.Initial(
             data_loaded[batch](0),
+            s_axil_data_areset[batch](1),
             Wait(reset_done),
+            s_axil_data_areset[batch](0),
             Wait(s_axil_data_aclk[batch]),
             
             Wait(~s_axil_data_aclk[batch]),
@@ -668,7 +662,9 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     ## Grid AXI-Lite Driver
     module.Initial(
         grid_loaded(0),
+        s_axil_grid_areset(1),
         Wait(reset_done),
+        s_axil_grid_areset(0),
         Wait(s_axil_grid_aclk),
         
         Wait(~s_axil_grid_aclk),
@@ -774,7 +770,9 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     ## Scale AXI-Lite Driver
     module.Initial(
         scle_loaded(0),
+        s_axil_scle_areset(1),
         Wait(reset_done),
+        s_axil_scle_areset(0),
         Wait(s_axil_scle_aclk),
         
         Wait(~s_axil_scle_aclk),
@@ -922,7 +920,11 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                 # s_axis_wght_tlast(0),
                 # s_axis_wght_tlast(total_wght == len(test_wght)),
                 # s_axis_wght_tlast(Ands(total_wght,(total_wght % 254 == 0))),
-                s_axis_wght_tlast(1),
+                If(WEIGHT_LAST_ENABLE)(
+                    s_axis_wght_tlast(total_wght == len(test_wght)),
+                ).Else(
+                    s_axis_wght_tlast(1),
+                ),
                 While(Ands(~s_axis_wght_tready, ~s_axis_wght_areset, wght_global_stage == global_stage_counter))(
                     Wait(s_axis_wght_aclk),
                     Wait(~s_axis_wght_aclk),
@@ -1021,11 +1023,6 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                                     Display("DEBUG: DATA %h >> %2d = %h -> %h", m_axis_rslt_tdata, (intra_rslt * DATA_WIDTH), m_axis_rslt_tdata >> (intra_rslt * DATA_WIDTH), rslt_buffer),
                                             AssertAbsDiffLE(rslt_buffer, test_rslt_i,1),
                                             Display('Rslt -- Batch %2d -- Captured %3d -- PASSED', batch, total_rslt_i),
-                                            If((total_rslt_i % RSLT_CHANNELS) == RSLT_CHANNELS-1)(
-                                                AssertTrue(m_axis_rslt_tlast),
-                                            ).Elif(intra_rslt == DMA_STRB_WIDTH - 1)(
-                                                AssertFalse(m_axis_rslt_tlast),
-                                            ),
                                             update_total_rslt(1),
                                         ) 
                                     ) for i, test_rslt_i in enumerate(test_rslt_batch)
@@ -1036,6 +1033,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                                 ),
                             ),
                             Display('Total after iteration : %3d', total_rslt_i),
+                            Assert(m_axis_rslt_tlast, total_rslt_i == rslt_len),
                             
                         ) for batch, (total_rslt_i, test_rslt_batch) in enumerate(zip(total_rslt, test_rslt))
                     ], When()(AssertTrue(0))
@@ -1120,8 +1118,16 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     module.Initial(
         global_stage_counter(0),
         Wait(reset_done),
+        Wait(~core_rst),
         Wait(~fsm_clk),
         Wait(fsm_clk),
+        
+        Display('Waiting data...'),
+        Wait(data_loaded),
+        Display('Waiting grid...'),
+        Wait(grid_loaded),
+        Display('Waiting scale...'),
+        Wait(scle_loaded),
         
         # Test 0: Write Registers
         AssertFalse(Cat(operation_busy, operation_complete, operation_error)),
@@ -1158,6 +1164,12 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         Assert(ctrl_buffer, 1),
         Display('-- Control Test 1 complete.'),
         
+        If(core_rst)(
+            Wait(~core_rst),
+            Wait(~fsm_clk),
+            Wait(fsm_clk),
+        ),
+        
         # Test 2: Check invalid configuration -- Data len = 0
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
         Assert(ctrl_buffer & (
@@ -1166,7 +1178,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST'] 
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
         Display('-- Control Test 2 complete.'),
         
@@ -1189,6 +1201,11 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK']),
+        If(core_rst)(
+            Wait(~core_rst),
+            Wait(~fsm_clk),
+            Wait(fsm_clk),
+        ),
         *control_wr_seq('CTRL_REG_INTR_REG', ctrl_reg['CTRL_REG_INTR_MASK_SFT'], 1),
         *control_rd_seq('CTRL_REG_OPER_STR', ctrl_buffer, 1),
         AssertFalse(ctrl_buffer),
@@ -1352,8 +1369,6 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
-        Display('Waiting data...'),
-        Wait(data_loaded),
         *control_wr_seq('CTRL_REG_DATA_LDR', 1, AXIL_CTRL_STRB_WIDTH),
         Display('-- Control Test 14 complete.'),
         
@@ -1368,8 +1383,6 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
-        Display('Waiting grid...'),
-        Wait(grid_loaded),
         *control_wr_seq('CTRL_REG_GRID_LDR', 1, AXIL_CTRL_STRB_WIDTH),
         Display('-- Control Test 15 complete.'),
         
@@ -1384,8 +1397,6 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL']),
-        Display('Waiting scale...'),
-        Wait(scle_loaded),
         *control_wr_seq('CTRL_REG_SCLE_LDR', 1, AXIL_CTRL_STRB_WIDTH),
         Display('-- Control Test 16 complete.'),
         
@@ -1469,6 +1480,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
         Display('-- Unset external error'),
         AssertFalse(Cat(operation_busy,operation_complete,operation_error,locked)),
+        Wait(~core_rst),
         Wait(~fsm_clk),
         Wait(fsm_clk),
         *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
@@ -1715,7 +1727,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             AssertTrue(ctrl_buffer > 0),
             AssertTrue(ctrl_buffer <= rslt_len),
             *control_rd_seq('CTRL_REG_ITER_PRG', ctrl_iter_buffer, AXIL_CTRL_STRB_WIDTH),
-            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS - 1),
+            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS),
             Display('-- Iteration %2d done', ctrl_iter_buffer),
             Display('-- Results done = %3d', ctrl_buffer),
             If(ctrl_buffer == rslt_len)(
@@ -1813,7 +1825,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             AssertTrue(ctrl_buffer > 0),
             AssertTrue(ctrl_buffer <= rslt_len),
             *control_rd_seq('CTRL_REG_ITER_PRG', ctrl_iter_buffer, AXIL_CTRL_STRB_WIDTH),
-            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS - 1),
+            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS),
             Display('-- Iteration %2d done', ctrl_iter_buffer),
             Display('-- Results done = %3d', ctrl_buffer),
             If(ctrl_buffer == rslt_len)(
@@ -1903,9 +1915,8 @@ def main():
         # (4,4,4),
         # (8,4,2),
     ):
-        # N_in, N_out = 2**10,2**10
         N_in, N_out = 24,24
-        # N_in, N_out = J,2*I
+        
         test = tb_KanAccelerator(I=I,J=J,K=K,N_in=N_in,N_out=N_out)
         fname_base = f'tb_KanAccelerator_{I}_{J}_{K}_{N_in}_{N_out}'
         fname = os.path.join(TOP_DIR,f'tb/{fname_base}.v')

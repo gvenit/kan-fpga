@@ -70,7 +70,9 @@ module ParallelizedDataProcessor #(
   // Input FIFO size
   parameter INPUT_FIFO_DEPTH = 0,
   // Internal FIFO size
-  parameter INTERNAL_FIFO_DEPTH = 0
+  parameter INTERNAL_FIFO_DEPTH = 0,
+  // Reset Pipeline Level
+  parameter RESET_PIPELINE_LEVEL = 3
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -241,7 +243,7 @@ module ParallelizedDataProcessor #(
       .DEPTH              (INTERNAL_FIFO_DEPTH)
     ) axis_srl_actf_inst  (
       .clk                (clk),
-      .rst                (rst),
+      .rst                (core_rst),
       .s_axis_tdata       (int_srl_actf_s_axis_tdata    [CHN*ACT_WIDTH +: ACT_WIDTH]),
       .s_axis_tkeep       (1'b1),
       .s_axis_tvalid      (int_srl_actf_s_axis_tvalid   [CHN]),
@@ -275,7 +277,7 @@ module ParallelizedDataProcessor #(
       .DEPTH              (INTERNAL_FIFO_DEPTH)
     ) axis_srl_wght_inst  (
       .clk                (clk),
-      .rst                (rst),
+      .rst                (core_rst),
       .s_axis_tdata       (int_srl_wght_s_axis_tdata  [WEIGHT_WIDTH * CHN +: WEIGHT_WIDTH]),
       .s_axis_tkeep       (1'b1),
       .s_axis_tvalid      (int_srl_wght_s_axis_tvalid [CHN]),
@@ -333,7 +335,8 @@ module ParallelizedDataProcessor #(
     .USER_WIDTH             (USER_WIDTH), 
     .OUTPUT_USER            (OUTPUT_USER),
     .OUTPUT_DEST            (OUTPUT_DEST),
-    .OUTPUT_ID              (OUTPUT_ID)
+    .OUTPUT_ID              (OUTPUT_ID),
+    .RESET_PIPELINE_LEVEL   (RESET_PIPELINE_LEVEL)
   ) parallelized_lpa_inst   (
     .clk                    (clk),
     .rst                    (rst),

@@ -90,6 +90,15 @@ module ParallelizedLPEControlUnit #(
   output wire                       err_unalligned_data
 );
   // FSM States
+`ifdef USE_ONE_HOT_ENCODING_FSM
+  localparam FSM_STATE_WIDTH = 6;
+  localparam FSM_ST0  = 2 ** 0;
+  localparam FSM_STRL = 2 ** 1;
+  localparam FSM_STRT = 2 ** 2;
+  localparam FSM_MAC  = 2 ** 3;
+  localparam FSM_ERR  = 2 ** 4;
+  localparam FSM_END  = 2 ** 5;
+`else
   localparam FSM_STATE_WIDTH = 3;
   localparam FSM_ST0  = 3'd0;
   localparam FSM_STRL = 3'd1;
@@ -97,6 +106,7 @@ module ParallelizedLPEControlUnit #(
   localparam FSM_MAC  = 3'd3;
   localparam FSM_ERR  = 3'd4;
   localparam FSM_END  = 3'd5;
+`endif 
 
   // FSM Registers & Wires
   reg  [FSM_STATE_WIDTH-1:0] fsm_state, fsm_state_next;
@@ -415,6 +425,7 @@ module ParallelizedLPEControlUnit #(
 
   // FSM Next State Logic
   always @(*) begin
+    fsm_state_next <= fsm_state;
     case (fsm_state)
       FSM_ST0, FSM_MAC : begin  
         if (op_valid) begin

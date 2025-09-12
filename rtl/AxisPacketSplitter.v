@@ -83,11 +83,19 @@ module AxisPacketSplitter #(
   output wire [USER_WIDTH-1:0]  m_axis_tuser
 );
   // Global FSM states
+`ifdef USE_ONE_HOT_ENCODING_FSM
+  localparam FSM_WIDTH = 4;
+  localparam FSM_STR = 2 ** 0;
+  localparam FSM_OPE = 2 ** 1;
+  localparam FSM_ERR = 2 ** 2;
+  localparam FSM_END = 2 ** 3;
+`else
   localparam FSM_WIDTH = 2;
   localparam FSM_STR = 0;
   localparam FSM_OPE = 1;
   localparam FSM_ERR = 2;
   localparam FSM_END = 3;
+`endif 
 
   // Control Registers & Wires
   reg  op_in_progress_reg = 1'b0;
