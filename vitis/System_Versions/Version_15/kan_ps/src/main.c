@@ -336,9 +336,11 @@ int main(void)
 
     // deallocation and ternimation
 
+#ifdef DEF_DBG
     xil_printf("DBG : Final results:\r\n");
     for (int j = 0; j < KAN_RESULT_FEATURES / DATA_PER_WORD; j++)
         xil_printf("DBG : %x\r\n", (void *)(*(((uint32_t *)data_buffer) + j)));
+#endif
 
     xil_printf("Application termination\r\n");
     xil_printf("=============================================================\r\n\r\n");
