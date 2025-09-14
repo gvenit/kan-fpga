@@ -4,6 +4,8 @@ __pycache__
 parse*
 .vscode
 
+!lib/*/
+
 tb/
 out/
 data/
@@ -24,19 +26,31 @@ venv/*
 !venv/requirements.txt
 test
 log
-graphs
+graphs/*
 dot
+!graphs/system-overview.png
+!graphs/lpc.png
 
 temp
+# auxiliary
+*.o
+*.exe
+*.raw
+*.bin
 
 # vivado
 vivado/*/*
 !vivado/*/*.tcl
+vivado*.jou
+vivado*.log
 
-
-#vitis
-vitis/System_Versions/Version_0/RemoteSystemsTempFiles
-vitis/lib
+# vitis
+vitis/*
+!vitis/System_Versions
+!vitis/Hardware_Files
+vitis/*/RemoteSystemsTempFiles
+vitis/System_Versions/Version_*/kan_pl/*
+!vitis/System_Versions/Version_*/kan_pl/platform.tcl
 *log
 *.metadata
 *logs

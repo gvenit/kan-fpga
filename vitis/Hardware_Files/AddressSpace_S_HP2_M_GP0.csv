@@ -1,0 +1,23 @@
+######################################################################################
+# This is a generated CSV file representing the addressing in design mixed16_4x4x1
+#
+# Format:
+# Master Segment Name, Address Space, Slave Segment, Offset, Range, Excluded (optional), Included (optional), Unassigned (optional)
+######################################################################################
+
+# 
+# Assignments in Address Space /axi_weight_dma/Data_MM2S
+#
+SEG_processing_system7_0_HP2_DDR_LOWOCM,/axi_weight_dma/Data_MM2S,/processing_system7/S_AXI_HP2/HP2_DDR_LOWOCM,0x00000000,512M
+# 
+# Assignments in Address Space /axi_weight_dma/Data_S2MM
+#
+SEG_processing_system7_0_HP2_DDR_LOWOCM,/axi_weight_dma/Data_S2MM,/processing_system7/S_AXI_HP2/HP2_DDR_LOWOCM,0x00000000,512M
+# 
+# Assignments in Address Space /processing_system7/Data
+#
+SEG_KanAcceleratorWrapper_0_reg0_1,/processing_system7/Data,/KanAccelerator/s00_axil_data/reg0,0x40000000,32K
+SEG_KanAcceleratorWrapper_0_reg0_2,/processing_system7/Data,/KanAccelerator/s_axil_grid/reg0,0x40008000,1K
+SEG_KanAcceleratorWrapper_0_reg0_3,/processing_system7/Data,/KanAccelerator/s_axil_scle/reg0,0x40008400,1K
+SEG_KanAcceleratorWrapper_0_reg0,/processing_system7/Data,/KanAccelerator/s_axil_ctrl/reg0,0x40200000,1K
+SEG_axi_dma_0_Reg,/processing_system7/Data,/axi_weight_dma/S_AXI_LITE/Reg,0x40400000,64K

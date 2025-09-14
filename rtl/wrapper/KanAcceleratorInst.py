@@ -103,16 +103,6 @@ def generate(batch_size=4, name=None, output=None, **kwargs):
 
 module {{name}} #(
   /*------------------------------------------------------------------
-<<<<<<< HEAD
-    Genreal parameters of the architecture
-  ------------------------------------------------------------------*/
-  
-  // Number of PEs in Processing Array k axis -- Number of batches per run
-  parameter BATCH_SIZE = {{n}},
-
-  /*------------------------------------------------------------------
-=======
->>>>>>> main
     DMA parameters
   ------------------------------------------------------------------*/
   
@@ -170,6 +160,10 @@ module {{name}} #(
   parameter SCALE_FRACTIONAL_BITS = {{scle_fbits}},
   // Total memory size allocated for Data in words
   parameter SCALE_DEPTH = {{scle_depth}},
+  // Scale Strobe Width
+  parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
+  // Scale Address Width
+  parameter SCALE_ADDR = `LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ),
 
   /*------------------------------------------------------------------
     RESULT / OUTPUT parameters
@@ -185,10 +179,6 @@ module {{name}} #(
   parameter RSLT_KEEP_WIDTH = ((RSLT_WIDTH + 7) / 8),
   // FIFO Depth for results
   parameter RSLT_FIFO_DEPTH = {{rslt_depth}},
-  // Scale Strobe Width
-  parameter SCALE_STRB_WIDTH = SCALE_WIDTH / 8,
-  // Scale Address Width
-  parameter SCALE_ADDR = `MAX( `LOG2( SCALE_DEPTH * SCALE_STRB_WIDTH ), SCALE_STRB_WIDTH),
 
   /*------------------------------------------------------------------
     WEIGHT streams parameters
@@ -227,40 +217,33 @@ module {{name}} #(
     Various AXI parameters
   ------------------------------------------------------------------*/
 
-<<<<<<< HEAD
-=======
   // Propagate tlast signal
-  parameter WEIGHT_LAST_ENABLE = 0,
->>>>>>> main
+  parameter WEIGHT_LAST_ENABLE = 1'b1,
   // Propagate tid signal
-  parameter WEIGHT_ID_ENABLE = 0,
+  parameter WEIGHT_ID_ENABLE = 1'b0,
   // tid signal width
   parameter WEIGHT_ID_WIDTH = (WEIGHT_ID_ENABLE) ? 8 : 1,
 
   // Propagate tid signal
-  parameter RSLT_ID_ENABLE = 1,
+  parameter RSLT_ID_ENABLE = 1'b1,
   // tid signal width
-<<<<<<< HEAD
-  parameter RSLT_ID_WIDTH = (RSLT_ID_ENABLE) ? `LOG2(BATCH_SIZE) : 1,
-=======
   parameter RSLT_ID_WIDTH = (RSLT_ID_ENABLE) ? `LOG2({{n}}) : 1,
->>>>>>> main
   // tid value
   parameter ID_OUTPUT = 0,
 
   // Propagate tdest signal
-  parameter DEST_ENABLE = 0,
+  parameter DEST_ENABLE = 1'b0,
   // tdest signal width
   parameter DEST_WIDTH = (DEST_ENABLE) ? 8 : 1,
   // tdest value
   parameter DEST_OUTPUT = 0,
 
   // Propagate tuser signal
-  parameter USER_ENABLE = 0,
+  parameter USER_ENABLE = 1'b0,
   // tuser signal width
   parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // tuser value
-  parameter USER_OUTPUT = 0,
+  parameter USER_OUTPUT = 1'b0,
 
   /*------------------------------------------------------------------
     Miscalleneous parameters
@@ -272,6 +255,10 @@ module {{name}} #(
   parameter CTRL_ADDR = {{ctrl_addr}}, // 13 
   // Set to true if fsm_clk and core_clk are driven by different clocks
   parameter IS_ASYNCHRONOUS = {{ async | int }},
+
+ `ifdef DEBUG
+  parameter DEBUG_WIRE_LENGTH = 1,
+ `endif 
 
   /*------------------------------------------------------------------
     Input / Output file constants
@@ -302,6 +289,10 @@ module {{name}} #(
   output wire                                       operation_error,
   output wire                                       locked,
   output wire                                       pl2ps_intr,
+
+ `ifdef DEBUG
+  output wire [DEBUG_WIRE_LENGTH-1:0]               debug_wire,
+ `endif
 
   /*------------------------------------------------------------------
       AXI-Lite Control Slave interface
@@ -509,11 +500,7 @@ module {{name}} #(
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
   input  wire                                       s_axis_wght_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TDATA" *)
-<<<<<<< HEAD
-    (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
-=======
     (* X_INTERFACE_PARAMETER = "HAS_TLAST WEIGHT_LAST_ENABLE, HAS_TSTRB 0, HAS_TREADY 1" *)
->>>>>>> main
   input  wire [DMA_WIDTH-1:0]                       s_axis_wght_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TKEEP" *)
   input  wire [DMA_KEEP_WIDTH-1:0]                  s_axis_wght_tkeep,
@@ -565,11 +552,7 @@ module {{name}} #(
   localparam GRID_STRB_WIDTH = GRID_WIDTH / 8;
   
   KanAccelerator #(
-<<<<<<< HEAD
-    .BATCH_SIZE                     (BATCH_SIZE),
-=======
     .BATCH_SIZE                     ({{n}}),
->>>>>>> main
     .DMA_WIDTH                      (DMA_WIDTH),
     .DMA_KEEP_ENABLE                (DMA_KEEP_ENABLE),
     .DMA_KEEP_WIDTH                 (DMA_KEEP_WIDTH),
@@ -605,10 +588,7 @@ module {{name}} #(
     .SCALED_DIFF_FRACTIONAL_BITS    (SCALED_DIFF_FRACTIONAL_BITS),
     .ACT_WIDTH                      (ACT_WIDTH),
     .ACT_FRACTIONAL_BITS            (ACT_FRACTIONAL_BITS),
-<<<<<<< HEAD
-=======
     .WEIGHT_LAST_ENABLE             (WEIGHT_LAST_ENABLE),
->>>>>>> main
     .WEIGHT_ID_ENABLE               (WEIGHT_ID_ENABLE),
     .WEIGHT_ID_WIDTH                (WEIGHT_ID_WIDTH),
     .RSLT_ID_ENABLE                 (RSLT_ID_ENABLE),
@@ -639,6 +619,10 @@ module {{name}} #(
     .operation_error                (operation_error),
     .locked                         (locked),
     .pl2ps_intr                     (pl2ps_intr),
+
+ `ifdef DEBUG
+    .debug_wire                     (debug_wire),
+ `endif
 
     /*------------------------------------------------------------------
         AXI-Lite Control Slave interface

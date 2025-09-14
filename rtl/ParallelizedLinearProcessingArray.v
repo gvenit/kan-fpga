@@ -60,7 +60,9 @@ module ParallelizedLinearProcessingArray #(
   // Output Destination 
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 
-  parameter OUTPUT_ID = 0
+  parameter OUTPUT_ID = 0,
+  // Reset Pipeline Level
+  parameter RESET_PIPELINE_LEVEL = 3
 ) (
   input  wire                                                 clk,
   input  wire                                                 rst,
@@ -143,26 +145,29 @@ module ParallelizedLinearProcessingArray #(
   wire [0:PE_NUMBER_I*PE_NUMBER_J*(BATCH_SIZE+1)-1] int_axis_tb_handshake = int_axis_tb_tready & int_axis_tb_tvalid;
 
   // Internal Reset
-  reg  [3:0]  rst_pipeline = 1;
+  reg  [RESET_PIPELINE_LEVEL+1:0]  rst_pipeline = 1;
   wire        rst_int;
 
   // Error Signal Reduction
   assign err_unalligned_data = |err_unalligned_data_int;
 
-  // Reset Management
-  always @(posedge clk ) begin
-    rst_pipeline[1] <= rst_pipeline[0];
-    rst_pipeline[2] <= rst_pipeline[1];
-    rst_pipeline[3] <= |rst_pipeline[2:0];
-  end
-
-  assign rst_int  = rst_pipeline[3];
+  assign rst_int  = rst_pipeline[RESET_PIPELINE_LEVEL+1];
   assign core_rst = rst_int;
 
   // PE Coordinates
   genvar pe_pos_i, pe_pos_j, batch;
+  integer j;
 
   generate
+    // Reset Management
+    if (RESET_PIPELINE_LEVEL > 0) begin
+      always @(posedge clk ) begin
+        for (j = 0; j < RESET_PIPELINE_LEVEL; j = j + 1)
+          rst_pipeline[j+1] <= rst_pipeline[j];
+        rst_pipeline[RESET_PIPELINE_LEVEL+1] <= |rst_pipeline[RESET_PIPELINE_LEVEL:1];
+      end
+    end
+
     always @* begin
       if (INTERNAL_RESET) begin : internal_reset_genblock
         rst_pipeline[0] <= rst | err_unalligned_data;

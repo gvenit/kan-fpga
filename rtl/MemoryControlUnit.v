@@ -27,6 +27,11 @@
 
 module MemoryControlUnit #(
  `include "header_MCUGlobalFSMParameters.vh"
+ 
+ `ifdef DEBUG
+  parameter DEBUG_WIRE_LENGTH = (BATCH_SIZE*DATA_CHANNELS + GRID_CHANNELS_IN + SCALE_CHANNELS_IN) * 3 + GLO_FSM_WIDTH * 2 + DATA_ADDR + GRID_ADDR + SCALE_ADDR + 3,
+ `endif 
+
   // BRAM control has ack signal
   parameter BRAM_ACK_SIG = 1,
   // Number of batches per run
@@ -92,6 +97,10 @@ module MemoryControlUnit #(
   input  wire [DATA_ADDR:0]                                         data_size,
   input  wire [GRID_ADDR:0]                                         grid_size,
   input  wire [SCALE_ADDR:0]                                        scle_size,
+
+ `ifdef DEBUG
+  output wire [DEBUG_WIRE_LENGTH-1:0]                               debug_wire,
+ `endif
   
   /*
    * Interrupt signals -- Corresponding clock : fsm_clk
@@ -250,13 +259,23 @@ module MemoryControlUnit #(
   reg  [GRID_CHANNELS_IN-1:0]         grid_error_reg = 0;
   reg  [SCALE_CHANNELS_IN-1:0]        scle_error_reg = 0;
 
-  always @(posedge fsm_clk ) begin
-    data_error_reg <= data_error;
-    grid_error_reg <= grid_error;
-    scle_error_reg <= scle_error;
-  end
+  wire internal_error = |{data_error_reg, grid_error_reg, scle_error_reg};
+  wire internal_error_done = &{data_error_reg, grid_error_reg, scle_error_reg};
 
-  wire internal_error = |{data_error, grid_error, scle_error};
+ `ifdef DEBUG
+  wire [BATCH_SIZE*DATA_CHANNELS*3-1:0]   data_debug_wire;
+  wire [GRID_CHANNELS_IN*3-1:0]           grid_debug_wire;
+  wire [SCALE_CHANNELS_IN*3-1:0]          scle_debug_wire;
+  assign debug_wire = {
+    data_size_reg,
+    grid_size_reg,
+    scle_size_reg,
+    glo_fsm_state, 
+    glo_fsm_state_next, 
+    scle_debug_wire, 
+    grid_debug_wire, 
+    data_debug_wire};
+ `endif
 
   // Global FSM state logic
   always @(posedge fsm_clk ) begin
@@ -345,6 +364,7 @@ module MemoryControlUnit #(
 
   // Global FSM next state logic
   always @(*) begin
+    glo_fsm_state_next <= glo_fsm_state;
     case (glo_fsm_state)
       GLO_FSM_ST0: begin
         `GLO_CHECK_OP_START
@@ -361,7 +381,11 @@ module MemoryControlUnit #(
         `GLO_CHECK_OP_START
       end
       GLO_FSM_ERR: begin
-        glo_fsm_state_next <= GLO_FSM_ST0;
+        if (internal_error_done) begin
+          glo_fsm_state_next <= GLO_FSM_ST0;
+        end else begin
+          glo_fsm_state_next <= GLO_FSM_ERR;
+        end
         
       end
       default: begin
@@ -369,7 +393,7 @@ module MemoryControlUnit #(
         
       end 
     endcase
-    if (internal_error) begin
+    if (internal_error && !internal_error_done) begin
       glo_fsm_state_next <= GLO_FSM_ERR;
     end
     if (rst) begin
@@ -442,6 +466,9 @@ module MemoryControlUnit #(
         .m_axil_rvalid            (m_axil_scle_rvalid[pos]),
         .m_axil_rready            (m_axil_scle_rready[pos]),
        `elsif SCALE_IF_IS_BRAM
+      `ifdef DEBUG
+        .debug_wire               (scle_debug_wire[pos*3 +: 3]),
+      `endif
         .bram_en                  (scle_bram_en[pos]),
         .bram_addr                (scle_bram_addr[pos*SCALE_ADDR +: SCALE_ADDR]),
         .bram_rddata              (scle_bram_rddata[pos*SCALE_WIDTH +: SCALE_WIDTH]),
@@ -658,6 +685,9 @@ module MemoryControlUnit #(
       .m_axil_rvalid            (m_axil_scle_rvalid),
       .m_axil_rready            (m_axil_scle_rready),
      `elsif SCALE_IF_IS_BRAM
+      `ifdef DEBUG
+      .debug_wire               (scle_debug_wire),
+      `endif
       .bram_en                  (scle_bram_en),
       .bram_addr                (scle_bram_addr),
       .bram_rddata              (scle_bram_rddata),
@@ -791,6 +821,9 @@ module MemoryControlUnit #(
         .m_axil_rvalid            (m_axil_grid_rvalid[pos]),
         .m_axil_rready            (m_axil_grid_rready[pos]),
        `elsif GRID_IF_IS_BRAM
+      `ifdef DEBUG
+        .debug_wire               (grid_debug_wire [pos*3 +: 3]),
+      `endif
         .bram_en                  (grid_bram_en[pos]),
         .bram_addr                (grid_bram_addr[pos*GRID_ADDR +: GRID_ADDR]),
         .bram_rddata              (grid_bram_rddata[pos*GRID_WIDTH +: GRID_WIDTH]),
@@ -1006,6 +1039,9 @@ module MemoryControlUnit #(
       .m_axil_rvalid            (m_axil_grid_rvalid),
       .m_axil_rready            (m_axil_grid_rready),
      `elsif GRID_IF_IS_BRAM
+     `ifdef DEBUG
+      .debug_wire               (grid_debug_wire),
+     `endif
       .bram_en                  (grid_bram_en),
       .bram_addr                (grid_bram_addr),
       .bram_rddata              (grid_bram_rddata),
@@ -1126,6 +1162,9 @@ module MemoryControlUnit #(
       .m_axil_rvalid            (m_axil_data_rvalid[pos]),
       .m_axil_rready            (m_axil_data_rready[pos]),
      `elsif DATA_IF_IS_BRAM
+     `ifdef DEBUG
+      .debug_wire               (data_debug_wire  [pos*3 +: 3]),
+     `endif
       .bram_en                  (data_bram_en[pos]),
       .bram_addr                (data_bram_addr[pos*DATA_ADDR +: DATA_ADDR]),
       .bram_rddata              (data_bram_rddata[pos*DATA_WIDTH +: DATA_WIDTH]),

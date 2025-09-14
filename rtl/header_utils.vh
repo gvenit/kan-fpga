@@ -27,5 +27,9 @@
 `define MIN(a,b) ((a < b) ? (a) : (b))
 
 `define ABS(signal) (($signed(signal) < 0) ? -$signed(signal) : signal)
+
+// `define DEBUG
+
+`define USE_ONE_HOT_ENCODING_FSM
     
 `endif
