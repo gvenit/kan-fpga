@@ -6,7 +6,13 @@
 #include "kan_memory.h"
 #include "kan_config.h"
 #include "kan_defines.h"
+#include "kan_dma.h"
 
+#ifdef DEF_TIME_LAYER
+#include "kan_timer.h"
+#endif
+
+#include <stdio.h>
 #include "xil_printf.h"
 
 /**
@@ -42,6 +48,39 @@ kan_status_t kan_ctrl_start_core(void);
  * that represents the state of the core
  */
 kan_state_t kan_ctrl_get_state(void);
+
+/**
+ * @brief Updates the layer stattistics on the layer struct
+ *
+ * The layer struct is the `Kan_Layer_Config_Struct` defined in `kan_config.h`
+ * for which the user must allocate memory in main function
+ *
+ * @param layer_handler a pointer to the layer handler (pointer to pointer)
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
+kan_status_t kan_ctrl_update_layer_stats(kan_layer_handler_t *layer_handler);
+
+/**
+ * @brief Nulls all statistic values from all the layer structs
+ *
+ * @param kan_handler a pointer to the kan network handler struct
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
+kan_status_t kan_ctrl_reset_all_layer_stats(kan_network_handler_t *kan_handler);
+
+/**
+ * @brief Prints statistics of all layers
+ *
+ * @param kan_handler a pointer to the kan network handler struct
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
+kan_status_t kan_ctrl_print_all_layer_stats(kan_network_handler_t *kan_handler);
 
 /**
  * @brief Returns a boolean if
@@ -109,19 +148,6 @@ kan_bool_t kan_ctrl_reg_status_reset(void);
 kan_bool_t kan_ctrl_reg_oper_done(void);
 
 /**
- * @brief Updates the layer stattistics on the layer struct
- *
- * The layer struct is the `Kan_Layer_Config_Struct` defined in `kan_config.h`
- * for which the user must allocate memory in main function
- *
- * @param layer_handler a pointer to the layer handler (pointer to pointer)
- *
- * @return
- * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
- */
-kan_status_t kan_ctrl_update_layer_stats(kan_layer_handler_t *layer_handler);
-
-/**
  * @brief Callback function for the PL2PS interrupt
  *
  * This callback function is called whenever the PL generates an interrupt.
@@ -135,5 +161,22 @@ kan_status_t kan_ctrl_update_layer_stats(kan_layer_handler_t *layer_handler);
  * @param intr_handler the interrupt handler responsible to monitor the PL2PS interrupt.
  */
 void callback_status_reg(void *intr_handler);
+
+/**
+ * @brief Run the KAN application on the system
+ *
+ * @warning it will not work if not properly initialized
+ *
+ * @param kan_handler the handler of the entire network - pointer to to the initialized network struct
+ * @param dma_handler the handler of the dma engine - pointer to to the initialized dma struct
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
+kan_status_t kan_ctrl_run_network(kan_network_handler_t *kan_handler, kan_dma_handler_t *dma_handler);
+
+#ifdef DEF_DBG
+void dbg_print_status(void);
+#endif
 
 #endif

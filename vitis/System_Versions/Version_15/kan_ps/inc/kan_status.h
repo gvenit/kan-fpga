@@ -64,137 +64,156 @@ typedef enum Kan_Status
     STATUS_DMA_TIMEOUT,
     STATUS_PL_ERROR,
     STATUS_MEM_READ_ERROR,
-    STATUS_MEM_WRITE_ERROR
+    STATUS_MEM_WRITE_ERROR,
+    STATUS_EXEC_CONFIC_DOWNLOAD_FAILED,
+    STATUS_EXEC_CORE_ERROR,
+
 } kan_status_t;
 
 #ifdef DEF_VERBOSE
-#define kan_error_handler(code, msg)                                           \
-    do                                                                         \
-    {                                                                          \
-        switch (code)                                                          \
-        {                                                                      \
-        case STATUS_FAILURE:                                                   \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_FAILURE\r\n");             \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_ILLEGAL_ARG:                                               \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_ILLEGAL_ARG\r\n");         \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_NULL_POINTER_REF:                                          \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_NULL_POINTER_REF\r\n");    \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_MALLOC_FAIL:                                               \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_MALLOC_FAIL\r\n");         \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_INTR_INIT_FAILURE:                                         \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_INTR_INIT_FAILURE\r\n");   \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_INTR_ATTACH_FAILURE:                                       \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_INTR_ATTACH_FAILURE\r\n"); \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_DMA_INIT_FAILURE:                                          \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_DMA_INIT_FAILURE\r\n");    \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_DMA_TX_FAILURE:                                            \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_DMA_TX_FAILURE\r\n");      \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_DMA_RX_FAILURE:                                            \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_DMA_RX_FAILURE\r\n");      \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_DMA_ERROR_INTR:                                            \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_DMA_ERROR_INTR\r\n");      \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_DMA_TIMEOUT:                                               \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_DMA_TIMEOUT\r\n");         \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_PL_ERROR:                                                  \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_PL_ERROR\r\n");            \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_MEM_READ_ERROR:                                            \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_MEM_READ_ERROR\r\n");      \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        case STATUS_MEM_WRITE_ERROR:                                           \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Call returned error: STATUS_MEM_WRITE_ERROR\r\n");     \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        default:                                                               \
-            xil_printf("\r\n");                                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("Unhandled error code: %d\r\n", code);                  \
-            xil_printf("MESSAGE: %s\r\n", msg);                                \
-            xil_printf("***\r\n");                                             \
-            xil_printf("\r\n");                                                \
-            break;                                                             \
-        }                                                                      \
-        return code;                                                           \
+#define kan_error_handler(code, msg)                                                   \
+    do                                                                                 \
+    {                                                                                  \
+        switch (code)                                                                  \
+        {                                                                              \
+        case STATUS_FAILURE:                                                           \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_FAILURE\r\n");                     \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_ILLEGAL_ARG:                                                       \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_ILLEGAL_ARG\r\n");                 \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_NULL_POINTER_REF:                                                  \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_NULL_POINTER_REF\r\n");            \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_MALLOC_FAIL:                                                       \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_MALLOC_FAIL\r\n");                 \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_INTR_INIT_FAILURE:                                                 \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_INTR_INIT_FAILURE\r\n");           \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_INTR_ATTACH_FAILURE:                                               \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_INTR_ATTACH_FAILURE\r\n");         \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_DMA_INIT_FAILURE:                                                  \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_DMA_INIT_FAILURE\r\n");            \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_DMA_TX_FAILURE:                                                    \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_DMA_TX_FAILURE\r\n");              \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_DMA_RX_FAILURE:                                                    \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_DMA_RX_FAILURE\r\n");              \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_DMA_ERROR_INTR:                                                    \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_DMA_ERROR_INTR\r\n");              \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_DMA_TIMEOUT:                                                       \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_DMA_TIMEOUT\r\n");                 \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_PL_ERROR:                                                          \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_PL_ERROR\r\n");                    \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_MEM_READ_ERROR:                                                    \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_MEM_READ_ERROR\r\n");              \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_MEM_WRITE_ERROR:                                                   \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_MEM_WRITE_ERROR\r\n");             \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_EXEC_CONFIC_DOWNLOAD_FAILED:                                       \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_EXEC_CONFIC_DOWNLOAD_FAILED\r\n"); \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        case STATUS_EXEC_CORE_ERROR:                                                   \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Call returned error: STATUS_EXEC_CORE_ERROR\r\n");             \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        default:                                                                       \
+            xil_printf("\r\n");                                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("Unhandled error code: %d\r\n", code);                          \
+            xil_printf("MESSAGE: %s\r\n", msg);                                        \
+            xil_printf("***\r\n");                                                     \
+            xil_printf("\r\n");                                                        \
+            break;                                                                     \
+        }                                                                              \
+        return code;                                                                   \
     } while (0)
 #else
 #define kan_error_handler(code, msg) return code;

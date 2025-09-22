@@ -21,6 +21,31 @@
  */
 // #define DEF_DBG
 
+/**
+ * Uncomment `DEF_TIME_LAYER` to time each layer individually and print such messages
+ *
+ * Comment it out if you do not wish to do so
+ *
+ * @warning Mutually exclusive with the `DEF_TIME_NETWORK` macro
+ */
+#define DEF_TIME_LAYER
+
+/**
+ * Uncomment `DEF_TIME_NETWORK` to time the execution of the entire layer and print it at the end
+ *
+ * Comment it out if you do not wish to do so
+ *
+ * @warning Mutually exclusive with the `DEF_TIME_LAYER` macro
+ */
+#define DEF_TIME_NETWORK
+
+/**
+ * Uncomment it to execute all the inputs of the HAM10000 dataset, stored in the `dataset_data` DDR region (see linker script)
+ *
+ * Comment it out and it will only exexute the first image of the dataset
+ */
+// #define DEF_EXEC_ALL_INPUTS
+
 /*==============================================================================
     Network parameters and type definitions
  ==============================================================================*/
@@ -42,6 +67,13 @@
 #define KAN_LAYERS_NUM 2
 
 /**
+ * @brief The number of different input datasets stored in the `dataset_data` region of the memory (see linker script)
+ *
+ * For the HAM10000 dataset this is the total number of used images.
+ */
+#define KAN_INPUT_DATA_NUM 1602
+
+/**
  * @brief Number of result packets.
  * Define how many data the final layer produces
  */
@@ -51,7 +83,7 @@
  * @brief Number of result channels.
  * Internal info of the PL architecture used to update the weights
  */
-#define KAN_RESULT_CHANNELS 1
+#define KAN_RESULT_CHANNELS 4
 
 /**
  * @brief the number of data on each KAN layer

@@ -3,3 +3,4 @@
 	url = https://github.com/alexforencich/verilog-axis.git
 [submodule "lib/Radial-Basis-Function-Based-Kolmogorov-Arnold-Networks"]
 	path = lib/Radial-Basis-Function-Based-Kolmogorov-Arnold-Networks
+	url = https://github.com/marrln/Radial-Basis-Function-Based-Kolmogorov-Arnold-Networks.git

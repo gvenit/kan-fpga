@@ -1,5 +1,7 @@
 import os
 import argparse
+import numpy as np
+from typing import Literal
 
 ###################################
 # Functions
@@ -27,6 +29,10 @@ def create_sourcefile (
 
     with open(file_path, "w") as source_file:
         source_file.write(f"#include \"{header_inc}\"\n\n")
+        # source_file.write(f'#ifdef {array_name.upper()}_SIZE\n')
+        # source_file.write(f'  #undef {array_name.upper()}_SIZE \n')
+        # source_file.write(f'#endif\n')
+        # source_file.write(f'#define {array_name.upper()}_SIZE {len(dataset)}\n')
         source_file.write(f"__attribute__((section(\".{section}\"), aligned(4), used))\n")
 
         source_file.write(f"data_t {array_name}[] = {{\n")
@@ -40,7 +46,7 @@ def create_sourcefile (
             else:
                 source_file.write(f"    {val}\n")
 
-        source_file.write("};\n\n")
+        source_file.write("};\n")
 
     print(f"Source file '{file_path}' generated with {len(dataset)} values.")
 
@@ -83,7 +89,9 @@ def create_headerfile (
 def bin_to_c_file (
         bin_file_path,
         file_path,
-        array_name="data_array"
+        array_name="data_array",
+        dtype = 'uint8',
+        endian : Literal['S','=','<','>','|'] = '='
     ):
     '''
     **Warning** : it reads raw files and interprets each byte as a single data
@@ -92,10 +100,13 @@ def bin_to_c_file (
         bin_file_path (path) : path to a .bin a .raw dataset
         file_path (path) : the path with the name of the header file to be created
         array_name (str) : the name of the C array that will contain the data
+        dtype (str | numpy.dtype) : the expected type of data
+        endian ('S','=','<','>','|') : the endianness used to store the data
     '''
     with open(bin_file_path, "rb") as bin_file:
         byte_data = bin_file.read()
-        values = list(byte_data)
+        dtype = np.dtype(dtype).newbyteorder(endian)
+        values = list(np.frombuffer(byte_data, dtype=dtype))
 
     create_sourcefile(values, file_path, array_name)
 
@@ -177,6 +188,20 @@ parser.add_argument(
     help='the size of the dataset that will be a list of constant values (used only if --raw not specified and if --size not specified)'
 )
 
+parser.add_argument(
+    '--dtype', '-d',
+    action='store',
+    default='uint8',
+    help='the data type of the dataset (default value is "uint8")'
+)
+
+parser.add_argument(
+    '--endian', '-e',
+    choices=['S','=','<','>','|'],
+    default='<',
+    help='the endianness of the dataset (default value is "<" -- little endian)'
+)
+
 
 ###################################
 # Main function
@@ -207,7 +232,9 @@ if __name__ == "__main__":
     
     if args.raw:
         rawpath = args.raw
-        bin_to_c_file(rawpath, filepath, arrayname)
+        dtype = args.dtype
+        endian = args.endian
+        bin_to_c_file(rawpath, filepath, arrayname, dtype, endian)
     else:
         size = int(args.size)
         if args.constant:

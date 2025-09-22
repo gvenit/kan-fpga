@@ -6,7 +6,7 @@ A complete engine for accelerating Kolmogorov-Arnold Networks (KAN) in FPGAs. Th
 The `vitis` application is under development. The engine is functional but susceptible to small changes. 
 
 ## FasterKAN
-[faster-kan](https://github.com/AthanasiosDelis/faster-kan), when compared to [pykan](), uses an easier to calculate activation function, the Reflectional SWitch Activation Function:  
+[faster-kan](https://github.com/AthanasiosDelis/faster-kan), when compared to [pykan](), uses an easier to calculate activation function, the Reflectional SWitch Activation Function: 
 
 $$RSWAF_i(x) = 1 - \tanh^2\left(scale\times(x-grid_i)\right)$$
 
@@ -59,20 +59,17 @@ and streamed on one of the opposite sides when the partial sum is complete.
 ![lpc](graphs/lpc.png) \
 Figure [2](#lpc). Linear Processing Cube
 
-The Linear Processing Cube (LPC) of Figure [(2)](#lpc)  consists of Linear Processing Elements (LPE) that are connected as follows:
+The Linear Processing Cube (LPC) of Figure [(2)](#lpc) consists of Linear Processing Elements (LPE) that are connected as follows:
 
 - Input Data (or data from the first operand in general) are streamed from left to right.
 - Input Weights (or data from the second operand in general) are streamed from top to bottom.
 - Output Data are streamed from up to down.
 
-For a Matrix-Matrix Multiplication (MMM), let A and B be two matrices 
-of sizes $A \times C$ and $C \times B$ respectively 
-and let the processing unit be a LPC of size $K \times N \times M$, 
-where $K \times N$ the size of input data matrix from the left face of LPC, 
-$K \times M$ the size of input data matrix from the top face of LPC and  
+For a Matrix-Matrix Multiplication (MMM), let A and B be two matrices of sizes $A \times C$ and $C \times B$ respectively 
+and let the processing unit be a LPC of size $K \times N \times M$, where $K \times N$ the size of input data matrix from the left face of LPC, 
+$K \times M$ the size of input data matrix from the top face of LPC and 
 $N \times M$ the size of output data matrix from the down face of the LPC.
-In order to calculate the MMM, 
-we split the matrices in sizes $\frac{A}{N} \times K$ and $K \times \frac{B}{M}$, 
+In order to calculate the MMM, we split the matrices in sizes $\frac{A}{N} \times K$ and $K \times \frac{B}{M}$, 
 resulting in matrices:
 
 $$A_n = a_{ic} \ , \ nN \le i \lt (n+1)N, \ 0 \le c \lt C$$
@@ -85,11 +82,12 @@ $$T(B)^m_{lkj} = (B_m)_{(lK+k),j} \ , \ mM \le j \lt (m+1)M, \ 0 \le l \lt \frac
 
 These matrices are streamed in the processor for $\frac{C}{K}$ cycles, 
 and the theroetical latency of each iteration is:
+
 $$\begin{gather*}
-Iteration \ Latency &=& (\text{Input Length})  \\
-                    &+& (\text{\#Cycles to reach last Row LPE})  \\
-                    &+& (\text{\#Cycles to reach last Column LPE})  \\
-                    &+& (\text{\#Parallel Processes})  \\
+Iteration \ Latency &=& (\text{Input Length}) \\
+                    &+& (\text{\\#Cycles to reach last Row LPE}) \\
+                    &+& (\text{\\#Cycles to reach last Column LPE}) \\
+                    &+& (\text{\\#Parallel Processes}) \\
                     &=& \frac{C}{K} + M + N + K - 3
 \end{gather*}$$
 
@@ -100,9 +98,8 @@ have provided the LPC with packets of the same length.
 In this project, the first operand is of the MMM is the output of the module that calculates the RBF.
 This module works in a stream-wise fashion, where the input data, grid and scale are streamed.
 The component then synchronizes the flows and calculates the difference between the data and the grid,
-multiplies the result with the scale and 
-then forwards the absolute value of the product to a ROM that is utilized as a Look-Up Table (LUT) for the
-$sech^2$ function.
+multiplies the result with the scale and then forwards the absolute value of the product 
+to a ROM that is utilized as a Look-Up Table (LUT) for the $sech^2$ function.
 
 ### Controllers & FIFOs
 To achieve maximum throughput, the data, grid and scale parameters are loaded on on-chip memory in memory banks.

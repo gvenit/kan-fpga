@@ -12,10 +12,11 @@ void *aligned_malloc(size_t size, size_t alignment)
 }
 #endif
 
-// kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, kan_data_buff_t *kan_data_buff_p)
-kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p)
+data_t *input_data_base_addr = dataArray;
+
+kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, data_t *input_data, volatile data_t **kan_data_buff_p)
 {
-    if (kan_handler == NULL || kan_layers_array == NULL)
+    if (kan_handler == NULL || kan_layers_array == NULL || input_data == NULL || kan_data_buff_p == NULL)
         return STATUS_ILLEGAL_ARG;
 
     size_t grid_block_stride = 0;
@@ -28,7 +29,7 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
 
     kan_handler->layers_num = KAN_LAYERS_NUM;
 
-    kan_handler->data_ps_base_addr = dataArray;
+    kan_handler->data_ps_base_addr = input_data; // dataArray;
     kan_handler->grid_ps_base_addr = gridArray;
     kan_handler->scale_ps_base_addr = scaleArray;
     kan_handler->weight_ps_base_addr = weightArray;
@@ -46,7 +47,6 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
         else
             kan_layers_array[i].result_num = KAN_RESULT_FEATURES;
 
-        kan_layers_array[i].weight_num = sizes_array_data[i] * sizes_array_grid[i] * kan_layers_array[i].result_num;
         kan_layers_array[i].weight_num = sizes_array_data[i] * sizes_array_grid[i] * (uint32_t)((kan_layers_array[i].result_num + KAN_RESULT_CHANNELS - 1) / KAN_RESULT_CHANNELS) * KAN_RESULT_CHANNELS;
 
         if (max_data < kan_layers_array[i].result_num)
@@ -94,6 +94,7 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
         kan_layers_array[i].iteration_latency = 0;
         kan_layers_array[i].operation_timer = 0;
         kan_layers_array[i].operation_latency = 0;
+        kan_layers_array[i].execution_time = 0.;
     }
 
     // final params
@@ -105,7 +106,16 @@ kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handl
     return STATUS_OK;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////
+kan_status_t kan_config_update_input(kan_network_handler_t *kan_handler, data_t *input_data)
+{
+    if (kan_handler == NULL || input_data == NULL)
+        return STATUS_NULL_POINTER_REF;
+
+    kan_handler->data_ps_base_addr = input_data;
+    kan_handler->kan_layers_handlers->data_ps_src_addr = kan_handler->data_ps_base_addr;
+
+    return STATUS_OK;
+}
 
 kan_status_t kan_config_download2pl(kan_layer_handler_t *layer_handler)
 {

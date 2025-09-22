@@ -7,11 +7,29 @@
 #include "xparameters.h"
 
 /*===========================================================================
+    Managing mutually exclusive macros
+============================================================================*/
+
+#if defined(DEF_TIME_LAYER)
+#ifdef DEF_TIME_NETWORK
+#undef DEF_TIME_NETWORK
+#endif
+#elif defined(DEF_TIME_NETWORK)
+#ifdef DEF_TIME_LAYER
+#undef DEF_TIME_LAYER
+#endif
+#endif
+
+/*===========================================================================
     Used datatype and size definitions
 ============================================================================*/
 
 #define DATUM_SIZE sizeof(data_t)                     // number if bytes for each datum
 #define DATA_PER_WORD (sizeof(uint32_t) / DATUM_SIZE) // every word is 32 bits and this calculates how many bytes it fits
+
+#define LOADED_VAL 0x01
+#define OPERATION_DONE_VAL 0x01
+#define NULL_VAL 0x00
 
 /*===========================================================================
     Fabric and other interrupts
@@ -19,7 +37,6 @@
 
 #define INTR_CONTROLLER_DEVICE_ID XPAR_SCUGIC_0_DEVICE_ID            // from Canonical definitions for SCU GIC. It is the ID of the Interrupt Controler (INTC)
 #define INTR_PL_TOP_PS_ID XPAR_FABRIC_KANACCELERATOR_PL2PS_INTR_INTR // the ID of the PL to PS interrupt
-// #define INTR_PL_TOP_PS_ID XPAR_FABRIC_KANACCELERATOR_PL2PS_INTR_INTR // the ID of the PL to PS interrupt
 
 /**
  * @note About the interrupt trigger types.
@@ -58,7 +75,6 @@
 #define TX_INTR_TRIGGER_TYPE INTR_TRIGGER_RISING_EDGE
 
 #define RESET_TIMEOUT_COUNTER 10000 // Timeout loop counter for reset (measured in ms)
-// #define NUMBER_OF_TRANSFERS 10
 
 #define DMA_MIN_ALIGNMENT 0x20 // minimum alignment of dma - found in `xaxidma_hw.h` as `XAXIDMA_MICROMODE_MIN_BUF_ALIGN`, or the debugger
 

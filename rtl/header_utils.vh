@@ -30,6 +30,6 @@
 
 // `define DEBUG
 
-`define USE_ONE_HOT_ENCODING_FSM
+// `define USE_ONE_HOT_ENCODING_FSM
     
 `endif

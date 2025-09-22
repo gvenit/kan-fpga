@@ -14,6 +14,12 @@
 #include "kan_status.h"
 
 /*===========================================================================
+    Configuration Specific Global Variables
+ ===========================================================================*/
+
+extern data_t *input_data_base_addr;
+
+/*===========================================================================
     Type definition of handler and struct declaration
  ===========================================================================*/
 
@@ -124,6 +130,8 @@ struct Kan_Layer_Config_Struct
     uint32_t iteration_latency;
     uint32_t operation_timer;
     uint32_t operation_latency;
+
+    double execution_time;
 };
 
 /*===========================================================================
@@ -137,13 +145,27 @@ struct Kan_Layer_Config_Struct
  * and each layer of it
  *
  * @param kan_handler a pointer to the already allocated struct of the entire network
- * @param kan_handler a pointer to the already allocated array of layer structs (one struct for each layer)
+ * @param kan_layers_array a pointer to the already allocated array of layer structs (one struct for each layer)
+ * @param input_data a pointer to the input data of the first layer
  * @param kan_data_buff_p pointer to a buffer that will hold the results and the data on each layer iteration
  *
  * @return
  * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
  */
-kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, volatile data_t **kan_data_buff_p);
+kan_status_t kan_config_init(kan_network_handler_t *kan_handler, kan_layer_handler_t *kan_layers_array, data_t *input_data, volatile data_t **kan_data_buff_p);
+
+/**
+ * @brief Updates the networks first layer input data base address
+ *
+ * This function is for use on an already initialized network and it just updates the address of the first input element on the first layer
+ *
+ * @param kan_handler a pointer to the already allocated struct of the entire network
+ * @param input_data a pointer to the input data of the first layer
+ *
+ * @return
+ * A suitable error code from the `enum Kan_Status` in `kan_status.h`.
+ */
+kan_status_t kan_config_update_input(kan_network_handler_t *kan_handler, data_t *input_data);
 
 /**
  * @brief Writes configuration data to the PL registers for a layer
