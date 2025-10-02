@@ -37,7 +37,7 @@ def find_strobe(out, address, word_size, clog_num_words, prints=False):
         )) for bit_i in range(2 ** clog_num_words.value)
     ] # + prints
 
-def KanAccelerator(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_width=16, is_async=True):
+def KanAccelerator(I=1,J=1,K=1, data_width=16, wght_width=8, sdff_width=12, actf_width=16, is_async=True):
     basename = 'tb_kan_accelerator_wrapper'
     fname = os.path.join(TOP_DIR,f'rtl/wrapper/{basename}.v')
     exec_str = ' '.join([
@@ -45,16 +45,15 @@ def KanAccelerator(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_widt
         os.path.join(TOP_DIR,'rtl/wrapper/KanAcceleratorInst.py'),
         '--batch-size',             K,
         '--data-width',             data_width,
-        '--data-frac-bits',         data_width-3,
+        '--data-frac-bits',         data_width-5,
         '--data-chn',               J,
         '--data-depth',             2**14,
-        # '--data-depth',             J * max(N_in // J, 1),
         '--grid-depth',             2**10,
         '--scle-width',             data_width,
         '--scle-frac-bits',         data_width-2,
         '--scle-depth',             2**10,
-        '--wght-width',             data_width,
-        '--wght-frac-bits',         data_width-5,
+        '--wght-width',             wght_width, 
+        '--wght-frac-bits',         wght_width + 2, 
         '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)) * 2,
         '--sdff-width',             sdff_width,
         '--sdff-frac-bits',         sdff_width-3,
@@ -72,8 +71,8 @@ def KanAccelerator(I=1,J=1,K=1,N_in=256, data_width=16, sdff_width=12, actf_widt
     clear_hints(fname)
     return verilog.from_verilog.read_verilog_module(fname)[basename] 
 
-def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
-    module = Module(f'tb_KanAccelerator_{I}_{J}_{K}_{N_in}_{N_out}')
+def tb_KanAccelerator(I=1,J=1,K=1):
+    module = Module(f'tb_KanAccelerator_{I}_{J}_{K}')
     
     module.EmbeddedCode(
     f'''
@@ -135,15 +134,17 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     data_width = 16
     sdff_width = 12
     actf_width = 16
+    wght_width = 8
     is_async = True
     
     fast_clk_hperiod = 2      # 250 MHz
-    GRID_LEN = 2
+    GRID_LEN = 3
     
-    kan = KanAccelerator(I=I,J=J,K=K,N_in=N_in, data_width=data_width, sdff_width=sdff_width, actf_width=actf_width, is_async=is_async)
+    kan = KanAccelerator(I=I,J=J,K=K, data_width=data_width, wght_width=wght_width, sdff_width=sdff_width, actf_width=actf_width, is_async=is_async)
     params = module.copy_params_as_localparams(kan)
     ports  = module.copy_ports_as_vars(kan)
-    final_dtype = getattr(torch,f'uint{((data_width +7)//8)*8}')
+    data_dtype = getattr(torch,f'uint{((data_width +7)//8)*8}')
+    wght_dtype = getattr(torch,f'uint{((wght_width +7)//8)*8}')
 
     DATA_CHANNELS               : Localparam = params['DATA_CHANNELS']
     RSLT_CHANNELS               : Localparam = params['RSLT_CHANNELS']
@@ -151,12 +152,14 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     SCALE_SHARE                 : Localparam = params['SCALE_SHARE']
     GRID_SHARE                  : Localparam = params['GRID_SHARE']
     DATA_WIDTH                  : Localparam = params['DATA_WIDTH']
+    WEIGHT_WIDTH                : Localparam = params['WEIGHT_WIDTH']
+    ACTF_WIDTH                  : Localparam = params['ACTF_WIDTH']
     DATA_FRACTIONAL_BITS        : Localparam = params['DATA_FRACTIONAL_BITS']
     SCALE_FRACTIONAL_BITS       : Localparam = params['SCALE_FRACTIONAL_BITS']
     WEIGHT_FRACTIONAL_BITS      : Localparam = params['WEIGHT_FRACTIONAL_BITS']
     SCALED_DIFF_WIDTH           : Localparam = params['SCALED_DIFF_WIDTH']
     SCALED_DIFF_FRACTIONAL_BITS : Localparam = params['SCALED_DIFF_FRACTIONAL_BITS']
-    ACT_FRACTIONAL_BITS         : Localparam = params['ACT_FRACTIONAL_BITS']
+    ACTF_FRACTIONAL_BITS        : Localparam = params['ACTF_FRACTIONAL_BITS']
     RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
     
     DMA_WIDTH                   : Localparam = params['DMA_WIDTH']
@@ -170,6 +173,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     SCALE_ADDR                  : Localparam = params['SCALE_ADDR']
     
     WEIGHT_LAST_ENABLE          : Localparam = params['WEIGHT_LAST_ENABLE']
+    WEIGHT_KEEP_WIDTH           : Localparam = params['WEIGHT_KEEP_WIDTH']
     
     if ('DATA_STRB_WIDTH' not in params):
         DATA_STRB_WIDTH         = module.Localparam('DATA_STRB_WIDTH', DATA_WIDTH / 8)
@@ -180,13 +184,16 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     DATA_CHANNELS.value = J
     # BATCH_SIZE.value  = K
     DATA_WIDTH.value = data_width
-    DATA_STRB_WIDTH.value = data_width // 8
-    DATA_FRACTIONAL_BITS.value = data_width-3
-    SCALE_FRACTIONAL_BITS.value = data_width-2
-    WEIGHT_FRACTIONAL_BITS.value = data_width-5
     SCALED_DIFF_WIDTH.value = sdff_width
+    ACTF_WIDTH.value = actf_width
+    WEIGHT_WIDTH.value = wght_width
+    DATA_STRB_WIDTH.value = data_width // 8
+    WEIGHT_KEEP_WIDTH.value = (WEIGHT_WIDTH + 7) / 8
+    DATA_FRACTIONAL_BITS.value = data_width-5
+    SCALE_FRACTIONAL_BITS.value = data_width-2
+    WEIGHT_FRACTIONAL_BITS.value = wght_width + 2
     SCALED_DIFF_FRACTIONAL_BITS.value = sdff_width-3
-    ACT_FRACTIONAL_BITS.value = data_width
+    ACTF_FRACTIONAL_BITS.value = data_width
     RSLT_FRACTIONAL_BITS.value = data_width-5
     
     DMA_WIDTH.value = 64
@@ -371,7 +378,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     slow_clk_hperiod = fast_clk_hperiod * 2  if is_async else fast_clk_hperiod
     dma_hperiod = max(int(fast_clk_hperiod * DMA_WIDTH.value / (DATA_CHANNELS.value*RSLT_CHANNELS.value*DATA_WIDTH.value)), 1)
 
-    vcd_name = os.path.join('..','vcd',f'tb_KanAccelerator_{I}_{J}_{K}_{N_in}_{N_out}.vcd')
+    vcd_name = os.path.join('..','vcd',f'tb_KanAccelerator_{I}_{J}_{K}.vcd')
     simulation.setup_waveform(module, uut, dumpfile=vcd_name)
     simulation.setup_clock(module, fsm_clk,  hperiod=slow_clk_hperiod)
     simulation.setup_clock(module, core_clk, hperiod=fast_clk_hperiod)
@@ -398,7 +405,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         reset_done(1),
         # Systask('finish'),
         nclk(fsm_clk),
-        Delay(2000 + 8*GRID_LEN*N_in*N_out/DATA_CHANNELS/RSLT_CHANNELS * 2 * 4 * (2**5)),
+        Delay(2000 + GRID_LEN * DATA_CHANNELS.value / RSLT_CHANNELS.value * (2**12)),
         # Delay(10),
         Display('!! TIMEOUT ERROR !!'),
         AssertTrue(0),
@@ -408,68 +415,66 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
 
     # KAN Layer parameters
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    data_len = DATA_CHANNELS.value * max(N_in // DATA_CHANNELS.value, 1)
+    data_len = DATA_CHANNELS.value * 2
     grid_len = GRID_LEN
-    scale_len = (1,1,1) if SCALE_SHARE.value else (1,data_len,grid_len)
-    rslt_len = RSLT_CHANNELS.value * max(N_out // RSLT_CHANNELS.value, 1)
+    scale_len = (1,1,1) if SCALE_SHARE.value else (1,grid_len,data_len,)
     weight_len = data_len * grid_len
+    rslt_len = weight_len + 4
     adder_size = 64
     pckt_len = (data_len * grid_len) # >> int(np.ceil(np.log2(DATA_CHANNELS.value)))
     # pckt_len = (data_len // DATA_CHANNELS.value) * (grid_len // (1 if GRID_SHARE.value else DATA_CHANNELS.value))
     # print(data_len,grid_len,scale_len,rslt_len,weight_len,pckt_len)
     
-    # Create data - size = [BATCH X DATA X 1]
-    layer_data = torch.randn(K, data_len, 1, device=device)
+    # Create data - size = [BATCH X 1 X DATA]
+    layer_data = torch.stack([torch.linspace(-(data_len//2), data_len//2, data_len, device=device) for _ in range(K)])
     # Quantize data
     layer_data_q = torch.tensor((layer_data * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'),device=device)
     # Dequantize data
     layer_data = layer_data_qd = layer_data_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
-    # Create grid - size = [1 X 1 X GRID]
-    layer_grid = torch.randn(1, 1, grid_len, device=device)
+    # Create grid - size = [1 X GRID X 1]
+    layer_grid = torch.linspace(-(grid_len//2), grid_len//2, grid_len, device=device)
     # Quantize grid
     layer_grid_q = torch.tensor((layer_grid * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize grid
     layer_grid = layer_grid_qd = layer_grid_q.to(torch.float32) / 2 ** DATA_FRACTIONAL_BITS.value
     
     # Create scale - size = [1 X DATA X GRID] or [1] 
-    layer_scle = torch.rand(*scale_len, device=device) * 2 ** (DATA_WIDTH.value - SCALE_FRACTIONAL_BITS.value-1)
+    layer_scle = torch.ones(*scale_len, device=device)
     # Quantize scale
     layer_scle_q = torch.tensor((layer_scle * 2 ** SCALE_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize scale
     layer_scle = layer_scle_qd = layer_scle_q.to(torch.float32) / 2 ** SCALE_FRACTIONAL_BITS.value
     
-    
     # Create weight - size = [WEIGHT x RESULT] or [1] 
-    layer_wght = (torch.rand(weight_len, rslt_len, device=device) * 2 - 1)
-
-    # Create expected scaled difference - size = [BATCH X GRID X DATA]
-    layer_exp_sdff = (layer_scle * (layer_data - layer_grid)).abs()
-    # Create expected activation data - size = [BATCH X GRID X DATA]
-    layer_exp_actd = torch.tensor((1 - np.tanh(layer_exp_sdff.cpu().numpy().astype('float128'))**2).astype('float32'), device=device)
-    # Reshape expected activation data - size = [BATCH X WEIGHT]
-    layer_exp_actd = layer_exp_actd.reshape(-1, weight_len)
-
-    if True:
-        # Perform expected Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
-        layer_exp_rslt = layer_exp_actd @ layer_wght
+    layer_wght = torch.zeros(weight_len, rslt_len, device=device)
+    layer_wght[:,1] = 1
+    layer_wght[:,2] = -1
+    layer_wght[:int(weight_len/2),3] = 1
+    layer_wght[int(weight_len/2):,3] = -1
+    for _iter in range(weight_len):
+        layer_wght[_iter,_iter+4] = 1
         
-        # Normalize weights
-        weight_scale = 1. / layer_exp_rslt.abs().max()
-    
-    
-    # Normalize weight - size = [WEIGHT x RESULT] or [1] 
-    layer_wght = layer_wght * weight_scale * 2 ** (DATA_WIDTH.value - WEIGHT_FRACTIONAL_BITS.value-1)
+    layer_wght /= 2**4
+
     # Quantize scale
     layer_wght_q = torch.tensor((layer_wght * 2 ** WEIGHT_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{4*DATA_WIDTH.value}'), device=device)
     # Dequantize scale
     layer_wght = layer_wght_qd = layer_wght_q.to(torch.float32) / 2 ** WEIGHT_FRACTIONAL_BITS.value
     # print(layer_wght_q,layer_wght)
     # exit()
+
+    # Create expected scaled difference - size = [BATCH X GRID X DATA]
+    layer_exp_sdff = (layer_scle * (layer_data[:,None,:] - layer_grid[None,:,None])).abs()
+    # Create expected activation data - size = [BATCH X GRID X DATA]
+    layer_exp_actd = torch.tensor((1 - np.tanh(layer_exp_sdff.cpu().numpy().astype('float128'))**2).astype('float32'), device=device)
+    print(layer_exp_actd)
+    # Reshape expected activation data - size = [BATCH X WEIGHT]
+    layer_exp_actd = torch.flatten(layer_exp_actd, start_dim=1)
     
     
     # Create scaled difference - size = [BATCH X GRID X DATA]
-    layer_diff = (layer_data_qd - layer_grid_qd)
+    layer_diff = (layer_data_qd[:,None,:] - layer_grid_qd[None,:,None])
     # Quantize scaled difference
     layer_diff_q = torch.tensor((layer_diff * 2 ** DATA_FRACTIONAL_BITS.value).cpu().numpy().astype(f'int{DATA_WIDTH.value}'), device=device).abs()
     # Dequantize scaled difference
@@ -488,18 +493,18 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     # Create activation data - size = [BATCH X WEIGHT]
     layer_actd = 1 - np.tanh(layer_sdff_qd)**2
     # Quantize activation data
-    layer_actd_q = torch.tensor((layer_actd * 2 ** ACT_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}'), device=device)
+    layer_actd_q = torch.tensor((layer_actd * 2 ** ACTF_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Unit correction
-    if (DATA_WIDTH.value == ACT_FRACTIONAL_BITS.value):
+    if (DATA_WIDTH.value == ACTF_FRACTIONAL_BITS.value):
         layer_actd_q = torch.where(
-            layer_actd_q > 2 ** ACT_FRACTIONAL_BITS.value -1,
-            2 ** ACT_FRACTIONAL_BITS.value - 1,
+            layer_actd_q > 2 ** ACTF_FRACTIONAL_BITS.value -1,
+            2 ** ACTF_FRACTIONAL_BITS.value - 1,
             layer_actd_q
         )
     # Reshape activation data - size = [BATCH X WEIGHT]
-    layer_actd_q = layer_actd_q.movedim(-1,-2).reshape(-1, weight_len)
+    layer_actd_q = torch.flatten(layer_actd_q, start_dim=1)
     # Dequantize activation data - size = [BATCH X WEIGHT]
-    layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACT_FRACTIONAL_BITS.value
+    layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACTF_FRACTIONAL_BITS.value
     
     # Perform expected Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
     layer_exp_rslt = layer_exp_actd @ layer_wght
@@ -513,14 +518,22 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     # # Dequantize result
     # layer_rslt_qd = layer_rslt_q.to('float32') / 2 ** RSLT_FRACTIONAL_BITS.value
     
+    print(layer_exp_rslt)
+    print(layer_exp_rslt_q)
+    print(layer_rslt)
+    print(layer_rslt_q)
+    
     # Perform Linear Layer / Matrix-Matrix Multiplication -- with integers - size = [BATCH X RESULT]
     layer_rslt_int = torch.einsum("bw,wr->wbr", layer_actd_q, layer_wght_q).cpu().numpy().astype('int64')
-    layer_rslt_int = torch.tensor(np.right_shift(np.sum(layer_rslt_int,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_rslt_int = torch.tensor(np.right_shift(np.sum(layer_rslt_int,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACTF_FRACTIONAL_BITS.value))).astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize result -- with integers
     layer_rslt_intd = layer_rslt_int.to(torch.float32) / 2 ** RSLT_FRACTIONAL_BITS.value
     
     layer_rslt      = layer_rslt.to(device=device, dtype=torch.float64)
     layer_rslt_intd = layer_rslt_intd.to(device=device, dtype=torch.float64)
+    
+    print(layer_rslt_intd)
+    print(layer_rslt_int)
     
     # Theoretical Device Simulation Bit Error Rate
     theo_dev_sim_ber = torch.sqrt(torch.mean(((layer_rslt_q - layer_rslt_int) ** 2).to(dtype=torch.float64))).cpu().numpy()
@@ -536,10 +549,14 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     # exit()
     
     # Data, Grid & Scale coordinator
-    test_data = layer_data_q.squeeze(-1).cpu().to(final_dtype).tolist()
-    test_grid = layer_grid_q.squeeze().cpu().to(final_dtype).tolist()
-    test_scle = layer_scle_q.squeeze(0).reshape(-1).cpu().to(final_dtype).tolist() if SCALE_SHARE.value else \
-                torch.stack(layer_data_q.reshape(-1).split(DATA_CHANNELS.value,-1)).reshape(-1).cpu().to(final_dtype).tolist()
+    test_data = layer_data_q.squeeze(-1).cpu().to(data_dtype).tolist()
+    test_grid = layer_grid_q.squeeze().cpu().to(data_dtype).tolist()
+    test_scle = layer_scle_q.squeeze(0).reshape(-1).cpu().to(data_dtype).tolist() if SCALE_SHARE.value else \
+                torch.stack(layer_data_q.reshape(-1).split(DATA_CHANNELS.value,-1)).reshape(-1).cpu().to(data_dtype).tolist()
+                
+    print('Data = ', test_data)
+    print('Grid = ', test_grid)
+    print('Scale = ', test_scle)
 
     # Data Driver
     addr_data   = [module.Integer(f'addr_data_{str(batch).zfill(2)}') for batch in range(K)]
@@ -872,7 +889,15 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     )
         
     # Weight coordinator
-    test_wght = torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1)).cpu().to(final_dtype).reshape(-1).tolist()
+    remain = layer_wght_q.shape[-1] % RSLT_CHANNELS.value
+    if remain != 0:
+        layer_wght_q = torch.concat([
+            layer_wght_q, 
+            torch.zeros(weight_len,RSLT_CHANNELS.value-remain, device=layer_wght_q.device, dtype=layer_wght_q.dtype)
+        ], dim=1)
+    test_wght = torch.flatten(torch.cat(torch.split(layer_wght_q,RSLT_CHANNELS.value,1))).cpu().to(wght_dtype).tolist()
+    # test_wght = torch.tensor(list(range(len(test_wght)))).to(wght_dtype).tolist()
+    print('Weights = ', test_wght)
     
     ## Weight driver
     intra_wght = module.Integer('intra_wght')
@@ -887,28 +912,30 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         
         Wait(wght_global_stage != global_stage_counter),
         Wait(~s_axis_wght_aclk),
+        s_axis_wght_areset(1),
         Wait(s_axis_wght_aclk),
         
         # Test 0 : Load Weights
         While(1)(
             wght_global_stage(global_stage_counter),
             Wait(~s_axis_wght_aclk),
+            s_axis_wght_areset(0),
             total_wght(0),
             s_axis_wght_tvalid(1),
             While(Ands(total_wght < len(test_wght), ~s_axis_wght_areset, wght_global_stage == global_stage_counter))(
                 Wait(~s_axis_wght_aclk),
                 s_axis_wght_tkeep(0),
-                For(intra_wght(0), Ands(intra_wght < (DMA_WIDTH / DATA_WIDTH), total_wght < len(test_wght),~s_axis_wght_areset, wght_global_stage == global_stage_counter), intra_wght.inc())(
+                For(intra_wght(0), Ands(intra_wght < (DMA_WIDTH / WEIGHT_WIDTH), total_wght < len(test_wght),~s_axis_wght_areset, wght_global_stage == global_stage_counter), intra_wght.inc())(
                     Case(total_wght)(
                         *[
                             When(_iter)(
                                 s_axis_wght_tdata.slice(
-                                    msb = ((_iter % (DMA_WIDTH / DATA_WIDTH))+1) * DATA_WIDTH -1,
-                                    lsb =  (_iter % (DMA_WIDTH / DATA_WIDTH)) * DATA_WIDTH
+                                    msb = ((_iter % (DMA_WIDTH / WEIGHT_WIDTH))+1) * WEIGHT_WIDTH -1,
+                                    lsb =  (_iter % (DMA_WIDTH / WEIGHT_WIDTH)) * WEIGHT_WIDTH
                                 )(test_wght_i),
                                 s_axis_wght_tkeep.slice(
-                                    msb = (_iter % (DMA_WIDTH / DATA_WIDTH) + 1) * DATA_STRB_WIDTH -1,
-                                    lsb = (_iter % (DMA_WIDTH / DATA_WIDTH)    ) * DATA_STRB_WIDTH
+                                    msb = (_iter % (DMA_WIDTH / WEIGHT_WIDTH) + 1) * WEIGHT_KEEP_WIDTH -1,
+                                    lsb = (_iter % (DMA_WIDTH / WEIGHT_WIDTH)    ) * WEIGHT_KEEP_WIDTH
                                 )(-1),
                             ) for _iter, test_wght_i in enumerate(test_wght)
                         ],
@@ -938,12 +965,13 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             Wait(~s_axis_wght_areset),
             Wait(wght_global_stage != global_stage_counter),
             Wait(~s_axis_wght_aclk),
+            s_axis_wght_areset(1),
             Wait(s_axis_wght_aclk),
         ),
     )
     
     # Result coordinator
-    test_rslt = layer_rslt_int.cpu().to(final_dtype).tolist()
+    test_rslt = layer_rslt_int.cpu().to(data_dtype).tolist()
     # print('Test layer_data_q:', layer_data_q.shape)
     # print(np.array(hex_list(layer_data_q.squeeze().cpu().numpy().astype('uint16').tolist())))
     # print('Test layer_grid_q:', layer_grid_q.shape)
@@ -962,7 +990,11 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
     # print('Test psum')
     # print(*[np.array(hex_list([np.sum(x[offset:2*_iter+offset+1:DATA_CHANNELS.value],axis=0).astype('uint64').tolist() for _iter in range(x.shape[0] // DATA_CHANNELS.value)])) for offset in range(DATA_CHANNELS.value)], sep ='\n')
     # print('Test rslt')
-    # print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
+    # print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACTF_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
+    # test_rslt = layer_actd_q.to(getattr(torch,f'uint{data_width}')).cpu().tolist()
+    print('ActF = ',layer_actd_q.to(getattr(torch,f'uint{data_width}')).cpu().tolist())
+    print('Result = ', test_rslt)
+    rslt_len = len(test_rslt[0])
 
     # Result driver
     rslt_done = module.Reg('rslt_done')
@@ -1022,7 +1054,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                                             ),
                                     Display("DEBUG: DATA %h >> %2d = %h -> %h", m_axis_rslt_tdata, (intra_rslt * DATA_WIDTH), m_axis_rslt_tdata >> (intra_rslt * DATA_WIDTH), rslt_buffer),
                                             AssertAbsDiffLE(rslt_buffer, test_rslt_i,1),
-                                            Display('Rslt -- Batch %2d -- Captured %3d -- PASSED', batch, total_rslt_i),
+                                            Display('  Rslt -- Batch %2d -- Captured %3d -- PASSED', batch, total_rslt_i),
                                             update_total_rslt(1),
                                         ) 
                                     ) for i, test_rslt_i in enumerate(test_rslt_batch)
@@ -1032,7 +1064,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
                                     update_total_rslt(0),
                                 ),
                             ),
-                            Display('Total after iteration : %3d', total_rslt_i),
+                            Display('DEBUG: Total after iteration : %3d', total_rslt_i),
                             Assert(m_axis_rslt_tlast, total_rslt_i == rslt_len),
                             
                         ) for batch, (total_rslt_i, test_rslt_batch) in enumerate(zip(total_rslt, test_rslt))
@@ -1596,93 +1628,94 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         ),
         Display('-- Hit interrupt soft'),
         *control_wr_seq('CTRL_REG_INTR_REG', ctrl_reg['CTRL_REG_INTR_MASK_SFT'], 1),
-        If(rslt_len / RSLT_CHANNELS == 1)( # Validate Nominal operation on the next test
-            Wait(~fsm_clk),
-            Wait(fsm_clk),
-            Display('-- Waiting for results...'),
+        AssertTrue(operation_busy),
+        AssertFalse(Cat(operation_complete,operation_error,locked)),
+        Wait(~fsm_clk),
+        Wait(fsm_clk),
+        *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+        Assert(ctrl_buffer & (
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+        ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
+        *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
+        AssertTrue(operation_busy),
+        AssertFalse(Cat(operation_complete,operation_error,locked)),
+        Wait(~fsm_clk),
+        Wait(fsm_clk),
+        *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+        Assert(ctrl_buffer & (
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
+        ), (ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] )),
+        
+        If((rslt_len+RSLT_CHANNELS-1) // RSLT_CHANNELS == 2)(
+            Display('-- Waiting for PL interrupt...'),
+            Wait(pl2ps_intr),
+            AssertTrue(operation_complete),
+            AssertTrue(locked),
+            AssertFalse(Cat(operation_busy,operation_error)),
+            *control_rd_seq('CTRL_REG_OPER_DNE', ctrl_buffer, 1),
+            Assert(ctrl_buffer,1),
+            Display('-- Waiting for rslt_done...'),
             Wait(rslt_done),
             Wait(~fsm_clk),
             rslt_done(0),
-        ).Else(
-            AssertTrue(operation_busy),
-            AssertFalse(Cat(operation_complete,operation_error,locked)),
-            Wait(~fsm_clk),
-            Wait(fsm_clk),
-            *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
-            Assert(ctrl_buffer & (
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
-            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
-            *control_wr_seq('CTRL_REG_INTR_REG', 0, 1),
-            AssertTrue(operation_busy),
-            AssertFalse(Cat(operation_complete,operation_error,locked)),
-            Wait(~fsm_clk),
-            Wait(fsm_clk),
-            *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
-            Assert(ctrl_buffer & (
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
-            ), (ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] )),
+            *control_wr_seq('CTRL_REG_OPER_DNE', 0, 1),
             
-            If(rslt_len // RSLT_CHANNELS == 2)(
-                Display('-- Waiting for PL interrupt...'),
-                Wait(pl2ps_intr),
-                AssertTrue(operation_complete),
-                AssertFalse(Cat(operation_busy,operation_error,locked)),
-                *control_rd_seq('CTRL_REG_OPER_DNE', ctrl_buffer, 1),
-                Assert(ctrl_buffer,1),
-                Display('-- Waiting for rslt_done...'),
-                Wait(rslt_done),
-                Wait(~fsm_clk),
-                rslt_done(0),
-                *control_wr_seq('CTRL_REG_OPER_DNE', 0, 1),
-                
-            ).Else(
-                Display('-- Waiting for PL interrupt...'),
-                Wait(pl2ps_intr),
-                AssertTrue(operation_busy),
-                AssertFalse(Cat(operation_complete,operation_error,locked)),
-            ),
-            Display('-- Waiting core reset...'),
-            For(ctrl_iter_buffer(0), Ands(ctrl_iter_buffer < 10, ~core_rst), ctrl_iter_buffer.inc())(
-                Wait(~fsm_clk),
-                Wait(fsm_clk),
-            ),
-            If(ctrl_iter_buffer == 10)(
-              Display('-- Core reset not captured. Assuming core_rst happend in earlier time.'),
-            ),
-            Wait(~core_rst),
             Wait(~fsm_clk),
             Wait(fsm_clk),
-            *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
-            If(rslt_len / RSLT_CHANNELS <= 2)( 
-                Assert(ctrl_buffer & (
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
-                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] ),
-            ).Else(
-                Assert(ctrl_buffer & (
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
-                ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
-                    ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] ),
-            ),
+            Wait(~fsm_clk),
+            fsm_rst(1),
+            Wait(fsm_clk),
+            Wait(~fsm_clk),
+            fsm_rst(0),
+            Wait(fsm_clk),
+            
+        ).Else(
+            Display('-- Waiting for PL interrupt...'),
+            Wait(pl2ps_intr),
+            AssertTrue(operation_busy),
+            AssertFalse(Cat(operation_complete,operation_error,locked)),
+        ),
+        Display('-- Waiting core reset...'),
+        For(ctrl_iter_buffer(0), Ands(ctrl_iter_buffer < 10, ~core_rst), ctrl_iter_buffer.inc())(
+            Wait(~fsm_clk),
+            Wait(fsm_clk),
+        ),
+        If(ctrl_iter_buffer == 10)(
+            Display('-- Core reset not captured. Assuming core_rst happend in earlier time.'),
+        ),
+        Wait(~core_rst),
+        Wait(~fsm_clk),
+        Wait(fsm_clk),
+        *control_rd_seq('CTRL_REG_OPER_STS', ctrl_buffer, 1),
+        If(rslt_len // RSLT_CHANNELS <= 2)( 
+            Assert(ctrl_buffer & (
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] ),
+        ).Else(
+            Assert(ctrl_buffer & (
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+            ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_IDL'] |
+                ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] ),
         ),
         Display('-- Control Test 21 complete.'),
         rslt_done(0),
@@ -1727,7 +1760,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             AssertTrue(ctrl_buffer > 0),
             AssertTrue(ctrl_buffer <= rslt_len),
             *control_rd_seq('CTRL_REG_ITER_PRG', ctrl_iter_buffer, AXIL_CTRL_STRB_WIDTH),
-            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS),
+            Assert(ctrl_iter_buffer, (ctrl_buffer+RSLT_CHANNELS-1) // RSLT_CHANNELS),
             Display('-- Iteration %2d done', ctrl_iter_buffer),
             Display('-- Results done = %3d', ctrl_buffer),
             If(ctrl_buffer == rslt_len)(
@@ -1798,7 +1831,16 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
         *control_wr_seq('CTRL_REG_SCLE_LDR', 1, 1),
         *control_wr_seq('CTRL_REG_WGHT_LDR', 1, 1),
         
+        Wait(~fsm_clk),
+        fsm_rst(1),
+        Wait(fsm_clk),
+        Wait(~fsm_clk),
+        fsm_rst(0),
+        Wait(fsm_clk),
+        Wait(~core_rst),
+        
         # Test 23: Test nominal -- 2nd iteration
+        global_stage_counter.inc(),
         Display('Test 23 start...'),
         *control_wr_seq('CTRL_REG_OPER_STR', 1, 1),
         Wait(operation_busy),
@@ -1812,8 +1854,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_ERR'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_LCK'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD'] |
-            ctrl_reg['CTRL_REG_OPER_STS_MASK_RST']
+            ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']
         ),  ctrl_reg['CTRL_REG_OPER_STS_MASK_BSY'] |
             ctrl_reg['CTRL_REG_OPER_STS_MASK_VLD']),
         ## Iterate until no results left
@@ -1825,7 +1866,7 @@ def tb_KanAccelerator(I=1,J=1,K=1,N_in=256,N_out=256):
             AssertTrue(ctrl_buffer > 0),
             AssertTrue(ctrl_buffer <= rslt_len),
             *control_rd_seq('CTRL_REG_ITER_PRG', ctrl_iter_buffer, AXIL_CTRL_STRB_WIDTH),
-            Assert(ctrl_iter_buffer, ctrl_buffer // RSLT_CHANNELS),
+            Assert(ctrl_iter_buffer, (ctrl_buffer+RSLT_CHANNELS-1) // RSLT_CHANNELS),
             Display('-- Iteration %2d done', ctrl_iter_buffer),
             Display('-- Results done = %3d', ctrl_buffer),
             If(ctrl_buffer == rslt_len)(
@@ -1908,17 +1949,15 @@ def main():
         # (1,1,3),
         # (2,2,1),
         # (2,2,2),
-        (8,2,1),
+        # (8,2,1),
         # (2,3,1),
-        # (4,2,1),
+        (4,2,1),
         # (4,4,1),
         # (4,4,4),
         # (8,4,2),
     ):
-        N_in, N_out = 24,24
-        
-        test = tb_KanAccelerator(I=I,J=J,K=K,N_in=N_in,N_out=N_out)
-        fname_base = f'tb_KanAccelerator_{I}_{J}_{K}_{N_in}_{N_out}'
+        test = tb_KanAccelerator(I=I,J=J,K=K)
+        fname_base = f'tb_KanAccelerator_{I}_{J}_{K}'
         fname = os.path.join(TOP_DIR,f'tb/{fname_base}.v')
         verilog_test = test.to_verilog(fname)
         stripModule(fname, 'tb_kan_accelerator_wrapper')

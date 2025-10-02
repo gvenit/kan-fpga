@@ -23,10 +23,14 @@ module ParallelizedLinearProcessingElement #(
   parameter PE_NUMBER_I = 4,
   // Number of PEs in Processing Array j axis
   parameter PE_NUMBER_J = 4,
+  // Number of PEs in Processing Array k axis -- Number of batches per run
+  parameter BATCH_SIZE = 1,
   // Position of current PE in the i axis
   parameter PE_POSITION_I = 0,
   // Position of current PE in the j axis
   parameter PE_POSITION_J = 0,
+  // Position of current PE in the k axis
+  parameter PE_POSITION_B = 0,
   // Data Width of Input Data (L-AXIS)
   parameter OP0_WIDTH = 16,
   // Treat operand 0 as unsigned
@@ -286,7 +290,7 @@ module ParallelizedLinearProcessingElement #(
     .USER_WIDTH(1),
     // Register type
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-    .REG_TYPE((PE_POSITION_J != PE_NUMBER_J-1))
+    .REG_TYPE(2 * (PE_POSITION_J != PE_NUMBER_J-1))
   ) axis_register_d_inst (
     .clk              (clk),
     .rst              (rst),
@@ -330,7 +334,7 @@ module ParallelizedLinearProcessingElement #(
     .USER_WIDTH(1),
     // Register type
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-    .REG_TYPE(2 * (PE_POSITION_I!=PE_NUMBER_I-1 || PE_POSITION_I > 0))
+    .REG_TYPE(2 * (PE_POSITION_I != PE_NUMBER_I-1))
   ) axis_register_l_inst (
     .clk              (clk),
     .rst              (rst),
@@ -416,7 +420,7 @@ module ParallelizedLinearProcessingElement #(
     .USER_WIDTH(1),
     // Register type
     // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-    .REG_TYPE(2)
+    .REG_TYPE(2 * (PE_POSITION_B != BATCH_SIZE-1))
   ) axis_register_t_inst (
     .clk              (clk),
     .rst              (rst),

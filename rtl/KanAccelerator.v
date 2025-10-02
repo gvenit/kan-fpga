@@ -130,9 +130,9 @@ module KanAccelerator #(
   ------------------------------------------------------------------*/
 
   // Width of Activation Function Data in bits
-  parameter ACT_WIDTH = 16,
+  parameter ACTF_WIDTH = 16,
   // Fractional bits of Activation Function Data
-  parameter ACT_FRACTIONAL_BITS = 16,
+  parameter ACTF_FRACTIONAL_BITS = 16,
 
   /*------------------------------------------------------------------
     Various AXI parameters
@@ -476,7 +476,7 @@ module KanAccelerator #(
   ------------------------------------------------------------------*/
 
   // Data FIFO Depth
-  localparam DATA_FIFO_DEPTH = `MAX(DATA_CHANNELS + BATCH_SIZE, 4);
+  localparam DATA_FIFO_DEPTH = 2; // `MAX(DATA_CHANNELS + BATCH_SIZE, 4);
   // Pipeline Output DATA
   localparam DATA_PIPELINE_OUTPUT = 1;
 
@@ -491,7 +491,7 @@ module KanAccelerator #(
   // Output Grid Channels
   localparam GRID_CHANNELS_OUT = (GRID_SHARE) ? 1 : DATA_CHANNELS*BATCH_SIZE;
   // Grid FIFO Depth
-  localparam GRID_FIFO_DEPTH = DATA_FIFO_DEPTH;
+  localparam GRID_FIFO_DEPTH = (GRID_SHARE) ? 0 : DATA_FIFO_DEPTH;
   // Pipeline Output Grid
   localparam GRID_PIPELINE_OUTPUT = 1;
 
@@ -531,7 +531,7 @@ module KanAccelerator #(
   localparam DATA_CHANNELS_OUT = DATA_CHANNELS_IN;
   localparam RSLT_CHANNELS_OUT = BATCH_SIZE*RSLT_CHANNELS;
 
-  localparam INTERNAL_FIFO_DEPTH = RSLT_CHANNELS + BATCH_SIZE;
+  localparam INTERNAL_FIFO_DEPTH = `MAX( DATA_CHANNELS + RSLT_CHANNELS + BATCH_SIZE, 8);
 
  `ifdef DEBUG
   localparam MCU_DEBUG_WIRE_LENGTH = (DATA_CHANNELS_IN + GRID_CHANNELS_IN + SCALE_CHANNELS_IN)*3 + 6 + DATA_BRAM_ADDR + GRID_BRAM_ADDR + SCALE_BRAM_ADDR;
@@ -1364,8 +1364,8 @@ module KanAccelerator #(
     .WEIGHT_FRACTIONAL_BITS       (WEIGHT_FRACTIONAL_BITS),
     .SCALED_DIFF_WIDTH            (SCALED_DIFF_WIDTH),
     .SCALED_DIFF_FRACTIONAL_BITS  (SCALED_DIFF_FRACTIONAL_BITS),
-    .ACT_WIDTH                    (ACT_WIDTH),
-    .ACT_FRACTIONAL_BITS          (ACT_FRACTIONAL_BITS),
+    .ACTF_WIDTH                   (ACTF_WIDTH),
+    .ACTF_FRACTIONAL_BITS         (ACTF_FRACTIONAL_BITS),
     .RSLT_WIDTH                   (RSLT_WIDTH),
     .RSLT_FRACTIONAL_BITS         (RSLT_FRACTIONAL_BITS),
     .KEEP_ENABLE                  (0),
@@ -1383,7 +1383,7 @@ module KanAccelerator #(
     .ROM_DATA_PATH                (ROM_DATA_PATH),
     .OUTPUT_DEST                  (0),
     .OUTPUT_ID                    (0),
-    .INPUT_FIFO_DEPTH             (2),
+    .INPUT_FIFO_DEPTH             (0),
     .INTERNAL_FIFO_DEPTH          (INTERNAL_FIFO_DEPTH),
     .RESET_PIPELINE_LEVEL         (16)
   ) data_processor_inst (

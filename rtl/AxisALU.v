@@ -199,7 +199,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
           0 :      m_axis_tdata_reg <= op0_i + op1_i; // ADD : 0
           1 :      m_axis_tdata_reg <= op0_i - op1_i; // SUB : 1
           2 :      m_axis_tdata_reg <= op0_i * op1_i; // MLT : 2
-          3 :      m_axis_tdata_reg <= `ABS( op0_i ); // ABS : 3
+          3 :      m_axis_tdata_reg <= `ABS_W( op0_i, OP0_WIDTH ); // ABS : 3
           default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
         endcase
       end
@@ -296,7 +296,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
           0 :      m_axis_tdata_reg <= op0_i + op1_i; // ADD : 0
           1 :      m_axis_tdata_reg <= op0_i - op1_i; // SUB : 1
           2 :      m_axis_tdata_reg <= op0_i * op1_i; // MLT : 2
-          3 :      m_axis_tdata_reg <= `ABS( op0_i ); // ABS : 3
+          3 :      m_axis_tdata_reg <= `ABS_W( op0_i, OP0_WIDTH ); // ABS : 3
           default: m_axis_tdata_reg <= {RSLT_WIDTH{1'bX}};
         endcase
       end
@@ -325,7 +325,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       0 :      assign m_axis_tdata = op0_i + op1_i; // ADD : 0
       1 :      assign m_axis_tdata = op0_i - op1_i; // SUB : 1
       2 :      assign m_axis_tdata = op0_i * op1_i; // MLT : 2
-      3 :      assign m_axis_tdata = `ABS( op0_i ); // ABS : 3
+      3 :      assign m_axis_tdata = `ABS_W( op0_i, OP0_WIDTH ); // ABS : 3
       default: assign m_axis_tdata = {RSLT_WIDTH{1'bX}};
     endcase
 

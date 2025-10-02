@@ -515,7 +515,7 @@ module ParallelizedLPEControlUnit #(
       // Registers & Wires
       reg  local_tlast_reg;
       
-      wire partial_sum_updated  = acc_res_reg && !bypass_adder_reg;
+      wire partial_sum_updated  = acc_res_reg && !export_rslt_int;
       wire local_tlast_reg_next = partial_sum_updated && int_axis_u_tlast;
 
       always @(posedge clk ) begin

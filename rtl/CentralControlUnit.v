@@ -154,6 +154,8 @@ module CentralControlUnit #(
   localparam MAX_PCKT_SIZE = 2 ** PCKT_SIZE_WIDTH;
   localparam MAX_RSLT_SIZE = 2 ** RSLT_SIZE_WIDTH;
 
+  localparam RSLT_CHANNELS_BITS = `LOG2( RSLT_CHANNELS + 1 ) + 1 ;
+
   // FSM States
 `ifdef USE_ONE_HOT_ENCODING_FSM
   localparam FSM_WIDTH = 6;
@@ -384,7 +386,7 @@ module CentralControlUnit #(
   reg  [23:0] results_left_reg;
   reg  [23:0] results_exported_reg;
 
-  wire [23:0] results_iter_size         = (results_left_reg > RSLT_CHANNELS) ? RSLT_CHANNELS : results_left_reg;
+  wire [RSLT_CHANNELS_BITS-1:0] results_iter_size = `MIN( results_left_reg, RSLT_CHANNELS );
   wire [23:0] results_left_reg_next     = results_left_reg - results_iter_size;
   wire [23:0] results_exported_reg_next = results_exported_reg + results_iter_size;
 

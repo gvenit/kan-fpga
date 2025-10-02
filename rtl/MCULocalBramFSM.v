@@ -97,14 +97,13 @@ module MCULocalBramFSM #(
   wire get_next_intra_iter = loc_out_axis_tvalid && m_axis_tready;
   reg  [INTRA_ITER_WIDTH-1:0] intra_counter_reg;
   wire [INTRA_ITER_WIDTH-1:0] intra_counter_reg_next = intra_counter_reg + 1;
-  // wire forward_reg_next = get_next_intra_iter && (~|(intra_counter_reg ^ intra_counter_max_reg) );
   wire forward_reg_next = get_next_intra_iter && ( (intra_counter_reg == intra_counter_max_reg) );
 
   // Local FSM Output Registers & Wires
   reg [LOC_FSM_WIDTH-1:0]     loc_fsm_state, loc_fsm_state_next;
   reg [ADDR_WIDTH-1:0]        loc_counter_addr_reg;
   reg [INTER_ITER_WIDTH-1:0]  inter_counter_reg; // Inter-Iteration Counter
-  reg                         bram_en_reg, store_data_reg;
+  reg                         bram_rdack_reg, store_data_reg;
   reg                         tlast_transmitted_reg;
   reg                         get_next_inter_iter;
   reg                         error_reg;
@@ -113,20 +112,19 @@ module MCULocalBramFSM #(
   reg [INTER_ITER_WIDTH-1:0]  inter_counter_max_reg = 0;
   reg [INTRA_ITER_WIDTH-1:0]  intra_counter_max_reg = 0;
 
-  assign bram_en    = (loc_fsm_state == LOC_FSM_OPE) ? bram_en_reg || (m_axis_tready && forward_reg_next) : 1'b0;
-  // assign bram_en    = (loc_fsm_state == LOC_FSM_OPE) ? bram_en_reg || loc_out_axis_tready : 1'b0;
+  wire bram_rdack_reg_next= (loc_in_axis_tready) ? 1'b0 : loc_in_axis_tvalid;
+
+  assign bram_en    = (loc_fsm_state == LOC_FSM_OPE) ? loc_in_axis_tready : 1'b0;
   assign bram_addr  = loc_counter_addr_reg;
-  // assign store_data = store_data_reg;
 
   assign loc_in_axis_tdata  = bram_rddata;
-  assign loc_in_axis_tvalid = bram_rdack_int;
+  assign loc_in_axis_tvalid = bram_rdack_int || bram_rdack_reg;
   assign loc_in_axis_tlast  = loc_fsm_state == LOC_FSM_END;
 
   // Local FSM Input Registers & Wires
-  wire                        get_next_addr              = bram_en; // loc_in_axis_tvalid && loc_in_axis_tready;
+  wire                        get_next_addr              = bram_en; 
   wire [ADDR_WIDTH:0]         loc_counter_addr_reg_next  = (get_next_addr) ? loc_counter_addr_reg + 1 : loc_counter_addr_reg;
   wire [INTER_ITER_WIDTH-1:0] inter_counter_reg_next     = (get_next_inter_iter) ? inter_counter_reg + 1 : inter_counter_reg; // Inter-Iteration Counter
-  // wire                        internal_error             = 1'b0;
   wire                        tlast_transmitted_reg_next = tlast_transmitted_reg || (loc_out_axis_tlast && loc_out_axis_tready && loc_out_axis_tvalid);
 
  `ifdef DEBUG
@@ -145,7 +143,7 @@ module MCULocalBramFSM #(
       inter_counter_reg     <= $unsigned(0);
       store_data_reg        <= 1'b0;
       error_reg             <= 1'b0;
-      bram_en_reg           <= 1'b0;
+      bram_rdack_reg          <= 1'b0;
       tlast_transmitted_reg <= 1'b0;
 
       addr_counter_max_reg  <= 0;
@@ -158,7 +156,7 @@ module MCULocalBramFSM #(
       inter_counter_reg    <= inter_counter_reg;
       store_data_reg       <= 1'b0;
       error_reg            <= 1'b0;
-      bram_en_reg          <= 1'b0;
+      bram_rdack_reg       <= bram_rdack_reg_next;
       tlast_transmitted_reg<= 1'b0;
 
       case (loc_fsm_state_next)
@@ -174,7 +172,6 @@ module MCULocalBramFSM #(
           end
 
           store_data_reg       <= 1'b1;
-          bram_en_reg          <= (loc_fsm_state != LOC_FSM_OPE);
           loc_counter_addr_reg <= loc_counter_addr_reg_next;
           inter_counter_reg    <= inter_counter_reg_next;
 
