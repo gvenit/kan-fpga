@@ -46,7 +46,7 @@ if  str(num_bits_in).isnumeric() :
     if args.fr_bits_in is None :
         args.fr_bits_in = num_bits_in // 2
         print('Setting input fractional bits to',args.fr_bits_in,'.')
-    elif args.fr_bits_in >= num_bits_in or args.fr_bits_in < 0 :
+    elif args.fr_bits_in < 0 :
         raise ValueError('Invalid value for argument "fr-bits-in" : {fr_bits}', args.fr_bits_in)
     
 else :

@@ -45,9 +45,9 @@ module AxisRom #(
    * AXI Stream Data input
    */
   input  wire [CHANNELS*ADDR_WIDTH-1:0]       s_axis_tdata,
-  input  wire [CHANNELS-1:0]                  s_axis_tlast,
   input  wire [CHANNELS-1:0]                  s_axis_tvalid,
   output wire [CHANNELS-1:0]                  s_axis_tready,
+  input  wire [CHANNELS-1:0]                  s_axis_tlast,
   input  wire [CHANNELS*ID_WIDTH-1:0]         s_axis_tid,
   input  wire [CHANNELS*DEST_WIDTH-1:0]       s_axis_tdest,
   input  wire [CHANNELS*USER_WIDTH-1:0]       s_axis_tuser,
@@ -56,9 +56,9 @@ module AxisRom #(
    * AXI Stream output
    */
   output wire [CHANNELS*DATA_WIDTH-1:0]       m_axis_tdata,
-  output wire [CHANNELS-1:0]                  m_axis_tlast,
   output wire [CHANNELS-1:0]                  m_axis_tvalid,
   input  wire [CHANNELS-1:0]                  m_axis_tready,
+  output wire [CHANNELS-1:0]                  m_axis_tlast,
   output wire [CHANNELS*ID_WIDTH-1:0]         m_axis_tid,
   output wire [CHANNELS*DEST_WIDTH-1:0]       m_axis_tdest,
   output wire [CHANNELS*USER_WIDTH-1:0]       m_axis_tuser
@@ -133,7 +133,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
     reg [DEST_WIDTH-1:0] m_axis_tdest_reg  = {DEST_WIDTH{1'b0}};
     reg [USER_WIDTH-1:0] m_axis_tuser_reg  = {USER_WIDTH{1'b0}};
 
-    reg [ADDR_WIDTH-1:0] temp_m_axis_tdata_reg  = {ADDR_WIDTH{1'b0}};
+    reg [DATA_WIDTH-1:0] temp_m_axis_tdata_reg  = {DATA_WIDTH{1'b0}};
     reg                  temp_m_axis_tvalid_reg = 1'b0, temp_m_axis_tvalid_next;
     reg                  temp_m_axis_tlast_reg  = 1'b0;
     reg [ID_WIDTH-1:0]   temp_m_axis_tid_reg    = {ID_WIDTH{1'b0}};
@@ -147,7 +147,9 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
 
     assign s_axis_tready [CHN] = s_axis_tready_reg;
 
-    assign m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH] = data_i;
+    assign m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH] = (store_axis_input_to_output) ? data_i : (
+                                                          (store_axis_temp_to_output)  ? temp_m_axis_tdata_reg : {DATA_WIDTH{1'bX}}
+                                                        );
     assign m_axis_tvalid [CHN]                          = m_axis_tvalid_reg;
 
     if (LAST_ENABLE) assign m_axis_tlast [CHN] = m_axis_tlast_reg ; 
@@ -209,7 +211,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       end
 
       if (store_axis_input_to_temp) begin
-        temp_m_axis_tdata_reg <= s_axis_tdata [CHN * ADDR_WIDTH +: ADDR_WIDTH];
+        temp_m_axis_tdata_reg <= data_i;
         temp_m_axis_tlast_reg <= s_axis_tlast [CHN];
         temp_m_axis_tid_reg   <= s_axis_tid   [CHN*ID_WIDTH   +: ID_WIDTH]  ;
         temp_m_axis_tdest_reg <= s_axis_tdest [CHN*DEST_WIDTH +: DEST_WIDTH];
@@ -223,10 +225,12 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       end
     end
 
-    assign addr_i = (store_axis_input_to_output) ? s_axis_tdata[CHN * ADDR_WIDTH +: ADDR_WIDTH] : (
-                    (store_axis_temp_to_output)  ? temp_m_axis_tdata_reg : {ADDR_WIDTH{1'bX}}
-                  );
-    assign en_i   = store_axis_input_to_output || store_axis_temp_to_output;
+    assign addr_i = s_axis_tdata[CHN * ADDR_WIDTH +: ADDR_WIDTH];
+    // assign addr_i = (store_axis_input_to_output) ? s_axis_tdata[CHN * ADDR_WIDTH +: ADDR_WIDTH] : (
+    //                 (store_axis_temp_to_output)  ? temp_m_axis_tdata_reg : {ADDR_WIDTH{1'bX}}
+    //               );
+    assign en_i   = store_axis_input_to_output || store_axis_input_to_temp;
+    // assign en_i   = store_axis_input_to_output || store_axis_temp_to_output;
 
   end else if (REG_TYPE == 1) begin : simple_register_genblock
     // simple register, inserts bubble cycles

@@ -55,9 +55,9 @@ module AxisClamp #(
    * AXI Stream Data input
    */
   input  wire [CHANNELS*DATA_WIDTH-1:0]       s_axis_tdata,
-  input  wire [CHANNELS-1:0]                  s_axis_tlast,
   input  wire [CHANNELS-1:0]                  s_axis_tvalid,
   output wire [CHANNELS-1:0]                  s_axis_tready,
+  input  wire [CHANNELS-1:0]                  s_axis_tlast,
   input  wire [CHANNELS*ID_WIDTH-1:0]         s_axis_tid,
   input  wire [CHANNELS*DEST_WIDTH-1:0]       s_axis_tdest,
   input  wire [CHANNELS*USER_WIDTH-1:0]       s_axis_tuser,
@@ -66,9 +66,9 @@ module AxisClamp #(
    * AXI Stream output
    */
   output wire [CHANNELS*RSLT_WIDTH-1:0]       m_axis_tdata,
-  output wire [CHANNELS-1:0]                  m_axis_tlast,
   output wire [CHANNELS-1:0]                  m_axis_tvalid,
   input  wire [CHANNELS-1:0]                  m_axis_tready,
+  output wire [CHANNELS-1:0]                  m_axis_tlast,
   output wire [CHANNELS*ID_WIDTH-1:0]         m_axis_tid,
   output wire [CHANNELS*DEST_WIDTH-1:0]       m_axis_tdest,
   output wire [CHANNELS*USER_WIDTH-1:0]       m_axis_tuser
@@ -120,8 +120,8 @@ THE SOFTWARE.
 genvar CHN;
 generate
 for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
-  wire sign = (UNSIGNED_DATA) ? 1'b0 : din_i [DATA_WIDTH  +  UNSIGNED_DATA-1];
   wire [DATA_WIDTH + UNSIGNED_DATA-1:0]   din_i;
+  wire sign = (UNSIGNED_DATA) ? 1'b0 : din_i [DATA_WIDTH  +  UNSIGNED_DATA-1];
   wire [MSB : LSB]                        data_slice_i = {{EXPAND_MSB{sign}}, din_i, {EXPAND_LSB{1'b0}}};
   wire [RSLT_WIDTH + UNSIGNED_RSLT-1:0]   dout_i;
 

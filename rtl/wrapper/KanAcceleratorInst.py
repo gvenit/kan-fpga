@@ -209,9 +209,9 @@ module {{name}} #(
   ------------------------------------------------------------------*/
 
   // Width of Activation Function Data in bits
-  parameter ACT_WIDTH = {{actf_width}},
+  parameter ACTF_WIDTH = {{actf_width}},
   // Fractional bits of Activation Function Data
-  parameter ACT_FRACTIONAL_BITS = {{actf_fbits}},
+  parameter ACTF_FRACTIONAL_BITS = {{actf_fbits}},
 
   /*------------------------------------------------------------------
     Various AXI parameters
@@ -586,8 +586,8 @@ module {{name}} #(
     .WEIGHT_FIFO_DEPTH              (WEIGHT_FIFO_DEPTH),
     .SCALED_DIFF_WIDTH              (SCALED_DIFF_WIDTH),
     .SCALED_DIFF_FRACTIONAL_BITS    (SCALED_DIFF_FRACTIONAL_BITS),
-    .ACT_WIDTH                      (ACT_WIDTH),
-    .ACT_FRACTIONAL_BITS            (ACT_FRACTIONAL_BITS),
+    .ACTF_WIDTH                      (ACTF_WIDTH),
+    .ACTF_FRACTIONAL_BITS            (ACTF_FRACTIONAL_BITS),
     .WEIGHT_LAST_ENABLE             (WEIGHT_LAST_ENABLE),
     .WEIGHT_ID_ENABLE               (WEIGHT_ID_ENABLE),
     .WEIGHT_ID_WIDTH                (WEIGHT_ID_WIDTH),

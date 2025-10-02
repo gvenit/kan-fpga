@@ -40,7 +40,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     SCALE_FRACTIONAL_BITS       : Localparam = params['SCALE_FRACTIONAL_BITS']
     WEIGHT_FRACTIONAL_BITS      : Localparam = params['WEIGHT_FRACTIONAL_BITS']
     SCALED_DIFF_FRACTIONAL_BITS : Localparam = params['SCALED_DIFF_FRACTIONAL_BITS']
-    ACT_FRACTIONAL_BITS         : Localparam = params['ACT_FRACTIONAL_BITS']
+    ACTF_FRACTIONAL_BITS         : Localparam = params['ACTF_FRACTIONAL_BITS']
     RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
     ROM_DATA_PATH               : Localparam = params['ROM_DATA_PATH']
     FIFO_DEPTH                  : Localparam = params['FIFO_DEPTH']
@@ -56,9 +56,9 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # SCALE_FRACTIONAL_BITS.value = 12
     # WEIGHT_FRACTIONAL_BITS.value = 16
     # SCALED_DIFF_FRACTIONAL_BITS.value = 13
-    # ACT_FRACTIONAL_BITS.value = 16
+    # ACTF_FRACTIONAL_BITS.value = 16
     # RSLT_FRACTIONAL_BITS.value = 15
-    # ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
+    # ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACTF_FRACTIONAL_BITS.value}.txt"
     # FIFO_DEPTH.value = 0
     SCALE_SHARE.value = 1
     GRID_SHARE.value = 1
@@ -67,9 +67,9 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     SCALE_FRACTIONAL_BITS.value = DATA_WIDTH.value-2
     WEIGHT_FRACTIONAL_BITS.value = DATA_WIDTH.value
     SCALED_DIFF_FRACTIONAL_BITS.value = DATA_WIDTH.value-3
-    ACT_FRACTIONAL_BITS.value = DATA_WIDTH.value
+    ACTF_FRACTIONAL_BITS.value = DATA_WIDTH.value
     RSLT_FRACTIONAL_BITS.value = DATA_WIDTH.value-1
-    ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt"
+    ROM_DATA_PATH.value = f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACTF_FRACTIONAL_BITS.value}.txt"
     FIFO_DEPTH.value = 0
     
     os.system(' '.join([
@@ -79,7 +79,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
         f'-I int{DATA_WIDTH.value}',
         f'-O uint{DATA_WIDTH.value}',
         f'-i {SCALED_DIFF_FRACTIONAL_BITS.value}',
-        f'-o {ACT_FRACTIONAL_BITS.value}',
+        f'-o {ACTF_FRACTIONAL_BITS.value}',
     ])
     )
     
@@ -89,7 +89,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     params['SCALE_WIDTH'].value = DATA_WIDTH
     params['WEIGHT_WIDTH'].value = DATA_WIDTH
     params['SCALED_DIFF_WIDTH'].value = DATA_WIDTH
-    params['ACT_WIDTH'].value = DATA_WIDTH
+    params['ACTF_WIDTH'].value = DATA_WIDTH
     params['RSLT_WIDTH'].value = DATA_WIDTH
     
     reset_done = module.Reg('reset_done', initval=0)
@@ -292,18 +292,18 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # Create activation data - size = [BATCH X WEIGHT]
     layer_actd = 1 - np.tanh(layer_sdff_qd)**2
     # Quantize activation data
-    layer_actd_q = torch.tensor((layer_actd * 2 ** ACT_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}'), device=device)
+    layer_actd_q = torch.tensor((layer_actd * 2 ** ACTF_FRACTIONAL_BITS.value).astype(f'int{2*DATA_WIDTH.value}'), device=device)
     # Unit correction
-    if (DATA_WIDTH.value == ACT_FRACTIONAL_BITS.value):
+    if (DATA_WIDTH.value == ACTF_FRACTIONAL_BITS.value):
         layer_actd_q = torch.where(
-            layer_actd_q > 2 ** ACT_FRACTIONAL_BITS.value -1,
-            2 ** ACT_FRACTIONAL_BITS.value - 1,
+            layer_actd_q > 2 ** ACTF_FRACTIONAL_BITS.value -1,
+            2 ** ACTF_FRACTIONAL_BITS.value - 1,
             layer_actd_q
         )
     # Reshape activation data - size = [BATCH X WEIGHT]
     layer_actd_q = layer_actd_q.movedim(-1,-2).reshape(-1, weight_len)
     # Dequantize activation data - size = [BATCH X WEIGHT]
-    layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACT_FRACTIONAL_BITS.value
+    layer_actd_qd = layer_actd_q.to(torch.float32) / 2 ** ACTF_FRACTIONAL_BITS.value
     
     # Perform expected Linear Layer / Matrix-Matrix Multiplication - size = [BATCH X RESULT]
     layer_exp_rslt = layer_exp_actd @ layer_wght
@@ -319,7 +319,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     
     # Perform Linear Layer / Matrix-Matrix Multiplication -- with integers - size = [BATCH X RESULT]
     layer_rslt_int = torch.einsum("bw,wr->wbr", layer_actd_q, layer_wght_q).cpu().numpy().astype('int64')
-    layer_rslt_int = torch.tensor(np.right_shift(np.sum(layer_rslt_int,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype(f'int{DATA_WIDTH.value}'), device=device)
+    layer_rslt_int = torch.tensor(np.right_shift(np.sum(layer_rslt_int,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACTF_FRACTIONAL_BITS.value))).astype(f'int{DATA_WIDTH.value}'), device=device)
     # Dequantize result -- with integers
     layer_rslt_intd = layer_rslt_int.to(torch.float32) / 2 ** RSLT_FRACTIONAL_BITS.value
     
@@ -656,7 +656,7 @@ def tb_ParallelizedDataProcessor(I=1,J=1,K=1,N_in=256,N_out=256):
     # print('Test psum')
     # print(*hex_list([np.sum(x[:_iter+1],axis=0).astype('uint64').tolist() for _iter in range(x.shape[0])]), sep ='\n')
     # print('Test rslt')
-    # print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACT_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
+    # print(hex_list( np.right_shift(np.sum(x,axis=0).astype('int64'), -(RSLT_FRACTIONAL_BITS.value - (WEIGHT_FRACTIONAL_BITS.value + ACTF_FRACTIONAL_BITS.value))).astype('uint16').tolist() ))
 
     ## Result driver
     per_channel_ik.Initial(

@@ -20,13 +20,15 @@
    (x <= 32768) ? 15 : \
    -1)
 
-`define RLOG2(x) ((x <= 1) ? 0 : `LOG2(x))
+`define RLOG2(x) (((x) <= 1) ? 0 : `LOG2( (x) ))
 
-`define MAX(a,b) ((a < b) ? b : a)
+`define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
-`define MIN(a,b) ((a < b) ? (a) : (b))
+`define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
-`define ABS(signal) (($signed(signal) < 0) ? -$signed(signal) : signal)
+`define ABS(signal) (($signed((signal)) >= 0) ? (signal) : -$signed((signal)))
+
+`define ABS_W(signal, width) ((signal[(width)-1] == 1'b1) ? -$signed((signal)) : (signal))
 
 // `define DEBUG
 
