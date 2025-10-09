@@ -209,10 +209,12 @@ module BramIntrfTranslatorReadEn #(
   assign wren_o = wren_reduct;
 
   always @(posedge clk ) begin
-    for (k = 0; k < IN_WORD_DATA; k = k + 1) begin
-      target_banks_pipeline[0][k] <= target_banks[k]; 
-      for (j = 0; j < RD_LATENCY-1; j = j + 1) begin
-        target_banks_pipeline[j+1][k] <= target_banks_pipeline[j][k];
+    if (rden_i) begin
+      for (k = 0; k < IN_WORD_DATA; k = k + 1) begin
+        target_banks_pipeline[0][k] <= target_banks[k]; 
+        for (j = 0; j < RD_LATENCY-1; j = j + 1) begin
+          target_banks_pipeline[j+1][k] <= target_banks_pipeline[j][k];
+        end
       end
     end
   end

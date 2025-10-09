@@ -138,6 +138,7 @@ def tb_KanAccelerator(I=1,J=1,K=1):
     is_async = True
     
     fast_clk_hperiod = 2      # 250 MHz
+    data_mult = 2
     GRID_LEN = 3
     
     kan = KanAccelerator(I=I,J=J,K=K, data_width=data_width, wght_width=wght_width, sdff_width=sdff_width, actf_width=actf_width, is_async=is_async)
@@ -405,7 +406,7 @@ def tb_KanAccelerator(I=1,J=1,K=1):
         reset_done(1),
         # Systask('finish'),
         nclk(fsm_clk),
-        Delay(2000 + GRID_LEN * DATA_CHANNELS.value / RSLT_CHANNELS.value * (2**12)),
+        Delay(2000 + GRID_LEN * data_mult * DATA_CHANNELS.value / RSLT_CHANNELS.value * (2**12)),
         # Delay(10),
         Display('!! TIMEOUT ERROR !!'),
         AssertTrue(0),
@@ -415,7 +416,7 @@ def tb_KanAccelerator(I=1,J=1,K=1):
 
     # KAN Layer parameters
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    data_len = DATA_CHANNELS.value * 2
+    data_len = DATA_CHANNELS.value * data_mult
     grid_len = GRID_LEN
     scale_len = (1,1,1) if SCALE_SHARE.value else (1,grid_len,data_len,)
     weight_len = data_len * grid_len
@@ -1944,14 +1945,14 @@ def main():
     
     for I,J,K in (
         # (1,1,1),
-        (1,2,1),
+        # (1,2,1),
         # (8,1,1),
         # (1,1,3),
         # (2,2,1),
         # (2,2,2),
         # (8,2,1),
         # (2,3,1),
-        # (4,2,1),
+        (4,2,1),
         # (4,4,1),
         # (4,4,4),
         # (8,4,2),

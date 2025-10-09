@@ -93,12 +93,6 @@ module MCULocalBramFSM #(
   wire                  loc_in_axis_tready, loc_out_axis_tready;
   wire                  loc_in_axis_tlast,  loc_out_axis_tlast;
 
-  // Intra-Iteration Counter Registers & Wires
-  wire get_next_intra_iter = loc_out_axis_tvalid && m_axis_tready;
-  reg  [INTRA_ITER_WIDTH-1:0] intra_counter_reg;
-  wire [INTRA_ITER_WIDTH-1:0] intra_counter_reg_next = intra_counter_reg + 1;
-  wire forward_reg_next = get_next_intra_iter && ( (intra_counter_reg == intra_counter_max_reg) );
-
   // Local FSM Output Registers & Wires
   reg [LOC_FSM_WIDTH-1:0]     loc_fsm_state, loc_fsm_state_next;
   reg [ADDR_WIDTH-1:0]        loc_counter_addr_reg;
@@ -127,6 +121,13 @@ module MCULocalBramFSM #(
   wire [INTER_ITER_WIDTH-1:0] inter_counter_reg_next     = (get_next_inter_iter) ? inter_counter_reg + 1 : inter_counter_reg; // Inter-Iteration Counter
   wire                        tlast_transmitted_reg_next = tlast_transmitted_reg || (loc_out_axis_tlast && loc_out_axis_tready && loc_out_axis_tvalid);
 
+  // Intra-Iteration Counter Registers & Wires
+  wire get_next_intra_iter = loc_out_axis_tvalid && m_axis_tready;
+  reg  [INTRA_ITER_WIDTH-1:0] intra_counter_reg;
+  wire [INTRA_ITER_WIDTH-1:0] intra_counter_reg_next = intra_counter_reg + 1;
+  wire forward_reg_next = get_next_intra_iter && ( ~|(intra_counter_reg ^ intra_counter_max_reg) );
+  // wire forward_reg_next = get_next_intra_iter && ( (intra_counter_reg == intra_counter_max_reg) );
+
  `ifdef DEBUG
   assign debug_wire = {DEBUG_WIRE_LENGTH{glo_fsm_state == GLO_FSM_STR}} & {
     addr_counter_max == 0,
@@ -143,7 +144,7 @@ module MCULocalBramFSM #(
       inter_counter_reg     <= $unsigned(0);
       store_data_reg        <= 1'b0;
       error_reg             <= 1'b0;
-      bram_rdack_reg          <= 1'b0;
+      bram_rdack_reg        <= 1'b0;
       tlast_transmitted_reg <= 1'b0;
 
       addr_counter_max_reg  <= 0;
@@ -151,13 +152,13 @@ module MCULocalBramFSM #(
       intra_counter_max_reg <= 0;
 
     end else begin
-      loc_fsm_state        <= loc_fsm_state_next;
-      loc_counter_addr_reg <= loc_counter_addr_reg;
-      inter_counter_reg    <= inter_counter_reg;
-      store_data_reg       <= 1'b0;
-      error_reg            <= 1'b0;
-      bram_rdack_reg       <= bram_rdack_reg_next;
-      tlast_transmitted_reg<= 1'b0;
+      loc_fsm_state         <= loc_fsm_state_next;
+      loc_counter_addr_reg  <= loc_counter_addr_reg;
+      inter_counter_reg     <= inter_counter_reg;
+      store_data_reg        <= 1'b0;
+      error_reg             <= 1'b0;
+      bram_rdack_reg        <= bram_rdack_reg_next;
+      tlast_transmitted_reg <= 1'b0;
 
       case (loc_fsm_state_next)
         LOC_FSM_STR: begin
@@ -208,7 +209,7 @@ module MCULocalBramFSM #(
       end
       LOC_FSM_OPE: begin
         loc_fsm_state_next <= LOC_FSM_OPE;
-        if (get_next_addr && loc_counter_addr_reg == addr_counter_max_reg) begin
+        if (get_next_addr && ~|(loc_counter_addr_reg ^ addr_counter_max_reg)) begin
           get_next_inter_iter <= 1'b1;
           if (inter_counter_reg == inter_counter_max_reg) begin
             loc_fsm_state_next <= LOC_FSM_END;

@@ -88,7 +88,7 @@ while [ $1 ] ; do
             LIB_RESOURCES="$LIB_RESOURCES -y $lib_path_i"
         done
 
-        print_exec iverilog $LIB_RESOURCES -Wall -o "../out/$module.out" "../tb/$module.v"
+        print_exec iverilog $LIB_RESOURCES -Wall -pfileline=1 -o "../out/$module.out" "../tb/$module.v"
         print_exec vvp $( [ verbose ] && echo -v ) -n "../out/$module.out"
         print_verbose -- Done
     else

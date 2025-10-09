@@ -18,6 +18,8 @@
  *                    Partial Sums
  */
 
+`include "header_utils.vh"
+
 module ParallelizedLinearProcessingArray #(
   // Number of PEs in Processing Array j axis -- Number of partial sums per result
   parameter DATA_CHANNELS = 1,
@@ -112,7 +114,7 @@ module ParallelizedLinearProcessingArray #(
 );
   // Global Local Parameters
   localparam MLT_OP_SIZE     = OP0_WIDTH + OP1_WIDTH + IS_UNSIGNED_OP0 + IS_UNSIGNED_OP1;
-  localparam PSUM_WIDTH      = 48; // `MAX( RSLT_WIDTH, MLT_OP_SIZE);
+  localparam PSUM_WIDTH      = 48; // `MAX( RSLT_WIDTH, MLT_OP_SIZE ) + 8;
   localparam MAC_RSLT_LSB    = OP0_FRACTIONAL_BITS + OP1_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
 
   localparam IS_UNSIGNED_RES = (IS_UNSIGNED_OP0 > 0) && (IS_UNSIGNED_OP1 > 0);

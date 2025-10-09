@@ -51,7 +51,7 @@ module DSPELogic #(
   reg  [EXTRA_SIGNAL_SIZE-1:0] extra_sig_reg_1;
 
   wire ce_in     = ~bypass_mlt;
-  wire ce_op2    =  bypass_mlt_reg_0;
+  wire ce_op2    =  bypass_mlt && ~bypass_add;
   wire ce_mlt    = ~bypass_mlt_reg_0;
   wire ce_acc    = ~bypass_add_reg_1;
   wire sload     =  reset_acc_reg_1;
@@ -127,7 +127,7 @@ module DSPELogic #(
 
     reg  psum_load = 1'b0;
       
-    always @(psum_load or psum) begin
+    always @(psum_load or acc_reg or psum) begin
       if (psum_load)
         old_psum <= acc_reg;
       else
@@ -167,3 +167,5 @@ module DSPELogic #(
   assign extra_sig_out = extra_sig_reg_1;
     
 endmodule
+
+`resetall

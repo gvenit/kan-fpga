@@ -67,10 +67,12 @@ module ParallelizedDataProcessor #(
   parameter OUTPUT_DEST = 0,
   // Output Thread ID 
   parameter OUTPUT_ID = 1,
-  // Input FIFO size
+  // Input Data, Grid and Scale FIFO size
   parameter INPUT_FIFO_DEPTH = 0,
-  // Internal FIFO size
-  parameter INTERNAL_FIFO_DEPTH = 0,
+  // Internal Activation Function FIFO size
+  parameter INTERNAL_ACTF_FIFO_DEPTH = 0,
+  // Internal Weights FIFO size
+  parameter INTERNAL_WEIGHTS_FIFO_DEPTH = 0,
   // Reset Pipeline Level
   parameter RESET_PIPELINE_LEVEL = 3
 ) (
@@ -296,7 +298,7 @@ module ParallelizedDataProcessor #(
 
   // SRL-FIFO Blocks
  genvar CHN;
- generate if (INTERNAL_FIFO_DEPTH > 0) begin : internal_fifo_genblock
+ generate if (INTERNAL_ACTF_FIFO_DEPTH > 0) begin : internal_actf_fifo_genblock
   for (CHN = 0; CHN < DATA_CHANNELS_OUT; CHN = CHN + 1) begin : actf_axis_srl_fifo_genblock
     // Activation Function SRL-FIFO Block per channel
     axis_srl_fifo #(
@@ -310,7 +312,7 @@ module ParallelizedDataProcessor #(
       .DEST_WIDTH         (DEST_WIDTH),
       .USER_ENABLE        (USER_ENABLE),
       .USER_WIDTH         (USER_WIDTH),
-      .DEPTH              (INTERNAL_FIFO_DEPTH)
+      .DEPTH              (INTERNAL_ACTF_FIFO_DEPTH)
     ) axis_fifo_actf_inst (
       .clk                (clk),
       .rst                (core_rst),
@@ -331,7 +333,18 @@ module ParallelizedDataProcessor #(
       .m_axis_tuser       (int_srl_actf_m_axis_tuser    [CHN*USER_WIDTH +: USER_WIDTH])
     );
   end
-    
+ end else begin : internal_skip_actf_fifo_genblock
+    // Activation Function skip SRL-FIFO Block per channel
+    assign int_srl_actf_m_axis_tdata  = int_srl_actf_s_axis_tdata;
+    assign int_srl_actf_m_axis_tvalid = int_srl_actf_s_axis_tvalid;
+    assign int_srl_actf_s_axis_tready = int_srl_actf_m_axis_tready;
+    assign int_srl_actf_m_axis_tlast  = int_srl_actf_s_axis_tlast;
+    assign int_srl_actf_m_axis_tid    = int_srl_actf_s_axis_tid;
+    assign int_srl_actf_m_axis_tdest  = int_srl_actf_s_axis_tdest;
+    assign int_srl_actf_m_axis_tuser  = int_srl_actf_s_axis_tuser;
+ end
+
+ if (INTERNAL_WEIGHTS_FIFO_DEPTH > 0) begin : internal_weights_fifo_genblock
   for (CHN = 0; CHN < WEIGHT_CHANNELS; CHN = CHN + 1) begin : axis_srl_wght_genblock
     // Weight SRL-FIFO Block per channel
     axis_srl_fifo #(
@@ -345,7 +358,7 @@ module ParallelizedDataProcessor #(
       .DEST_WIDTH         (DEST_WIDTH),
       .USER_ENABLE        (USER_ENABLE),
       .USER_WIDTH         (USER_WIDTH),
-      .DEPTH              (INTERNAL_FIFO_DEPTH)
+      .DEPTH              (INTERNAL_WEIGHTS_FIFO_DEPTH)
     ) axis_fifo_data_inst (
       .clk                (clk),
       .rst                (core_rst),
@@ -366,16 +379,7 @@ module ParallelizedDataProcessor #(
       .m_axis_tuser       (int_srl_wght_m_axis_tuser    [CHN*USER_WIDTH    +: USER_WIDTH])
     );
   end
- end else begin : internal_skip_fifo_genblock
-    // Activation Function skip SRL-FIFO Block per channel
-    assign int_srl_actf_m_axis_tdata  = int_srl_actf_s_axis_tdata;
-    assign int_srl_actf_m_axis_tvalid = int_srl_actf_s_axis_tvalid;
-    assign int_srl_actf_s_axis_tready = int_srl_actf_m_axis_tready;
-    assign int_srl_actf_m_axis_tlast  = int_srl_actf_s_axis_tlast;
-    assign int_srl_actf_m_axis_tid    = int_srl_actf_s_axis_tid;
-    assign int_srl_actf_m_axis_tdest  = int_srl_actf_s_axis_tdest;
-    assign int_srl_actf_m_axis_tuser  = int_srl_actf_s_axis_tuser;
-
+ end else begin : internal_skip_weights_fifo_genblock
     // Weight skip SRL-FIFO Block per channel
     assign int_srl_wght_m_axis_tdata  = int_srl_wght_s_axis_tdata;
     assign int_srl_wght_m_axis_tvalid = int_srl_wght_s_axis_tvalid;

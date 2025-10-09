@@ -29,7 +29,7 @@ def tb_DataProcessor():
     DATA_FRACTIONAL_BITS        = module.Localparam('DATA_FRACTIONAL_BITS', 12)
     SCALE_FRACTIONAL_BITS       = module.Localparam('SCALE_FRACTIONAL_BITS', 15)
     SCALED_DIFF_FRACTIONAL_BITS = module.Localparam('SCALED_DIFF_FRACTIONAL_BITS', 13)
-    ACTF_FRACTIONAL_BITS         = module.Localparam('ACTF_FRACTIONAL_BITS', 16)
+    ACTF_FRACTIONAL_BITS        = module.Localparam('ACTF_FRACTIONAL_BITS', 16)
     WEIGHT_FRACTIONAL_BITS      = module.Localparam('WEIGHT_FRACTIONAL_BITS', 16)
     RSLT_FRACTIONAL_BITS        = module.Localparam('RSLT_FRACTIONAL_BITS', 12)
     IS_UNSIGNED_OP0             = module.Localparam('IS_UNSIGNED_OP0', 1)
