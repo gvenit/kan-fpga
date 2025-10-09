@@ -20,9 +20,9 @@ module DataProcessor #(
   // Fractional bits of Scaled Data
   parameter SCALED_DIFF_FRACTIONAL_BITS = 12,
   // Width of Activation Function Data in bits
-  parameter ACT_WIDTH = 16,
+  parameter ACTF_WIDTH = 16,
   // Fractional bits of Activation Function Data
-  parameter ACT_FRACTIONAL_BITS = 12,
+  parameter ACTF_FRACTIONAL_BITS = 12,
   // Width of AXI stream Output Data interface in bits
   parameter RSLT_WIDTH = 16,
   // Fractional bits of output data
@@ -129,7 +129,7 @@ module DataProcessor #(
   output wire                                          core_rst
 );
   // Internal Activation Function Output AXI-Stream Wires
-  wire [DATA_CHANNELS*ACT_WIDTH-1:0]             int_axis_act_func_tdata;
+  wire [DATA_CHANNELS*ACTF_WIDTH-1:0]             int_axis_act_func_tdata;
   wire [DATA_CHANNELS*KEEP_WIDTH-1:0]                 int_axis_act_func_tkeep;
   wire [DATA_CHANNELS-1:0]                            int_axis_act_func_tvalid;
   wire [DATA_CHANNELS-1:0]                            int_axis_act_func_tready;

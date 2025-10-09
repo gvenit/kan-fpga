@@ -177,7 +177,8 @@ module KanAccelerator #(
   parameter IS_ASYNCHRONOUS = 1,
 
  `ifdef DEBUG
-  parameter DEBUG_WIRE_LENGTH = 3* NUM_PERIPHERALS + PERIPHERAL_TRANSMISSION_WIDTH + 2 + MCU_DEBUG_WIRE_LENGTH,
+  parameter DEBUG_WIRE_LENGTH = SCALE_CHANNELS_IN*SCALE_WIDTH + GRID_CHANNELS_IN*GRID_WIDTH + DATA_CHANNELS_IN*DATA_WIDTH + 3,
+  // parameter DEBUG_WIRE_LENGTH = 3* NUM_PERIPHERALS + PERIPHERAL_TRANSMISSION_WIDTH + 2 + MCU_DEBUG_WIRE_LENGTH,
  `endif 
 
   /*------------------------------------------------------------------
@@ -476,7 +477,7 @@ module KanAccelerator #(
   ------------------------------------------------------------------*/
 
   // Data FIFO Depth
-  localparam DATA_FIFO_DEPTH = 2; // `MAX(DATA_CHANNELS + BATCH_SIZE, 4);
+  localparam DATA_FIFO_DEPTH = `MAX(DATA_CHANNELS + BATCH_SIZE, 4);
   // Pipeline Output DATA
   localparam DATA_PIPELINE_OUTPUT = 1;
 
@@ -531,7 +532,8 @@ module KanAccelerator #(
   localparam DATA_CHANNELS_OUT = DATA_CHANNELS_IN;
   localparam RSLT_CHANNELS_OUT = BATCH_SIZE*RSLT_CHANNELS;
 
-  localparam INTERNAL_FIFO_DEPTH = `MAX( DATA_CHANNELS + RSLT_CHANNELS + BATCH_SIZE, 8);
+  localparam INTERNAL_ACTF_FIFO_DEPTH = 0; // `MAX( DATA_CHANNELS + RSLT_CHANNELS + BATCH_SIZE, 16);
+  localparam INTERNAL_WEIGHTS_FIFO_DEPTH = RSLT_CHANNELS + BATCH_SIZE; // `MAX( DATA_CHANNELS + RSLT_CHANNELS + BATCH_SIZE, 16);
 
  `ifdef DEBUG
   localparam MCU_DEBUG_WIRE_LENGTH = (DATA_CHANNELS_IN + GRID_CHANNELS_IN + SCALE_CHANNELS_IN)*3 + 6 + DATA_BRAM_ADDR + GRID_BRAM_ADDR + SCALE_BRAM_ADDR;
@@ -961,9 +963,9 @@ module KanAccelerator #(
     .DATA_ADDR                  (DATA_BRAM_ADDR),
     .GRID_ADDR                  (GRID_BRAM_ADDR),
     .SCALE_ADDR                 (SCALE_BRAM_ADDR),
-    .DATA_FIFO_DEPTH            (DATA_FIFO_DEPTH),
-    .GRID_FIFO_DEPTH            (GRID_FIFO_DEPTH),
-    .SCALE_FIFO_DEPTH           (SCALE_FIFO_DEPTH)
+    .DATA_FIFO_DEPTH            (0),
+    .GRID_FIFO_DEPTH            (0),
+    .SCALE_FIFO_DEPTH           (0)
   ) mcu_inst (
     .fsm_clk                    (fsm_clk),
     .rst                        (core_rst),
@@ -972,7 +974,7 @@ module KanAccelerator #(
     .grid_size                  (grid_size_bram),
     .scle_size                  (scle_size_bram),
  `ifdef DEBUG
-    .debug_wire                 (mcu_debug_wire),
+    // .debug_wire                 (mcu_debug_wire),
  `endif
     .operation_busy             (mcu_operation_busy),
     .operation_complete         (mcu_operation_complete),
@@ -1384,7 +1386,8 @@ module KanAccelerator #(
     .OUTPUT_DEST                  (0),
     .OUTPUT_ID                    (0),
     .INPUT_FIFO_DEPTH             (0),
-    .INTERNAL_FIFO_DEPTH          (INTERNAL_FIFO_DEPTH),
+    .INTERNAL_ACTF_FIFO_DEPTH     (INTERNAL_ACTF_FIFO_DEPTH),
+    .INTERNAL_WEIGHTS_FIFO_DEPTH  (INTERNAL_WEIGHTS_FIFO_DEPTH),
     .RESET_PIPELINE_LEVEL         (16)
   ) data_processor_inst (
     .clk                          (core_clk),
@@ -1691,6 +1694,23 @@ module KanAccelerator #(
 
   
  `ifdef DEBUG
+  // Pipeline #(
+  //   .DATA_WIDTH (DEBUG_WIRE_LENGTH),
+  //   .LEVEL      (1)
+  // ) debug_pipeline_inst (
+  //   .clk        (core_clk),
+  //   .rst        (1'b0),
+  //   .din        ({
+  //                 mcu_debug_wire,
+  //                 peripheral_transmission,
+  //                 operation_start,
+  //                 rslt_tlast, 
+  //                 peripheral_operation_busy, 
+  //                 peripheral_operation_complete, 
+  //                 peripheral_operation_error
+  //               }),
+  //   .dout       (debug_wire)
+  // );
   Pipeline #(
     .DATA_WIDTH (DEBUG_WIRE_LENGTH),
     .LEVEL      (1)
@@ -1698,18 +1718,16 @@ module KanAccelerator #(
     .clk        (core_clk),
     .rst        (1'b0),
     .din        ({
-                  mcu_debug_wire,
-                  peripheral_transmission,
-                  operation_start,
-                  rslt_tlast, 
-                  peripheral_operation_busy, 
-                  peripheral_operation_complete, 
-                  peripheral_operation_error
+                  int_mcu_scle_m_axis_tdata,
+                  int_mcu_scle_m_axis_tvalid,
+                  int_mcu_grid_m_axis_tdata,
+                  int_mcu_grid_m_axis_tvalid,
+                  int_mcu_data_m_axis_tdata,
+                  int_mcu_data_m_axis_tvalid
                 }),
     .dout       (debug_wire)
   );
  `endif
-
 endmodule
 
 `resetall

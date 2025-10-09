@@ -83,7 +83,7 @@ module AxisClamp #(
  localparam IN_MSB  = DATA_WIDTH + UNSIGNED_DATA - 1;
  localparam IN_LSB  = 0;
 
- localparam OUT_MSB = DATA_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS + RSLT_WIDTH + UNSIGNED_RSLT - 1;
+ localparam OUT_MSB = DATA_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS + RSLT_WIDTH - 1;
  localparam OUT_LSB = DATA_FRACTIONAL_BITS - RSLT_FRACTIONAL_BITS;
 
  localparam MSB = `MAX( IN_MSB, OUT_MSB );
@@ -133,7 +133,7 @@ for (CHN = 0; CHN < CHANNELS; CHN = CHN+1) begin: register_genblock
       assign dout_i = (overflow) ? {(RSLT_WIDTH + UNSIGNED_RSLT){1'b1}} : data_slice_i[OUT_MSB:OUT_LSB];
 
     end else begin : use_signed_genblock
-      wire overflow = ~&(data_slice_i[MSB:OUT_MSB+1]) || |(~data_slice_i[MSB:OUT_MSB+1]);
+      wire overflow = ~&(data_slice_i[MSB:OUT_MSB]) || |(~data_slice_i[MSB:OUT_MSB]);
       
       assign dout_i = (overflow) ? {sign, {(RSLT_WIDTH-1){~sign}}} : data_slice_i[OUT_MSB:OUT_LSB];
 

@@ -29,7 +29,7 @@ def tb_DataProcessor():
     DATA_FRACTIONAL_BITS        = module.Localparam('DATA_FRACTIONAL_BITS', 12)
     SCALE_FRACTIONAL_BITS       = module.Localparam('SCALE_FRACTIONAL_BITS', 15)
     SCALED_DIFF_FRACTIONAL_BITS = module.Localparam('SCALED_DIFF_FRACTIONAL_BITS', 13)
-    ACT_FRACTIONAL_BITS         = module.Localparam('ACT_FRACTIONAL_BITS', 16)
+    ACTF_FRACTIONAL_BITS        = module.Localparam('ACTF_FRACTIONAL_BITS', 16)
     WEIGHT_FRACTIONAL_BITS      = module.Localparam('WEIGHT_FRACTIONAL_BITS', 16)
     RSLT_FRACTIONAL_BITS        = module.Localparam('RSLT_FRACTIONAL_BITS', 12)
     IS_UNSIGNED_OP0             = module.Localparam('IS_UNSIGNED_OP0', 1)
@@ -39,7 +39,7 @@ def tb_DataProcessor():
     DATA_CHANNELS               = module.Localparam('DATA_CHANNELS', 1)
     WEIGHT_CHANNELS             = module.Localparam('WEIGHT_CHANNELS', 1)
     SCALE_SHARE                 = module.Localparam('SCALE_SHARE', 1)
-    ROM_DATA_PATH               = module.Localparam('ROM_DATA_PATH', f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACT_FRACTIONAL_BITS.value}.txt")
+    ROM_DATA_PATH               = module.Localparam('ROM_DATA_PATH', f"../data/Sech2Lutram_n_{DATA_WIDTH.value}.{SCALED_DIFF_FRACTIONAL_BITS.value}_{DATA_WIDTH.value}.{ACTF_FRACTIONAL_BITS.value}.txt")
     
     clk = module.Reg('clk')
     rst = module.Reg('rst')
@@ -100,9 +100,9 @@ def tb_DataProcessor():
   // Fractional bits of Scaled Data
   .SCALED_DIFF_FRACTIONAL_BITS(SCALED_DIFF_FRACTIONAL_BITS),
   // Width of AXI stream Activation Function Data interface in bits
-  .ACT_WIDTH(DATA_WIDTH),
+  .ACTF_WIDTH(DATA_WIDTH),
   // Fractional bits of Activation Function Data
-  .ACT_FRACTIONAL_BITS(ACT_FRACTIONAL_BITS),
+  .ACTF_FRACTIONAL_BITS(ACTF_FRACTIONAL_BITS),
   // Width of AXI stream Output Data interface in bits
   .RSLT_WIDTH(DATA_WIDTH),
   // Fractional bits of output data

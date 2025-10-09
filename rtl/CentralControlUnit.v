@@ -383,12 +383,12 @@ module CentralControlUnit #(
   assign operation_status_locked_wr = locked_next;
 
   // Check results exported -- Contain information about the next iteration
-  reg  [23:0] results_left_reg;
-  reg  [23:0] results_exported_reg;
+  reg  unsigned [23:0] results_left_reg;
+  reg  unsigned [23:0] results_exported_reg;
 
-  wire [RSLT_CHANNELS_BITS-1:0] results_iter_size = `MIN( results_left_reg, RSLT_CHANNELS );
-  wire [23:0] results_left_reg_next     = results_left_reg - results_iter_size;
-  wire [23:0] results_exported_reg_next = results_exported_reg + results_iter_size;
+  wire unsigned [RSLT_CHANNELS_BITS-1:0] results_iter_size = `MIN( results_left_reg, RSLT_CHANNELS );
+  wire unsigned [23:0] results_left_reg_next     = results_left_reg - results_iter_size;
+  wire unsigned [23:0] results_exported_reg_next = results_exported_reg + results_iter_size;
 
   wire [RSLT_CHANNELS-1:0] use_channels_next;
   wire [BATCH_SIZE-1:0]    use_batch_next;
