@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -27,11 +54,9 @@
 
 module MemoryControlUnit #(
  `include "header_MCUGlobalFSMParameters.vh"
- 
  `ifdef DEBUG
   parameter DEBUG_WIRE_LENGTH = (BATCH_SIZE*DATA_CHANNELS + GRID_CHANNELS_IN + SCALE_CHANNELS_IN) * 3 + GLO_FSM_WIDTH * 2 + DATA_ADDR + GRID_ADDR + SCALE_ADDR + 3,
  `endif 
-
   // BRAM control has ack signal
   parameter BRAM_ACK_SIG = 1,
   // Number of batches per run
@@ -87,145 +112,144 @@ module MemoryControlUnit #(
   // Scale FIFO size per stream
   parameter SCALE_FIFO_DEPTH = (SCALE_SHARE) ? 0 : BATCH_SIZE + DATA_CHANNELS
 ) (
-  input  wire                                                       fsm_clk,
-  input  wire                                                       rst,
+  input  wire                                             fsm_clk,
+  input  wire                                             rst,
 
   /*
    * Control signals -- Corresponding clock : fsm_clk
    */
-  input  wire                                                       operation_start,
-  input  wire [DATA_ADDR:0]                                         data_size,
-  input  wire [GRID_ADDR:0]                                         grid_size,
-  input  wire [SCALE_ADDR:0]                                        scle_size,
+  input  wire                                             operation_start,
+  input  wire [DATA_ADDR:0]                               data_size,
+  input  wire [GRID_ADDR:0]                               grid_size,
+  input  wire [SCALE_ADDR:0]                              scle_size,
 
  `ifdef DEBUG
-  output wire [DEBUG_WIRE_LENGTH-1:0]                               debug_wire,
+  output wire [DEBUG_WIRE_LENGTH-1:0]                     debug_wire,
  `endif
   
   /*
    * Interrupt signals -- Corresponding clock : fsm_clk
    */
-  output reg                                                        operation_busy,
-  output reg                                                        operation_complete,
-  output reg                                                        operation_error,
+  output reg                                              operation_busy,
+  output reg                                              operation_complete,
+  output reg                                              operation_error,
 
  `ifdef DATA_IF_IS_AXIL
   /*
    * Data AXI lite Master Interface -- Corresponding clock : m_axil_data_aclk
    */
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axil_data_aclk,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_ADDR-1:0]              m_axil_data_araddr,
-  output wire [BATCH_SIZE*DATA_CHANNELS*3-1:0]                      m_axil_data_arprot,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axil_data_arvalid,
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axil_data_arready,
-  input  wire [BATCH_SIZE*DATA_CHANNELS*SCALE_WIDTH-1:0]            m_axil_data_rdata,
-  input  wire [BATCH_SIZE*DATA_CHANNELS*2-1:0]                      m_axil_data_rresp,
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axil_data_rvalid,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axil_data_rready,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axil_data_aclk,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_ADDR-1:0]    m_axil_data_araddr,
+  output wire [BATCH_SIZE*DATA_CHANNELS*3-1:0]            m_axil_data_arprot,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axil_data_arvalid,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axil_data_arready,
+  input  wire [BATCH_SIZE*DATA_CHANNELS*SCALE_WIDTH-1:0]  m_axil_data_rdata,
+  input  wire [BATCH_SIZE*DATA_CHANNELS*2-1:0]            m_axil_data_rresp,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axil_data_rvalid,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axil_data_rready,
 
  `elsif DATA_IF_IS_BRAM
   /*
    * Data BRAM Control Interface -- Corresponding clock : data_bram_clk
    */
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        data_bram_clk,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        data_bram_en,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_ADDR-1:0]              data_bram_addr,
-  input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]             data_bram_rddata,
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        data_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]              data_bram_clk,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]              data_bram_en,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_ADDR-1:0]    data_bram_addr,
+  input  wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]   data_bram_rddata,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]              data_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
  `endif
 
   /*
    * AXI Stream Data Output -- Corresponding clock : m_axis_data_aclk
    */
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_aclk,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]             m_axis_data_tdata,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_tvalid,
-  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_tready,
-  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]                        m_axis_data_tlast,
-  output wire [BATCH_SIZE*DATA_CHANNELS*ID_WIDTH-1:0]               m_axis_data_tid,
-  output wire [BATCH_SIZE*DATA_CHANNELS*DEST_WIDTH-1:0]             m_axis_data_tdest,
-  output wire [BATCH_SIZE*DATA_CHANNELS*USER_WIDTH-1:0]             m_axis_data_tuser,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axis_data_aclk,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DATA_WIDTH-1:0]   m_axis_data_tdata,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axis_data_tvalid,
+  input  wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axis_data_tready,
+  output wire [BATCH_SIZE*DATA_CHANNELS-1:0]              m_axis_data_tlast,
+  output wire [BATCH_SIZE*DATA_CHANNELS*ID_WIDTH-1:0]     m_axis_data_tid,
+  output wire [BATCH_SIZE*DATA_CHANNELS*DEST_WIDTH-1:0]   m_axis_data_tdest,
+  output wire [BATCH_SIZE*DATA_CHANNELS*USER_WIDTH-1:0]   m_axis_data_tuser,
 
  `ifdef GRID_IF_IS_AXIL
   /*
    * Grid AXI lite Master  -- Corresponding clock : m_axil_grid_aclk
    */
-  input  wire [GRID_CHANNELS_IN-1:0]                                m_axil_grid_aclk,
-  output wire [GRID_CHANNELS_IN*GRID_ADDR-1:0]                      m_axil_grid_araddr,
-  output wire [GRID_CHANNELS_IN*3-1:0]                              m_axil_grid_arprot,
-  output wire [GRID_CHANNELS_IN-1:0]                                m_axil_grid_arvalid,
-  input  wire [GRID_CHANNELS_IN-1:0]                                m_axil_grid_arready,
-  input  wire [GRID_CHANNELS_IN*GRID_WIDTH-1:0]                     m_axil_grid_rdata,
-  input  wire [GRID_CHANNELS_IN*2-1:0]                              m_axil_grid_rresp,
-  input  wire [GRID_CHANNELS_IN-1:0]                                m_axil_grid_rvalid,
-  output wire [GRID_CHANNELS_IN-1:0]                                m_axil_grid_rready,
+  input  wire [GRID_CHANNELS_IN-1:0]                      m_axil_grid_aclk,
+  output wire [GRID_CHANNELS_IN*GRID_ADDR-1:0]            m_axil_grid_araddr,
+  output wire [GRID_CHANNELS_IN*3-1:0]                    m_axil_grid_arprot,
+  output wire [GRID_CHANNELS_IN-1:0]                      m_axil_grid_arvalid,
+  input  wire [GRID_CHANNELS_IN-1:0]                      m_axil_grid_arready,
+  input  wire [GRID_CHANNELS_IN*GRID_WIDTH-1:0]           m_axil_grid_rdata,
+  input  wire [GRID_CHANNELS_IN*2-1:0]                    m_axil_grid_rresp,
+  input  wire [GRID_CHANNELS_IN-1:0]                      m_axil_grid_rvalid,
+  output wire [GRID_CHANNELS_IN-1:0]                      m_axil_grid_rready,
 
  `elsif GRID_IF_IS_BRAM
   /*
    * Grid BRAM Control Interface -- Corresponding clock : grid_bram_clk
    */
-  input  wire [GRID_CHANNELS_IN-1:0]                                grid_bram_clk,
-  output wire [GRID_CHANNELS_IN-1:0]                                grid_bram_en,
-  output wire [GRID_CHANNELS_IN*GRID_ADDR-1:0]                      grid_bram_addr,
-  input  wire [GRID_CHANNELS_IN*GRID_WIDTH-1:0]                     grid_bram_rddata,
-  input  wire [GRID_CHANNELS_IN-1:0]                                grid_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0                                     
+  input  wire [GRID_CHANNELS_IN-1:0]                      grid_bram_clk,
+  output wire [GRID_CHANNELS_IN-1:0]                      grid_bram_en,
+  output wire [GRID_CHANNELS_IN*GRID_ADDR-1:0]            grid_bram_addr,
+  input  wire [GRID_CHANNELS_IN*GRID_WIDTH-1:0]           grid_bram_rddata,
+  input  wire [GRID_CHANNELS_IN-1:0]                      grid_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0                                     
  `endif
 
   /*
    * AXI Stream Grid Output -- Corresponding clock : m_axis_grid_aclk
    */
-  output wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_aclk,
-  output wire [GRID_CHANNELS_OUT*DATA_WIDTH-1:0]                    m_axis_grid_tdata,
-  output wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_tvalid,
-  input  wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_tready,
-  output wire [GRID_CHANNELS_OUT-1:0]                               m_axis_grid_tlast,
-  output wire [GRID_CHANNELS_OUT*ID_WIDTH-1:0]                      m_axis_grid_tid,
-  output wire [GRID_CHANNELS_OUT*DEST_WIDTH-1:0]                    m_axis_grid_tdest,
-  output wire [GRID_CHANNELS_OUT*USER_WIDTH-1:0]                    m_axis_grid_tuser,
+  output wire [GRID_CHANNELS_OUT-1:0]                     m_axis_grid_aclk,
+  output wire [GRID_CHANNELS_OUT*DATA_WIDTH-1:0]          m_axis_grid_tdata,
+  output wire [GRID_CHANNELS_OUT-1:0]                     m_axis_grid_tvalid,
+  input  wire [GRID_CHANNELS_OUT-1:0]                     m_axis_grid_tready,
+  output wire [GRID_CHANNELS_OUT-1:0]                     m_axis_grid_tlast,
+  output wire [GRID_CHANNELS_OUT*ID_WIDTH-1:0]            m_axis_grid_tid,
+  output wire [GRID_CHANNELS_OUT*DEST_WIDTH-1:0]          m_axis_grid_tdest,
+  output wire [GRID_CHANNELS_OUT*USER_WIDTH-1:0]          m_axis_grid_tuser,
 
  `ifdef SCALE_IF_IS_AXIL
   /*
    * Scale AXI lite Master Interface -- Corresponding clock : m_axil_scle_aclk
    */
-  input  wire [SCALE_CHANNELS_IN-1:0]                               m_axil_scle_aclk,
-  output wire [SCALE_CHANNELS_IN*SCALE_ADDR-1:0]                    m_axil_scle_araddr,
-  output wire [SCALE_CHANNELS_IN*3-1:0]                             m_axil_scle_arprot,
-  output wire [SCALE_CHANNELS_IN-1:0]                               m_axil_scle_arvalid,
-  input  wire [SCALE_CHANNELS_IN-1:0]                               m_axil_scle_arready,
-  input  wire [SCALE_CHANNELS_IN*SCALE_WIDTH-1:0]                   m_axil_scle_rdata,
-  input  wire [SCALE_CHANNELS_IN*2-1:0]                             m_axil_scle_rresp,
-  input  wire [SCALE_CHANNELS_IN-1:0]                               m_axil_scle_rvalid,
-  output wire [SCALE_CHANNELS_IN-1:0]                               m_axil_scle_rready,
+  input  wire [SCALE_CHANNELS_IN-1:0]                     m_axil_scle_aclk,
+  output wire [SCALE_CHANNELS_IN*SCALE_ADDR-1:0]          m_axil_scle_araddr,
+  output wire [SCALE_CHANNELS_IN*3-1:0]                   m_axil_scle_arprot,
+  output wire [SCALE_CHANNELS_IN-1:0]                     m_axil_scle_arvalid,
+  input  wire [SCALE_CHANNELS_IN-1:0]                     m_axil_scle_arready,
+  input  wire [SCALE_CHANNELS_IN*SCALE_WIDTH-1:0]         m_axil_scle_rdata,
+  input  wire [SCALE_CHANNELS_IN*2-1:0]                   m_axil_scle_rresp,
+  input  wire [SCALE_CHANNELS_IN-1:0]                     m_axil_scle_rvalid,
+  output wire [SCALE_CHANNELS_IN-1:0]                     m_axil_scle_rready,
   
  `elsif SCALE_IF_IS_BRAM
   /*
    * Scale BRAM Control Interface -- Corresponding clock : scle_bram_clk
    */
-  input  wire [SCALE_CHANNELS_IN-1:0]                               scle_bram_clk,
-  output wire [SCALE_CHANNELS_IN-1:0]                               scle_bram_en,
-  output wire [SCALE_CHANNELS_IN*SCALE_ADDR-1:0]                    scle_bram_addr,
-  input  wire [SCALE_CHANNELS_IN*SCALE_WIDTH-1:0]                   scle_bram_rddata,
-  input  wire [SCALE_CHANNELS_IN-1:0]                               scle_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
+  input  wire [SCALE_CHANNELS_IN-1:0]                     scle_bram_clk,
+  output wire [SCALE_CHANNELS_IN-1:0]                     scle_bram_en,
+  output wire [SCALE_CHANNELS_IN*SCALE_ADDR-1:0]          scle_bram_addr,
+  input  wire [SCALE_CHANNELS_IN*SCALE_WIDTH-1:0]         scle_bram_rddata,
+  input  wire [SCALE_CHANNELS_IN-1:0]                     scle_bram_rdack,  // Ignore if BRAM_ACK_SIG == 0
  `endif
 
   /*
    * AXI Stream Scale Output -- Corresponding clock : m_axis_scle_aclk
    */
-  output wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_aclk,
-  output wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]                  m_axis_scle_tdata,
-  output wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_tvalid,
-  input  wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_tready,
-  output wire [SCALE_CHANNELS_OUT-1:0]                              m_axis_scle_tlast,
-  output wire [SCALE_CHANNELS_OUT*ID_WIDTH-1:0]                     m_axis_scle_tid,
-  output wire [SCALE_CHANNELS_OUT*DEST_WIDTH-1:0]                   m_axis_scle_tdest,
-  output wire [SCALE_CHANNELS_OUT*USER_WIDTH-1:0]                   m_axis_scle_tuser
+  output wire [SCALE_CHANNELS_OUT-1:0]                    m_axis_scle_aclk,
+  output wire [SCALE_CHANNELS_OUT*SCALE_WIDTH-1:0]        m_axis_scle_tdata,
+  output wire [SCALE_CHANNELS_OUT-1:0]                    m_axis_scle_tvalid,
+  input  wire [SCALE_CHANNELS_OUT-1:0]                    m_axis_scle_tready,
+  output wire [SCALE_CHANNELS_OUT-1:0]                    m_axis_scle_tlast,
+  output wire [SCALE_CHANNELS_OUT*ID_WIDTH-1:0]           m_axis_scle_tid,
+  output wire [SCALE_CHANNELS_OUT*DEST_WIDTH-1:0]         m_axis_scle_tdest,
+  output wire [SCALE_CHANNELS_OUT*USER_WIDTH-1:0]         m_axis_scle_tuser
 );
-
   // Control Registers & Wires
   reg  op_in_progress_reg = 1'b0;
-  reg  [DATA_ADDR:0]  data_size_reg;
-  reg  [GRID_ADDR:0]  grid_size_reg;
-  reg  [SCALE_ADDR:0] scle_size_reg;
+  reg  [DATA_ADDR:0]  data_size_reg = 0;
+  reg  [GRID_ADDR:0]  grid_size_reg = 0;
+  reg  [SCALE_ADDR:0] scle_size_reg = 0;
 
   // Local FSM output signals
   wire [BATCH_SIZE*DATA_CHANNELS-1:0] data_tlast_transmitted;
@@ -253,14 +277,14 @@ module MemoryControlUnit #(
     ($unsigned(scle_size) <= {1'b1,{SCALE_ADDR{1'b0}}}) && (|scle_size) 
   );
 
-  wire op_done        =  &{data_op_done_reg, grid_op_done_reg, scle_op_done_reg};
+  wire op_done              =  &{data_op_done_reg, grid_op_done_reg, scle_op_done_reg};
 
   reg  [BATCH_SIZE*DATA_CHANNELS-1:0] data_error_reg = 0;
   reg  [GRID_CHANNELS_IN-1:0]         grid_error_reg = 0;
   reg  [SCALE_CHANNELS_IN-1:0]        scle_error_reg = 0;
 
-  wire internal_error = |{data_error_reg, grid_error_reg, scle_error_reg};
-  wire internal_error_done = &{data_error_reg, grid_error_reg, scle_error_reg};
+  wire internal_error       = |{data_error_reg, grid_error_reg, scle_error_reg};
+  wire internal_error_done  = &{data_error_reg, grid_error_reg, scle_error_reg};
 
  `ifdef DEBUG
   wire [BATCH_SIZE*DATA_CHANNELS*3-1:0]   data_debug_wire;
@@ -280,87 +304,82 @@ module MemoryControlUnit #(
   // Global FSM state logic
   always @(posedge fsm_clk ) begin
     if (rst) begin
-      glo_fsm_state <= GLO_FSM_ST0;
+      glo_fsm_state       <= GLO_FSM_ST0;
 
-      data_op_done_reg <= 0;
-      grid_op_done_reg <= 0;
-      scle_op_done_reg <= 0;
+      data_op_done_reg    <= 0;
+      grid_op_done_reg    <= 0;
+      scle_op_done_reg    <= 0;
 
-      data_error_reg   <= 0;
-      grid_error_reg   <= 0;
-      scle_error_reg   <= 0;
+      data_error_reg      <= 0;
+      grid_error_reg      <= 0;
+      scle_error_reg      <= 0;
 
-      operation_busy        <= 1'b0;
-      operation_complete    <= 1'b0;
-      operation_error       <= 1'b0;
+      operation_busy      <= 1'b0;
+      operation_complete  <= 1'b0;
+      operation_error     <= 1'b0;
 
     end else begin
-      glo_fsm_state <= glo_fsm_state_next;
+      glo_fsm_state       <= glo_fsm_state_next;
 
-      data_op_done_reg <= {(BATCH_SIZE*DATA_CHANNELS){1'b0}};
-      grid_op_done_reg <= {GRID_CHANNELS_IN{1'b0}};
-      scle_op_done_reg <= {SCALE_CHANNELS_IN{1'b0}};
+      data_op_done_reg    <= {(BATCH_SIZE*DATA_CHANNELS){1'b0}};
+      grid_op_done_reg    <= {GRID_CHANNELS_IN{1'b0}};
+      scle_op_done_reg    <= {SCALE_CHANNELS_IN{1'b0}};
 
-      data_error_reg  <= data_error;
-      grid_error_reg  <= grid_error;
-      scle_error_reg  <= scle_error;
+      data_error_reg      <= data_error;
+      grid_error_reg      <= grid_error;
+      scle_error_reg      <= scle_error;
 
-      operation_busy        <= 1'b0;
-      operation_complete    <= 1'b0;
-      operation_error       <= 1'b0;
+      operation_busy      <= 1'b0;
+      operation_complete  <= 1'b0;
+      operation_error     <= 1'b0;
 
       case (glo_fsm_state_next)
-        GLO_FSM_ST0: begin
-
-        end
         GLO_FSM_STR: begin
-          data_size_reg <= data_size;
-          grid_size_reg <= grid_size;
-          scle_size_reg <= scle_size;
+          data_size_reg       <= data_size;
+          grid_size_reg       <= grid_size;
+          scle_size_reg       <= scle_size;
 
-          operation_busy <= 1'b1;
-
+          operation_busy      <= 1'b1;
         end
         GLO_FSM_OPE: begin
-          data_op_done_reg <= data_op_done_reg_next;
-          grid_op_done_reg <= grid_op_done_reg_next;
-          scle_op_done_reg <= scle_op_done_reg_next;
+          data_op_done_reg    <= data_op_done_reg_next;
+          grid_op_done_reg    <= grid_op_done_reg_next;
+          scle_op_done_reg    <= scle_op_done_reg_next;
 
-          operation_busy <= 1'b1;
-
+          operation_busy      <= 1'b1;
         end
         GLO_FSM_END: begin
-          operation_complete <= 1'b1;
-          
+          operation_complete  <= 1'b1;
         end
         GLO_FSM_ERR: begin
-          operation_error <= 1'b1;
+          data_error_reg      <= 0;
+          grid_error_reg      <= 0;
+          scle_error_reg      <= 0;
 
-          data_error_reg  <= 0;
-          grid_error_reg  <= 0;
-          scle_error_reg  <= 0;
+          operation_error     <= 1'b1;
         end
         default: begin
-          
         end 
       endcase
     end
   end
 
-  wire validate = ($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|data_size) && 
-          ($unsigned(grid_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|grid_size) && 
-          ($unsigned(scle_size) <= {1'b1, {DATA_ADDR{1'b0}}}) && (|scle_size);
+  wire validate = &{
+    ($unsigned(data_size) <= {1'b1, {DATA_ADDR{1'b0}}}), (|data_size), 
+    ($unsigned(grid_size) <= {1'b1, {DATA_ADDR{1'b0}}}), (|grid_size), 
+    ($unsigned(scle_size) <= {1'b1, {DATA_ADDR{1'b0}}}), (|scle_size)
+  };
 
-  `define GLO_CHECK_OP_START \
-    if (operation_start) begin \
-      if (op_valid) begin \
-        glo_fsm_state_next <= GLO_FSM_STR; \
-      end else begin \
-        glo_fsm_state_next <= GLO_FSM_ERR; \
-      end \
+ `define GLO_CHECK_OP_START \
+  if (operation_start) begin \
+    if (op_valid) begin \
+      glo_fsm_state_next <= GLO_FSM_STR; \
     end else begin \
-      glo_fsm_state_next <= GLO_FSM_ST0; \
-    end 
+      glo_fsm_state_next <= GLO_FSM_ERR; \
+    end \
+  end else begin \
+    glo_fsm_state_next <= GLO_FSM_ST0; \
+  end 
 
   // Global FSM next state logic
   always @(*) begin
@@ -401,255 +420,33 @@ module MemoryControlUnit #(
     end
   end
 
-  genvar pos, batch;
-
- generate
-  if (SCALE_SHARE == 0) begin : scle_not_shared_genblock
-    for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin : scle_chn_genblock // One scale per data channel
-      // Channel's clk driver
-      wire scle_clk_pos = 
-       `ifdef SCALE_IF_IS_AXIL
-        m_axil_scle_aclk[pos];
-       `endif 
-       `ifdef SCALE_IF_IS_BRAM
-        scle_bram_clk[pos];
-       `endif 
-
-      // Local Scale FIFO I/O
-      wire [SCALE_WIDTH-1:0]            scle_fifo_in_axis_tdata,  scle_fifo_out_axis_tdata;
-      wire                              scle_fifo_in_axis_tvalid, scle_fifo_out_axis_tvalid;
-      wire                              scle_fifo_in_axis_tready, scle_fifo_out_axis_tready;
-      wire                              scle_fifo_in_axis_tlast,  scle_fifo_out_axis_tlast;
-
-      // Local Grid Broadcaster I/O
-      wire [SCALE_WIDTH-1:0]            scle_bcst_in_axis_tdata;  
-      wire                              scle_bcst_in_axis_tvalid; 
-      wire                              scle_bcst_in_axis_tready; 
-      wire                              scle_bcst_in_axis_tlast;
-
-      wire [BATCH_SIZE*SCALE_WIDTH-1:0] scle_bcst_out_axis_tdata;
-      wire [BATCH_SIZE-1:0]             scle_bcst_out_axis_tvalid;
-      wire [BATCH_SIZE-1:0]             scle_bcst_out_axis_tready;
-      wire [BATCH_SIZE-1:0]             scle_bcst_out_axis_tlast;
-
-     `ifdef SCALE_IF_IS_AXIL
-      MCULocalAxilFSM 
-     `elsif SCALE_IF_IS_BRAM
-      MCULocalBramFSM
-     `endif 
-     #(
-       `include "header_MCUGlobalFSMParametersInst.vh"
-       `ifdef SCALE_IF_IS_BRAM
-        // BRAM control has valid signal
-        .BRAM_ACK_SIG(BRAM_ACK_SIG),
-       `endif 
-        // Width of AXI stream Output interfaces in bits
-        .DATA_WIDTH(SCALE_WIDTH),
-        // Data Strobe Width
-        .DATA_STRB_WIDTH(SCALE_STRB_WIDTH),
-        // Width of address bus in bits
-        .ADDR_WIDTH(SCALE_ADDR),
-        // Width of inter-iteration counters
-        .INTER_ITER_WIDTH(1),
-        // Width of intra-iteration counters
-        .INTRA_ITER_WIDTH(1)
-      ) MCULocalFSM_scle_pos_inst (
-        .clk                      (scle_clk_pos),
-        .rst                      (rst),
-       `ifdef SCALE_IF_IS_AXIL
-        .m_axil_araddr            (m_axil_scle_araddr[pos*SCALE_ADDR +: SCALE_ADDR]),
-        .m_axil_arprot            (m_axil_scle_arprot[pos*3 +:3]),
-        .m_axil_arvalid           (m_axil_scle_arvalid[pos]),
-        .m_axil_arready           (m_axil_scle_arready[pos]),
-        .m_axil_rdata             (m_axil_scle_rdata[pos*SCALE_WIDTH +: SCALE_WIDTH]),
-        .m_axil_rresp             (m_axil_scle_rresp[pos*2 +:2]),
-        .m_axil_rvalid            (m_axil_scle_rvalid[pos]),
-        .m_axil_rready            (m_axil_scle_rready[pos]),
-       `elsif SCALE_IF_IS_BRAM
-      `ifdef DEBUG
-        .debug_wire               (scle_debug_wire[pos*3 +: 3]),
-      `endif
-        .bram_en                  (scle_bram_en[pos]),
-        .bram_addr                (scle_bram_addr[pos*SCALE_ADDR +: SCALE_ADDR]),
-        .bram_rddata              (scle_bram_rddata[pos*SCALE_WIDTH +: SCALE_WIDTH]),
-        .bram_rdack               (scle_bram_rdack[pos]),
-       `endif 
-        .m_axis_tdata             (scle_fifo_in_axis_tdata),
-        .m_axis_tvalid            (scle_fifo_in_axis_tvalid),
-        .m_axis_tready            (scle_fifo_in_axis_tready),
-        .m_axis_tlast             (scle_fifo_in_axis_tlast),
-        .glo_fsm_state            (glo_fsm_state),
-        .addr_counter_max         (scle_size_reg),   //  Unique scale per data per grid
-        .inter_counter_max        (1'b1),
-        .intra_counter_max        (1'b1),
-        .tlast_transmitted        (scle_tlast_transmitted[pos]),
-        .error                    (scle_error[pos])
-      );
-
-      if (SCALE_FIFO_DEPTH > 0) begin : scle_fifo_genblock
-        axis_srl_fifo #(
-          // Width of AXI stream interfaces in bits
-          .DATA_WIDTH(SCALE_WIDTH),
-          // Propagate tkeep signal
-          .KEEP_ENABLE(0),
-          // tkeep signal width (words per cycle)
-          .KEEP_WIDTH(1),
-          // Propagate tlast signal
-          .LAST_ENABLE(1),
-          // Propagate tid signal
-          .ID_ENABLE(0),
-          // tid signal width
-          .ID_WIDTH(1),
-          // Propagate tdest signal
-          .DEST_ENABLE(0),
-          // tdest signal width
-          .DEST_WIDTH(1),
-          // Propagate tuser signal
-          .USER_ENABLE(0),
-          // tuser signal width
-          .USER_WIDTH(1),
-          // FIFO depth in cycles
-          .DEPTH((SCALE_FIFO_DEPTH+1)>>1)
-        ) axis_fifo_scle_pos_batch_inst (
-          .clk              (scle_clk_pos),
-          .rst              (rst),
-          .s_axis_tdata     (scle_fifo_in_axis_tdata),
-          .s_axis_tkeep     (1'b1),
-          .s_axis_tvalid    (scle_fifo_in_axis_tvalid),
-          .s_axis_tready    (scle_fifo_in_axis_tready),
-          .s_axis_tlast     (scle_fifo_in_axis_tlast),
-          .s_axis_tid       (1'b0),
-          .s_axis_tdest     (1'b0),
-          .s_axis_tuser     (1'b0),
-          .m_axis_tdata     (scle_fifo_out_axis_tdata),
-          .m_axis_tvalid    (scle_fifo_out_axis_tvalid),
-          .m_axis_tready    (scle_fifo_out_axis_tready),
-          .m_axis_tlast     (scle_fifo_out_axis_tlast)
-        );
-      end else begin
-        assign scle_fifo_out_axis_tdata  = scle_fifo_in_axis_tdata;
-        assign scle_fifo_out_axis_tvalid = scle_fifo_in_axis_tvalid;
-        assign scle_fifo_in_axis_tready  = scle_fifo_out_axis_tready;
-        assign scle_fifo_out_axis_tlast  = scle_fifo_in_axis_tlast;
-      end
-
-      assign scle_bcst_in_axis_tdata  = scle_fifo_out_axis_tdata;
-      assign scle_bcst_in_axis_tvalid = scle_fifo_out_axis_tvalid;
-      assign scle_fifo_out_axis_tready= scle_bcst_in_axis_tready;
-      assign scle_bcst_in_axis_tlast  = scle_fifo_out_axis_tlast;
-      
-      axis_broadcast #(
-        .M_COUNT        (BATCH_SIZE),
-        .DATA_WIDTH     (SCALE_WIDTH),
-        .KEEP_ENABLE    (0),
-        .KEEP_WIDTH     (1),
-        .LAST_ENABLE    (1),
-        .ID_ENABLE      (0),
-        .ID_WIDTH       (1),
-        .DEST_ENABLE    (0),
-        .DEST_WIDTH     (1),
-        .USER_ENABLE    (0),
-        .USER_WIDTH     (1)
-      ) axis_broadcast_scle_pos_inst (
-        .clk            (scle_clk_pos),
-        .rst            (rst),
-        // AXI input
-        .s_axis_tdata   (scle_bcst_in_axis_tdata),
-        .s_axis_tkeep   (1'b1),
-        .s_axis_tvalid  (scle_bcst_in_axis_tvalid),
-        .s_axis_tready  (scle_bcst_in_axis_tready),
-        .s_axis_tlast   (scle_bcst_in_axis_tlast),
-        .s_axis_tid     (1'b0),
-        .s_axis_tdest   (1'b0),
-        .s_axis_tuser   (1'b0),
-        // AXI outputs
-        .m_axis_tdata   (scle_bcst_out_axis_tdata),
-        .m_axis_tvalid  (scle_bcst_out_axis_tvalid),
-        .m_axis_tready  (scle_bcst_out_axis_tready),
-        .m_axis_tlast   (scle_bcst_out_axis_tlast)
-      );
-
-      for (batch=0; batch < BATCH_SIZE; batch = batch+1) begin : scle_batch_fifo_genblock // Broadcast scales to BATCH_SIZE channels
-        localparam LFT_POS = batch * DATA_CHANNELS + pos;
-        // Batch Local Scale FIFO I/O
-        wire [SCALE_WIDTH-1:0]      scle_batch_fifo_in_axis_tdata,  scle_batch_fifo_out_axis_tdata;
-        wire                        scle_batch_fifo_in_axis_tvalid, scle_batch_fifo_out_axis_tvalid;
-        wire                        scle_batch_fifo_in_axis_tready, scle_batch_fifo_out_axis_tready;
-        wire                        scle_batch_fifo_in_axis_tlast,  scle_batch_fifo_out_axis_tlast;
-
-        assign scle_batch_fifo_in_axis_tdata   = scle_bcst_out_axis_tdata [batch*DATA_WIDTH +: DATA_WIDTH];
-        assign scle_batch_fifo_in_axis_tvalid  = scle_bcst_out_axis_tvalid[batch];
-        assign scle_bcst_out_axis_tready[batch] = scle_batch_fifo_in_axis_tready;
-        assign scle_batch_fifo_in_axis_tlast   =scle_bcst_out_axis_tlast [batch];
-
-        if (SCALE_FIFO_DEPTH > 1) begin : scle_batch_fifo_genblock
-          axis_srl_fifo #(
-            // Width of AXI stream interfaces in bits
-            .DATA_WIDTH(SCALE_WIDTH),
-            // Propagate tkeep signal
-            .KEEP_ENABLE(0),
-            // tkeep signal width (words per cycle)
-            .KEEP_WIDTH(1),
-            // Propagate tlast signal
-            .LAST_ENABLE(1),
-            // Propagate tid signal
-            .ID_ENABLE(0),
-            // tid signal width
-            .ID_WIDTH(1),
-            // Propagate tdest signal
-            .DEST_ENABLE(0),
-            // tdest signal width
-            .DEST_WIDTH(1),
-            // Propagate tuser signal
-            .USER_ENABLE(0),
-            // tuser signal width
-            .USER_WIDTH(1),
-            // FIFO depth in cycles
-            .DEPTH(SCALE_FIFO_DEPTH >> 1)
-          ) axis_fifo_scle_batch_inst (
-            .clk              (scle_clk_pos),
-            .rst              (rst),
-            .s_axis_tdata     (scle_batch_fifo_in_axis_tdata),
-            .s_axis_tkeep     (1'b1),
-            .s_axis_tvalid    (scle_batch_fifo_in_axis_tvalid),
-            .s_axis_tready    (scle_batch_fifo_in_axis_tready),
-            .s_axis_tlast     (scle_batch_fifo_in_axis_tlast),
-            .s_axis_tid       (1'b0),
-            .s_axis_tdest     (1'b0),
-            .s_axis_tuser     (1'b0),
-            .m_axis_tdata     (scle_batch_fifo_out_axis_tdata),
-            .m_axis_tvalid    (scle_batch_fifo_out_axis_tvalid),
-            .m_axis_tready    (scle_batch_fifo_out_axis_tready),
-            .m_axis_tlast     (scle_batch_fifo_out_axis_tlast)
-          );
-        end else begin : scle_fifo_bypass_genblock
-          assign scle_batch_fifo_out_axis_tdata  = scle_batch_fifo_in_axis_tdata;
-          assign scle_batch_fifo_out_axis_tvalid = scle_batch_fifo_in_axis_tvalid;
-          assign scle_batch_fifo_in_axis_tready  = scle_batch_fifo_out_axis_tready;
-          assign scle_batch_fifo_out_axis_tlast  = scle_batch_fifo_in_axis_tlast;
-        end
-
-        assign m_axis_scle_aclk   [LFT_POS] = scle_clk_pos;
-        assign m_axis_scle_tdata  [LFT_POS*SCALE_WIDTH +: SCALE_WIDTH] = scle_batch_fifo_out_axis_tdata;
-        assign m_axis_scle_tvalid [LFT_POS] = scle_batch_fifo_out_axis_tvalid;
-        assign scle_batch_fifo_out_axis_tready = m_axis_scle_tready[LFT_POS];
-        assign m_axis_scle_tlast  [LFT_POS] = scle_batch_fifo_out_axis_tlast;
-      end
-    end
-  end else begin : scle_share_genblock // One scale per data channel
+ genvar pos, batch;
+ generate if (SCALE_SHARE == 0) begin : scle_not_shared_genblock
+  for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin : scle_chn_genblock // One scale per data channel
     // Channel's clk driver
-    wire scle_clk = 
+    wire scle_clk_pos = 
      `ifdef SCALE_IF_IS_AXIL
-      m_axil_scle_aclk[0];
+      m_axil_scle_aclk[pos];
      `elsif SCALE_IF_IS_BRAM
-      scle_bram_clk[0];
+      scle_bram_clk[pos];
      `endif 
 
     // Local Scale FIFO I/O
-    wire [SCALE_WIDTH-1:0]      scle_fifo_in_axis_tdata,  scle_fifo_out_axis_tdata;
-    wire                        scle_fifo_in_axis_tvalid, scle_fifo_out_axis_tvalid;
-    wire                        scle_fifo_in_axis_tready, scle_fifo_out_axis_tready;
-    wire                        scle_fifo_in_axis_tlast,  scle_fifo_out_axis_tlast;
+    wire [SCALE_WIDTH-1:0]            scle_fifo_in_axis_tdata,  scle_fifo_out_axis_tdata;
+    wire                              scle_fifo_in_axis_tvalid, scle_fifo_out_axis_tvalid;
+    wire                              scle_fifo_in_axis_tready, scle_fifo_out_axis_tready;
+    wire                              scle_fifo_in_axis_tlast,  scle_fifo_out_axis_tlast;
+
+    // Local Grid Broadcaster I/O
+    wire [SCALE_WIDTH-1:0]            scle_bcst_in_axis_tdata;  
+    wire                              scle_bcst_in_axis_tvalid; 
+    wire                              scle_bcst_in_axis_tready; 
+    wire                              scle_bcst_in_axis_tlast;
+
+    wire [BATCH_SIZE*SCALE_WIDTH-1:0] scle_bcst_out_axis_tdata;
+    wire [BATCH_SIZE-1:0]             scle_bcst_out_axis_tvalid;
+    wire [BATCH_SIZE-1:0]             scle_bcst_out_axis_tready;
+    wire [BATCH_SIZE-1:0]             scle_bcst_out_axis_tlast;
 
    `ifdef SCALE_IF_IS_AXIL
     MCULocalAxilFSM 
@@ -659,39 +456,33 @@ module MemoryControlUnit #(
     #(
      `include "header_MCUGlobalFSMParametersInst.vh"
      `ifdef SCALE_IF_IS_BRAM
-      // BRAM control has valid signal
-      .BRAM_ACK_SIG(BRAM_ACK_SIG),
+      .BRAM_ACK_SIG             (BRAM_ACK_SIG),
      `endif 
-      // Width of AXI stream Output interfaces in bits
-      .DATA_WIDTH(SCALE_WIDTH),
-      // Data Strobe Width
-      .DATA_STRB_WIDTH(SCALE_STRB_WIDTH),
-      // Width of address bus in bits
-      .ADDR_WIDTH(SCALE_ADDR),
-      // Width of inter-iteration counters
-      .INTER_ITER_WIDTH(1),
-      // Width of intra-iteration counters
-      .INTRA_ITER_WIDTH(1)
+      .DATA_WIDTH               (SCALE_WIDTH),
+      .DATA_STRB_WIDTH          (SCALE_STRB_WIDTH),
+      .ADDR_WIDTH               (SCALE_ADDR),
+      .INTER_ITER_WIDTH         (1),
+      .INTRA_ITER_WIDTH         (1)
     ) MCULocalFSM_scle_pos_inst (
-      .clk                      (scle_clk),
+      .clk                      (scle_clk_pos),
       .rst                      (rst),
+     `ifdef DEBUG
+      .debug_wire               (scle_debug_wire        [pos*3 +: 3]),
+     `endif
      `ifdef SCALE_IF_IS_AXIL
-      .m_axil_araddr            (m_axil_scle_araddr),
-      .m_axil_arprot            (m_axil_scle_arprot),
-      .m_axil_arvalid           (m_axil_scle_arvalid),
-      .m_axil_arready           (m_axil_scle_arready[0]),
-      .m_axil_rdata             (m_axil_scle_rdata),
-      .m_axil_rresp             (m_axil_scle_rresp),
-      .m_axil_rvalid            (m_axil_scle_rvalid),
-      .m_axil_rready            (m_axil_scle_rready),
+      .m_axil_araddr            (m_axil_scle_araddr     [pos*SCALE_ADDR +: SCALE_ADDR]),
+      .m_axil_arprot            (m_axil_scle_arprot     [pos*3 +:3]),
+      .m_axil_arvalid           (m_axil_scle_arvalid    [pos]),
+      .m_axil_arready           (m_axil_scle_arready    [pos]),
+      .m_axil_rdata             (m_axil_scle_rdata      [pos*SCALE_WIDTH +: SCALE_WIDTH]),
+      .m_axil_rresp             (m_axil_scle_rresp      [pos*2 +:2]),
+      .m_axil_rvalid            (m_axil_scle_rvalid     [pos]),
+      .m_axil_rready            (m_axil_scle_rready     [pos]),
      `elsif SCALE_IF_IS_BRAM
-      `ifdef DEBUG
-      .debug_wire               (scle_debug_wire),
-      `endif
-      .bram_en                  (scle_bram_en),
-      .bram_addr                (scle_bram_addr),
-      .bram_rddata              (scle_bram_rddata),
-      .bram_rdack               (scle_bram_rdack),
+      .bram_en                  (scle_bram_en           [pos]),
+      .bram_addr                (scle_bram_addr         [pos*SCALE_ADDR +: SCALE_ADDR]),
+      .bram_rddata              (scle_bram_rddata       [pos*SCALE_WIDTH +: SCALE_WIDTH]),
+      .bram_rdack               (scle_bram_rdack        [pos]),
      `endif 
       .m_axis_tdata             (scle_fifo_in_axis_tdata),
       .m_axis_tvalid            (scle_fifo_in_axis_tvalid),
@@ -701,36 +492,25 @@ module MemoryControlUnit #(
       .addr_counter_max         (scle_size_reg),   //  Unique scale per data per grid
       .inter_counter_max        (1'b1),
       .intra_counter_max        (1'b1),
-      .tlast_transmitted        (scle_tlast_transmitted[0]),
-      .error                    (scle_error[0])
+      .tlast_transmitted        (scle_tlast_transmitted [pos]),
+      .error                    (scle_error             [pos])
     );
 
-    if (SCALE_FIFO_DEPTH > 1) begin : scle_fifo_genblock
+    if (SCALE_FIFO_DEPTH > 0) begin : scle_fifo_genblock
       axis_srl_fifo #(
-        // Width of AXI stream interfaces in bits
-        .DATA_WIDTH(SCALE_WIDTH),
-        // Propagate tkeep signal
-        .KEEP_ENABLE(0),
-        // tkeep signal width (words per cycle)
-        .KEEP_WIDTH(1),
-        // Propagate tlast signal
-        .LAST_ENABLE(1),
-        // Propagate tid signal
-        .ID_ENABLE(0),
-        // tid signal width
-        .ID_WIDTH(1),
-        // Propagate tdest signal
-        .DEST_ENABLE(0),
-        // tdest signal width
-        .DEST_WIDTH(1),
-        // Propagate tuser signal
-        .USER_ENABLE(0),
-        // tuser signal width
-        .USER_WIDTH(1),
-        // FIFO depth in cycles
-        .DEPTH(SCALE_FIFO_DEPTH)
+        .DATA_WIDTH       (SCALE_WIDTH),
+        .KEEP_ENABLE      (0),
+        .KEEP_WIDTH       (1),
+        .LAST_ENABLE      (1),
+        .ID_ENABLE        (0),
+        .ID_WIDTH         (1),
+        .DEST_ENABLE      (0),
+        .DEST_WIDTH       (1),
+        .USER_ENABLE      (0),
+        .USER_WIDTH       (1),
+        .DEPTH            ((SCALE_FIFO_DEPTH+1)>>1)
       ) axis_fifo_scle_pos_batch_inst (
-        .clk              (scle_clk),
+        .clk              (scle_clk_pos),
         .rst              (rst),
         .s_axis_tdata     (scle_fifo_in_axis_tdata),
         .s_axis_tkeep     (1'b1),
@@ -745,266 +525,235 @@ module MemoryControlUnit #(
         .m_axis_tready    (scle_fifo_out_axis_tready),
         .m_axis_tlast     (scle_fifo_out_axis_tlast)
       );
-    end else begin : scle_fifo_bypass_genblock
+    end else begin
       assign scle_fifo_out_axis_tdata  = scle_fifo_in_axis_tdata;
       assign scle_fifo_out_axis_tvalid = scle_fifo_in_axis_tvalid;
       assign scle_fifo_in_axis_tready  = scle_fifo_out_axis_tready;
       assign scle_fifo_out_axis_tlast  = scle_fifo_in_axis_tlast;
     end
 
-    assign m_axis_scle_aclk   [0]     = scle_clk;
-    assign m_axis_scle_tdata          = scle_fifo_out_axis_tdata;
-    assign m_axis_scle_tvalid [0]     = scle_fifo_out_axis_tvalid;
-    assign scle_fifo_out_axis_tready  = m_axis_scle_tready[0];
-    assign m_axis_scle_tlast  [0]     = scle_fifo_out_axis_tlast;
-  end
+    assign scle_bcst_in_axis_tdata  = scle_fifo_out_axis_tdata;
+    assign scle_bcst_in_axis_tvalid = scle_fifo_out_axis_tvalid;
+    assign scle_fifo_out_axis_tready= scle_bcst_in_axis_tready;
+    assign scle_bcst_in_axis_tlast  = scle_fifo_out_axis_tlast;
+    
+    axis_broadcast #(
+      .M_COUNT        (BATCH_SIZE),
+      .DATA_WIDTH     (SCALE_WIDTH),
+      .KEEP_ENABLE    (0),
+      .KEEP_WIDTH     (1),
+      .LAST_ENABLE    (1),
+      .ID_ENABLE      (0),
+      .ID_WIDTH       (1),
+      .DEST_ENABLE    (0),
+      .DEST_WIDTH     (1),
+      .USER_ENABLE    (0),
+      .USER_WIDTH     (1)
+    ) axis_broadcast_scle_pos_inst (
+      .clk            (scle_clk_pos),
+      .rst            (rst),
+      .s_axis_tdata   (scle_bcst_in_axis_tdata),
+      .s_axis_tkeep   (1'b1),
+      .s_axis_tvalid  (scle_bcst_in_axis_tvalid),
+      .s_axis_tready  (scle_bcst_in_axis_tready),
+      .s_axis_tlast   (scle_bcst_in_axis_tlast),
+      .s_axis_tid     (1'b0),
+      .s_axis_tdest   (1'b0),
+      .s_axis_tuser   (1'b0),
+      .m_axis_tdata   (scle_bcst_out_axis_tdata),
+      .m_axis_tvalid  (scle_bcst_out_axis_tvalid),
+      .m_axis_tready  (scle_bcst_out_axis_tready),
+      .m_axis_tlast   (scle_bcst_out_axis_tlast)
+    );
 
-  if (GRID_SHARE == 0) begin : grid_not_shared_genblock
-    for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin : grid_chn_genblock // One scale per data channel
-      // Channel's clk driver
-      wire grid_clk_pos = 
-       `ifdef GRID_IF_IS_AXIL
-        m_axil_grid_aclk[pos];
-       `elsif GRID_IF_IS_BRAM
-        grid_bram_clk[pos];
-       `endif 
+    for (batch=0; batch < BATCH_SIZE; batch = batch+1) begin : scle_batch_fifo_genblock // Broadcast scales to BATCH_SIZE channels
+      localparam LFT_POS = batch * DATA_CHANNELS + pos;
+      // Batch Local Scale FIFO I/O
+      wire [SCALE_WIDTH-1:0]      scle_batch_fifo_in_axis_tdata,  scle_batch_fifo_out_axis_tdata;
+      wire                        scle_batch_fifo_in_axis_tvalid, scle_batch_fifo_out_axis_tvalid;
+      wire                        scle_batch_fifo_in_axis_tready, scle_batch_fifo_out_axis_tready;
+      wire                        scle_batch_fifo_in_axis_tlast,  scle_batch_fifo_out_axis_tlast;
 
-      // Local Scale FIFO I/O
-      wire [GRID_WIDTH-1:0]       grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
-      wire                        grid_fifo_in_axis_tvalid, grid_fifo_out_axis_tvalid;
-      wire                        grid_fifo_in_axis_tready, grid_fifo_out_axis_tready;
-      wire                        grid_fifo_in_axis_tlast,  grid_fifo_out_axis_tlast;
+      assign scle_batch_fifo_in_axis_tdata   = scle_bcst_out_axis_tdata [batch*DATA_WIDTH +: DATA_WIDTH];
+      assign scle_batch_fifo_in_axis_tvalid  = scle_bcst_out_axis_tvalid[batch];
+      assign scle_bcst_out_axis_tready[batch] = scle_batch_fifo_in_axis_tready;
+      assign scle_batch_fifo_in_axis_tlast   =scle_bcst_out_axis_tlast [batch];
 
-      // Local Grid Broadcaster I/O
-      wire [GRID_WIDTH-1:0]               grid_bcst_in_axis_tdata;  
-      wire                                grid_bcst_in_axis_tvalid; 
-      wire                                grid_bcst_in_axis_tready; 
-      wire                                grid_bcst_in_axis_tlast;
-
-      wire [BATCH_SIZE*GRID_WIDTH-1:0]    grid_bcst_out_axis_tdata;
-      wire [BATCH_SIZE-1:0]               grid_bcst_out_axis_tvalid;
-      wire [BATCH_SIZE-1:0]               grid_bcst_out_axis_tready;
-      wire [BATCH_SIZE-1:0]               grid_bcst_out_axis_tlast;
-
-     `ifdef GRID_IF_IS_AXIL
-      MCULocalAxilFSM 
-     `endif 
-     `ifdef GRID_IF_IS_BRAM
-      MCULocalBramFSM
-     `endif 
-      #(
-       `include "header_MCUGlobalFSMParametersInst.vh"
-       `ifdef GRID_IF_IS_BRAM
-        // BRAM control has valid signal
-        .BRAM_ACK_SIG(BRAM_ACK_SIG),
-       `endif 
-        // Width of AXI stream Output interfaces in bits
-        .DATA_WIDTH(GRID_WIDTH),
-        // Data Strobe Width
-        .DATA_STRB_WIDTH(GRID_STRB_WIDTH),
-        // Width of address bus in bits
-        .ADDR_WIDTH(GRID_ADDR),
-        // Width of inter-iteration counters
-        .INTER_ITER_WIDTH(1),
-        // Width of intra-iteration counters
-        .INTRA_ITER_WIDTH(DATA_ADDR+1)
-      ) MCULocalFSM_grid_pos_inst (
-        .clk                      (grid_clk_pos),
-        .rst                      (rst),
-       `ifdef GRID_IF_IS_AXIL
-        .m_axil_araddr            (m_axil_grid_araddr[pos*GRID_ADDR +: GRID_ADDR]),
-        .m_axil_arprot            (m_axil_grid_arprot[pos*3 +:3]),
-        .m_axil_arvalid           (m_axil_grid_arvalid[pos]),
-        .m_axil_arready           (m_axil_grid_arready[pos]),
-        .m_axil_rdata             (m_axil_grid_rdata[pos*GRID_WIDTH +: GRID_WIDTH]),
-        .m_axil_rresp             (m_axil_grid_rresp[pos*2 +:2]),
-        .m_axil_rvalid            (m_axil_grid_rvalid[pos]),
-        .m_axil_rready            (m_axil_grid_rready[pos]),
-       `elsif GRID_IF_IS_BRAM
-      `ifdef DEBUG
-        .debug_wire               (grid_debug_wire [pos*3 +: 3]),
-      `endif
-        .bram_en                  (grid_bram_en[pos]),
-        .bram_addr                (grid_bram_addr[pos*GRID_ADDR +: GRID_ADDR]),
-        .bram_rddata              (grid_bram_rddata[pos*GRID_WIDTH +: GRID_WIDTH]),
-        .bram_rdack               (grid_bram_rdack[pos]),
-       `endif 
-        .m_axis_tdata             (grid_fifo_in_axis_tdata),
-        .m_axis_tvalid            (grid_fifo_in_axis_tvalid),
-        .m_axis_tready            (grid_fifo_in_axis_tready),
-        .m_axis_tlast             (grid_fifo_in_axis_tlast),
-        .glo_fsm_state            (glo_fsm_state),
-        .addr_counter_max         (grid_size_reg),   //  Multiple data per grid
-        .inter_counter_max        (1'b1),
-        .intra_counter_max        (data_size_reg),
-        .tlast_transmitted        (grid_tlast_transmitted[pos]),
-        .error                    (grid_error[pos])
-      );
-
-      if (GRID_FIFO_DEPTH > 0) begin
+      if (SCALE_FIFO_DEPTH > 1) begin : scle_batch_fifo_genblock
         axis_srl_fifo #(
-          // Width of AXI stream interfaces in bits
-          .DATA_WIDTH(DATA_WIDTH),
-          // Propagate tkeep signal
-          .KEEP_ENABLE(0),
-          // tkeep signal width (words per cycle)
-          .KEEP_WIDTH(1),
-          // Propagate tlast signal
-          .LAST_ENABLE(1),
-          // Propagate tid signal
-          .ID_ENABLE(0),
-          // tid signal width
-          .ID_WIDTH(1),
-          // Propagate tdest signal
-          .DEST_ENABLE(0),
-          // tdest signal width
-          .DEST_WIDTH(1),
-          // Propagate tuser signal
-          .USER_ENABLE(0),
-          // tuser signal width
-          .USER_WIDTH(1),
-          // FIFO depth in cycles
-          .DEPTH((GRID_FIFO_DEPTH+1)>>1)
-        ) axis_fifo_grid_pos_batch_inst (
-          .clk              (grid_clk_pos),
+          .DATA_WIDTH       (SCALE_WIDTH),
+          .KEEP_ENABLE      (0),
+          .KEEP_WIDTH       (1),
+          .LAST_ENABLE      (1),
+          .ID_ENABLE        (0),
+          .ID_WIDTH         (1),
+          .DEST_ENABLE      (0),
+          .DEST_WIDTH       (1),
+          .USER_ENABLE      (0),
+          .USER_WIDTH       (1),
+          .DEPTH            (SCALE_FIFO_DEPTH >> 1)
+        ) axis_fifo_scle_batch_inst (
+          .clk              (scle_clk_pos),
           .rst              (rst),
-          .s_axis_tdata     (grid_fifo_in_axis_tdata),
+          .s_axis_tdata     (scle_batch_fifo_in_axis_tdata),
           .s_axis_tkeep     (1'b1),
-          .s_axis_tvalid    (grid_fifo_in_axis_tvalid),
-          .s_axis_tready    (grid_fifo_in_axis_tready),
-          .s_axis_tlast     (grid_fifo_in_axis_tlast),
+          .s_axis_tvalid    (scle_batch_fifo_in_axis_tvalid),
+          .s_axis_tready    (scle_batch_fifo_in_axis_tready),
+          .s_axis_tlast     (scle_batch_fifo_in_axis_tlast),
           .s_axis_tid       (1'b0),
           .s_axis_tdest     (1'b0),
           .s_axis_tuser     (1'b0),
-          .m_axis_tdata     (grid_fifo_out_axis_tdata),
-          .m_axis_tvalid    (grid_fifo_out_axis_tvalid),
-          .m_axis_tready    (grid_fifo_out_axis_tready),
-          .m_axis_tlast     (grid_fifo_out_axis_tlast)
+          .m_axis_tdata     (scle_batch_fifo_out_axis_tdata),
+          .m_axis_tvalid    (scle_batch_fifo_out_axis_tvalid),
+          .m_axis_tready    (scle_batch_fifo_out_axis_tready),
+          .m_axis_tlast     (scle_batch_fifo_out_axis_tlast)
         );
-      end else begin
-        assign grid_fifo_out_axis_tdata  = grid_fifo_in_axis_tdata;
-        assign grid_fifo_out_axis_tvalid = grid_fifo_in_axis_tvalid;
-        assign grid_fifo_in_axis_tready  = grid_fifo_out_axis_tready;
-        assign grid_fifo_out_axis_tlast  = grid_fifo_in_axis_tlast;
+      end else begin : scle_fifo_bypass_genblock
+        assign scle_batch_fifo_out_axis_tdata  = scle_batch_fifo_in_axis_tdata;
+        assign scle_batch_fifo_out_axis_tvalid = scle_batch_fifo_in_axis_tvalid;
+        assign scle_batch_fifo_in_axis_tready  = scle_batch_fifo_out_axis_tready;
+        assign scle_batch_fifo_out_axis_tlast  = scle_batch_fifo_in_axis_tlast;
       end
 
-      assign grid_bcst_in_axis_tdata  = grid_fifo_out_axis_tdata;
-      assign grid_bcst_in_axis_tvalid = grid_fifo_out_axis_tvalid;
-      assign grid_fifo_out_axis_tready= grid_bcst_in_axis_tready;
-      assign grid_bcst_in_axis_tlast  = grid_fifo_out_axis_tlast;
-      
-      axis_broadcast #(
-        .M_COUNT        (BATCH_SIZE),
-        .DATA_WIDTH     (DATA_WIDTH),
-        .KEEP_ENABLE    (0),
-        .KEEP_WIDTH     (1),
-        .LAST_ENABLE    (1),
-        .ID_ENABLE      (0),
-        .ID_WIDTH       (1),
-        .DEST_ENABLE    (0),
-        .DEST_WIDTH     (1),
-        .USER_ENABLE    (0),
-        .USER_WIDTH     (1)
-      ) axis_broadcast_grid_pos_inst (
-        .clk            (grid_clk_pos),
-        .rst            (rst),
-        // AXI input
-        .s_axis_tdata   (grid_bcst_in_axis_tdata),
-        .s_axis_tkeep   (1'b1),
-        .s_axis_tvalid  (grid_bcst_in_axis_tvalid),
-        .s_axis_tready  (grid_bcst_in_axis_tready),
-        .s_axis_tlast   (grid_bcst_in_axis_tlast),
-        .s_axis_tid     (1'b0),
-        .s_axis_tdest   (1'b0),
-        .s_axis_tuser   (1'b0),
-        // AXI outputs
-        .m_axis_tdata   (grid_bcst_out_axis_tdata),
-        .m_axis_tvalid  (grid_bcst_out_axis_tvalid),
-        .m_axis_tready  (grid_bcst_out_axis_tready),
-        .m_axis_tlast   (grid_bcst_out_axis_tlast)
-      );
-
-      for (batch=0; batch < BATCH_SIZE; batch = batch+1) begin  // Broadcast scales to BATCH_SIZE channels
-        localparam LFT_POS = batch * DATA_CHANNELS + pos;
-        // Batch Local Scale FIFO I/O
-        wire [DATA_WIDTH-1:0]  grid_batch_fifo_in_axis_tdata,  grid_batch_fifo_out_axis_tdata;
-        wire                        grid_batch_fifo_in_axis_tvalid, grid_batch_fifo_out_axis_tvalid;
-        wire                        grid_batch_fifo_in_axis_tready, grid_batch_fifo_out_axis_tready;
-        wire                        grid_batch_fifo_in_axis_tlast,  grid_batch_fifo_out_axis_tlast;
-
-        assign grid_batch_fifo_in_axis_tdata   = grid_bcst_out_axis_tdata [batch*DATA_WIDTH +: DATA_WIDTH];
-        assign grid_batch_fifo_in_axis_tvalid  = grid_bcst_out_axis_tvalid[batch];
-        assign grid_bcst_out_axis_tready[batch] = grid_batch_fifo_in_axis_tready;
-        assign grid_batch_fifo_in_axis_tlast   =grid_bcst_out_axis_tlast [batch];
-
-        if (GRID_FIFO_DEPTH > 2) begin
-          axis_srl_fifo #(
-            // Width of AXI stream interfaces in bits
-            .DATA_WIDTH(DATA_WIDTH),
-            // Propagate tkeep signal
-            .KEEP_ENABLE(0),
-            // tkeep signal width (words per cycle)
-            .KEEP_WIDTH(1),
-            // Propagate tlast signal
-            .LAST_ENABLE(1),
-            // Propagate tid signal
-            .ID_ENABLE(0),
-            // tid signal width
-            .ID_WIDTH(1),
-            // Propagate tdest signal
-            .DEST_ENABLE(0),
-            // tdest signal width
-            .DEST_WIDTH(1),
-            // Propagate tuser signal
-            .USER_ENABLE(0),
-            // tuser signal width
-            .USER_WIDTH(1),
-            // FIFO depth in cycles
-            .DEPTH(GRID_FIFO_DEPTH >> 1)
-          ) axis_fifo_grid_batch_inst (
-            .clk              (grid_clk_pos),
-            .rst              (rst),
-            .s_axis_tdata     (grid_batch_fifo_in_axis_tdata),
-            .s_axis_tkeep     (1'b1),
-            .s_axis_tvalid    (grid_batch_fifo_in_axis_tvalid),
-            .s_axis_tready    (grid_batch_fifo_in_axis_tready),
-            .s_axis_tlast     (grid_batch_fifo_in_axis_tlast),
-            .s_axis_tid       (1'b0),
-            .s_axis_tdest     (1'b0),
-            .s_axis_tuser     (1'b0),
-            .m_axis_tdata     (grid_batch_fifo_out_axis_tdata),
-            .m_axis_tvalid    (grid_batch_fifo_out_axis_tvalid),
-            .m_axis_tready    (grid_batch_fifo_out_axis_tready),
-            .m_axis_tlast     (grid_batch_fifo_out_axis_tlast)
-          );
-        end else begin
-          assign grid_batch_fifo_out_axis_tdata  = grid_batch_fifo_in_axis_tdata;
-          assign grid_batch_fifo_out_axis_tvalid = grid_batch_fifo_in_axis_tvalid;
-          assign grid_batch_fifo_in_axis_tready  = grid_batch_fifo_out_axis_tready;
-          assign grid_batch_fifo_out_axis_tlast  = grid_batch_fifo_in_axis_tlast;
-        end
-
-        assign m_axis_grid_aclk   [LFT_POS] = grid_clk_pos;
-        assign m_axis_grid_tdata  [LFT_POS*DATA_WIDTH +: DATA_WIDTH] = grid_batch_fifo_out_axis_tdata;
-        assign m_axis_grid_tvalid [LFT_POS] = grid_batch_fifo_out_axis_tvalid;
-        assign grid_batch_fifo_out_axis_tready = m_axis_grid_tready[LFT_POS];
-        assign m_axis_grid_tlast  [LFT_POS] = grid_batch_fifo_out_axis_tlast;
-      end
+      assign m_axis_scle_aclk   [LFT_POS] = scle_clk_pos;
+      assign m_axis_scle_tdata  [LFT_POS*SCALE_WIDTH +: SCALE_WIDTH] = scle_batch_fifo_out_axis_tdata;
+      assign m_axis_scle_tvalid [LFT_POS] = scle_batch_fifo_out_axis_tvalid;
+      assign scle_batch_fifo_out_axis_tready = m_axis_scle_tready[LFT_POS];
+      assign m_axis_scle_tlast  [LFT_POS] = scle_batch_fifo_out_axis_tlast;
     end
-  end else begin : grid_share_genblock // One scale per data channel
+  end
+end else begin : scle_share_genblock // One scale per data channel
+  // Channel's clk driver
+  wire scle_clk = 
+   `ifdef SCALE_IF_IS_AXIL
+    m_axil_scle_aclk[0];
+   `elsif SCALE_IF_IS_BRAM
+    scle_bram_clk[0];
+   `endif 
+
+  // Local Scale FIFO I/O
+  wire [SCALE_WIDTH-1:0]      scle_fifo_in_axis_tdata,  scle_fifo_out_axis_tdata;
+  wire                        scle_fifo_in_axis_tvalid, scle_fifo_out_axis_tvalid;
+  wire                        scle_fifo_in_axis_tready, scle_fifo_out_axis_tready;
+  wire                        scle_fifo_in_axis_tlast,  scle_fifo_out_axis_tlast;
+
+ `ifdef SCALE_IF_IS_AXIL
+  MCULocalAxilFSM 
+ `elsif SCALE_IF_IS_BRAM
+  MCULocalBramFSM
+ `endif 
+  #(
+   `include "header_MCUGlobalFSMParametersInst.vh"
+   `ifdef SCALE_IF_IS_BRAM
+    .BRAM_ACK_SIG             (BRAM_ACK_SIG),
+   `endif 
+    .DATA_WIDTH               (SCALE_WIDTH),
+    .DATA_STRB_WIDTH          (SCALE_STRB_WIDTH),
+    .ADDR_WIDTH               (SCALE_ADDR),
+    .INTER_ITER_WIDTH         (1),
+    .INTRA_ITER_WIDTH         (1)
+  ) MCULocalFSM_scle_pos_inst (
+    .clk                      (scle_clk),
+    .rst                      (rst),
+   `ifdef DEBUG
+    .debug_wire               (scle_debug_wire),
+   `endif
+   `ifdef SCALE_IF_IS_AXIL
+    .m_axil_araddr            (m_axil_scle_araddr),
+    .m_axil_arprot            (m_axil_scle_arprot),
+    .m_axil_arvalid           (m_axil_scle_arvalid),
+    .m_axil_arready           (m_axil_scle_arready[0]),
+    .m_axil_rdata             (m_axil_scle_rdata),
+    .m_axil_rresp             (m_axil_scle_rresp),
+    .m_axil_rvalid            (m_axil_scle_rvalid),
+    .m_axil_rready            (m_axil_scle_rready),
+   `elsif SCALE_IF_IS_BRAM
+    .bram_en                  (scle_bram_en),
+    .bram_addr                (scle_bram_addr),
+    .bram_rddata              (scle_bram_rddata),
+    .bram_rdack               (scle_bram_rdack),
+   `endif 
+    .m_axis_tdata             (scle_fifo_in_axis_tdata),
+    .m_axis_tvalid            (scle_fifo_in_axis_tvalid),
+    .m_axis_tready            (scle_fifo_in_axis_tready),
+    .m_axis_tlast             (scle_fifo_in_axis_tlast),
+    .glo_fsm_state            (glo_fsm_state),
+    .addr_counter_max         (scle_size_reg),   //  Unique scale per data per grid
+    .inter_counter_max        (1'b1),
+    .intra_counter_max        (1'b1),
+    .tlast_transmitted        (scle_tlast_transmitted[0]),
+    .error                    (scle_error[0])
+  );
+
+  if (SCALE_FIFO_DEPTH > 1) begin : scle_fifo_genblock
+    axis_srl_fifo #(
+      .DATA_WIDTH       (SCALE_WIDTH),
+      .KEEP_ENABLE      (0),
+      .KEEP_WIDTH       (1),
+      .LAST_ENABLE      (1),
+      .ID_ENABLE        (0),
+      .ID_WIDTH         (1),
+      .DEST_ENABLE      (0),
+      .DEST_WIDTH       (1),
+      .USER_ENABLE      (0),
+      .USER_WIDTH       (1),
+      .DEPTH            (SCALE_FIFO_DEPTH)
+    ) axis_fifo_scle_pos_batch_inst (
+      .clk              (scle_clk),
+      .rst              (rst),
+      .s_axis_tdata     (scle_fifo_in_axis_tdata),
+      .s_axis_tkeep     (1'b1),
+      .s_axis_tvalid    (scle_fifo_in_axis_tvalid),
+      .s_axis_tready    (scle_fifo_in_axis_tready),
+      .s_axis_tlast     (scle_fifo_in_axis_tlast),
+      .s_axis_tid       (1'b0),
+      .s_axis_tdest     (1'b0),
+      .s_axis_tuser     (1'b0),
+      .m_axis_tdata     (scle_fifo_out_axis_tdata),
+      .m_axis_tvalid    (scle_fifo_out_axis_tvalid),
+      .m_axis_tready    (scle_fifo_out_axis_tready),
+      .m_axis_tlast     (scle_fifo_out_axis_tlast)
+    );
+  end else begin : scle_fifo_bypass_genblock
+    assign scle_fifo_out_axis_tdata  = scle_fifo_in_axis_tdata;
+    assign scle_fifo_out_axis_tvalid = scle_fifo_in_axis_tvalid;
+    assign scle_fifo_in_axis_tready  = scle_fifo_out_axis_tready;
+    assign scle_fifo_out_axis_tlast  = scle_fifo_in_axis_tlast;
+  end
+
+  assign m_axis_scle_aclk   [0]     = scle_clk;
+  assign m_axis_scle_tdata          = scle_fifo_out_axis_tdata;
+  assign m_axis_scle_tvalid [0]     = scle_fifo_out_axis_tvalid;
+  assign scle_fifo_out_axis_tready  = m_axis_scle_tready[0];
+  assign m_axis_scle_tlast  [0]     = scle_fifo_out_axis_tlast;
+ end
+
+ if (GRID_SHARE == 0) begin : grid_not_shared_genblock
+  for (pos = 0; pos < DATA_CHANNELS; pos = pos + 1) begin : grid_chn_genblock // One scale per data channel
     // Channel's clk driver
-    wire grid_clk = 
-     `ifdef SCALE_IF_IS_AXIL
-        m_axil_scle_aclk[0];
-     `elsif SCALE_IF_IS_BRAM
-        scle_bram_clk[0];
+    wire grid_clk_pos = 
+     `ifdef GRID_IF_IS_AXIL
+      m_axil_grid_aclk[pos];
+     `elsif GRID_IF_IS_BRAM
+      grid_bram_clk[pos];
      `endif 
 
-    // Local Grid FIFO I/O
-    wire [GRID_WIDTH-1:0]  grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
-    wire                   grid_fifo_in_axis_tvalid, grid_fifo_out_axis_tvalid;
-    wire                   grid_fifo_in_axis_tready, grid_fifo_out_axis_tready;
-    wire                   grid_fifo_in_axis_tlast,  grid_fifo_out_axis_tlast;
+    // Local Scale FIFO I/O
+    wire [GRID_WIDTH-1:0]             grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
+    wire                              grid_fifo_in_axis_tvalid, grid_fifo_out_axis_tvalid;
+    wire                              grid_fifo_in_axis_tready, grid_fifo_out_axis_tready;
+    wire                              grid_fifo_in_axis_tlast,  grid_fifo_out_axis_tlast;
+
+    // Local Grid Broadcaster I/O
+    wire [GRID_WIDTH-1:0]             grid_bcst_in_axis_tdata;  
+    wire                              grid_bcst_in_axis_tvalid; 
+    wire                              grid_bcst_in_axis_tready; 
+    wire                              grid_bcst_in_axis_tlast;
+
+    wire [BATCH_SIZE*GRID_WIDTH-1:0]  grid_bcst_out_axis_tdata;
+    wire [BATCH_SIZE-1:0]             grid_bcst_out_axis_tvalid;
+    wire [BATCH_SIZE-1:0]             grid_bcst_out_axis_tready;
+    wire [BATCH_SIZE-1:0]             grid_bcst_out_axis_tlast;
 
    `ifdef GRID_IF_IS_AXIL
     MCULocalAxilFSM 
@@ -1014,39 +763,34 @@ module MemoryControlUnit #(
     #(
      `include "header_MCUGlobalFSMParametersInst.vh"
      `ifdef GRID_IF_IS_BRAM
-      // BRAM control has valid signal
       .BRAM_ACK_SIG(BRAM_ACK_SIG),
      `endif 
       .DATA_WIDTH(GRID_WIDTH),
-      // Data Strobe Width
       .DATA_STRB_WIDTH(GRID_STRB_WIDTH),
-      // Width of address bus in bits
       .ADDR_WIDTH(GRID_ADDR),
-      // Width of inter-iteration counters
       .INTER_ITER_WIDTH(1),
-      // Width of intra-iteration counters
       .INTRA_ITER_WIDTH(DATA_ADDR+1)
     ) MCULocalFSM_grid_pos_inst (
-      .clk                      (grid_clk),
+      .clk                      (grid_clk_pos),
       .rst                      (rst),
-     `ifdef GRID_IF_IS_AXIL
-      .m_axil_araddr            (m_axil_grid_araddr),
-      .m_axil_arprot            (m_axil_grid_arprot),
-      .m_axil_arvalid           (m_axil_grid_arvalid),
-      .m_axil_arready           (m_axil_grid_arready),
-      .m_axil_rdata             (m_axil_grid_rdata),
-      .m_axil_rresp             (m_axil_grid_rresp),
-      .m_axil_rvalid            (m_axil_grid_rvalid),
-      .m_axil_rready            (m_axil_grid_rready),
-     `elsif GRID_IF_IS_BRAM
      `ifdef DEBUG
-      .debug_wire               (grid_debug_wire),
+      .debug_wire               (grid_debug_wire        [pos*3 +: 3]),
      `endif
-      .bram_en                  (grid_bram_en),
-      .bram_addr                (grid_bram_addr),
-      .bram_rddata              (grid_bram_rddata),
-      .bram_rdack               (grid_bram_rdack),
-     `endif 
+     `ifdef GRID_IF_IS_AXIL
+      .m_axil_araddr            (m_axil_grid_araddr     [pos*GRID_ADDR +: GRID_ADDR]),
+      .m_axil_arprot            (m_axil_grid_arprot     [pos*3 +:3]),
+      .m_axil_arvalid           (m_axil_grid_arvalid    [pos]),
+      .m_axil_arready           (m_axil_grid_arready    [pos]),
+      .m_axil_rdata             (m_axil_grid_rdata      [pos*GRID_WIDTH +: GRID_WIDTH]),
+      .m_axil_rresp             (m_axil_grid_rresp      [pos*2 +:2]),
+      .m_axil_rvalid            (m_axil_grid_rvalid     [pos]),
+      .m_axil_rready            (m_axil_grid_rready     [pos]),
+     `elsif GRID_IF_IS_BRAM
+      .bram_en                  (grid_bram_en           [pos]),
+      .bram_addr                (grid_bram_addr         [pos*GRID_ADDR +: GRID_ADDR]),
+      .bram_rddata              (grid_bram_rddata       [pos*GRID_WIDTH +: GRID_WIDTH]),
+      .bram_rdack               (grid_bram_rdack        [pos]),
+      `endif 
       .m_axis_tdata             (grid_fifo_in_axis_tdata),
       .m_axis_tvalid            (grid_fifo_in_axis_tvalid),
       .m_axis_tready            (grid_fifo_in_axis_tready),
@@ -1055,36 +799,25 @@ module MemoryControlUnit #(
       .addr_counter_max         (grid_size_reg),   //  Multiple data per grid
       .inter_counter_max        (1'b1),
       .intra_counter_max        (data_size_reg),
-      .tlast_transmitted        (grid_tlast_transmitted[0]),
-      .error                    (grid_error[0])
+      .tlast_transmitted        (grid_tlast_transmitted [pos]),
+      .error                    (grid_error             [pos])
     );
 
-    if (GRID_FIFO_DEPTH > 1) begin
+    if (GRID_FIFO_DEPTH > 0) begin
       axis_srl_fifo #(
-        // Width of AXI stream interfaces in bits
-        .DATA_WIDTH(GRID_WIDTH),
-        // Propagate tkeep signal
-        .KEEP_ENABLE(0),
-        // tkeep signal width (words per cycle)
-        .KEEP_WIDTH(1),
-        // Propagate tlast signal
-        .LAST_ENABLE(1),
-        // Propagate tid signal
-        .ID_ENABLE(0),
-        // tid signal width
-        .ID_WIDTH(1),
-        // Propagate tdest signal
-        .DEST_ENABLE(0),
-        // tdest signal width
-        .DEST_WIDTH(1),
-        // Propagate tuser signal
-        .USER_ENABLE(0),
-        // tuser signal width
-        .USER_WIDTH(1),
-        // FIFO depth in cycles
-        .DEPTH(GRID_FIFO_DEPTH)
+        .DATA_WIDTH       (DATA_WIDTH),
+        .KEEP_ENABLE      (0),
+        .KEEP_WIDTH       (1),
+        .LAST_ENABLE      (1),
+        .ID_ENABLE        (0),
+        .ID_WIDTH         (1),
+        .DEST_ENABLE      (0),
+        .DEST_WIDTH       (1),
+        .USER_ENABLE      (0),
+        .USER_WIDTH       (1),
+        .DEPTH            ((GRID_FIFO_DEPTH+1)>>1)
       ) axis_fifo_grid_pos_batch_inst (
-        .clk              (grid_clk),
+        .clk              (grid_clk_pos),
         .rst              (rst),
         .s_axis_tdata     (grid_fifo_in_axis_tdata),
         .s_axis_tkeep     (1'b1),
@@ -1106,135 +839,307 @@ module MemoryControlUnit #(
       assign grid_fifo_out_axis_tlast  = grid_fifo_in_axis_tlast;
     end
 
-    assign m_axis_grid_aclk   [0] = grid_clk;
-    assign m_axis_grid_tdata  = grid_fifo_out_axis_tdata;
-    assign m_axis_grid_tvalid [0] = grid_fifo_out_axis_tvalid;
-    assign grid_fifo_out_axis_tready = m_axis_grid_tready[0];
-    assign m_axis_grid_tlast  [0] = grid_fifo_out_axis_tlast;
-  end
-
-  for (pos = 0; pos < BATCH_SIZE*DATA_CHANNELS; pos = pos + 1) begin : data_chn_genblock // One data per data channel per batch
-    // Channel's clk driver
-    wire data_clk_pos = 
-     `ifdef DATA_IF_IS_AXIL
-      m_axil_data_aclk[pos];
-     `elsif DATA_IF_IS_BRAM
-      data_bram_clk[pos];
-     `endif 
-
-    // Local Data FIFO I/O
-    wire [DATA_WIDTH-1:0]  data_fifo_in_axis_tdata,  data_fifo_out_axis_tdata;
-    wire                   data_fifo_in_axis_tvalid, data_fifo_out_axis_tvalid;
-    wire                   data_fifo_in_axis_tready, data_fifo_out_axis_tready;
-    wire                   data_fifo_in_axis_tlast,  data_fifo_out_axis_tlast;
-
-    `ifdef DATA_IF_IS_AXIL
-    MCULocalAxilFSM 
-    `elsif DATA_IF_IS_BRAM
-    MCULocalBramFSM
-    `endif 
-    #(
-     `include "header_MCUGlobalFSMParametersInst.vh"
-     `ifdef DATA_IF_IS_BRAM
-      // BRAM control has valid signal
-      .BRAM_ACK_SIG(BRAM_ACK_SIG),
-     `endif 
-      // Width of AXI stream Output interfaces in bits
-      .DATA_WIDTH(DATA_WIDTH),
-      // Data Strobe Width
-      .DATA_STRB_WIDTH(DATA_STRB_WIDTH),
-      // Width of address bus in bits
-      .ADDR_WIDTH(DATA_ADDR),
-      // Width of inter-iteration counters
-      .INTER_ITER_WIDTH(GRID_ADDR+1),
-      // Width of intra-iteration counters
-      .INTRA_ITER_WIDTH(1)
-    ) MCULocalFSM_data_pos_inst (
-      .clk                      (data_clk_pos),
-      .rst                      (rst),
-     `ifdef DATA_IF_IS_AXIL
-      .m_axil_araddr            (m_axil_data_araddr[pos*DATA_ADDR +: DATA_ADDR]),
-      .m_axil_arprot            (m_axil_data_arprot[pos*3 +: 3]),
-      .m_axil_arvalid           (m_axil_data_arvalid[pos]),
-      .m_axil_arready           (m_axil_data_arready[pos]),
-      .m_axil_rdata             (m_axil_data_rdata[pos*DATA_WIDTH +: DATA_WIDTH]),
-      .m_axil_rresp             (m_axil_data_rresp[pos*2 +: 2]),
-      .m_axil_rvalid            (m_axil_data_rvalid[pos]),
-      .m_axil_rready            (m_axil_data_rready[pos]),
-     `elsif DATA_IF_IS_BRAM
-     `ifdef DEBUG
-      .debug_wire               (data_debug_wire  [pos*3 +: 3]),
-     `endif
-      .bram_en                  (data_bram_en[pos]),
-      .bram_addr                (data_bram_addr[pos*DATA_ADDR +: DATA_ADDR]),
-      .bram_rddata              (data_bram_rddata[pos*DATA_WIDTH +: DATA_WIDTH]),
-      .bram_rdack               (data_bram_rdack[pos]),
-     `endif 
-      .m_axis_tdata             (data_fifo_in_axis_tdata),
-      .m_axis_tvalid            (data_fifo_in_axis_tvalid),
-      .m_axis_tready            (data_fifo_in_axis_tready),
-      .m_axis_tlast             (data_fifo_in_axis_tlast),
-      .glo_fsm_state            (glo_fsm_state),
-      .addr_counter_max         (data_size_reg),   //  One data per grid
-      .inter_counter_max        (grid_size_reg),
-      .intra_counter_max        (1'b1),
-      .tlast_transmitted        (data_tlast_transmitted[pos]),
-      .error                    (data_error[pos])
+    assign grid_bcst_in_axis_tdata  = grid_fifo_out_axis_tdata;
+    assign grid_bcst_in_axis_tvalid = grid_fifo_out_axis_tvalid;
+    assign grid_fifo_out_axis_tready= grid_bcst_in_axis_tready;
+    assign grid_bcst_in_axis_tlast  = grid_fifo_out_axis_tlast;
+    
+    axis_broadcast #(
+      .M_COUNT        (BATCH_SIZE),
+      .DATA_WIDTH     (DATA_WIDTH),
+      .KEEP_ENABLE    (0),
+      .KEEP_WIDTH     (1),
+      .LAST_ENABLE    (1),
+      .ID_ENABLE      (0),
+      .ID_WIDTH       (1),
+      .DEST_ENABLE    (0),
+      .DEST_WIDTH     (1),
+      .USER_ENABLE    (0),
+      .USER_WIDTH     (1)
+    ) axis_broadcast_grid_pos_inst (
+      .clk            (grid_clk_pos),
+      .rst            (rst),
+      .s_axis_tdata   (grid_bcst_in_axis_tdata),
+      .s_axis_tkeep   (1'b1),
+      .s_axis_tvalid  (grid_bcst_in_axis_tvalid),
+      .s_axis_tready  (grid_bcst_in_axis_tready),
+      .s_axis_tlast   (grid_bcst_in_axis_tlast),
+      .s_axis_tid     (1'b0),
+      .s_axis_tdest   (1'b0),
+      .s_axis_tuser   (1'b0),
+      .m_axis_tdata   (grid_bcst_out_axis_tdata),
+      .m_axis_tvalid  (grid_bcst_out_axis_tvalid),
+      .m_axis_tready  (grid_bcst_out_axis_tready),
+      .m_axis_tlast   (grid_bcst_out_axis_tlast)
     );
 
-    if (DATA_FIFO_DEPTH > 1) begin
-      axis_srl_fifo #(
-        // Width of AXI stream interfaces in bits
-        .DATA_WIDTH(DATA_WIDTH),
-        // Propagate tkeep signal
-        .KEEP_ENABLE(0),
-        // tkeep signal width (words per cycle)
-        .KEEP_WIDTH(1),
-        // Propagate tlast signal
-        .LAST_ENABLE(1),
-        // Propagate tid signal
-        .ID_ENABLE(0),
-        // tid signal width
-        .ID_WIDTH(1),
-        // Propagate tdest signal
-        .DEST_ENABLE(0),
-        // tdest signal width
-        .DEST_WIDTH(1),
-        // Propagate tuser signal
-        .USER_ENABLE(0),
-        // tuser signal width
-        .USER_WIDTH(1),
-        // FIFO depth in cycles
-        .DEPTH(DATA_FIFO_DEPTH)
-      ) axis_fifo_data_inst (
-        .clk              (data_clk_pos),
-        .rst              (rst),
-        .s_axis_tdata     (data_fifo_in_axis_tdata),
-        .s_axis_tkeep     (1'b1),
-        .s_axis_tvalid    (data_fifo_in_axis_tvalid),
-        .s_axis_tready    (data_fifo_in_axis_tready),
-        .s_axis_tlast     (data_fifo_in_axis_tlast),
-        .s_axis_tid       (1'b0),
-        .s_axis_tdest     (1'b0),
-        .s_axis_tuser     (1'b0),
-        .m_axis_tdata     (data_fifo_out_axis_tdata),
-        .m_axis_tvalid    (data_fifo_out_axis_tvalid),
-        .m_axis_tready    (data_fifo_out_axis_tready),
-        .m_axis_tlast     (data_fifo_out_axis_tlast)
-      );
-    end else begin
-      assign data_fifo_out_axis_tdata  = data_fifo_in_axis_tdata;
-      assign data_fifo_out_axis_tvalid = data_fifo_in_axis_tvalid;
-      assign data_fifo_in_axis_tready  = data_fifo_out_axis_tready;
-      assign data_fifo_out_axis_tlast  = data_fifo_in_axis_tlast;
-    end
+    for (batch=0; batch < BATCH_SIZE; batch = batch+1) begin  // Broadcast scales to BATCH_SIZE channels
+      localparam LFT_POS = batch * DATA_CHANNELS + pos;
+      // Batch Local Scale FIFO I/O
+      wire [DATA_WIDTH-1:0]  grid_batch_fifo_in_axis_tdata,  grid_batch_fifo_out_axis_tdata;
+      wire                   grid_batch_fifo_in_axis_tvalid, grid_batch_fifo_out_axis_tvalid;
+      wire                   grid_batch_fifo_in_axis_tready, grid_batch_fifo_out_axis_tready;
+      wire                   grid_batch_fifo_in_axis_tlast,  grid_batch_fifo_out_axis_tlast;
 
-    assign m_axis_data_aclk    [pos] = data_clk_pos;
-    assign m_axis_data_tdata   [pos*DATA_WIDTH +: DATA_WIDTH] = data_fifo_out_axis_tdata;
-    assign m_axis_data_tvalid  [pos] = data_fifo_out_axis_tvalid;
-    assign data_fifo_out_axis_tready = m_axis_data_tready[pos];
-    assign m_axis_data_tlast   [pos] = data_fifo_out_axis_tlast;
+      assign grid_batch_fifo_in_axis_tdata   = grid_bcst_out_axis_tdata [batch*DATA_WIDTH +: DATA_WIDTH];
+      assign grid_batch_fifo_in_axis_tvalid  = grid_bcst_out_axis_tvalid[batch];
+      assign grid_bcst_out_axis_tready[batch] = grid_batch_fifo_in_axis_tready;
+      assign grid_batch_fifo_in_axis_tlast   =grid_bcst_out_axis_tlast [batch];
+
+      if (GRID_FIFO_DEPTH > 2) begin
+        axis_srl_fifo #(
+          .DATA_WIDTH       (DATA_WIDTH),
+          .KEEP_ENABLE      (0),
+          .KEEP_WIDTH       (1),
+          .LAST_ENABLE      (1),
+          .ID_ENABLE        (0),
+          .ID_WIDTH         (1),
+          .DEST_ENABLE      (0),
+          .DEST_WIDTH       (1),
+          .USER_ENABLE      (0),
+          .USER_WIDTH       (1),
+          .DEPTH            (GRID_FIFO_DEPTH >> 1)
+        ) axis_fifo_grid_batch_inst (
+          .clk              (grid_clk_pos),
+          .rst              (rst),
+          .s_axis_tdata     (grid_batch_fifo_in_axis_tdata),
+          .s_axis_tkeep     (1'b1),
+          .s_axis_tvalid    (grid_batch_fifo_in_axis_tvalid),
+          .s_axis_tready    (grid_batch_fifo_in_axis_tready),
+          .s_axis_tlast     (grid_batch_fifo_in_axis_tlast),
+          .s_axis_tid       (1'b0),
+          .s_axis_tdest     (1'b0),
+          .s_axis_tuser     (1'b0),
+          .m_axis_tdata     (grid_batch_fifo_out_axis_tdata),
+          .m_axis_tvalid    (grid_batch_fifo_out_axis_tvalid),
+          .m_axis_tready    (grid_batch_fifo_out_axis_tready),
+          .m_axis_tlast     (grid_batch_fifo_out_axis_tlast)
+        );
+      end else begin
+        assign grid_batch_fifo_out_axis_tdata  = grid_batch_fifo_in_axis_tdata;
+        assign grid_batch_fifo_out_axis_tvalid = grid_batch_fifo_in_axis_tvalid;
+        assign grid_batch_fifo_in_axis_tready  = grid_batch_fifo_out_axis_tready;
+        assign grid_batch_fifo_out_axis_tlast  = grid_batch_fifo_in_axis_tlast;
+      end
+
+      assign m_axis_grid_aclk   [LFT_POS]                           = grid_clk_pos;
+      assign m_axis_grid_tdata  [LFT_POS*DATA_WIDTH +: DATA_WIDTH]  = grid_batch_fifo_out_axis_tdata;
+      assign m_axis_grid_tvalid [LFT_POS]                           = grid_batch_fifo_out_axis_tvalid;
+      assign grid_batch_fifo_out_axis_tready                        = m_axis_grid_tready[LFT_POS];
+      assign m_axis_grid_tlast  [LFT_POS]                           = grid_batch_fifo_out_axis_tlast;
+    end
   end
+end else begin : grid_share_genblock // One scale per data channel
+  // Channel's clk driver
+  wire grid_clk = 
+   `ifdef SCALE_IF_IS_AXIL
+    m_axil_scle_aclk[0];
+   `elsif SCALE_IF_IS_BRAM
+    scle_bram_clk[0];
+   `endif 
+
+  // Local Grid FIFO I/O
+  wire [GRID_WIDTH-1:0]  grid_fifo_in_axis_tdata,  grid_fifo_out_axis_tdata;
+  wire                   grid_fifo_in_axis_tvalid, grid_fifo_out_axis_tvalid;
+  wire                   grid_fifo_in_axis_tready, grid_fifo_out_axis_tready;
+  wire                   grid_fifo_in_axis_tlast,  grid_fifo_out_axis_tlast;
+
+ `ifdef GRID_IF_IS_AXIL
+  MCULocalAxilFSM 
+ `elsif GRID_IF_IS_BRAM
+  MCULocalBramFSM
+ `endif 
+  #(
+   `include "header_MCUGlobalFSMParametersInst.vh"
+   `ifdef GRID_IF_IS_BRAM
+    .BRAM_ACK_SIG             (BRAM_ACK_SIG),
+   `endif 
+    .DATA_WIDTH               (GRID_WIDTH),
+    .DATA_STRB_WIDTH          (GRID_STRB_WIDTH),
+    .ADDR_WIDTH               (GRID_ADDR),
+    .INTER_ITER_WIDTH         (1),
+    .INTRA_ITER_WIDTH         (DATA_ADDR+1)
+  ) MCULocalFSM_grid_pos_inst (
+    .clk                      (grid_clk),
+    .rst                      (rst),
+   `ifdef GRID_IF_IS_AXIL
+    .m_axil_araddr            (m_axil_grid_araddr),
+    .m_axil_arprot            (m_axil_grid_arprot),
+    .m_axil_arvalid           (m_axil_grid_arvalid),
+    .m_axil_arready           (m_axil_grid_arready),
+    .m_axil_rdata             (m_axil_grid_rdata),
+    .m_axil_rresp             (m_axil_grid_rresp),
+    .m_axil_rvalid            (m_axil_grid_rvalid),
+    .m_axil_rready            (m_axil_grid_rready),
+    `elsif GRID_IF_IS_BRAM
+    `ifdef DEBUG
+    .debug_wire               (grid_debug_wire),
+    `endif
+    .bram_en                  (grid_bram_en),
+    .bram_addr                (grid_bram_addr),
+    .bram_rddata              (grid_bram_rddata),
+    .bram_rdack               (grid_bram_rdack),
+    `endif 
+    .m_axis_tdata             (grid_fifo_in_axis_tdata),
+    .m_axis_tvalid            (grid_fifo_in_axis_tvalid),
+    .m_axis_tready            (grid_fifo_in_axis_tready),
+    .m_axis_tlast             (grid_fifo_in_axis_tlast),
+    .glo_fsm_state            (glo_fsm_state),
+    .addr_counter_max         (grid_size_reg),   //  Multiple data per grid
+    .inter_counter_max        (1'b1),
+    .intra_counter_max        (data_size_reg),
+    .tlast_transmitted        (grid_tlast_transmitted[0]),
+    .error                    (grid_error[0])
+  );
+
+  if (GRID_FIFO_DEPTH > 1) begin
+    axis_srl_fifo #(
+      .DATA_WIDTH       (GRID_WIDTH),
+      .KEEP_ENABLE      (0),
+      .KEEP_WIDTH       (1),
+      .LAST_ENABLE      (1),
+      .ID_ENABLE        (0),
+      .ID_WIDTH         (1),
+      .DEST_ENABLE      (0),
+      .DEST_WIDTH       (1),
+      .USER_ENABLE      (0),
+      .USER_WIDTH       (1),
+      .DEPTH            (GRID_FIFO_DEPTH)
+    ) axis_fifo_grid_pos_batch_inst (
+      .clk              (grid_clk),
+      .rst              (rst),
+      .s_axis_tdata     (grid_fifo_in_axis_tdata),
+      .s_axis_tkeep     (1'b1),
+      .s_axis_tvalid    (grid_fifo_in_axis_tvalid),
+      .s_axis_tready    (grid_fifo_in_axis_tready),
+      .s_axis_tlast     (grid_fifo_in_axis_tlast),
+      .s_axis_tid       (1'b0),
+      .s_axis_tdest     (1'b0),
+      .s_axis_tuser     (1'b0),
+      .m_axis_tdata     (grid_fifo_out_axis_tdata),
+      .m_axis_tvalid    (grid_fifo_out_axis_tvalid),
+      .m_axis_tready    (grid_fifo_out_axis_tready),
+      .m_axis_tlast     (grid_fifo_out_axis_tlast)
+    );
+  end else begin
+    assign grid_fifo_out_axis_tdata  = grid_fifo_in_axis_tdata;
+    assign grid_fifo_out_axis_tvalid = grid_fifo_in_axis_tvalid;
+    assign grid_fifo_in_axis_tready  = grid_fifo_out_axis_tready;
+    assign grid_fifo_out_axis_tlast  = grid_fifo_in_axis_tlast;
+  end
+
+  assign m_axis_grid_aclk   [0] = grid_clk;
+  assign m_axis_grid_tdata      = grid_fifo_out_axis_tdata;
+  assign m_axis_grid_tvalid [0] = grid_fifo_out_axis_tvalid;
+  assign grid_fifo_out_axis_tready  = m_axis_grid_tready[0];
+  assign m_axis_grid_tlast  [0] = grid_fifo_out_axis_tlast;
+end
+
+for (pos = 0; pos < BATCH_SIZE*DATA_CHANNELS; pos = pos + 1) begin : data_chn_genblock // One data per data channel per batch
+  // Channel's clk driver
+  wire data_clk_pos = 
+   `ifdef DATA_IF_IS_AXIL
+    m_axil_data_aclk[pos];
+   `elsif DATA_IF_IS_BRAM
+    data_bram_clk[pos];
+   `endif 
+
+  // Local Data FIFO I/O
+  wire [DATA_WIDTH-1:0]  data_fifo_in_axis_tdata,  data_fifo_out_axis_tdata;
+  wire                   data_fifo_in_axis_tvalid, data_fifo_out_axis_tvalid;
+  wire                   data_fifo_in_axis_tready, data_fifo_out_axis_tready;
+  wire                   data_fifo_in_axis_tlast,  data_fifo_out_axis_tlast;
+
+ `ifdef DATA_IF_IS_AXIL
+  MCULocalAxilFSM 
+ `elsif DATA_IF_IS_BRAM
+  MCULocalBramFSM
+ `endif 
+  #(
+   `include "header_MCUGlobalFSMParametersInst.vh"
+   `ifdef DATA_IF_IS_BRAM
+    .BRAM_ACK_SIG(BRAM_ACK_SIG),
+   `endif 
+    .DATA_WIDTH(DATA_WIDTH),
+    .DATA_STRB_WIDTH(DATA_STRB_WIDTH),
+    .ADDR_WIDTH(DATA_ADDR),
+    .INTER_ITER_WIDTH(GRID_ADDR+1),
+    .INTRA_ITER_WIDTH(1)
+  ) MCULocalFSM_data_pos_inst (
+    .clk                      (data_clk_pos),
+    .rst                      (rst),
+   `ifdef DEBUG
+    .debug_wire               (data_debug_wire        [pos*3 +: 3]),
+   `endif
+   `ifdef DATA_IF_IS_AXIL
+    .m_axil_araddr            (m_axil_data_araddr     [pos*DATA_ADDR +: DATA_ADDR]),
+    .m_axil_arprot            (m_axil_data_arprot     [pos*3 +: 3]),
+    .m_axil_arvalid           (m_axil_data_arvalid    [pos]),
+    .m_axil_arready           (m_axil_data_arready    [pos]),
+    .m_axil_rdata             (m_axil_data_rdata      [pos*DATA_WIDTH +: DATA_WIDTH]),
+    .m_axil_rresp             (m_axil_data_rresp      [pos*2 +: 2]),
+    .m_axil_rvalid            (m_axil_data_rvalid     [pos]),
+    .m_axil_rready            (m_axil_data_rready     [pos]),
+   `elsif DATA_IF_IS_BRAM
+    .bram_en                  (data_bram_en           [pos]),
+    .bram_addr                (data_bram_addr         [pos*DATA_ADDR +: DATA_ADDR]),
+    .bram_rddata              (data_bram_rddata       [pos*DATA_WIDTH +: DATA_WIDTH]),
+    .bram_rdack               (data_bram_rdack        [pos]),
+   `endif 
+    .m_axis_tdata             (data_fifo_in_axis_tdata),
+    .m_axis_tvalid            (data_fifo_in_axis_tvalid),
+    .m_axis_tready            (data_fifo_in_axis_tready),
+    .m_axis_tlast             (data_fifo_in_axis_tlast),
+    .glo_fsm_state            (glo_fsm_state),
+    .addr_counter_max         (data_size_reg),   //  One data per grid
+    .inter_counter_max        (grid_size_reg),
+    .intra_counter_max        (1'b1),
+    .tlast_transmitted        (data_tlast_transmitted [pos]),
+    .error                    (data_error             [pos])
+  );
+
+  if (DATA_FIFO_DEPTH > 1) begin
+    axis_srl_fifo #(
+      .DATA_WIDTH         (DATA_WIDTH),
+      .KEEP_ENABLE        (0),
+      .KEEP_WIDTH         (1),
+      .LAST_ENABLE        (1),
+      .ID_ENABLE          (0),
+      .ID_WIDTH           (1),
+      .DEST_ENABLE        (0),
+      .DEST_WIDTH         (1),
+      .USER_ENABLE        (0),
+      .USER_WIDTH         (1),
+      .DEPTH              (DATA_FIFO_DEPTH)
+    ) axis_srl_data_inst  (
+      .clk                (data_clk_pos),
+      .rst                (rst),
+      .s_axis_tdata       (data_fifo_in_axis_tdata),
+      .s_axis_tkeep       (1'b1),
+      .s_axis_tvalid      (data_fifo_in_axis_tvalid),
+      .s_axis_tready      (data_fifo_in_axis_tready),
+      .s_axis_tlast       (data_fifo_in_axis_tlast),
+      .s_axis_tid         (1'b0),
+      .s_axis_tdest       (1'b0),
+      .s_axis_tuser       (1'b0),
+      .m_axis_tdata       (data_fifo_out_axis_tdata),
+      .m_axis_tvalid      (data_fifo_out_axis_tvalid),
+      .m_axis_tready      (data_fifo_out_axis_tready),
+      .m_axis_tlast       (data_fifo_out_axis_tlast)
+    );
+  end else begin
+    assign data_fifo_out_axis_tdata  = data_fifo_in_axis_tdata;
+    assign data_fifo_out_axis_tvalid = data_fifo_in_axis_tvalid;
+    assign data_fifo_in_axis_tready  = data_fifo_out_axis_tready;
+    assign data_fifo_out_axis_tlast  = data_fifo_in_axis_tlast;
+  end
+
+  assign m_axis_data_aclk    [pos]                          = data_clk_pos;
+  assign m_axis_data_tdata   [pos*DATA_WIDTH +: DATA_WIDTH] = data_fifo_out_axis_tdata;
+  assign m_axis_data_tvalid  [pos]                          = data_fifo_out_axis_tvalid;
+  assign data_fifo_out_axis_tready                          = m_axis_data_tready[pos];
+  assign m_axis_data_tlast   [pos]                          = data_fifo_out_axis_tlast;
+ end
  endgenerate
 
 `undef GLO_CHECK_OP_START

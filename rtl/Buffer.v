@@ -1,3 +1,29 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
 
 `resetall
 `timescale 1ns/1ps
@@ -32,6 +58,7 @@ module Buffer #(
 ) (
   input  wire                                 clk,
   input  wire                                 rst,
+
   /*
    * AXI Stream Data input
    */
@@ -57,43 +84,42 @@ module Buffer #(
   output wire [CHANNELS*USER_WIDTH-1:0]       m_axis_tuser
 );
 
-generate
-  genvar CHN;
-  for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin
-    axis_register #(
-      .DATA_WIDTH     (DATA_WIDTH),
-      .KEEP_ENABLE    (KEEP_ENABLE),
-      .KEEP_WIDTH     (KEEP_WIDTH),
-      .LAST_ENABLE    (LAST_ENABLE),
-      .ID_ENABLE      (ID_ENABLE),
-      .ID_WIDTH       (ID_WIDTH),
-      .DEST_ENABLE    (DEST_ENABLE),
-      .DEST_WIDTH     (DEST_WIDTH),
-      .USER_ENABLE    (USER_ENABLE),
-      .USER_WIDTH     (USER_WIDTH),
-      .REG_TYPE       (REG_TYPE)
-    ) reg_i_inst (
-      .clk            (clk),
-      .rst            (rst),
-      .s_axis_tdata   (s_axis_tdata     [CHN*DATA_WIDTH +: DATA_WIDTH]),
-      .s_axis_tkeep   (s_axis_tkeep     [CHN*KEEP_WIDTH +: KEEP_WIDTH]),
-      .s_axis_tvalid  (s_axis_tvalid    [CHN]),
-      .s_axis_tready  (s_axis_tready    [CHN]),
-      .s_axis_tlast   (s_axis_tlast     [CHN]),
-      .s_axis_tid     (s_axis_tid       [CHN*ID_WIDTH   +: ID_WIDTH]),
-      .s_axis_tdest   (s_axis_tdest     [CHN*DEST_WIDTH +: DEST_WIDTH]),
-      .s_axis_tuser   (s_axis_tuser     [CHN*USER_WIDTH +: USER_WIDTH]),
-      .m_axis_tdata   (m_axis_tdata     [CHN*DATA_WIDTH +: DATA_WIDTH]),
-      .m_axis_tkeep   (m_axis_tkeep     [CHN*KEEP_WIDTH +: KEEP_WIDTH]),
-      .m_axis_tvalid  (m_axis_tvalid    [CHN]),
-      .m_axis_tready  (m_axis_tready    [CHN]),
-      .m_axis_tlast   (m_axis_tlast     [CHN]),
-      .m_axis_tid     (m_axis_tid       [CHN*ID_WIDTH   +: ID_WIDTH]),
-      .m_axis_tdest   (m_axis_tdest     [CHN*DEST_WIDTH +: DEST_WIDTH]),
-      .m_axis_tuser   (m_axis_tuser     [CHN*USER_WIDTH +: USER_WIDTH])
-    );
-  end
-endgenerate
+ genvar CHN;
+ generate for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin
+  axis_register #(
+    .DATA_WIDTH     (DATA_WIDTH),
+    .KEEP_ENABLE    (KEEP_ENABLE),
+    .KEEP_WIDTH     (KEEP_WIDTH),
+    .LAST_ENABLE    (LAST_ENABLE),
+    .ID_ENABLE      (ID_ENABLE),
+    .ID_WIDTH       (ID_WIDTH),
+    .DEST_ENABLE    (DEST_ENABLE),
+    .DEST_WIDTH     (DEST_WIDTH),
+    .USER_ENABLE    (USER_ENABLE),
+    .USER_WIDTH     (USER_WIDTH),
+    .REG_TYPE       (REG_TYPE)
+  ) reg_i_inst (
+    .clk            (clk),
+    .rst            (rst),
+    .s_axis_tdata   (s_axis_tdata     [CHN*DATA_WIDTH +: DATA_WIDTH]),
+    .s_axis_tkeep   (s_axis_tkeep     [CHN*KEEP_WIDTH +: KEEP_WIDTH]),
+    .s_axis_tvalid  (s_axis_tvalid    [CHN]),
+    .s_axis_tready  (s_axis_tready    [CHN]),
+    .s_axis_tlast   (s_axis_tlast     [CHN]),
+    .s_axis_tid     (s_axis_tid       [CHN*ID_WIDTH   +: ID_WIDTH]),
+    .s_axis_tdest   (s_axis_tdest     [CHN*DEST_WIDTH +: DEST_WIDTH]),
+    .s_axis_tuser   (s_axis_tuser     [CHN*USER_WIDTH +: USER_WIDTH]),
+    .m_axis_tdata   (m_axis_tdata     [CHN*DATA_WIDTH +: DATA_WIDTH]),
+    .m_axis_tkeep   (m_axis_tkeep     [CHN*KEEP_WIDTH +: KEEP_WIDTH]),
+    .m_axis_tvalid  (m_axis_tvalid    [CHN]),
+    .m_axis_tready  (m_axis_tready    [CHN]),
+    .m_axis_tlast   (m_axis_tlast     [CHN]),
+    .m_axis_tid     (m_axis_tid       [CHN*ID_WIDTH   +: ID_WIDTH]),
+    .m_axis_tdest   (m_axis_tdest     [CHN*DEST_WIDTH +: DEST_WIDTH]),
+    .m_axis_tuser   (m_axis_tuser     [CHN*USER_WIDTH +: USER_WIDTH])
+  );
+ end
+ endgenerate
 
 endmodule
 

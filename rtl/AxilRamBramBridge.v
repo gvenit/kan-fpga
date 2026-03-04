@@ -1,21 +1,67 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
+// AXI-Lite Control interface -- modified version of https://github.com/alexforencich/verilog-axi/blob/master/rtl/axil_ram.v
+/*
+Copyright (c) 2018 Alex Forencich
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
 
-/*=============================================
-    Wrapper module that contains:
-
-    - Dual Port Axi-Lite RAM
-    - Width Adapter on port B
-
-    B_AXIL_DATA_WIDTH specifies the actual
-    data width of the internal RAM module.
-    B_AXIL_DATA_WIDTH external is the external
-    adapted width so that it interfaces
-    with other blocks in the block design
-    because Vivado will not allow 
-    data width smaller than 32 bits
-==============================================*/
+/*
+ * AxilRamBramBridge : A Multi-port BRAM wrapper that allows  
+ *  memory transactions from an AXI-Lite Interface and multiple
+ *  native BRAM ports.
+ *
+ *    The component is designed to support unified byte-size 
+ *      address space from the AXI_Lite side and banks of
+ *      word-size address space on the native BRAM side.
+ *
+ */
 
 `include "header_utils.vh"
 
@@ -31,10 +77,9 @@ module AxilRamBramBridge #(
   input  wire                                   clka,
   input  wire                                   rsta,
 
-  /*-----------------------------------------
-      Port A AXI-Lite : Internal port
-  -----------------------------------------*/
-
+  /*
+   * Port A - AXI-Lite Interface
+   */
   input  wire [AXIL_ADDR_WIDTH-1:0]             s_axil_awaddr,
   input  wire [2:0]                             s_axil_awprot,
   input  wire                                   s_axil_awvalid,
@@ -55,10 +100,9 @@ module AxilRamBramBridge #(
   output wire                                   s_axil_rvalid,
   input  wire                                   s_axil_rready,
 
-  /*-----------------------------------------
-      Port B BRam : External port
-  -----------------------------------------*/
-
+  /*
+   * Port B - Native BRAM Interfaces
+   */
   input  wire [BRAM_PORTS-1:0]                  clkb,
   input  wire [BRAM_PORTS-1:0]                  rstb,
   input  wire [BRAM_PORTS-1:0]                  rden,
@@ -71,9 +115,9 @@ module AxilRamBramBridge #(
 
 );
 
-  /********************************
-  Internal Signals & localparams -- Port A
-  ********************************/
+  /*******************************************
+    Internal Signals & localparams -- Port A
+  *******************************************/
 
   localparam AXIL_VALID_ADDR_WIDTH = `MAX( AXIL_ADDR_WIDTH - `RLOG2( AXIL_STRB_WIDTH ), 1 );
   localparam AXIL_WORD_WIDTH = AXIL_STRB_WIDTH;
@@ -121,7 +165,7 @@ module AxilRamBramBridge #(
   assign addra = mem_rd_en ? s_axil_araddr_valid : s_axil_awaddr_valid;
 
   /********************************
-  Always blocks -- Port A
+       Always blocks -- Port A
   ********************************/
 
   always @* begin
@@ -194,7 +238,7 @@ module AxilRamBramBridge #(
   reg                           mem_rd_en_reg;
 
   /********************************
-  Module instantiations
+        Module instantiations
   ********************************/
 
   always @(posedge clka ) begin  // Hold Read data in case of handshake delays in read channel

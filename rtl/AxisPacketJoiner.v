@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -83,9 +110,8 @@ module AxisPacketJoiner #(
   output wire [USER_WIDTH-1:0]            m_axis_tuser
 );
 
-generate
- if (CHANNELS == 1) begin : pass_through_genblock
-  reg allow_transmission = 1'b1;
+ generate if (CHANNELS == 1) begin : pass_through_genblock
+  reg  allow_transmission = 1'b1;
 
   // Pass through
   assign m_axis_tdata  = s_axis_tdata;
@@ -127,28 +153,28 @@ generate
   localparam CLOG2_CHANNELS = `LOG2( CHANNELS );
 
   // Global FSM states
-`ifdef USE_ONE_HOT_ENCODING_FSM
+ `ifdef USE_ONE_HOT_ENCODING_FSM
   localparam FSM_WIDTH = 4;
   localparam FSM_STR = 2 ** 0;
   localparam FSM_OPE = 2 ** 1;
   localparam FSM_ERR = 2 ** 2;
   localparam FSM_END = 2 ** 3;
-`else
+ `else
   localparam FSM_WIDTH = 2;
   localparam FSM_STR = 0;
   localparam FSM_OPE = 1;
   localparam FSM_ERR = 2;
   localparam FSM_END = 3;
-`endif 
+ `endif 
 
   // Control Registers & Wires
-  wire int_rst = rst || interrupt;
-  reg  lock_reg;
+  wire                      int_rst = rst || interrupt;
+  reg                       lock_reg = 1'b0;
 
-  reg  [CHANNELS-1:0]  use_channels_reg;
+  reg  [CHANNELS-1:0]       use_channels_reg = 0;
 
   // FSM Logic output Restiters & Wires
-  reg  [FSM_WIDTH-1:0] fsm_state, fsm_state_next;
+  reg  [FSM_WIDTH-1:0]      fsm_state, fsm_state_next;
 
   // FSM Logic intput Registers & 
   wire [CHANNELS-1:0]       s_axis_tready_int;
@@ -216,19 +242,20 @@ generate
     end
   end
 
-  `define CHECK_OP_START \
-    if (operation_start) begin \
-      if (use_channels) begin \
-        fsm_state_next <= FSM_OPE; \
-      end else begin \
-        fsm_state_next <= FSM_ERR; \
-      end \
+ `define CHECK_OP_START \
+  if (operation_start) begin \
+    if (use_channels) begin \
+      fsm_state_next <= FSM_OPE; \
     end else begin \
-      fsm_state_next <= FSM_STR; \
-    end 
+      fsm_state_next <= FSM_ERR; \
+    end \
+  end else begin \
+    fsm_state_next <= FSM_STR; \
+  end 
 
   // Global FSM next state logic
   always @(*) begin
+    fsm_state_next <= fsm_state;
     if (~ALLOW_LOCKS || ~lock) begin
       case (fsm_state)
         FSM_STR: begin
@@ -245,11 +272,9 @@ generate
         end
         FSM_ERR: begin
           fsm_state_next <= FSM_STR;
-          
         end
         default: begin
           fsm_state_next <= FSM_STR;
-          
         end 
       endcase
     end
@@ -266,27 +291,17 @@ generate
   end
 
   axis_mux #(
-    // Number of AXI stream inputs
-    .S_COUNT(CHANNELS),
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH),
-    // Propagate tkeep signal
-    .KEEP_ENABLE(KEEP_ENABLE),
-    // tkeep signal width (words per cycle)
-    .KEEP_WIDTH(KEEP_WIDTH),
-    // Propagate tid signal
-    .ID_ENABLE(ID_ENABLE),
-    // tid signal width
-    .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
-    .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
-    .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
-    .USER_ENABLE(1),
-    // tuser signal width
-    .USER_WIDTH(USER_WIDTH+1)
-  ) axis_mux_inst (
+    .S_COUNT        (CHANNELS),
+    .DATA_WIDTH     (DATA_WIDTH),
+    .KEEP_ENABLE    (KEEP_ENABLE),
+    .KEEP_WIDTH     (KEEP_WIDTH),
+    .ID_ENABLE      (ID_ENABLE),
+    .ID_WIDTH       (ID_WIDTH),
+    .DEST_ENABLE    (DEST_ENABLE),
+    .DEST_WIDTH     (DEST_WIDTH),
+    .USER_ENABLE    (1),
+    .USER_WIDTH     (USER_WIDTH+1)
+  ) axis_mux_inst   (
     .clk            (clk),
     .rst            (int_rst),
     .s_axis_tdata   (s_axis_tdata),
@@ -310,23 +325,19 @@ generate
   );
 
   arbiter # (
-    .PORTS(CHANNELS),
-    // select round robin arbitration
-    .ARB_TYPE_ROUND_ROBIN(1),
-    // blocking arbiter enable
-    .ARB_BLOCK(1),
-    // block on acknowledge assert when nonzero, request deassert when 0
-    .ARB_BLOCK_ACK(1),
-    // LSB priority selection
-    .ARB_LSB_HIGH_PRIORITY(1)
-  ) arbiter_inst (
-    .clk           (clk),
-    .rst           (int_rst || fsm_state == FSM_END),
-    .request       (use_channels_reg),
-    .acknowledge   (acknowledge),
-    .grant         (grant),
-    .grant_valid   (grant_valid),
-    .grant_encoded (grant_encoded)
+    .PORTS                  (CHANNELS),
+    .ARB_TYPE_ROUND_ROBIN   (1),
+    .ARB_BLOCK              (1),
+    .ARB_BLOCK_ACK          (1),
+    .ARB_LSB_HIGH_PRIORITY  (1)
+  ) arbiter_inst            (
+    .clk                    (clk),
+    .rst                    (int_rst || fsm_state == FSM_END),
+    .request                (use_channels_reg),
+    .acknowledge            (acknowledge),
+    .grant                  (grant),
+    .grant_valid            (grant_valid),
+    .grant_encoded          (grant_encoded)
   );
 
   // Transmission flag
@@ -338,7 +349,7 @@ generate
   end
 
  end
-endgenerate
+ endgenerate
 
 `undef CHECK_OP_START
 endmodule

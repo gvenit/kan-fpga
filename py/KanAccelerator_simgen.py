@@ -52,6 +52,7 @@ def KanAccelerator(I=1,J=1,K=1, data_width=16, wght_width=8, sdff_width=12, actf
         '--scle-width',             data_width,
         '--scle-frac-bits',         data_width-2,
         '--scle-depth',             2**10,
+        '--wght-dma-width',         wght_width * I * J, 
         '--wght-width',             wght_width, 
         '--wght-frac-bits',         wght_width + 2, 
         '--wght-depth',             int(max(2 ** np.ceil(np.log2(I*J+K+8)+4), 8)) * 2,
@@ -60,6 +61,7 @@ def KanAccelerator(I=1,J=1,K=1, data_width=16, wght_width=8, sdff_width=12, actf
         '--actf-width',             actf_width,
         '--actf-frac-bits',         actf_width,
         '--rslt-chn',               I,
+        '--rslt-dma-width',         data_width, 
         '--rslt-width',             data_width,
         '--rslt-frac-bits',         data_width-5,
         '--rslt-depth',             int(max( 2 ** np.ceil(np.log2(K + I + 8)), 8))*2,
@@ -163,8 +165,11 @@ def tb_KanAccelerator(I=1,J=1,K=1):
     ACTF_FRACTIONAL_BITS        : Localparam = params['ACTF_FRACTIONAL_BITS']
     RSLT_FRACTIONAL_BITS        : Localparam = params['RSLT_FRACTIONAL_BITS']
     
-    DMA_WIDTH                   : Localparam = params['DMA_WIDTH']
-    DMA_STRB_WIDTH              : Localparam = params['AXIL_STRB_WIDTH']
+    WEIGHT_DMA_WIDTH            : Localparam = params['WEIGHT_DMA_WIDTH']
+    WEIGHT_DMA_KEEP_WIDTH       : Localparam = params['WEIGHT_DMA_KEEP_WIDTH']
+    
+    RSLT_DMA_WIDTH              : Localparam = params['RSLT_DMA_WIDTH']
+    RSLT_DMA_KEEP_WIDTH         : Localparam = params['RSLT_DMA_KEEP_WIDTH']
     
     AXIL_WIDTH                  : Localparam = params['AXIL_WIDTH']
     AXIL_STRB_WIDTH             : Localparam = params['AXIL_STRB_WIDTH']
@@ -197,8 +202,11 @@ def tb_KanAccelerator(I=1,J=1,K=1):
     ACTF_FRACTIONAL_BITS.value = data_width
     RSLT_FRACTIONAL_BITS.value = data_width-5
     
-    DMA_WIDTH.value = 64
-    DMA_STRB_WIDTH.value = 64 // 8
+    WEIGHT_DMA_WIDTH.value = I * J * wght_width
+    WEIGHT_DMA_KEEP_WIDTH.value = WEIGHT_DMA_WIDTH.value // 8
+    
+    RSLT_DMA_WIDTH.value = data_width
+    RSLT_DMA_KEEP_WIDTH.value = data_width // 8
     
     AXIL_WIDTH.value = 32
     AXIL_STRB_WIDTH.value = 32 // 8
@@ -377,7 +385,7 @@ def tb_KanAccelerator(I=1,J=1,K=1):
     reset_stmt.append(m_axis_rslt_tready(0))
     
     slow_clk_hperiod = fast_clk_hperiod * 2  if is_async else fast_clk_hperiod
-    dma_hperiod = max(int(fast_clk_hperiod * DMA_WIDTH.value / (DATA_CHANNELS.value*RSLT_CHANNELS.value*DATA_WIDTH.value)), 1)
+    dma_hperiod = max(int(fast_clk_hperiod * WEIGHT_DMA_WIDTH.value / (DATA_CHANNELS.value*RSLT_CHANNELS.value*DATA_WIDTH.value)), 1)
 
     vcd_name = os.path.join('..','vcd',f'tb_KanAccelerator_{I}_{J}_{K}.vcd')
     simulation.setup_waveform(module, uut, dumpfile=vcd_name)
@@ -926,17 +934,17 @@ def tb_KanAccelerator(I=1,J=1,K=1):
             While(Ands(total_wght < len(test_wght), ~s_axis_wght_areset, wght_global_stage == global_stage_counter))(
                 Wait(~s_axis_wght_aclk),
                 s_axis_wght_tkeep(0),
-                For(intra_wght(0), Ands(intra_wght < (DMA_WIDTH / WEIGHT_WIDTH), total_wght < len(test_wght),~s_axis_wght_areset, wght_global_stage == global_stage_counter), intra_wght.inc())(
+                For(intra_wght(0), Ands(intra_wght < (WEIGHT_DMA_WIDTH / WEIGHT_WIDTH), total_wght < len(test_wght),~s_axis_wght_areset, wght_global_stage == global_stage_counter), intra_wght.inc())(
                     Case(total_wght)(
                         *[
                             When(_iter)(
                                 s_axis_wght_tdata.slice(
-                                    msb = ((_iter % (DMA_WIDTH / WEIGHT_WIDTH))+1) * WEIGHT_WIDTH -1,
-                                    lsb =  (_iter % (DMA_WIDTH / WEIGHT_WIDTH)) * WEIGHT_WIDTH
+                                    msb = ((_iter % (WEIGHT_DMA_WIDTH / WEIGHT_WIDTH))+1) * WEIGHT_WIDTH -1,
+                                    lsb =  (_iter % (WEIGHT_DMA_WIDTH / WEIGHT_WIDTH)) * WEIGHT_WIDTH
                                 )(test_wght_i),
                                 s_axis_wght_tkeep.slice(
-                                    msb = (_iter % (DMA_WIDTH / WEIGHT_WIDTH) + 1) * WEIGHT_KEEP_WIDTH -1,
-                                    lsb = (_iter % (DMA_WIDTH / WEIGHT_WIDTH)    ) * WEIGHT_KEEP_WIDTH
+                                    msb = (_iter % (WEIGHT_DMA_WIDTH / WEIGHT_WIDTH) + 1) * WEIGHT_KEEP_WIDTH -1,
+                                    lsb = (_iter % (WEIGHT_DMA_WIDTH / WEIGHT_WIDTH)    ) * WEIGHT_KEEP_WIDTH
                                 )(-1),
                             ) for _iter, test_wght_i in enumerate(test_wght)
                         ],
@@ -1032,7 +1040,7 @@ def tb_KanAccelerator(I=1,J=1,K=1):
                             AssertTrue(total_rslt_i < rslt_len),
                             For(
                                 intra_rslt(0), Ands(
-                                    intra_rslt < DMA_STRB_WIDTH, Ors(*[
+                                    intra_rslt < RSLT_DMA_KEEP_WIDTH, Ors(*[
                                         total_rslt_j < rslt_len
                                             for total_rslt_j in total_rslt
                                     ]),
@@ -1562,7 +1570,7 @@ def tb_KanAccelerator(I=1,J=1,K=1):
             Wait(pl2ps_intr),
         ).Else(
             Display('-- Waiting for time to pass...'),
-            For(ctrl_buffer(0),ctrl_buffer < (weight_len //  (DMA_STRB_WIDTH / DATA_STRB_WIDTH)) // 2, ctrl_buffer.inc())(
+            For(ctrl_buffer(0),ctrl_buffer < (weight_len //  (WEIGHT_DMA_KEEP_WIDTH / DATA_STRB_WIDTH)) // 2, ctrl_buffer.inc())(
                 Wait(~fsm_clk),
                 Wait(fsm_clk),
             ),
@@ -1622,7 +1630,7 @@ def tb_KanAccelerator(I=1,J=1,K=1):
             Wait(pl2ps_intr),
         ).Else(
             Display('-- Waiting for time to pass...'),
-            For(ctrl_buffer(0),ctrl_buffer < (weight_len //  (DMA_STRB_WIDTH / DATA_STRB_WIDTH)) // 4, ctrl_buffer.inc())(
+            For(ctrl_buffer(0),ctrl_buffer < (weight_len //  (WEIGHT_DMA_KEEP_WIDTH / DATA_STRB_WIDTH)) // 4, ctrl_buffer.inc())(
                 Wait(~fsm_clk),
                 Wait(fsm_clk),
             ),
@@ -1944,17 +1952,17 @@ def main():
     ## I = Results, J = Data, K = Batch
     
     for I,J,K in (
-        # (1,1,1),
-        # (1,2,1),
-        # (8,1,1),
-        # (1,1,3),
+        (1,1,1),
+        (1,8,1),
+        (8,1,1),
+        (1,1,3),
         # (2,2,1),
         # (2,2,2),
         # (8,2,1),
         # (2,3,1),
-        (4,2,1),
-        # (4,4,1),
-        # (4,4,4),
+        # (4,2,1),
+        (4,4,1),
+        (4,4,4),
         # (8,4,2),
     ):
         test = tb_KanAccelerator(I=I,J=J,K=K)

@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -186,52 +213,52 @@ module CentralControlUnit #(
   wire                        rslt_tlast_sampled;
 
   // Capture interrupts -- Reset every clock tick
- generate
-  if (IS_ASYNCHRONOUS > 0) begin : use_samplers_genblock
-    genvar peripheral;
-    for (peripheral = 0; peripheral < NUM_PERIPHERALS; peripheral = peripheral + 1) begin : peripheral_samplers_genblock 
-      Sampler #(
-      ) sampler_peripheral_op_busy_inst (
-        .signal_clk       (core_clk),
-        .sampler_clk      (fsm_clk),
-        .signal           (peripheral_operation_busy[peripheral]),
-        .sampled_signal   (peripheral_operation_busy_sampled[peripheral])
-      );
-      Sampler #(
-      ) sampler_peripheral_op_complete_inst (
-        .signal_clk       (core_clk),
-        .sampler_clk      (fsm_clk),
-        .signal           (peripheral_operation_complete[peripheral]),
-        .sampled_signal   (peripheral_operation_complete_sampled[peripheral])
-      );
-      Sampler #(
-      ) sampler_peripheral_op_error_inst (
-        .signal_clk       (core_clk),
-        .sampler_clk      (fsm_clk),
-        .signal           (peripheral_operation_error[peripheral]),
-        .sampled_signal   (peripheral_operation_error_sampled[peripheral])
-      );
-    end
+ generate if (IS_ASYNCHRONOUS > 0) begin : use_samplers_genblock
+ genvar peripheral;
+
+  for (peripheral = 0; peripheral < NUM_PERIPHERALS; peripheral = peripheral + 1) begin : peripheral_samplers_genblock 
     Sampler #(
-    ) sampler_rslt_tlast_inst (
+    ) sampler_peripheral_op_busy_inst (
       .signal_clk       (core_clk),
       .sampler_clk      (fsm_clk),
-      .signal           (rslt_tlast),
-      .sampled_signal   (rslt_tlast_sampled)
+      .signal           (peripheral_operation_busy[peripheral]),
+      .sampled_signal   (peripheral_operation_busy_sampled[peripheral])
     );
-  end else begin : skip_samplers_genblock
-    assign peripheral_operation_busy_sampled     = peripheral_operation_busy;
-    assign peripheral_operation_complete_sampled = peripheral_operation_complete;
-    assign peripheral_operation_error_sampled    = peripheral_operation_error;
-    assign rslt_tlast_sampled                    = rslt_tlast;
+    Sampler #(
+    ) sampler_peripheral_op_complete_inst (
+      .signal_clk       (core_clk),
+      .sampler_clk      (fsm_clk),
+      .signal           (peripheral_operation_complete[peripheral]),
+      .sampled_signal   (peripheral_operation_complete_sampled[peripheral])
+    );
+    Sampler #(
+    ) sampler_peripheral_op_error_inst (
+      .signal_clk       (core_clk),
+      .sampler_clk      (fsm_clk),
+      .signal           (peripheral_operation_error[peripheral]),
+      .sampled_signal   (peripheral_operation_error_sampled[peripheral])
+    );
   end
+  Sampler #(
+  ) sampler_rslt_tlast_inst (
+    .signal_clk       (core_clk),
+    .sampler_clk      (fsm_clk),
+    .signal           (rslt_tlast),
+    .sampled_signal   (rslt_tlast_sampled)
+  );
+ end else begin : skip_samplers_genblock
+  assign peripheral_operation_busy_sampled     = peripheral_operation_busy;
+  assign peripheral_operation_complete_sampled = peripheral_operation_complete;
+  assign peripheral_operation_error_sampled    = peripheral_operation_error;
+  assign rslt_tlast_sampled                    = rslt_tlast;
+ end
  endgenerate
 
   // Input PL control signals
-  reg         rw_op_str_reg_en;
-  reg         rw_op_dne_reg_en;
-  wire        wo_reg_en  = rslt_tlast_sampled == 1'b1; 
-  wire        wo_reg_rst = (fsm_state == FSM_STR || fsm_state == FSM_ITR);
+  reg         rw_op_str_reg_en = 1'b0;
+  reg         rw_op_dne_reg_en = 1'b0;
+  wire        wo_reg_en  = (rslt_tlast_sampled == 1'b1); 
+  wire        wo_reg_rst = ((fsm_state == FSM_STR) || (fsm_state == FSM_ITR));
 
   // Read-Write Registers (PS -> PL) 
   wire [31:0] data_size_rd; 
@@ -278,7 +305,6 @@ module CentralControlUnit #(
   wire        operation_status_valid_wr;
   wire        operation_status_reset_wr = core_rst;
   wire        operation_status_error_aps_wr = peripheral_operation_error_sampled[PERIPHERAL_APS];
-  // wire        operation_status_error_mcu_wr = peripheral_operation_error_sampled[PERIPHERAL_MCU];
   wire        operation_status_error_dpu_wr = peripheral_operation_error_sampled[PERIPHERAL_DPU];
 
   wire [31:0] operation_progress_rslt_wr;
@@ -383,31 +409,29 @@ module CentralControlUnit #(
   assign operation_status_locked_wr = locked_next;
 
   // Check results exported -- Contain information about the next iteration
-  reg  unsigned [23:0] results_left_reg;
-  reg  unsigned [23:0] results_exported_reg;
+  reg  unsigned [23:0]                    results_left_reg          = 0;
+  reg  unsigned [23:0]                    results_exported_reg      = 0;
+  wire unsigned [RSLT_CHANNELS_BITS-1:0]  results_iter_size         = `MIN( results_left_reg, RSLT_CHANNELS );
+  wire unsigned [23:0]                    results_left_reg_next     = results_left_reg - results_iter_size;
+  wire unsigned [23:0]                    results_exported_reg_next = results_exported_reg + results_iter_size;
 
-  wire unsigned [RSLT_CHANNELS_BITS-1:0] results_iter_size = `MIN( results_left_reg, RSLT_CHANNELS );
-  wire unsigned [23:0] results_left_reg_next     = results_left_reg - results_iter_size;
-  wire unsigned [23:0] results_exported_reg_next = results_exported_reg + results_iter_size;
+  wire [RSLT_CHANNELS-1:0]                use_channels_next;
+  wire [BATCH_SIZE-1:0]                   use_batch_next;
 
-  wire [RSLT_CHANNELS-1:0] use_channels_next;
-  wire [BATCH_SIZE-1:0]    use_batch_next;
-
-  generate
-    genvar CHN;
-    for (CHN=0; CHN<RSLT_CHANNELS; CHN=CHN+1) begin : use_channels_genblock
-      assign use_channels_next[CHN] = CHN < results_iter_size;
-    end
-    genvar BATCH;
-    for (BATCH=0; BATCH<BATCH_SIZE; BATCH=BATCH+1) begin : use_batch_genblock
-      assign use_batch_next[BATCH] = BATCH < btch_size_rd;
-    end
-  endgenerate
+ genvar CHN, BATCH;
+ generate
+  for (CHN=0; CHN<RSLT_CHANNELS; CHN=CHN+1) begin : use_channels_genblock
+    assign use_channels_next[CHN] = (CHN < results_iter_size);
+  end
+  for (BATCH=0; BATCH<BATCH_SIZE; BATCH=BATCH+1) begin : use_batch_genblock
+    assign use_batch_next[BATCH]  = (BATCH < btch_size_rd);
+  end
+ endgenerate
 
   assign operation_progress_rslt_wr = $unsigned(results_exported_reg);
 
   // Check iteration
-  reg  [23:0] iteration_reg;
+  reg  [23:0] iteration_reg = 0;
   wire [23:0] iteration_reg_next = iteration_reg + 1;
 
   assign operation_progress_iter_wr = $unsigned(iteration_reg_next);
@@ -440,31 +464,31 @@ module CentralControlUnit #(
   // Global FSM state logic
   always @(posedge fsm_clk ) begin
     if (fsm_rst) begin
-      fsm_state <= FSM_ST0;
+      fsm_state                 <= FSM_ST0;
 
-      core_start      <= 1'b0;
-      operation_start <= 1'b0;
-      data_size       <= {DATA_ADDR{1'b0}};
-      grid_size       <= {GRID_ADDR{1'b0}};
-      scle_size       <= {SCALE_ADDR{1'b0}};
-      pckt_size       <= {PCKT_SIZE_WIDTH{1'b0}};
-      rslt_size       <= {RSLT_SIZE_WIDTH{1'b0}};
+      core_start                <= 1'b0;
+      operation_start           <= 1'b0;
+      data_size                 <= {DATA_ADDR{1'b0}};
+      grid_size                 <= {GRID_ADDR{1'b0}};
+      scle_size                 <= {SCALE_ADDR{1'b0}};
+      pckt_size                 <= {PCKT_SIZE_WIDTH{1'b0}};
+      rslt_size                 <= {RSLT_SIZE_WIDTH{1'b0}};
 
-      iteration_start <= 1'b0;
-      use_channels    <= {RSLT_CHANNELS{1'b0}};
-      use_batch       <= {BATCH_SIZE{1'b0}};
+      iteration_start           <= 1'b0;
+      use_channels              <= {RSLT_CHANNELS{1'b0}};
+      use_batch                 <= {BATCH_SIZE{1'b0}};
 
-      operation_busy        <= 1'b0;
-      operation_complete    <= 1'b0;
-      operation_error       <= 1'b0;
+      operation_busy            <= 1'b0;
+      operation_complete        <= 1'b0;
+      operation_error           <= 1'b0;
 
-      results_left_reg      <= {24{1'b0}};
-      results_exported_reg  <= {24{1'b0}};
+      results_left_reg          <= {24{1'b0}};
+      results_exported_reg      <= {24{1'b0}};
 
-      iteration_reg         <= {24{1'b0}};
+      iteration_reg             <= {24{1'b0}};
 
-      locked      <= 1'b0;
-      int_pl2ps  <= 1'b0;
+      locked                    <= 1'b0;
+      int_pl2ps                 <= 1'b0;
 
       interrupt_soft_reg        <= 1'b0;
       interrupt_soft_reg_early  <= 1'b0;
@@ -473,24 +497,24 @@ module CentralControlUnit #(
       internal_error_asserted   <= 1'b0;
 
     end else begin
-      fsm_state <= fsm_state_next;
+      fsm_state                 <= fsm_state_next;
 
 
-      iteration_start <= 1'b0;
+      iteration_start           <= 1'b0;
 
-      results_left_reg      <= results_left_reg;
-      results_exported_reg  <= results_exported_reg;
+      results_left_reg          <= results_left_reg;
+      results_exported_reg      <= results_exported_reg;
 
-      iteration_reg         <= iteration_reg;
+      iteration_reg             <= iteration_reg;
 
-      core_start            <= 1'b0;
-      operation_start       <= 1'b0;
-      operation_busy        <= 1'b0;
-      operation_complete    <= 1'b0;
-      operation_error       <= 1'b0;
+      core_start                <= 1'b0;
+      operation_start           <= 1'b0;
+      operation_busy            <= 1'b0;
+      operation_complete        <= 1'b0;
+      operation_error           <= 1'b0;
 
-      locked      <= locked_next;
-      int_pl2ps  <= 1'b0;
+      locked                    <= locked_next;
+      int_pl2ps                 <= 1'b0;
 
       // Soft Interrupts -- Capture soft interrupts, activate at the end of an iteration
       interrupt_soft_reg        <= interrupt_soft_reg;
@@ -499,10 +523,10 @@ module CentralControlUnit #(
 
       case (fsm_state_next)
         FSM_ST0: begin
-          results_left_reg      <= {24{1'b0}};
-          results_exported_reg  <= {24{1'b0}};
+          results_left_reg          <= {24{1'b0}};
+          results_exported_reg      <= {24{1'b0}};
           
-          iteration_reg         <= {24{1'b0}};
+          iteration_reg             <= {24{1'b0}};
 
           interrupt_soft_reg        <= 1'b0;
           interrupt_soft_reg_early  <= 1'b0;
@@ -510,52 +534,52 @@ module CentralControlUnit #(
           internal_error_asserted   <= 1'b0;
         end
         FSM_STR: begin
-          data_size       <= data_size_rd[DATA_ADDR :0];
-          grid_size       <= grid_size_rd[GRID_ADDR :0];
-          scle_size       <= scle_size_rd[SCALE_ADDR:0];
-          pckt_size       <= pckt_size_rd[PCKT_SIZE_WIDTH-1:0];
-          rslt_size       <= rslt_size_rd[RSLT_SIZE_WIDTH-1:0];
+          data_size                 <= data_size_rd[DATA_ADDR :0];
+          grid_size                 <= grid_size_rd[GRID_ADDR :0];
+          scle_size                 <= scle_size_rd[SCALE_ADDR:0];
+          pckt_size                 <= pckt_size_rd[PCKT_SIZE_WIDTH-1:0];
+          rslt_size                 <= rslt_size_rd[RSLT_SIZE_WIDTH-1:0];
 
-          use_channels    <= use_channels_next;
-          use_batch       <= use_batch_next;
+          use_channels              <= use_channels_next;
+          use_batch                 <= use_batch_next;
 
-          results_left_reg      <= rslt_size_rd;
-          results_exported_reg  <= {24{1'b0}};
+          results_left_reg          <= rslt_size_rd;
+          results_exported_reg      <= {24{1'b0}};
 
-          iteration_reg         <= {24{1'b0}};
+          iteration_reg             <= {24{1'b0}};
 
-          operation_busy  <= 1'b1;
+          operation_busy            <= 1'b1;
 
-          int_pl2ps  <= 1'b1;
+          int_pl2ps                 <= 1'b1;
         end
         FSM_OPE: begin
           if (fsm_state == FSM_STR) begin
-            core_start      <= 1'b1;
-            operation_start <= 1'b1;
+            core_start              <= 1'b1;
+            operation_start         <= 1'b1;
           end
 
-          operation_busy  <= 1'b1;
+          operation_busy            <= 1'b1;
 
-          iteration_start <= 1'b1;
-          use_channels    <= use_channels_next;
-          use_batch       <= use_batch_next;
+          iteration_start           <= 1'b1;
+          use_channels              <= use_channels_next;
+          use_batch                 <= use_batch_next;
 
           if (rslt_tlast_sampled || fsm_state == FSM_STR) begin
-            results_left_reg      <= results_left_reg_next;
-            results_exported_reg  <= results_exported_reg_next;
+            results_left_reg          <= results_left_reg_next;
+            results_exported_reg      <= results_exported_reg_next;
           end
           if (rslt_tlast_sampled) begin
             iteration_reg             <= iteration_reg_next;
             interrupt_soft_reg        <= interrupt_soft_reg_early || interrupt_soft;
             interrupt_soft_reg_early  <= 1'b0;
 
-            operation_start <= ~(interrupt_soft_reg_early || interrupt_soft);
-            int_pl2ps  <= 1'b1;
+            operation_start           <= ~(interrupt_soft_reg_early || interrupt_soft);
+            int_pl2ps                 <= 1'b1;
           end
         end
         FSM_END: begin
-          operation_complete <= 1'b1;
-          int_pl2ps          <= 1'b1;
+          operation_complete        <= 1'b1;
+          int_pl2ps                 <= 1'b1;
         end
         FSM_ERR: begin
           internal_operation_error  <= ~(internal_error_asserted || core_rst);
@@ -601,14 +625,14 @@ module CentralControlUnit #(
         end 
       end
       FSM_STR: begin
-        fsm_state_next <= FSM_OPE;
-        rw_op_str_reg_en <= 1'b1;
+        fsm_state_next    <= FSM_OPE;
+        rw_op_str_reg_en  <= 1'b1;
       end
       FSM_OPE: begin
-        fsm_state_next <= FSM_OPE;
+        fsm_state_next    <= FSM_OPE;
         if (last_iteration && rslt_tlast_sampled) begin
-          fsm_state_next <= FSM_END;
-          rw_op_dne_reg_en <= 1'b1;
+          fsm_state_next    <= FSM_END;
+          rw_op_dne_reg_en  <= 1'b1;
           locked_next_error <= 1'b1;
         end
       end
@@ -640,7 +664,7 @@ module CentralControlUnit #(
       rw_op_dne_reg_en      <= interrupt_error;
     end
     if (fsm_rst) begin
-      fsm_state_next <= FSM_ST0;
+      fsm_state_next        <= FSM_ST0;
     end
   end
 

@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -43,9 +70,10 @@ module BramIntrfTranslatorReadEn #(
   parameter RD_LATENCY = 1
 ) (
   input  wire                             clk,
-  /*-----------------------------------------------
-      Input BRAM interface
-  -----------------------------------------------*/
+
+  /*
+   * Input BRAM interface
+   */
   input  wire                             rden_i,
   input  wire                             wren_i,
   input  wire [STRB_WIDTH_IN-1:0]         wrstrb_i,
@@ -54,9 +82,9 @@ module BramIntrfTranslatorReadEn #(
   output wire [DATA_WIDTH_IN-1:0]         dout_i,
   output wire                             dack_i,
 
-  /*-----------------------------------------------
-      Output multi-bank BRAM interface
-  -----------------------------------------------*/
+  /*
+   * Output multi-bank BRAM interface
+   */
   output wire [BANKS-1:0]                 rden_o,
   output wire [BANKS-1:0]                 wren_o,
   output wire [BANKS*STRB_WIDTH_OUT-1:0]  wrstrb_o,

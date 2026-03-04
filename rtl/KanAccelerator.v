@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -24,11 +51,18 @@ module KanAccelerator #(
   ------------------------------------------------------------------*/
   
   // Width of DMA streams
-  parameter DMA_WIDTH = 64,
+  parameter WEIGHT_DMA_WIDTH = 64,
   // Propagate tkeep signal
-  parameter DMA_KEEP_ENABLE = (DMA_WIDTH > 8),
+  parameter WEIGHT_DMA_KEEP_ENABLE = (WEIGHT_DMA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter DMA_KEEP_WIDTH = (DMA_KEEP_ENABLE) ? ((DMA_WIDTH + 7) / 8) : 1,
+  parameter WEIGHT_DMA_KEEP_WIDTH  = (WEIGHT_DMA_KEEP_ENABLE) ? ((WEIGHT_DMA_WIDTH + 7) / 8) : 1,
+
+  // Width of DMA streams
+  parameter RSLT_DMA_WIDTH = 64,
+  // Propagate tkeep signal
+  parameter RSLT_DMA_KEEP_ENABLE = (RSLT_DMA_WIDTH > 8),
+  // tkeep signal width (words per cycle)
+  parameter RSLT_DMA_KEEP_WIDTH  = (RSLT_DMA_KEEP_ENABLE) ? ((RSLT_DMA_WIDTH + 7) / 8) : 1,
 
   /*------------------------------------------------------------------
     AXI_Lite controller mem interface parameters
@@ -99,7 +133,7 @@ module KanAccelerator #(
   // tkeep signal width (words per cycle)
   parameter RSLT_KEEP_WIDTH = ((RSLT_WIDTH + 7) / 8),
   // FIFO Depth for results
-  parameter RSLT_FIFO_DEPTH = `MAX( 2 ** `LOG2(`LOG2(BATCH_SIZE + RSLT_CHANNELS) + DMA_KEEP_WIDTH), 8),
+  parameter RSLT_FIFO_DEPTH = `MAX( 2 ** `LOG2(`LOG2(BATCH_SIZE + RSLT_CHANNELS) + RSLT_DMA_KEEP_WIDTH), 8),
 
   /*------------------------------------------------------------------
     WEIGHT streams parameters
@@ -114,7 +148,7 @@ module KanAccelerator #(
   // tkeep signal width (words per cycle)
   parameter WEIGHT_KEEP_WIDTH = (WEIGHT_KEEP_ENABLE) ? ((WEIGHT_WIDTH + 7) / 8) : 1,
   // FIFO Depth for WEIGHT parameters
-  parameter WEIGHT_FIFO_DEPTH = 2 ** `LOG2(BATCH_SIZE + DATA_CHANNELS + RSLT_CHANNELS + DMA_KEEP_WIDTH),
+  parameter WEIGHT_FIFO_DEPTH = 2 ** `LOG2(BATCH_SIZE + DATA_CHANNELS + RSLT_CHANNELS + WEIGHT_DMA_KEEP_WIDTH),
 
   /*------------------------------------------------------------------
     SCALED_DIFF parameters
@@ -424,9 +458,9 @@ module KanAccelerator #(
   input  wire                                       s_axis_wght_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST WEIGHT_LAST_ENABLE, HAS_TSTRB 0, HAS_TREADY 1" *)
-  input  wire [DMA_WIDTH-1:0]                       s_axis_wght_tdata,
+  input  wire [WEIGHT_DMA_WIDTH-1:0]                s_axis_wght_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TKEEP" *)
-  input  wire [DMA_KEEP_WIDTH-1:0]                  s_axis_wght_tkeep,
+  input  wire [WEIGHT_DMA_KEEP_WIDTH-1:0]           s_axis_wght_tkeep,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TVALID" *)
   input  wire                                       s_axis_wght_tvalid,  
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TREADY" *)
@@ -452,9 +486,9 @@ module KanAccelerator #(
   input  wire                                       m_axis_rslt_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
-  output wire [DMA_WIDTH-1:0]                       m_axis_rslt_tdata,
+  output wire [RSLT_DMA_WIDTH-1:0]                  m_axis_rslt_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TKEEP" *)
-  output wire [DMA_KEEP_WIDTH-1:0]                  m_axis_rslt_tkeep,
+  output wire [RSLT_DMA_KEEP_WIDTH-1:0]             m_axis_rslt_tkeep,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TVALID" *)
   output wire                                       m_axis_rslt_tvalid,  
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TREADY" *)
@@ -551,8 +585,12 @@ module KanAccelerator #(
       $error("Missmatch between widths of grid and data.");
       $finish;
     end
-    if (DMA_WIDTH % 32 != 0) begin
-      $error("Data width for DMA master & slave interfaces must be multiples of 32.");
+    if (WEIGHT_DMA_WIDTH % 8 != 0) begin
+      $error("Data width for DMA master interfaces must be multiples of 8.");
+      $finish;
+    end
+    if (RSLT_DMA_WIDTH % 8 != 0) begin
+      $error("Data width for DMA slave interfaces must be multiples of 8.");
       $finish;
     end
     if ( 2 ** ($clog2(DATA_CHANNELS)) != DATA_CHANNELS) begin
@@ -648,50 +686,49 @@ module KanAccelerator #(
   wire [DATA_CHANNELS*DATA_WIDTH-1:0]         int_ram_data_bram_rddata  [0:BATCH_SIZE-1];
   wire [DATA_CHANNELS-1:0]                    int_ram_data_bram_rdack   [0:BATCH_SIZE-1];
 
-  generate
-  for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: axil_ram_data_genblock
-    AxilRamBramBridge # (
-      .AXIL_ADDR_WIDTH    (DATA_ADDR),
-      .AXIL_DATA_WIDTH    (AXIL_WIDTH),
-      .AXIL_STRB_WIDTH    (AXIL_STRB_WIDTH),
-      .BRAM_DATA_WIDTH    (DATA_WIDTH),
-      .BRAM_STRB_WIDTH    (DATA_STRB_WIDTH),
-      .BRAM_PORTS         (DATA_CHANNELS),
-      .PIPELINE_OUTPUT    (DATA_PIPELINE_OUTPUT)
-    ) axil_ram_data_inst  (
-      .clka               (int_ram_data_axil_aclk     [BATCH]),
-      .rsta               (int_ram_data_axil_arst     [BATCH]),
-      .s_axil_awaddr      (int_ram_data_axil_awaddr   [BATCH]),
-      .s_axil_awprot      (int_ram_data_axil_awprot   [BATCH]),
-      .s_axil_awvalid     (int_ram_data_axil_awvalid  [BATCH]),
-      .s_axil_awready     (int_ram_data_axil_awready  [BATCH]),
-      .s_axil_wdata       (int_ram_data_axil_wdata    [BATCH]),
-      .s_axil_wstrb       (int_ram_data_axil_wstrb    [BATCH]),
-      .s_axil_wvalid      (int_ram_data_axil_wvalid   [BATCH]),
-      .s_axil_wready      (int_ram_data_axil_wready   [BATCH]),
-      .s_axil_bresp       (int_ram_data_axil_bresp    [BATCH]),
-      .s_axil_bvalid      (int_ram_data_axil_bvalid   [BATCH]),
-      .s_axil_bready      (int_ram_data_axil_bready   [BATCH]),
-      .s_axil_araddr      (int_ram_data_axil_araddr   [BATCH]),
-      .s_axil_arprot      (int_ram_data_axil_arprot   [BATCH]),
-      .s_axil_arvalid     (int_ram_data_axil_arvalid  [BATCH]),
-      .s_axil_arready     (int_ram_data_axil_arready  [BATCH]),
-      .s_axil_rdata       (int_ram_data_axil_rdata    [BATCH]),
-      .s_axil_rresp       (int_ram_data_axil_rresp    [BATCH]),
-      .s_axil_rvalid      (int_ram_data_axil_rvalid   [BATCH]),
-      .s_axil_rready      (int_ram_data_axil_rready   [BATCH]),
-      .clkb               (int_ram_data_bram_clk      [BATCH]),
-      .rstb               (int_ram_data_bram_rst      [BATCH]),
-      .rden               (int_ram_data_bram_rden     [BATCH]),
-      .wren               ({DATA_CHANNELS{1'b0}}),
-      .wrstrb             ({DATA_CHANNELS*DATA_STRB_WIDTH{1'b0}}),
-      .addr               (int_ram_data_bram_addr     [BATCH]),
-      .din                ({DATA_CHANNELS*DATA_WIDTH{1'b0}}),
-      .dout               (int_ram_data_bram_rddata   [BATCH]),
-      .dack               (int_ram_data_bram_rdack    [BATCH])
-    );
-  end
-  endgenerate
+ generate for (BATCH = 0; BATCH < BATCH_SIZE; BATCH = BATCH + 1) begin: axil_ram_data_genblock
+  AxilRamBramBridge # (
+    .AXIL_ADDR_WIDTH    (DATA_ADDR),
+    .AXIL_DATA_WIDTH    (AXIL_WIDTH),
+    .AXIL_STRB_WIDTH    (AXIL_STRB_WIDTH),
+    .BRAM_DATA_WIDTH    (DATA_WIDTH),
+    .BRAM_STRB_WIDTH    (DATA_STRB_WIDTH),
+    .BRAM_PORTS         (DATA_CHANNELS),
+    .PIPELINE_OUTPUT    (DATA_PIPELINE_OUTPUT)
+  ) axil_ram_data_inst  (
+    .clka               (int_ram_data_axil_aclk     [BATCH]),
+    .rsta               (int_ram_data_axil_arst     [BATCH]),
+    .s_axil_awaddr      (int_ram_data_axil_awaddr   [BATCH]),
+    .s_axil_awprot      (int_ram_data_axil_awprot   [BATCH]),
+    .s_axil_awvalid     (int_ram_data_axil_awvalid  [BATCH]),
+    .s_axil_awready     (int_ram_data_axil_awready  [BATCH]),
+    .s_axil_wdata       (int_ram_data_axil_wdata    [BATCH]),
+    .s_axil_wstrb       (int_ram_data_axil_wstrb    [BATCH]),
+    .s_axil_wvalid      (int_ram_data_axil_wvalid   [BATCH]),
+    .s_axil_wready      (int_ram_data_axil_wready   [BATCH]),
+    .s_axil_bresp       (int_ram_data_axil_bresp    [BATCH]),
+    .s_axil_bvalid      (int_ram_data_axil_bvalid   [BATCH]),
+    .s_axil_bready      (int_ram_data_axil_bready   [BATCH]),
+    .s_axil_araddr      (int_ram_data_axil_araddr   [BATCH]),
+    .s_axil_arprot      (int_ram_data_axil_arprot   [BATCH]),
+    .s_axil_arvalid     (int_ram_data_axil_arvalid  [BATCH]),
+    .s_axil_arready     (int_ram_data_axil_arready  [BATCH]),
+    .s_axil_rdata       (int_ram_data_axil_rdata    [BATCH]),
+    .s_axil_rresp       (int_ram_data_axil_rresp    [BATCH]),
+    .s_axil_rvalid      (int_ram_data_axil_rvalid   [BATCH]),
+    .s_axil_rready      (int_ram_data_axil_rready   [BATCH]),
+    .clkb               (int_ram_data_bram_clk      [BATCH]),
+    .rstb               (int_ram_data_bram_rst      [BATCH]),
+    .rden               (int_ram_data_bram_rden     [BATCH]),
+    .wren               ({DATA_CHANNELS{1'b0}}),
+    .wrstrb             ({DATA_CHANNELS*DATA_STRB_WIDTH{1'b0}}),
+    .addr               (int_ram_data_bram_addr     [BATCH]),
+    .din                ({DATA_CHANNELS*DATA_WIDTH{1'b0}}),
+    .dout               (int_ram_data_bram_rddata   [BATCH]),
+    .dack               (int_ram_data_bram_rdack    [BATCH])
+  );
+ end
+ endgenerate
  
   /**********************************************
     AXI-Lite / BRam Grid Bridge 
@@ -939,10 +976,7 @@ module KanAccelerator #(
                                                   };
 
   MemoryControlUnit #(
-    // `include "header_MCUGlobalFSMParametersInst.vh"
-   `ifdef BRAM_ACK_SIG_OPTION
     .BRAM_ACK_SIG               (1),
-   `endif
     .BATCH_SIZE                 (BATCH_SIZE),
     .DATA_WIDTH                 (DATA_WIDTH),
     .GRID_WIDTH                 (GRID_WIDTH),
@@ -974,7 +1008,7 @@ module KanAccelerator #(
     .grid_size                  (grid_size_bram),
     .scle_size                  (scle_size_bram),
  `ifdef DEBUG
-    // .debug_wire                 (mcu_debug_wire),
+    .debug_wire                 (mcu_debug_wire),
  `endif
     .operation_busy             (mcu_operation_busy),
     .operation_complete         (mcu_operation_complete),
@@ -1024,8 +1058,8 @@ module KanAccelerator #(
   *********************************************/
 
   wire                                          int_adp_wght_s_axis_aclk;
-  wire [DMA_WIDTH-1:0]                          int_adp_wght_s_axis_tdata;
-  wire [DMA_KEEP_WIDTH-1:0]                     int_adp_wght_s_axis_tkeep;
+  wire [WEIGHT_DMA_WIDTH-1:0]                   int_adp_wght_s_axis_tdata;
+  wire [WEIGHT_DMA_KEEP_WIDTH-1:0]              int_adp_wght_s_axis_tkeep;
   wire                                          int_adp_wght_s_axis_tvalid;
   wire                                          int_adp_wght_s_axis_tready;
   wire                                          int_adp_wght_s_axis_tlast;
@@ -1039,7 +1073,7 @@ module KanAccelerator #(
 
   axis_async_fifo_adapter #(
     .DEPTH          (WEIGHT_FIFO_DEPTH),
-    .S_DATA_WIDTH   (DMA_WIDTH),
+    .S_DATA_WIDTH   (WEIGHT_DMA_WIDTH),
     .M_DATA_WIDTH   (WEIGHT_CHANNELS*WEIGHT_WIDTH),
     .ID_ENABLE      (WEIGHT_ID_ENABLE),
     .ID_WIDTH       (WEIGHT_ID_WIDTH),
@@ -1095,7 +1129,7 @@ module KanAccelerator #(
   AxisSplitter #(
     .OUTPUT_DATA_WIDTH  (WEIGHT_WIDTH),
     .CHANNELS           (WEIGHT_CHANNELS),
-    .INPUT_KEEP_ENABLE  (DMA_KEEP_ENABLE),
+    .INPUT_KEEP_ENABLE  (WEIGHT_DMA_KEEP_ENABLE),
     .INPUT_KEEP_WIDTH   (WEIGHT_CHANNELS*WEIGHT_KEEP_WIDTH),
     .OUTPUT_KEEP_ENABLE (0),
     .OUTPUT_KEEP_WIDTH  (1),
@@ -1260,8 +1294,8 @@ module KanAccelerator #(
   wire [RSLT_CHANNELS_OUT-1:0]             int_jnr_rslt_s_axis_tready;
   wire [RSLT_CHANNELS_OUT-1:0]             int_jnr_rslt_s_axis_tlast;
 
-  wire [DMA_WIDTH-1:0]                     int_jnr_rslt_m_axis_tdata;
-  wire [DMA_KEEP_WIDTH-1:0]                int_jnr_rslt_m_axis_tkeep;
+  wire [RSLT_DMA_WIDTH-1:0]                int_jnr_rslt_m_axis_tdata;
+  wire [RSLT_DMA_KEEP_WIDTH-1:0]           int_jnr_rslt_m_axis_tkeep;
   wire                                     int_jnr_rslt_m_axis_tvalid;
   wire                                     int_jnr_rslt_m_axis_tready;
   wire                                     int_jnr_rslt_m_axis_tlast;
@@ -1273,9 +1307,9 @@ module KanAccelerator #(
     .S_DATA_WIDTH       (RSLT_WIDTH),
     .S_KEEP_ENABLE      (RSLT_KEEP_ENABLE),
     .S_KEEP_WIDTH       (RSLT_KEEP_WIDTH),
-    .M_DATA_WIDTH       (DMA_WIDTH),
-    .M_KEEP_ENABLE      (DMA_KEEP_ENABLE),
-    .M_KEEP_WIDTH       (DMA_KEEP_WIDTH),
+    .M_DATA_WIDTH       (RSLT_DMA_WIDTH),
+    .M_KEEP_ENABLE      (RSLT_DMA_KEEP_ENABLE),
+    .M_KEEP_WIDTH       (RSLT_DMA_KEEP_WIDTH),
     .S_ID_ENABLE        (0),
     .S_ID_WIDTH         (1),
     .M_ID_WIDTH         (RSLT_ID_WIDTH),

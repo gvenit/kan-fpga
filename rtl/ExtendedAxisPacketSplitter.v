@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -90,173 +117,158 @@ module ExtendedAxisPacketSplitter # (
 
   wire int_external_error; 
 
-  genvar CHN;
+ genvar CHN;
+ generate if (CHANNELS == 1) begin : single_channel_genblock
+  assign lock_bus = 0;
+  assign int_external_error = external_error; 
 
-  generate
-    if (CHANNELS == 1) begin : single_channel_genblock
-      assign lock_bus = 0;
-      assign int_external_error = external_error; 
+  always @(*) begin
+    operation_busy     <= operation_busy_bus[0];
+    operation_complete <= operation_complete_bus[0];
+    operation_error    <= operation_error_bus[0];
+  end
+ end else begin : multi_channel_genblock
+  reg                 operation_error_reg_reduced;
+  reg  [CHANNELS-1:0] operation_complete_bus_reg;
+  wire [CHANNELS-1:0] operation_complete_bus_reg_next = operation_complete_bus | operation_complete_bus_reg;
 
-      always @(*) begin
-        operation_busy     <= operation_busy_bus[0];
-        operation_complete <= operation_complete_bus[0];
-        operation_error    <= operation_error_bus[0];
-      end
-    end else begin : multi_channel_genblock
-      reg                 operation_error_reg_reduced;
-      reg  [CHANNELS-1:0] operation_complete_bus_reg;
-      wire [CHANNELS-1:0] operation_complete_bus_reg_next = operation_complete_bus | operation_complete_bus_reg;
+  wire op_done = &operation_complete_bus_reg_next;
+  wire op_busy = |operation_busy_bus;
 
-      wire op_done = &operation_complete_bus_reg_next;
-      wire op_busy = |operation_busy_bus;
-
-      assign lock_bus = operation_complete_bus_reg & {CHANNELS{~op_done}};
-      assign int_external_error = (&operation_error_bus) ? external_error : (operation_error_reg_reduced || external_error); 
-      
-      always @(*) begin
-        if (rst) begin
-          operation_busy     <= 1'b0;
-          operation_complete <= 1'b0;
-          operation_error    <= 1'b0;
-        end else begin
-          operation_busy     <= 1'b0;
-          operation_complete <= 1'b0;
-          operation_error    <= 1'b0;
-          if (operation_error_reg_reduced) begin
-            operation_error    <= 1'b1;
-          end else if (op_done) begin
-            operation_complete <= 1'b1;
-          end else if (op_busy) begin
-            operation_busy     <= 1'b1;
-          end
-        end
-      end
-      always @(posedge clk ) begin
-        if (rst) begin
-          operation_complete_bus_reg <= 0;
-          operation_error_reg_reduced <= 1'b0;
-        end else begin
-          operation_complete_bus_reg <= 0;
-          operation_error_reg_reduced <= 1'b0;
-          if (int_external_error) begin
-          end if (|operation_error_bus) begin
-            operation_error_reg_reduced <= 1'b1;
-          end else if (op_done) begin
-          end else if (op_busy) begin
-            operation_complete_bus_reg <= operation_complete_bus_reg_next;
-          end
-        end
+  assign lock_bus = operation_complete_bus_reg & {CHANNELS{~op_done}};
+  assign int_external_error = (&operation_error_bus) ? external_error : (operation_error_reg_reduced || external_error); 
+  
+  always @(*) begin
+    if (rst) begin
+      operation_busy     <= 1'b0;
+      operation_complete <= 1'b0;
+      operation_error    <= 1'b0;
+    end else begin
+      operation_busy     <= 1'b0;
+      operation_complete <= 1'b0;
+      operation_error    <= 1'b0;
+      if (operation_error_reg_reduced) begin
+        operation_error    <= 1'b1;
+      end else if (op_done) begin
+        operation_complete <= 1'b1;
+      end else if (op_busy) begin
+        operation_busy     <= 1'b1;
       end
     end
-
-    for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin : axis_packet_splitter_genblock
-      wire                   int_lock; 
-      wire                   int_operation_busy;
-      wire                   int_operation_complete;
-      wire                   int_operation_error;
-      wire                   int_transmission;
-      wire [DATA_WIDTH-1:0]  int_s_axis_tdata;
-      wire [KEEP_WIDTH-1:0]  int_s_axis_tkeep;
-      wire                   int_s_axis_tvalid;
-      wire                   int_s_axis_tready;
-      wire                   int_s_axis_tlast;
-      wire [ID_WIDTH-1:0]    int_s_axis_tid;
-      wire [DEST_WIDTH-1:0]  int_s_axis_tdest;
-      wire [USER_WIDTH-1:0]  int_s_axis_tuser;
-      wire [DATA_WIDTH-1:0]  int_m_axis_tdata;
-      wire [KEEP_WIDTH-1:0]  int_m_axis_tkeep;
-      wire                   int_m_axis_tvalid;
-      wire                   int_m_axis_tready;
-      wire                   int_m_axis_tlast;
-      wire [ID_WIDTH-1:0]    int_m_axis_tid;
-      wire [DEST_WIDTH-1:0]  int_m_axis_tdest;
-      wire [USER_WIDTH-1:0]  int_m_axis_tuser;
-
-      AxisPacketSplitter  #(
-        // Width of AXI stream Data interfaces in bits
-        .DATA_WIDTH (DATA_WIDTH),
-        // Propagate tkeep signal
-        .KEEP_ENABLE(KEEP_ENABLE),
-        // tkeep signal width (words per cycle)
-        .KEEP_WIDTH(KEEP_WIDTH),
-        // Propagate tid signal
-        .ID_ENABLE(ID_ENABLE),
-        // tid signal width
-        .ID_WIDTH(ID_WIDTH),
-        // Propagate tdest signal
-        .DEST_ENABLE(DEST_ENABLE),
-        // tdest signal width
-        .DEST_WIDTH(DEST_WIDTH),
-        // Propagate tuser signal
-        .USER_ENABLE(USER_ENABLE),
-        // tuser signal width
-        .USER_WIDTH(USER_WIDTH),
-        // Width of Packet Size
-        .PCKT_WIDTH(PCKT_WIDTH),
-        // Allow locking module in its current state
-        .ALLOW_LOCKS(1),
-        // Ignore input packet sizes
-        .IGNORE_TLAST(IGNORE_TLAST),
-        // Raise error flag if input packet non divisible
-        .RAISE_NON_DIVISIBLE(RAISE_NON_DIVISIBLE)
-      ) axis_packet_splitter_inst (
-        .clk                 (clk),
-        .rst                 (rst),
-        .operation_start     (operation_start),
-        .pckt_size           (pckt_size),
-        .lock                (int_lock),
-        .external_error      (int_external_error),
-        .operation_busy      (int_operation_busy),
-        .operation_complete  (int_operation_complete),
-        .operation_error     (int_operation_error),
-        .transmission        (int_transmission),
-        .s_axis_tdata        (int_s_axis_tdata),
-        .s_axis_tkeep        (int_s_axis_tkeep),
-        .s_axis_tvalid       (int_s_axis_tvalid),  
-        .s_axis_tready       (int_s_axis_tready),
-        .s_axis_tlast        (int_s_axis_tlast),
-        .s_axis_tid          (int_s_axis_tid),
-        .s_axis_tdest        (int_s_axis_tdest),
-        .s_axis_tuser        (int_s_axis_tuser),
-        .m_axis_tdata        (int_m_axis_tdata),
-        .m_axis_tkeep        (int_m_axis_tkeep),
-        .m_axis_tvalid       (int_m_axis_tvalid),
-        .m_axis_tready       (int_m_axis_tready),
-        .m_axis_tlast        (int_m_axis_tlast),
-        .m_axis_tid          (int_m_axis_tid),
-        .m_axis_tdest        (int_m_axis_tdest),
-        .m_axis_tuser        (int_m_axis_tuser)
-      );
-
-      assign int_lock                     = lock_bus[CHN];
-      assign operation_busy_bus[CHN]      = int_operation_busy;
-      assign operation_complete_bus[CHN]  = int_operation_complete;
-      assign operation_error_bus[CHN]     = int_operation_error;
-
-      assign int_s_axis_tdata     = s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH];
-      assign int_s_axis_tkeep     = s_axis_tkeep  [CHN*KEEP_WIDTH +: KEEP_WIDTH];
-      assign int_s_axis_tvalid    = s_axis_tvalid [CHN];
-      assign s_axis_tready [CHN]  = int_s_axis_tready;
-      assign int_s_axis_tlast     = s_axis_tlast  [CHN];
-      assign int_s_axis_tid       = s_axis_tid    [CHN*ID_WIDTH +: ID_WIDTH];
-      assign int_s_axis_tdest     = s_axis_tdest  [CHN*DEST_WIDTH +: DEST_WIDTH];
-      assign int_s_axis_tuser     = s_axis_tuser  [CHN*USER_WIDTH +: USER_WIDTH];
-
-      assign m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH] = int_m_axis_tdata;
-      assign m_axis_tkeep  [CHN*KEEP_WIDTH +: KEEP_WIDTH] = int_m_axis_tkeep;
-      assign m_axis_tvalid [CHN]                          = int_m_axis_tvalid;
-      assign int_m_axis_tready                            = m_axis_tready [CHN];
-      assign m_axis_tlast  [CHN]                          = int_m_axis_tlast;
-      assign m_axis_tid    [CHN*ID_WIDTH +: ID_WIDTH]     = int_m_axis_tid;
-      assign m_axis_tdest  [CHN*DEST_WIDTH +: DEST_WIDTH] = int_m_axis_tdest;
-      assign m_axis_tuser  [CHN*USER_WIDTH +: USER_WIDTH] = int_m_axis_tuser;
-
-      always @(*) begin
-        transmission[CHN] <= int_transmission;
+  end
+  always @(posedge clk ) begin
+    if (rst) begin
+      operation_complete_bus_reg <= 0;
+      operation_error_reg_reduced <= 1'b0;
+    end else begin
+      operation_complete_bus_reg <= 0;
+      operation_error_reg_reduced <= 1'b0;
+      if (int_external_error) begin
+      end if (|operation_error_bus) begin
+        operation_error_reg_reduced <= 1'b1;
+      end else if (op_done) begin
+      end else if (op_busy) begin
+        operation_complete_bus_reg <= operation_complete_bus_reg_next;
       end
     end
+  end
+ end
 
-  endgenerate
+ for (CHN = 0; CHN < CHANNELS; CHN = CHN + 1) begin : axis_packet_splitter_genblock
+  wire                   int_lock; 
+  wire                   int_operation_busy;
+  wire                   int_operation_complete;
+  wire                   int_operation_error;
+  wire                   int_transmission;
+  wire [DATA_WIDTH-1:0]  int_s_axis_tdata;
+  wire [KEEP_WIDTH-1:0]  int_s_axis_tkeep;
+  wire                   int_s_axis_tvalid;
+  wire                   int_s_axis_tready;
+  wire                   int_s_axis_tlast;
+  wire [ID_WIDTH-1:0]    int_s_axis_tid;
+  wire [DEST_WIDTH-1:0]  int_s_axis_tdest;
+  wire [USER_WIDTH-1:0]  int_s_axis_tuser;
+  wire [DATA_WIDTH-1:0]  int_m_axis_tdata;
+  wire [KEEP_WIDTH-1:0]  int_m_axis_tkeep;
+  wire                   int_m_axis_tvalid;
+  wire                   int_m_axis_tready;
+  wire                   int_m_axis_tlast;
+  wire [ID_WIDTH-1:0]    int_m_axis_tid;
+  wire [DEST_WIDTH-1:0]  int_m_axis_tdest;
+  wire [USER_WIDTH-1:0]  int_m_axis_tuser;
+
+  AxisPacketSplitter #(
+    .DATA_WIDTH           (DATA_WIDTH),
+    .KEEP_ENABLE          (KEEP_ENABLE),
+    .KEEP_WIDTH           (KEEP_WIDTH),
+    .ID_ENABLE            (ID_ENABLE),
+    .ID_WIDTH             (ID_WIDTH),
+    .DEST_ENABLE          (DEST_ENABLE),
+    .DEST_WIDTH           (DEST_WIDTH),
+    .USER_ENABLE          (USER_ENABLE),
+    .USER_WIDTH           (USER_WIDTH),
+    .PCKT_WIDTH           (PCKT_WIDTH),
+    .ALLOW_LOCKS          (1),
+    .IGNORE_TLAST         (IGNORE_TLAST),
+    .RAISE_NON_DIVISIBLE  (RAISE_NON_DIVISIBLE)
+  ) axis_aps_inst         (
+    .clk                  (clk),
+    .rst                  (rst),
+    .operation_start      (operation_start),
+    .pckt_size            (pckt_size),
+    .lock                 (int_lock),
+    .external_error       (int_external_error),
+    .operation_busy       (int_operation_busy),
+    .operation_complete   (int_operation_complete),
+    .operation_error      (int_operation_error),
+    .transmission         (int_transmission),
+    .s_axis_tdata         (int_s_axis_tdata),
+    .s_axis_tkeep         (int_s_axis_tkeep),
+    .s_axis_tvalid        (int_s_axis_tvalid),  
+    .s_axis_tready        (int_s_axis_tready),
+    .s_axis_tlast         (int_s_axis_tlast),
+    .s_axis_tid           (int_s_axis_tid),
+    .s_axis_tdest         (int_s_axis_tdest),
+    .s_axis_tuser         (int_s_axis_tuser),
+    .m_axis_tdata         (int_m_axis_tdata),
+    .m_axis_tkeep         (int_m_axis_tkeep),
+    .m_axis_tvalid        (int_m_axis_tvalid),
+    .m_axis_tready        (int_m_axis_tready),
+    .m_axis_tlast         (int_m_axis_tlast),
+    .m_axis_tid           (int_m_axis_tid),
+    .m_axis_tdest         (int_m_axis_tdest),
+    .m_axis_tuser         (int_m_axis_tuser)
+  );
+
+  assign int_lock                     = lock_bus[CHN];
+  assign operation_busy_bus[CHN]      = int_operation_busy;
+  assign operation_complete_bus[CHN]  = int_operation_complete;
+  assign operation_error_bus[CHN]     = int_operation_error;
+
+  assign int_s_axis_tdata             = s_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH];
+  assign int_s_axis_tkeep             = s_axis_tkeep  [CHN*KEEP_WIDTH +: KEEP_WIDTH];
+  assign int_s_axis_tvalid            = s_axis_tvalid [CHN];
+  assign s_axis_tready [CHN]          = int_s_axis_tready;
+  assign int_s_axis_tlast             = s_axis_tlast  [CHN];
+  assign int_s_axis_tid               = s_axis_tid    [CHN*ID_WIDTH +: ID_WIDTH];
+  assign int_s_axis_tdest             = s_axis_tdest  [CHN*DEST_WIDTH +: DEST_WIDTH];
+  assign int_s_axis_tuser             = s_axis_tuser  [CHN*USER_WIDTH +: USER_WIDTH];
+
+  assign m_axis_tdata  [CHN*DATA_WIDTH +: DATA_WIDTH] = int_m_axis_tdata;
+  assign m_axis_tkeep  [CHN*KEEP_WIDTH +: KEEP_WIDTH] = int_m_axis_tkeep;
+  assign m_axis_tvalid [CHN]                          = int_m_axis_tvalid;
+  assign int_m_axis_tready                            = m_axis_tready [CHN];
+  assign m_axis_tlast  [CHN]                          = int_m_axis_tlast;
+  assign m_axis_tid    [CHN*ID_WIDTH +: ID_WIDTH]     = int_m_axis_tid;
+  assign m_axis_tdest  [CHN*DEST_WIDTH +: DEST_WIDTH] = int_m_axis_tdest;
+  assign m_axis_tuser  [CHN*USER_WIDTH +: USER_WIDTH] = int_m_axis_tuser;
+
+  always @(*) begin
+    transmission[CHN] <= int_transmission;
+  end
+ end
+ endgenerate
+
 endmodule
 
 `resetall

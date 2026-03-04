@@ -2,11 +2,8 @@
 
 A complete engine for accelerating Kolmogorov-Arnold Networks (KAN) in FPGAs. The engine is based on [faster-kan](https://github.com/AthanasiosDelis/faster-kan) and exploits the repeatitive use of the data and grid elements to calculate the operations of a KAN layer. 
 
-## Notes
-The `vitis` application is under development. The engine is functional but susceptible to small changes. 
-
 ## FasterKAN
-[faster-kan](https://github.com/AthanasiosDelis/faster-kan), when compared to [pykan](), uses an easier to calculate activation function, the Reflectional SWitch Activation Function: 
+[faster-kan](https://github.com/AthanasiosDelis/faster-kan), when compared to [pykan](https://github.com/KindXiaoming/pykan), uses an easier to calculate activation function, the Reflectional SWitch Activation Function: 
 
 $$RSWAF_i(x) = 1 - \tanh^2\left(scale\times(x-grid_i)\right)$$
 
@@ -157,12 +154,15 @@ the result stream makes use of the TID flag to indicate the corresponding batch.
 - [x] Integrate dataset and KAN model to the repository
 - [x] Integrate quantization of the KAN model to the repository. 
 - [x] Integrate a valid vivado projects to the repository.
-- [ ] Integrate vitis project to the repository.
+- [x] Integrate vitis project to the repository.
 
 # To-Do (Secondary)
 - [ ] Upgrade to / add option for AXI interfaces for data, grid and scale on-chip memory storage.
-- [ ] Option to use Distributed RAM instead of Block Ram for small memory depths.
-- [ ] Update `KanAccelerator_simgen.py` to use actual data instead of randomly generated ones.
+ - Note : avoiding this because of the high resource allocation needed
+- [-] Option to use Distributed RAM instead of Block Ram for small memory depths.
+ - Note : vivado does that by default
+- [-] Update `KanAccelerator_simgen.py` to use actual data instead of randomly generated ones.
+ - Note : Changed testbench to create check actual data with trustworthy results but not run a neural network.
 
 # Citation
 Copyright (c) 2025 Georgios Venitourakis under MIT License.
@@ -171,8 +171,13 @@ Copyright (c) 2025 Georgios Venitourakis under MIT License.
 pending...
 ```
 
+# Acknowledgements
+This project could not be complete without the repositories [verilog-axis](https://github.com/alexforencich/verilog-axis) and [verilog-axi](https://github.com/alexforencich/verilog-axi) by [Alex Forencich](https://github.com/alexforencich). 
+
 # Contributions
 Contributions are welcome. Please raise issues as necessary. 
 
 # References
-- pending...
+- [faster-kan](https://github.com/AthanasiosDelis/faster-kan)
+- [pykan](https://github.com/KindXiaoming/pykan)
+- [verilog-axis](https://github.com/alexforencich/verilog-axis)

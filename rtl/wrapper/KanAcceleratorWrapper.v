@@ -1,6 +1,6 @@
 /* This script was generating by the following command:
                  
-python wrapper/KanAcceleratorInst.py --dma-width 64 --data-width 16 --data-frac-bits 11 --data-chn 4 --data-depth 16384 --grid-depth 16 --scle-width 16 --scle-frac-bits 14 --scle-depth 2 --wght-width 16 --wght-frac-bits 16 --wght-depth 512 --sdff-width 12 --sdff-frac-bits 9 --actf-width 16 --actf-frac-bits 16 --rslt-chn 2 --rslt-width 16 --rslt-frac-bits 11 --rslt-depth 32 --async -n KanAcceleratorWrapper -o wrapper/KanAcceleratorWrapper.v
+python wrapper/KanAcceleratorInst.py --wght-dma-width 64 --rslt-dma-width 64 --data-width 16 --data-frac-bits 11 --data-chn 4 --data-depth 16384 --grid-depth 16 --scle-width 16 --scle-frac-bits 14 --scle-depth 2 --wght-width 16 --wght-frac-bits 16 --wght-depth 512 --sdff-width 12 --sdff-frac-bits 9 --actf-width 16 --actf-frac-bits 16 --rslt-chn 2 --rslt-width 16 --rslt-frac-bits 11 --rslt-depth 32 --async -n KanAcceleratorWrapper -o wrapper/KanAcceleratorWrapper.v
 
 */
                  
@@ -16,11 +16,18 @@ module KanAcceleratorWrapper #(
   ------------------------------------------------------------------*/
   
   // Width of DMA streams
-  parameter DMA_WIDTH = 64,
+  parameter WEIGHT_DMA_WIDTH = 64,
   // Propagate tkeep signal
-  parameter DMA_KEEP_ENABLE = (DMA_WIDTH > 8),
+  parameter WEIGHT_DMA_KEEP_ENABLE = (WEIGHT_DMA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter DMA_KEEP_WIDTH = (DMA_KEEP_ENABLE) ? ((DMA_WIDTH + 7) / 8) : 1,
+  parameter WEIGHT_DMA_KEEP_WIDTH = (WEIGHT_DMA_KEEP_ENABLE) ? ((WEIGHT_DMA_WIDTH + 7) / 8) : 1,
+
+  // Width of DMA streams
+  parameter RSLT_DMA_WIDTH = 64,
+  // Propagate tkeep signal
+  parameter RSLT_DMA_KEEP_ENABLE = (RSLT_DMA_WIDTH > 8),
+  // tkeep signal width (words per cycle)
+  parameter RSLT_DMA_KEEP_WIDTH = (RSLT_DMA_KEEP_ENABLE) ? ((RSLT_DMA_WIDTH + 7) / 8) : 1,
 
   /*------------------------------------------------------------------
     AXI_Lite controller mem interface parameters
@@ -152,7 +159,7 @@ module KanAcceleratorWrapper #(
   // tuser signal width
   parameter USER_WIDTH = (USER_ENABLE) ? 8 : 1,
   // tuser value
-  parameter USER_OUTPUT = 0,
+  parameter USER_OUTPUT = 1'b0,
 
   /*------------------------------------------------------------------
     Miscalleneous parameters
@@ -407,9 +414,9 @@ module KanAcceleratorWrapper #(
   input  wire                                       s_axis_wght_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST WEIGHT_LAST_ENABLE, HAS_TSTRB 0, HAS_TREADY 1" *)
-  input  wire [DMA_WIDTH-1:0]                       s_axis_wght_tdata,
+  input  wire [WEIGHT_DMA_WIDTH-1:0]                s_axis_wght_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TKEEP" *)
-  input  wire [DMA_KEEP_WIDTH-1:0]                  s_axis_wght_tkeep,
+  input  wire [WEIGHT_DMA_KEEP_WIDTH-1:0]           s_axis_wght_tkeep,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TVALID" *)
   input  wire                                       s_axis_wght_tvalid,  
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TREADY" *)
@@ -435,9 +442,9 @@ module KanAcceleratorWrapper #(
   input  wire                                       m_axis_rslt_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
-  output wire [DMA_WIDTH-1:0]                       m_axis_rslt_tdata,
+  output wire [RSLT_DMA_WIDTH-1:0]                  m_axis_rslt_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TKEEP" *)
-  output wire [DMA_KEEP_WIDTH-1:0]                  m_axis_rslt_tkeep,
+  output wire [RSLT_DMA_KEEP_WIDTH-1:0]             m_axis_rslt_tkeep,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TVALID" *)
   output wire                                       m_axis_rslt_tvalid,  
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TREADY" *)
@@ -459,9 +466,12 @@ module KanAcceleratorWrapper #(
   
   KanAccelerator #(
     .BATCH_SIZE                     (1),
-    .DMA_WIDTH                      (DMA_WIDTH),
-    .DMA_KEEP_ENABLE                (DMA_KEEP_ENABLE),
-    .DMA_KEEP_WIDTH                 (DMA_KEEP_WIDTH),
+    .WEIGHT_DMA_WIDTH               (WEIGHT_DMA_WIDTH),
+    .WEIGHT_DMA_KEEP_ENABLE         (WEIGHT_DMA_KEEP_ENABLE),
+    .WEIGHT_DMA_KEEP_WIDTH          (WEIGHT_DMA_KEEP_WIDTH),
+    .RSLT_DMA_WIDTH                 (RSLT_DMA_WIDTH),
+    .RSLT_DMA_KEEP_ENABLE           (RSLT_DMA_KEEP_ENABLE),
+    .RSLT_DMA_KEEP_WIDTH            (RSLT_DMA_KEEP_WIDTH),
     .AXIL_WIDTH                     (AXIL_WIDTH),
     .AXIL_STRB_WIDTH                (AXIL_STRB_WIDTH),
     .DATA_WIDTH                     (DATA_WIDTH),

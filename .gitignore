@@ -11,10 +11,10 @@ out/
 data/
 vcd/
 
-rtl/DummyBRAM.v
 rtl/wrapper/KanAcceleratorInstWrapper*.v
 rtl/wrapper/tb_kan_accelerator_wrapper.v
 rtl/*tmp*
+rtl/unused
 
 py/*
 !py/*_simgen.py

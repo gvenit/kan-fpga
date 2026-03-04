@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -99,18 +126,18 @@ module AxisPacketSplitter #(
 
   // Control Registers & Wires
   reg  op_in_progress_reg = 1'b0;
-  reg  [PCKT_WIDTH-1:0]  pckt_size_reg_early;
+  reg  [PCKT_WIDTH-1:0]  pckt_size_reg_early = 0;
 
   // FSM Logic output Restiters & Wires
   reg  [FSM_WIDTH-1:0]  fsm_state, fsm_state_next;
-  reg  [PCKT_WIDTH-1:0] pckt_size_counter_reg;
+  reg  [PCKT_WIDTH-1:0] pckt_size_counter_reg = 0;
 
   // FSM Logic intput Registers & Wires
   wire s_axis_tready_int;
-  wire get_next = operation_busy && s_axis_tvalid && s_axis_tready_int;
-  wire [PCKT_WIDTH-1:0] pckt_size_counter_reg_next = (get_next) ? pckt_size_counter_reg+1 : pckt_size_counter_reg;
-
+  wire get_next       = operation_busy && s_axis_tvalid && s_axis_tready_int;
   wire generate_tlast = get_next && (pckt_size_counter_reg == pckt_size_reg_early);
+
+  wire [PCKT_WIDTH-1:0] pckt_size_counter_reg_next = (get_next) ? pckt_size_counter_reg+1 : pckt_size_counter_reg;
 
   assign s_axis_tready     = operation_busy && s_axis_tready_int;
   wire   s_axis_tvalid_int = operation_busy && s_axis_tvalid;
@@ -119,14 +146,17 @@ module AxisPacketSplitter #(
   // Global FSM state logic
   always @(posedge clk ) begin
     if (rst) begin
-      fsm_state <= FSM_STR;
+      fsm_state             <= FSM_STR;
       
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
       operation_error       <= 1'b0;
 
     end else begin
-      fsm_state <= fsm_state_next;
+      fsm_state             <= fsm_state_next;
+
+      pckt_size_reg_early   <= pckt_size_reg_early; 
+      pckt_size_counter_reg <= pckt_size_counter_reg;
 
       operation_busy        <= 1'b0;
       operation_complete    <= 1'b0;
@@ -134,47 +164,43 @@ module AxisPacketSplitter #(
 
       case (fsm_state_next)
         FSM_STR: begin
-          pckt_size_counter_reg <= $unsigned(0);
-          pckt_size_reg_early <= pckt_size-1;
-
+          pckt_size_counter_reg <= 0;
+          pckt_size_reg_early   <= pckt_size-1;
         end
         FSM_OPE: begin
           if (fsm_state != FSM_OPE) begin
-            pckt_size_reg_early <= pckt_size-1;
+            pckt_size_reg_early   <= pckt_size-1;
           end
           if (get_next && generate_tlast) begin
-            pckt_size_counter_reg <= $unsigned(0);
+            pckt_size_counter_reg <= 0;
           end else begin
             pckt_size_counter_reg <= pckt_size_counter_reg_next;
           end
-          operation_busy <= 1'b1;
-
+          operation_busy        <= 1'b1;
         end
         FSM_END: begin
-          pckt_size_counter_reg <= $unsigned(0);
-          operation_complete <= 1'b1;
-          
+          pckt_size_counter_reg <= 0;
+          operation_complete    <= 1'b1;
         end
         FSM_ERR: begin
-          operation_error <= 1'b1;
-
+          operation_error       <= 1'b1;
         end
         default: begin
-          
         end 
       endcase
     end
   end
 
-  `define CHECK_OP_START \
-    if (operation_start) begin \
-      fsm_state_next <= FSM_OPE; \
-    end else begin \
-      fsm_state_next <= FSM_STR; \
-    end 
+ `define CHECK_OP_START \
+  if (operation_start) begin \
+    fsm_state_next <= FSM_OPE; \
+  end else begin \
+    fsm_state_next <= FSM_STR; \
+  end 
 
   // Global FSM next state logic
   always @(*) begin
+    fsm_state_next <= fsm_state;
     if (~ALLOW_LOCKS || ~lock) begin
       case (fsm_state)
         FSM_STR: begin
@@ -202,11 +228,9 @@ module AxisPacketSplitter #(
         end
         FSM_ERR: begin
           fsm_state_next <= FSM_STR;
-          
         end
         default: begin
           fsm_state_next <= FSM_STR;
-          
         end 
       endcase
     end 
@@ -219,29 +243,17 @@ module AxisPacketSplitter #(
   end
 
   axis_register #(
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(DATA_WIDTH),
-    // Propagate tkeep signal
-    .KEEP_ENABLE(KEEP_ENABLE),
-    // tkeep signal width (words per cycle)
-    .KEEP_WIDTH(KEEP_WIDTH),
-    // Propagate tlast signal
-    .LAST_ENABLE(1),
-    // Propagate tid signal
-    .ID_ENABLE(ID_ENABLE),
-    // tid signal width
-    .ID_WIDTH(ID_WIDTH),
-    // Propagate tdest signal
-    .DEST_ENABLE(DEST_ENABLE),
-    // tdest signal width
-    .DEST_WIDTH(DEST_WIDTH),
-    // Propagate tuser signal
-    .USER_ENABLE(USER_ENABLE),
-    // tuser signal width
-    .USER_WIDTH(USER_WIDTH),
-    // Register type
-    // 0 to bypass, 1 for simple buffer, 2 for skid buffer
-    .REG_TYPE(2)
+    .DATA_WIDTH           (DATA_WIDTH),
+    .KEEP_ENABLE          (KEEP_ENABLE),
+    .KEEP_WIDTH           (KEEP_WIDTH),
+    .LAST_ENABLE          (1),
+    .ID_ENABLE            (ID_ENABLE),
+    .ID_WIDTH             (ID_WIDTH),
+    .DEST_ENABLE          (DEST_ENABLE),
+    .DEST_WIDTH           (DEST_WIDTH),
+    .USER_ENABLE          (USER_ENABLE),
+    .USER_WIDTH           (USER_WIDTH),
+    .REG_TYPE             (2)
   ) in_axis_register_inst (
     .clk                  (clk),
     .rst                  (rst),

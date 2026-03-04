@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -80,8 +107,8 @@ module ParallelizedDataProcessor #(
   input  wire                                                 rst,
 
   /*
-    * AXI Stream Data input
-    */
+   * AXI Stream Data input
+   */
   input  wire [DATA_CHANNELS*BATCH_SIZE*DATA_WIDTH-1:0]       s_axis_data_tdata,
   input  wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tvalid,
   output wire [DATA_CHANNELS*BATCH_SIZE-1:0]                  s_axis_data_tready,
@@ -91,8 +118,8 @@ module ParallelizedDataProcessor #(
   input  wire [DATA_CHANNELS*BATCH_SIZE*USER_WIDTH-1:0]       s_axis_data_tuser,
 
   /*      
-    * AXI Stream Grid input  wire    
-    */      
+   * AXI Stream Grid input  wire    
+   */      
   input  wire [GRID_CHANNELS*DATA_WIDTH-1:0]                  s_axis_grid_tdata,
   input  wire [GRID_CHANNELS-1:0]                             s_axis_grid_tvalid,
   output wire [GRID_CHANNELS-1:0]                             s_axis_grid_tready,
@@ -102,8 +129,8 @@ module ParallelizedDataProcessor #(
   input  wire [GRID_CHANNELS*USER_WIDTH-1:0]                  s_axis_grid_tuser,
 
   /*
-    * AXI Stream Scale input
-    */
+   * AXI Stream Scale input
+   */
   input  wire [SCALE_CHANNELS*SCALE_WIDTH-1:0]                s_axis_scle_tdata,
   input  wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tvalid,
   output wire [SCALE_CHANNELS-1:0]                            s_axis_scle_tready,
@@ -113,8 +140,8 @@ module ParallelizedDataProcessor #(
   input  wire [SCALE_CHANNELS*USER_WIDTH-1:0]                 s_axis_scle_tuser,
 
   /*
-    * AXI Stream Weight input
-    */
+   * AXI Stream Weight input
+   */
   input  wire [WEIGHT_CHANNELS*WEIGHT_WIDTH-1:0]              s_axis_wght_tdata,
   input  wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tvalid,
   output wire [WEIGHT_CHANNELS-1:0]                           s_axis_wght_tready,
@@ -124,8 +151,8 @@ module ParallelizedDataProcessor #(
   input  wire [WEIGHT_CHANNELS*USER_WIDTH-1:0]                s_axis_wght_tuser,
 
   /*
-    * AXI Stream output
-    */
+   * AXI Stream output
+   */
   output wire [RSLT_CHANNELS*BATCH_SIZE*RSLT_WIDTH-1:0]       m_axis_data_tdata,
   output wire [RSLT_CHANNELS*BATCH_SIZE*KEEP_WIDTH-1:0]       m_axis_data_tkeep,
   output wire [RSLT_CHANNELS*BATCH_SIZE-1:0]                  m_axis_data_tvalid,
@@ -334,14 +361,14 @@ module ParallelizedDataProcessor #(
     );
   end
  end else begin : internal_skip_actf_fifo_genblock
-    // Activation Function skip SRL-FIFO Block per channel
-    assign int_srl_actf_m_axis_tdata  = int_srl_actf_s_axis_tdata;
-    assign int_srl_actf_m_axis_tvalid = int_srl_actf_s_axis_tvalid;
-    assign int_srl_actf_s_axis_tready = int_srl_actf_m_axis_tready;
-    assign int_srl_actf_m_axis_tlast  = int_srl_actf_s_axis_tlast;
-    assign int_srl_actf_m_axis_tid    = int_srl_actf_s_axis_tid;
-    assign int_srl_actf_m_axis_tdest  = int_srl_actf_s_axis_tdest;
-    assign int_srl_actf_m_axis_tuser  = int_srl_actf_s_axis_tuser;
+  // Activation Function skip SRL-FIFO Block per channel
+  assign int_srl_actf_m_axis_tdata  = int_srl_actf_s_axis_tdata;
+  assign int_srl_actf_m_axis_tvalid = int_srl_actf_s_axis_tvalid;
+  assign int_srl_actf_s_axis_tready = int_srl_actf_m_axis_tready;
+  assign int_srl_actf_m_axis_tlast  = int_srl_actf_s_axis_tlast;
+  assign int_srl_actf_m_axis_tid    = int_srl_actf_s_axis_tid;
+  assign int_srl_actf_m_axis_tdest  = int_srl_actf_s_axis_tdest;
+  assign int_srl_actf_m_axis_tuser  = int_srl_actf_s_axis_tuser;
  end
 
  if (INTERNAL_WEIGHTS_FIFO_DEPTH > 0) begin : internal_weights_fifo_genblock
@@ -380,15 +407,15 @@ module ParallelizedDataProcessor #(
     );
   end
  end else begin : internal_skip_weights_fifo_genblock
-    // Weight skip SRL-FIFO Block per channel
-    assign int_srl_wght_m_axis_tdata  = int_srl_wght_s_axis_tdata;
-    assign int_srl_wght_m_axis_tvalid = int_srl_wght_s_axis_tvalid;
-    assign int_srl_wght_s_axis_tready = int_srl_wght_m_axis_tready;
-    assign int_srl_wght_m_axis_tlast  = int_srl_wght_s_axis_tlast;
-    assign int_srl_wght_m_axis_tid    = int_srl_wght_s_axis_tid;
-    assign int_srl_wght_m_axis_tdest  = int_srl_wght_s_axis_tdest;
-    assign int_srl_wght_m_axis_tuser  = int_srl_wght_s_axis_tuser;
-  end
+  // Weight skip SRL-FIFO Block per channel
+  assign int_srl_wght_m_axis_tdata  = int_srl_wght_s_axis_tdata;
+  assign int_srl_wght_m_axis_tvalid = int_srl_wght_s_axis_tvalid;
+  assign int_srl_wght_s_axis_tready = int_srl_wght_m_axis_tready;
+  assign int_srl_wght_m_axis_tlast  = int_srl_wght_s_axis_tlast;
+  assign int_srl_wght_m_axis_tid    = int_srl_wght_s_axis_tid;
+  assign int_srl_wght_m_axis_tdest  = int_srl_wght_s_axis_tdest;
+  assign int_srl_wght_m_axis_tuser  = int_srl_wght_s_axis_tuser;
+ end
  endgenerate
 
   // Linear Processing Cube Block

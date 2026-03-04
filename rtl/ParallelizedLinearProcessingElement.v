@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -179,9 +206,7 @@ module ParallelizedLinearProcessingElement #(
 
   // Control Logic
   ParallelizedLPEControlUnit #(
-    // Number of PEs in Processing Array j axis
     .PE_NUMBER_J(PE_NUMBER_J),
-    // Position of current PE in the j axis
     .PE_POSITION_J(PE_POSITION_J)
   ) control_unit (
     .clk                    (clk),
@@ -206,6 +231,7 @@ module ParallelizedLinearProcessingElement #(
     .drop_u                 (drop_u),
     .export_rslt            (export_rslt),
     .export_rslt_last       (export_rslt_last),
+    .export_rslt_sync       (export_rslt_sync),
     .op_start               (op_start),
     .bypass_adder           (bypass_adder),
     .acc_res                (acc_res),
@@ -224,28 +250,16 @@ module ParallelizedLinearProcessingElement #(
       wire s_axis_u_tready_int;
       assign s_axis_u_tready = s_axis_u_tready_int & store_u;
       axis_register #(
-        // Width of AXI stream interfaces in bits
         .DATA_WIDTH(PSUM_WIDTH),
-        // Propagate tkeep signal
         .KEEP_ENABLE(0),
-        // tkeep signal width (words per cycle)
         .KEEP_WIDTH(1),
-        // Propagate tlast signal
         .LAST_ENABLE(1),
-        // Propagate tid signal
         .ID_ENABLE(0),
-        // tid signal width
         .ID_WIDTH(1),
-        // Propagate tdest signal
         .DEST_ENABLE(0),
-        // tdest signal width
         .DEST_WIDTH(1),
-        // Propagate tuser signal
         .USER_ENABLE(0),
-        // tuser signal width
         .USER_WIDTH(1),
-        // Register type
-        // 0 to bypass, 1 for simple buffer, 2 for skid buffer
         .REG_TYPE(0)
       ) axis_register_u_inst (
         .clk              (clk),
@@ -482,11 +496,16 @@ module ParallelizedLinearProcessingElement #(
 
   // Output Down AXI-Stream Drivers
   generate
-    if (PE_POSITION_J > 0) begin : up_down_connections_genblock
-      assign int_axis_d_tdata   = (export_rslt_sync) ? partial_sum_reg       : int_axis_u_tdata;
-      assign int_axis_d_tvalid  = (export_rslt_sync) ? 1'b1                  : int_axis_u_tvalid & forward_u & !drop_u;
-      assign int_axis_u_tready  = (export_rslt_sync) ? 1'b0                  : int_axis_d_tready & forward_u |  drop_u;
-      assign int_axis_d_tlast   = (export_rslt_sync) ? export_rslt_last_sync : export_rslt_last;
+    if (PE_POSITION_J == PE_NUMBER_J - 1) begin : up_down_connections_genblock
+      assign int_axis_d_tdata   = (export_rslt_sync)                ? partial_sum_reg       : int_axis_u_tdata;
+      assign int_axis_d_tvalid  = (export_rslt_sync)                ? 1'b1                  : int_axis_u_tvalid & forward_u & !drop_u;
+      assign int_axis_u_tready  = (export_rslt_sync)                ? 1'b0                  : int_axis_d_tready & forward_u |  drop_u;
+      assign int_axis_d_tlast   = (export_rslt_sync)                ? export_rslt_last_sync : export_rslt_last;
+    end else if (PE_POSITION_J > 0) begin : up_down_connections_genblock
+      assign int_axis_d_tdata   = (export_rslt && export_rslt_sync) ? partial_sum_reg       : int_axis_u_tdata;
+      assign int_axis_d_tvalid  = (export_rslt && export_rslt_sync) ? 1'b1                  : int_axis_u_tvalid & forward_u & !drop_u;
+      assign int_axis_u_tready  = (export_rslt && export_rslt_sync) ? 1'b0                  : int_axis_d_tready & forward_u |  drop_u;
+      assign int_axis_d_tlast   = export_rslt_last;
     end else begin : down_interface_genblock
       assign int_axis_d_tdata   = partial_sum_reg;
       assign int_axis_d_tvalid  = export_rslt_sync;

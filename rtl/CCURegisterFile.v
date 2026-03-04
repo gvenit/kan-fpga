@@ -1,3 +1,53 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
+// AXI-Lite Control interface -- modified version of https://github.com/alexforencich/verilog-axi/blob/master/rtl/axil_ram.v
+/*
+Copyright (c) 2018 Alex Forencich
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -66,7 +116,6 @@ module CCURegisterFile #(
   input  wire                   operation_status_valid_wr,
   input  wire                   operation_status_reset_wr,
   input  wire                   operation_status_error_aps_wr,
-  // input  wire                   operation_status_error_mcu_wr,
   input  wire                   operation_status_error_dpu_wr,
 
   input  wire [31:0]            operation_progress_rslt_wr,
@@ -119,28 +168,6 @@ module CCURegisterFile #(
   (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 s_axil RREADY" *)
   input  wire                   s_axil_rready
 );
-  // AXI-Lite Control interface -- modified version of https://github.com/alexforencich/verilog-axi/blob/master/rtl/axil_ram.v
-  /*
-    Copyright (c) 2018 Alex Forencich
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-    all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-    THE SOFTWARE.
-  */
   localparam DATA_WIDTH = 32;
   localparam STRB_WIDTH = (DATA_WIDTH/8);
   localparam VALID_ADDR_WIDTH = ADDR_WIDTH - $clog2(STRB_WIDTH);
@@ -187,23 +214,23 @@ module CCURegisterFile #(
   end
 
   // Write-Protection Macro
-  `define PL_WRITE_MEM(mem,REG,value,VALUE_WIDTH) \
-    if (s_axil_awaddr_valid != (REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)) || ~(mem_wr_en && s_axil_wstrb[REG % WORD_WIDTH])) begin \
-      mem[REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(REG % WORD_WIDTH) * WORD_SIZE +: VALUE_WIDTH] = value; \
-    end
+ `define PL_WRITE_MEM(mem,REG,value,VALUE_WIDTH) \
+  if (s_axil_awaddr_valid != (REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)) || ~(mem_wr_en && s_axil_wstrb[REG % WORD_WIDTH])) begin \
+    mem[REG >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(REG % WORD_WIDTH) * WORD_SIZE +: VALUE_WIDTH] = value; \
+  end
 
   // Read-Write Registers (PS -> PL) 
-  assign data_size_rd   = mem[CTRL_REG_DATA_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign grid_size_rd   = mem[CTRL_REG_GRID_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign scle_size_rd   = mem[CTRL_REG_SCLE_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign rslt_size_rd   = mem[CTRL_REG_RSLT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign pckt_size_rd   = mem[CTRL_REG_PCKT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
-  assign btch_size_rd   = mem[CTRL_REG_BTCH_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_BTCH_LEN % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE];
+  assign data_size_rd       = mem[CTRL_REG_DATA_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign grid_size_rd       = mem[CTRL_REG_GRID_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign scle_size_rd       = mem[CTRL_REG_SCLE_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign rslt_size_rd       = mem[CTRL_REG_RSLT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign pckt_size_rd       = mem[CTRL_REG_PCKT_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)];
+  assign btch_size_rd       = mem[CTRL_REG_BTCH_LEN >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_BTCH_LEN % WORD_WIDTH) * WORD_SIZE +: WORD_SIZE];
 
-  assign data_loaded_rd = mem[CTRL_REG_DATA_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_DATA_LDR % WORD_WIDTH) * WORD_SIZE];
-  assign grid_loaded_rd = mem[CTRL_REG_GRID_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_GRID_LDR % WORD_WIDTH) * WORD_SIZE];
-  assign scle_loaded_rd = mem[CTRL_REG_SCLE_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_SCLE_LDR % WORD_WIDTH) * WORD_SIZE];
-  assign wght_loaded_rd = mem[CTRL_REG_WGHT_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_WGHT_LDR % WORD_WIDTH) * WORD_SIZE];
+  assign data_loaded_rd     = mem[CTRL_REG_DATA_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_DATA_LDR % WORD_WIDTH) * WORD_SIZE];
+  assign grid_loaded_rd     = mem[CTRL_REG_GRID_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_GRID_LDR % WORD_WIDTH) * WORD_SIZE];
+  assign scle_loaded_rd     = mem[CTRL_REG_SCLE_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_SCLE_LDR % WORD_WIDTH) * WORD_SIZE];
+  assign wght_loaded_rd     = mem[CTRL_REG_WGHT_LDR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_WGHT_LDR % WORD_WIDTH) * WORD_SIZE];
 
   assign operation_start_rd = mem[CTRL_REG_OPER_STR >> (ADDR_WIDTH - VALID_ADDR_WIDTH)][(CTRL_REG_OPER_STR % WORD_WIDTH) * WORD_SIZE];
 
@@ -227,9 +254,7 @@ module CCURegisterFile #(
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_VLD)] = operation_status_valid_wr;
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_RST)] = operation_status_reset_wr;
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_MCU)] = operation_status_error_aps_wr;
-  // assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_MCU)] = operation_status_error_mcu_wr;
   assign operation_status_wr[`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_DPU)] = operation_status_error_dpu_wr;
-  // assign operation_status_wr[WORD_SIZE-1:`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_DPU)+1] = {WORD_SIZE-`RLOG2(CTRL_REG_OPER_STS_MASK_ERR_DPU){1'b0}};
 
   always @* begin
     mem_wr_en = 1'b0;
@@ -336,6 +361,7 @@ module CCURegisterFile #(
     end
   end
 
+`undef PL_WRITE_MEM
 endmodule
 
 `resetall

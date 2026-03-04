@@ -1,3 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2025 Georgios Venitourakis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// Language: Verilog 2001
+
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
@@ -184,50 +211,49 @@ module BatchedAxisPacketJoiner #(
   wire op_done = &batch_operation_complete_reg_next;
   wire op_busy = |batch_operation_busy;
 
- generate
-  genvar batch;
-  for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin : axis_packet_joiner_batch_genblock
-    AxisPacketJoiner #(
-      .CHANNELS           (CHANNELS),
-      .DATA_WIDTH         (S_DATA_WIDTH),
-      .KEEP_ENABLE        (S_KEEP_ENABLE),
-      .KEEP_WIDTH         (S_KEEP_WIDTH),
-      .ID_ENABLE          (S_ID_ENABLE),
-      .ID_WIDTH           (S_ID_WIDTH),
-      .DEST_ENABLE        (DEST_ENABLE),
-      .DEST_WIDTH         (DEST_WIDTH),
-      .USER_ENABLE        (USER_ENABLE),
-      .USER_WIDTH         (USER_WIDTH),
-      .ALLOW_LOCKS        (BATCH_SIZE > 1)
-    ) AxisPacketJoiner_i  (
-      .clk                (s_clk),
-      .rst                (s_rst),
-      .operation_start    ((BATCH_SIZE > 1 ? (op_busy ? use_batch_reg[batch] : operation_start && use_batch[batch]) : operation_start)),
-      .use_channels       (use_channels),
-      .lock               (batch_lock                   [batch]),
-      .interrupt          (interrupt),
-      .operation_busy     (batch_operation_busy         [batch]),
-      .operation_complete (batch_operation_complete     [batch]),
-      .operation_error    (batch_operation_error        [batch]),
-      .transmission       (batch_transmission           [batch]),       // Active high if bus transmitted data in the current cycle
-      .s_axis_tdata       (int_jnr_btch_s_axis_tdata    [batch*CHANNELS*S_DATA_WIDTH +: CHANNELS*S_DATA_WIDTH]),
-      .s_axis_tkeep       (int_jnr_btch_s_axis_tkeep    [batch*CHANNELS*S_KEEP_WIDTH +: CHANNELS*S_KEEP_WIDTH]),
-      .s_axis_tvalid      (int_jnr_btch_s_axis_tvalid   [batch*CHANNELS +: CHANNELS]),
-      .s_axis_tready      (int_jnr_btch_s_axis_tready   [batch*CHANNELS +: CHANNELS]),
-      .s_axis_tlast       (int_jnr_btch_s_axis_tlast    [batch*CHANNELS +: CHANNELS]),
-      .s_axis_tid         (int_jnr_btch_s_axis_tid      [batch*CHANNELS*S_ID_WIDTH +: CHANNELS*S_ID_WIDTH]),
-      .s_axis_tdest       (int_jnr_btch_s_axis_tdest    [batch*CHANNELS*DEST_WIDTH +: CHANNELS*DEST_WIDTH]),
-      .s_axis_tuser       (int_jnr_btch_s_axis_tuser    [batch*CHANNELS*USER_WIDTH +: CHANNELS*USER_WIDTH]),
-      .m_axis_tdata       (int_jnr_btch_m_axis_tdata    [batch*S_DATA_WIDTH +: S_DATA_WIDTH]),
-      .m_axis_tkeep       (int_jnr_btch_m_axis_tkeep    [batch*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
-      .m_axis_tvalid      (int_jnr_btch_m_axis_tvalid   [batch]),
-      .m_axis_tready      (int_jnr_btch_m_axis_tready   [batch]),
-      .m_axis_tlast       (int_jnr_btch_m_axis_tlast    [batch]),
-      .m_axis_tid         (int_jnr_btch_m_axis_tid      [batch*S_ID_WIDTH +: S_ID_WIDTH]),
-      .m_axis_tdest       (int_jnr_btch_m_axis_tdest    [batch*DEST_WIDTH +: DEST_WIDTH]),
-      .m_axis_tuser       (int_jnr_btch_m_axis_tuser    [batch*USER_WIDTH +: USER_WIDTH])
-    );
-  end 
+ genvar batch;
+ generate for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin : axis_packet_joiner_batch_genblock
+  AxisPacketJoiner #(
+    .CHANNELS           (CHANNELS),
+    .DATA_WIDTH         (S_DATA_WIDTH),
+    .KEEP_ENABLE        (S_KEEP_ENABLE),
+    .KEEP_WIDTH         (S_KEEP_WIDTH),
+    .ID_ENABLE          (S_ID_ENABLE),
+    .ID_WIDTH           (S_ID_WIDTH),
+    .DEST_ENABLE        (DEST_ENABLE),
+    .DEST_WIDTH         (DEST_WIDTH),
+    .USER_ENABLE        (USER_ENABLE),
+    .USER_WIDTH         (USER_WIDTH),
+    .ALLOW_LOCKS        (BATCH_SIZE > 1)
+  ) AxisPacketJoiner_i  (
+    .clk                (s_clk),
+    .rst                (s_rst),
+    .operation_start    ((BATCH_SIZE > 1 ? (op_busy ? use_batch_reg[batch] : operation_start && use_batch[batch]) : operation_start)),
+    .use_channels       (use_channels),
+    .lock               (batch_lock                   [batch]),
+    .interrupt          (interrupt),
+    .operation_busy     (batch_operation_busy         [batch]),
+    .operation_complete (batch_operation_complete     [batch]),
+    .operation_error    (batch_operation_error        [batch]),
+    .transmission       (batch_transmission           [batch]),       // Active high if bus transmitted data in the current cycle
+    .s_axis_tdata       (int_jnr_btch_s_axis_tdata    [batch*CHANNELS*S_DATA_WIDTH +: CHANNELS*S_DATA_WIDTH]),
+    .s_axis_tkeep       (int_jnr_btch_s_axis_tkeep    [batch*CHANNELS*S_KEEP_WIDTH +: CHANNELS*S_KEEP_WIDTH]),
+    .s_axis_tvalid      (int_jnr_btch_s_axis_tvalid   [batch*CHANNELS +: CHANNELS]),
+    .s_axis_tready      (int_jnr_btch_s_axis_tready   [batch*CHANNELS +: CHANNELS]),
+    .s_axis_tlast       (int_jnr_btch_s_axis_tlast    [batch*CHANNELS +: CHANNELS]),
+    .s_axis_tid         (int_jnr_btch_s_axis_tid      [batch*CHANNELS*S_ID_WIDTH +: CHANNELS*S_ID_WIDTH]),
+    .s_axis_tdest       (int_jnr_btch_s_axis_tdest    [batch*CHANNELS*DEST_WIDTH +: CHANNELS*DEST_WIDTH]),
+    .s_axis_tuser       (int_jnr_btch_s_axis_tuser    [batch*CHANNELS*USER_WIDTH +: CHANNELS*USER_WIDTH]),
+    .m_axis_tdata       (int_jnr_btch_m_axis_tdata    [batch*S_DATA_WIDTH +: S_DATA_WIDTH]),
+    .m_axis_tkeep       (int_jnr_btch_m_axis_tkeep    [batch*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+    .m_axis_tvalid      (int_jnr_btch_m_axis_tvalid   [batch]),
+    .m_axis_tready      (int_jnr_btch_m_axis_tready   [batch]),
+    .m_axis_tlast       (int_jnr_btch_m_axis_tlast    [batch]),
+    .m_axis_tid         (int_jnr_btch_m_axis_tid      [batch*S_ID_WIDTH +: S_ID_WIDTH]),
+    .m_axis_tdest       (int_jnr_btch_m_axis_tdest    [batch*DEST_WIDTH +: DEST_WIDTH]),
+    .m_axis_tuser       (int_jnr_btch_m_axis_tuser    [batch*USER_WIDTH +: USER_WIDTH])
+  );
+ end 
  endgenerate
  
   ExtendedAxisPacketSplitter #(
@@ -272,50 +298,48 @@ module BatchedAxisPacketJoiner #(
     .m_axis_tuser         (int_aps_btch_m_axis_tuser)
   );
 
- generate
-  for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin : axis_adp_batch_genblock
-    axis_async_fifo_adapter #(
-      .DEPTH              (FIFO_DEPTH),
-      .S_DATA_WIDTH       (S_DATA_WIDTH),
-      .S_KEEP_ENABLE      (S_KEEP_ENABLE),
-      .S_KEEP_WIDTH       (S_KEEP_WIDTH),
-      .M_DATA_WIDTH       (M_DATA_WIDTH),
-      .M_KEEP_ENABLE      (M_KEEP_ENABLE),
-      .M_KEEP_WIDTH       (M_KEEP_WIDTH),
-      .ID_ENABLE          (S_ID_ENABLE),
-      .ID_WIDTH           (S_ID_WIDTH),
-      .DEST_ENABLE        (DEST_ENABLE),
-      .DEST_WIDTH         (DEST_WIDTH),
-      .USER_ENABLE        (USER_ENABLE),
-      .USER_WIDTH         (USER_WIDTH)
-    ) axis_adp_batch_inst (
-      .s_clk              (s_clk),
-      .s_rst              (s_rst),
-      .s_axis_tdata       (int_adp_btch_s_axis_tdata   [batch*S_DATA_WIDTH +: S_DATA_WIDTH]),
-      .s_axis_tkeep       (int_adp_btch_s_axis_tkeep   [batch*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
-      .s_axis_tvalid      (int_adp_btch_s_axis_tvalid  [batch]),
-      .s_axis_tready      (int_adp_btch_s_axis_tready  [batch]),
-      .s_axis_tlast       (int_adp_btch_s_axis_tlast   [batch]),
-      .s_axis_tid         (int_adp_btch_s_axis_tid     [batch*S_ID_WIDTH   +: S_ID_WIDTH]),
-      .s_axis_tdest       (int_adp_btch_s_axis_tdest   [batch*DEST_WIDTH   +: DEST_WIDTH]),
-      .s_axis_tuser       (int_adp_btch_s_axis_tuser   [batch*USER_WIDTH   +: USER_WIDTH]),
-      .m_clk              (m_clk),
-      .m_rst              (m_rst),
-      .m_axis_tdata       (int_adp_btch_m_axis_tdata   [batch*M_DATA_WIDTH +: M_DATA_WIDTH]),
-      .m_axis_tkeep       (int_adp_btch_m_axis_tkeep   [batch*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
-      .m_axis_tvalid      (int_adp_btch_m_axis_tvalid  [batch]),
-      .m_axis_tready      (int_adp_btch_m_axis_tready  [batch]),
-      .m_axis_tlast       (int_adp_btch_m_axis_tlast   [batch]),
-      .m_axis_tid         (int_adp_btch_m_axis_tid     [batch*S_ID_WIDTH   +: S_ID_WIDTH]),
-      .m_axis_tdest       (int_adp_btch_m_axis_tdest   [batch*DEST_WIDTH   +: DEST_WIDTH]),
-      .m_axis_tuser       (int_adp_btch_m_axis_tuser   [batch*USER_WIDTH   +: USER_WIDTH]),
-      .s_pause_req        (1'b0),
-      .m_pause_req        (1'b0)
-    );
-  end 
- endgenerate
-
- generate if (BATCH_SIZE == 1) begin : single_batch_genblock
+ generate for (batch = 0; batch < BATCH_SIZE; batch = batch + 1) begin : axis_adp_batch_genblock
+  axis_async_fifo_adapter #(
+    .DEPTH              (FIFO_DEPTH),
+    .S_DATA_WIDTH       (S_DATA_WIDTH),
+    .S_KEEP_ENABLE      (S_KEEP_ENABLE),
+    .S_KEEP_WIDTH       (S_KEEP_WIDTH),
+    .M_DATA_WIDTH       (M_DATA_WIDTH),
+    .M_KEEP_ENABLE      (M_KEEP_ENABLE),
+    .M_KEEP_WIDTH       (M_KEEP_WIDTH),
+    .ID_ENABLE          (S_ID_ENABLE),
+    .ID_WIDTH           (S_ID_WIDTH),
+    .DEST_ENABLE        (DEST_ENABLE),
+    .DEST_WIDTH         (DEST_WIDTH),
+    .USER_ENABLE        (USER_ENABLE),
+    .USER_WIDTH         (USER_WIDTH)
+  ) axis_adp_batch_inst (
+    .s_clk              (s_clk),
+    .s_rst              (s_rst),
+    .s_axis_tdata       (int_adp_btch_s_axis_tdata   [batch*S_DATA_WIDTH +: S_DATA_WIDTH]),
+    .s_axis_tkeep       (int_adp_btch_s_axis_tkeep   [batch*S_KEEP_WIDTH +: S_KEEP_WIDTH]),
+    .s_axis_tvalid      (int_adp_btch_s_axis_tvalid  [batch]),
+    .s_axis_tready      (int_adp_btch_s_axis_tready  [batch]),
+    .s_axis_tlast       (int_adp_btch_s_axis_tlast   [batch]),
+    .s_axis_tid         (int_adp_btch_s_axis_tid     [batch*S_ID_WIDTH   +: S_ID_WIDTH]),
+    .s_axis_tdest       (int_adp_btch_s_axis_tdest   [batch*DEST_WIDTH   +: DEST_WIDTH]),
+    .s_axis_tuser       (int_adp_btch_s_axis_tuser   [batch*USER_WIDTH   +: USER_WIDTH]),
+    .m_clk              (m_clk),
+    .m_rst              (m_rst),
+    .m_axis_tdata       (int_adp_btch_m_axis_tdata   [batch*M_DATA_WIDTH +: M_DATA_WIDTH]),
+    .m_axis_tkeep       (int_adp_btch_m_axis_tkeep   [batch*M_KEEP_WIDTH +: M_KEEP_WIDTH]),
+    .m_axis_tvalid      (int_adp_btch_m_axis_tvalid  [batch]),
+    .m_axis_tready      (int_adp_btch_m_axis_tready  [batch]),
+    .m_axis_tlast       (int_adp_btch_m_axis_tlast   [batch]),
+    .m_axis_tid         (int_adp_btch_m_axis_tid     [batch*S_ID_WIDTH   +: S_ID_WIDTH]),
+    .m_axis_tdest       (int_adp_btch_m_axis_tdest   [batch*DEST_WIDTH   +: DEST_WIDTH]),
+    .m_axis_tuser       (int_adp_btch_m_axis_tuser   [batch*USER_WIDTH   +: USER_WIDTH]),
+    .s_pause_req        (1'b0),
+    .m_pause_req        (1'b0)
+  );
+ end 
+ 
+ if (BATCH_SIZE == 1) begin : single_batch_genblock
   assign int_mux_btch_m_axis_tdata  = int_mux_btch_s_axis_tdata;
   assign int_mux_btch_m_axis_tkeep  = int_mux_btch_s_axis_tkeep;
   assign int_mux_btch_m_axis_tvalid = int_mux_btch_s_axis_tvalid;
@@ -337,40 +361,40 @@ module BatchedAxisPacketJoiner #(
  end else begin : multi_batch_genblock
   // Multiplex all packets to a single channel
   axis_arb_mux #(
-    .S_COUNT                  (BATCH_SIZE),
-    .DATA_WIDTH               (M_DATA_WIDTH),
-    .KEEP_ENABLE              (M_KEEP_ENABLE),
-    .KEEP_WIDTH               (M_KEEP_WIDTH),
-    .ID_ENABLE                (1),
-    .S_ID_WIDTH               (S_ID_WIDTH),
-    .M_ID_WIDTH               (M_ID_WIDTH),
-    .DEST_ENABLE              (DEST_ENABLE),
-    .DEST_WIDTH               (DEST_WIDTH),
-    .USER_ENABLE              (USER_ENABLE),
-    .USER_WIDTH               (USER_WIDTH),
-    .LAST_ENABLE              (1),
-    .UPDATE_TID               (1),
-    .ARB_TYPE_ROUND_ROBIN     (0),
-    .ARB_LSB_HIGH_PRIORITY    (1)
-  ) packet_mux (
-    .clk                      (m_clk),
-    .rst                      (m_rst),
-    .s_axis_tdata             (int_mux_btch_s_axis_tdata),
-    .s_axis_tkeep             (int_mux_btch_s_axis_tkeep),
-    .s_axis_tvalid            (int_mux_btch_s_axis_tvalid),
-    .s_axis_tready            (int_mux_btch_s_axis_tready),
-    .s_axis_tlast             (int_mux_btch_s_axis_tlast),
-    .s_axis_tid               (int_mux_btch_s_axis_tid),
-    .s_axis_tdest             (int_mux_btch_s_axis_tdest),
-    .s_axis_tuser             (int_mux_btch_s_axis_tuser),
-    .m_axis_tdata             (int_mux_btch_m_axis_tdata),
-    .m_axis_tkeep             (int_mux_btch_m_axis_tkeep),
-    .m_axis_tvalid            (int_mux_btch_m_axis_tvalid),
-    .m_axis_tready            (int_mux_btch_m_axis_tready),
-    .m_axis_tlast             (int_mux_btch_m_axis_tlast),
-    .m_axis_tid               (int_mux_btch_m_axis_tid),
-    .m_axis_tdest             (int_mux_btch_m_axis_tdest),
-    .m_axis_tuser             (int_mux_btch_m_axis_tuser)
+    .S_COUNT                (BATCH_SIZE),
+    .DATA_WIDTH             (M_DATA_WIDTH),
+    .KEEP_ENABLE            (M_KEEP_ENABLE),
+    .KEEP_WIDTH             (M_KEEP_WIDTH),
+    .ID_ENABLE              (1),
+    .S_ID_WIDTH             (S_ID_WIDTH),
+    .M_ID_WIDTH             (M_ID_WIDTH),
+    .DEST_ENABLE            (DEST_ENABLE),
+    .DEST_WIDTH             (DEST_WIDTH),
+    .USER_ENABLE            (USER_ENABLE),
+    .USER_WIDTH             (USER_WIDTH),
+    .LAST_ENABLE            (1),
+    .UPDATE_TID             (1),
+    .ARB_TYPE_ROUND_ROBIN   (0),
+    .ARB_LSB_HIGH_PRIORITY  (1)
+  ) packet_mux              (
+    .clk                    (m_clk),
+    .rst                    (m_rst),
+    .s_axis_tdata           (int_mux_btch_s_axis_tdata),
+    .s_axis_tkeep           (int_mux_btch_s_axis_tkeep),
+    .s_axis_tvalid          (int_mux_btch_s_axis_tvalid),
+    .s_axis_tready          (int_mux_btch_s_axis_tready),
+    .s_axis_tlast           (int_mux_btch_s_axis_tlast),
+    .s_axis_tid             (int_mux_btch_s_axis_tid),
+    .s_axis_tdest           (int_mux_btch_s_axis_tdest),
+    .s_axis_tuser           (int_mux_btch_s_axis_tuser),
+    .m_axis_tdata           (int_mux_btch_m_axis_tdata),
+    .m_axis_tkeep           (int_mux_btch_m_axis_tkeep),
+    .m_axis_tvalid          (int_mux_btch_m_axis_tvalid),
+    .m_axis_tready          (int_mux_btch_m_axis_tready),
+    .m_axis_tlast           (int_mux_btch_m_axis_tlast),
+    .m_axis_tid             (int_mux_btch_m_axis_tid),
+    .m_axis_tdest           (int_mux_btch_m_axis_tdest),
+    .m_axis_tuser           (int_mux_btch_m_axis_tuser)
   );
 
   reg invalid_batch_config;
@@ -413,16 +437,16 @@ module BatchedAxisPacketJoiner #(
       if (int_external_error) begin
       // end else if (op_done) begin
       end else if (op_busy) begin
-        use_batch_reg <= use_batch_reg & (~(batch_operation_busy | batch_operation_complete));
-        batch_operation_complete_reg <= batch_operation_complete_reg_next;
+        use_batch_reg                 <= use_batch_reg & (~(batch_operation_busy | batch_operation_complete));
+        batch_operation_complete_reg  <= batch_operation_complete_reg_next;
       end else if (operation_start) begin
         if (use_batch) begin
-          use_batch_reg                <= use_batch;
-          batch_operation_complete_reg <= ~use_batch;
+          use_batch_reg                 <= use_batch;
+          batch_operation_complete_reg  <= ~use_batch;
         end else begin
-          invalid_batch_config         <= 1'b1;
+          invalid_batch_config          <= 1'b1;
         end
-    end
+      end
     end
   end
  end

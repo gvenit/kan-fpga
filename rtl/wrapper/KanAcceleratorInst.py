@@ -22,7 +22,6 @@ def main():
     parser.add_argument('--async', action='store_true', help='Asynchronous mode', dest='async')
     
     parser.add_argument('-b', '--batch-size',  type=int, default=1, help="batch size", dest='batch_size')
-    parser.add_argument('--dma-width',  type=int, default=64, help="DMA Data Width", dest='dma_width')
     parser.add_argument('--ctrl-addr',  type=int, default=13, help="Control Address Width", dest='ctrl_addr')
     
     parser.add_argument('--data-width',     type=int, default=16, help="Data & Grid Width", dest='data_width')
@@ -39,6 +38,7 @@ def main():
     parser.add_argument('--weight-width',     '--wght-width',     type=int, default=16, help="Weight Width", dest='wght_width')
     parser.add_argument('--weight-frac-bits', '--wght-frac-bits', type=int, default=12, help="Weight Fractional Bits", dest='wght_fbits')
     parser.add_argument('--weight-depth',     '--wght-depth',     type=int, default=16, help="Weight Depth", dest='wght_depth')
+    parser.add_argument('--weight-dma-width', '--wght-dma-width',  type=int, default=64, help="DMA Weight Width", dest='wght_dma_width')
     
     parser.add_argument('--scaled-diff-width',     '--sdff-width',     type=int, default=16, help="Scaled Difference Width", dest='sdff_width')
     parser.add_argument('--scaled-diff-frac-bits', '--sdff-frac-bits', type=int, default=13, help="Scaled Difference Fractional Bits", dest='sdff_fbits')
@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--result-width',     '--rslt-width',     type=int, default=16, help="Result Width", dest='rslt_width')
     parser.add_argument('--result-frac-bits', '--rslt-frac-bits', type=int, default=12, help="Result Fractional Bits", dest='rslt_fbits')
     parser.add_argument('--result-depth',     '--rslt-depth',     type=int, default=8, help="Result Depth", dest='rslt_depth')
+    parser.add_argument('--result-dma-width', '--rslt-dma-width',  type=int, default=64, help="DMA Result Width", dest='rslt_dma_width')
     
     parser.add_argument('-n', '--name',   type=str, help="module name")
     parser.add_argument('-o', '--output', type=str, help="output file name")
@@ -107,11 +108,18 @@ module {{name}} #(
   ------------------------------------------------------------------*/
   
   // Width of DMA streams
-  parameter DMA_WIDTH = {{dma_width}},
+  parameter WEIGHT_DMA_WIDTH = {{wght_dma_width}},
   // Propagate tkeep signal
-  parameter DMA_KEEP_ENABLE = (DMA_WIDTH > 8),
+  parameter WEIGHT_DMA_KEEP_ENABLE = (WEIGHT_DMA_WIDTH > 8),
   // tkeep signal width (words per cycle)
-  parameter DMA_KEEP_WIDTH = (DMA_KEEP_ENABLE) ? ((DMA_WIDTH + 7) / 8) : 1,
+  parameter WEIGHT_DMA_KEEP_WIDTH = (WEIGHT_DMA_KEEP_ENABLE) ? ((WEIGHT_DMA_WIDTH + 7) / 8) : 1,
+
+  // Width of DMA streams
+  parameter RSLT_DMA_WIDTH = {{rslt_dma_width}},
+  // Propagate tkeep signal
+  parameter RSLT_DMA_KEEP_ENABLE = (RSLT_DMA_WIDTH > 8),
+  // tkeep signal width (words per cycle)
+  parameter RSLT_DMA_KEEP_WIDTH = (RSLT_DMA_KEEP_ENABLE) ? ((RSLT_DMA_WIDTH + 7) / 8) : 1,
 
   /*------------------------------------------------------------------
     AXI_Lite controller mem interface parameters
@@ -501,9 +509,9 @@ module {{name}} #(
   input  wire                                       s_axis_wght_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST WEIGHT_LAST_ENABLE, HAS_TSTRB 0, HAS_TREADY 1" *)
-  input  wire [DMA_WIDTH-1:0]                       s_axis_wght_tdata,
+  input  wire [WEIGHT_DMA_WIDTH-1:0]                s_axis_wght_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TKEEP" *)
-  input  wire [DMA_KEEP_WIDTH-1:0]                  s_axis_wght_tkeep,
+  input  wire [WEIGHT_DMA_KEEP_WIDTH-1:0]           s_axis_wght_tkeep,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TVALID" *)
   input  wire                                       s_axis_wght_tvalid,  
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 s_axis_wght TREADY" *)
@@ -529,9 +537,9 @@ module {{name}} #(
   input  wire                                       m_axis_rslt_areset,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TDATA" *)
     (* X_INTERFACE_PARAMETER = "HAS_TLAST 1,HAS_TSTRB 0,HAS_TREADY 1" *)
-  output wire [DMA_WIDTH-1:0]                       m_axis_rslt_tdata,
+  output wire [RSLT_DMA_WIDTH-1:0]                  m_axis_rslt_tdata,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TKEEP" *)
-  output wire [DMA_KEEP_WIDTH-1:0]                  m_axis_rslt_tkeep,
+  output wire [RSLT_DMA_KEEP_WIDTH-1:0]             m_axis_rslt_tkeep,
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TVALID" *)
   output wire                                       m_axis_rslt_tvalid,  
   (* X_INTERFACE_INFO = "xilinx.com:interface:axis:1.0 m_axis_rslt TREADY" *)
@@ -553,9 +561,12 @@ module {{name}} #(
   
   KanAccelerator #(
     .BATCH_SIZE                     ({{n}}),
-    .DMA_WIDTH                      (DMA_WIDTH),
-    .DMA_KEEP_ENABLE                (DMA_KEEP_ENABLE),
-    .DMA_KEEP_WIDTH                 (DMA_KEEP_WIDTH),
+    .WEIGHT_DMA_WIDTH               (WEIGHT_DMA_WIDTH),
+    .WEIGHT_DMA_KEEP_ENABLE         (WEIGHT_DMA_KEEP_ENABLE),
+    .WEIGHT_DMA_KEEP_WIDTH          (WEIGHT_DMA_KEEP_WIDTH),
+    .RSLT_DMA_WIDTH                 (RSLT_DMA_WIDTH),
+    .RSLT_DMA_KEEP_ENABLE           (RSLT_DMA_KEEP_ENABLE),
+    .RSLT_DMA_KEEP_WIDTH            (RSLT_DMA_KEEP_WIDTH),
     .AXIL_WIDTH                     (AXIL_WIDTH),
     .AXIL_STRB_WIDTH                (AXIL_STRB_WIDTH),
     .DATA_WIDTH                     (DATA_WIDTH),
