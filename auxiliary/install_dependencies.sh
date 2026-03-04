@@ -15,3 +15,7 @@ fi
 source venv/bin/activate
 
 pip install -r venv/requirements.txt
+
+pip install -U $(pip list --outdated | tail -n +3 | sed -rn 's/([a-zA-Z0-9\-]+) .*/\1 /p')
+
+pip freeze > venv/requirements.txt
